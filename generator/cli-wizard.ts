@@ -1,6 +1,7 @@
 /**
  * Wizard interactivo: Crear un negocio desde cero
- * Preguntas → GeneratorInput → UiSpec → AppBootResult
+ * Preguntas → GeneratorInput → UiSpec → WizardDraft
+ * (NO genera AppBootResult directamente; eso lo hace web/cli.ts después de decisiones)
  */
 
 import { createHash } from "node:crypto";
@@ -15,8 +16,12 @@ import type { GeneratorInput, LifecycleSlice } from "../generator/types.js";
 import type { CompiledRuleSet, RoleDef } from "../policies/types.js";
 import { generateUiSpec } from "../generator/index.js";
 import type { ValidatedUiSpec } from "../presentation/validated.js";
-import type { AppBootResult } from "../web/types.js";
-import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "../web/sample-data.js";
+import type {
+  WizardDraft,
+  ModuleInfo,
+  ColorPalette,
+  TypographyPreset,
+} from "../web/decision-screen-types.js";
 import { proposeDesignSystems } from "../design/index.js";
 
 interface WizardAnswers {
@@ -81,28 +86,43 @@ async function askQuestions(): Promise<WizardAnswers> {
     hasFiscalCompliance: fiscal,
   };
 }
-
 /**
  * Crea un ciclo de vida mínimo a partir de estados
+ * Reordena automáticamente para que terminales vayan al final
  */
 function buildMinimalLifecycle(stateIds: string[]): Lifecycle {
-  const commitments = Array.from({ length: Math.max(1, stateIds.length - 1) }, (_, i) => ({
-    id: `commit_${i}`,
-    label: `Paso ${i + 1}`,
-  }));
-
+  // ✅ NUEVO: Reordenar estados para que terminales vayan al final
   const isCancelTerminal = (id: string) => {
     const lower = id.toLowerCase();
     return lower.includes("cancel") || lower.includes("rechaz") || lower.includes("abort");
   };
 
-  const states: StateNode[] = stateIds.map((id, idx) => ({
+  const isLastTerminal = (id: string, idx: number, all: string[]) => {
+    return idx === all.length - 1 && !isCancelTerminal(id);
+  };
+
+  // Separar: terminales de cancelación, terminales finales, intermedios
+  const terminals = stateIds.filter(isCancelTerminal);
+  const intermediate = stateIds.filter(id => !isCancelTerminal(id) && stateIds.indexOf(id) !== stateIds.length - 1);
+  const finalState = stateIds[stateIds.length - 1];
+
+  // Reordenar: intermedios → final → cancelables
+  const orderedStateIds = [...intermediate, finalState!, ...terminals];
+
+  console.log(`ℹ️  Estados reordenados: ${orderedStateIds.join(" → ")}`);
+
+  const commitments = Array.from({ length: Math.max(1, orderedStateIds.length - 1) }, (_, i) => ({
+    id: `commit_${i}`,
+    label: `Paso ${i + 1}`,
+  }));
+
+  const states: StateNode[] = orderedStateIds.map((id, idx) => ({
     id,
     kind: idx === 0 
       ? "inicial" 
       : isCancelTerminal(id)
-        ? "terminal_rechazo"
-        : idx === stateIds.length - 1
+        ? "terminal_excepcion"
+        : idx === orderedStateIds.length - 1
           ? "terminal_exito"
           : "intermedio",
     label: id.replace(/_/g, " "),
@@ -114,10 +134,18 @@ function buildMinimalLifecycle(stateIds: string[]): Lifecycle {
     ],
   }));
 
+  // ✅ NO crear transiciones saliendo de estados terminales
   const transitions: Transition[] = [];
-  for (let i = 0; i < stateIds.length - 1; i++) {
-    const from = stateIds[i]!;
-    const to = stateIds[i + 1]!;
+  for (let i = 0; i < orderedStateIds.length - 1; i++) {
+    const from = orderedStateIds[i]!;
+    const fromState = states[i]!;
+    const to = orderedStateIds[i + 1]!;
+    
+    // Si el estado de origen es terminal, NO crear transición
+    if (fromState.kind.startsWith("terminal")) {
+      continue;
+    }
+    
     transitions.push({
       id: `t_${from}_to_${to}`,
       from,
@@ -135,7 +163,6 @@ function buildMinimalLifecycle(stateIds: string[]): Lifecycle {
     commitments,
   } as Lifecycle;
 }
-
 /**
  * Crea un RuleSet mínimo con guard rules
  */
@@ -226,9 +253,96 @@ function buildGeneratorInput(answers: WizardAnswers): GeneratorInput {
 }
 
 /**
- * Ejecuta el wizard y devuelve AppBootResult
+ * Convierte ModuleSpec a ModuleInfo (con explicaciones)
  */
-export async function runWizard(): Promise<AppBootResult> {
+function modulesToModuleInfo(
+  modules: readonly any[],
+  description: string
+): ModuleInfo[] {
+  const descriptions: Record<string, string> = {
+    "mod.tpv": "Sistema de punto de venta para transacciones presenciales",
+    "mod.crm": "Gestión de clientes y relaciones comerciales",
+    "mod.inventario": "Control de inventario y stock",
+    "mod.agenda": "Sistema de citas y horarios",
+    "mod.agenda_taller": "Agenda especializada para talleres y servicios",
+    "mod.facturacion": "Facturación y cumplimiento fiscal",
+    "mod.portal_cliente": "Portal autoservicio para clientes",
+  };
+
+  const importance: Record<string, "critical" | "high" | "medium" | "low"> = {
+    "mod.crm": "critical",
+    "mod.agenda": "high",
+    "mod.facturacion": "high",
+    "mod.tpv": "high",
+    "mod.portal_cliente": "medium",
+    "mod.inventario": "medium",
+  };
+
+  return modules.map((m: any) => ({
+    id: m.id,
+    labelKey: m.labelKey,
+    name: m.id.replace("mod.", "").replace(/_/g, " ").toUpperCase(),
+    description: descriptions[m.id] || "Módulo funcional",
+    category: "RECOMMENDED" as const,
+    confidence: 0.95,
+    reason: "Detectado automáticamente por reglas",
+    importance: importance[m.id] || "medium",
+    relatedRoles: m.roleIds || [],
+  }));
+}
+
+/**
+ * Extrae información de diseño desde DesignSystem
+ */
+function extractDesignFromDesignSystem(designSystem: any): {
+  colors: ColorPalette;
+  typography: TypographyPreset;
+  theme: "light" | "dark";
+} {
+  // TODO: Mapear DesignSystem real a ColorPalette y TypographyPreset
+  // Por ahora, defaults
+  return {
+    colors: {
+      primary: "#3B82F6",
+      secondary: "#10B981",
+      accent: "#F59E0B",
+      success: "#10B981",
+      warning: "#F59E0B",
+      error: "#EF4444",
+      background: "#FFFFFF",
+      text: "#1F2937",
+    },
+    typography: {
+      fontFamily: "Inter, sans-serif",
+      fontSize: {
+        xs: 12,
+        sm: 14,
+        base: 16,
+        lg: 18,
+        xl: 20,
+        "2xl": 24,
+      },
+      fontWeight: {
+        light: 300,
+        regular: 400,
+        semibold: 600,
+        bold: 700,
+      },
+      lineHeight: {
+        tight: 1.2,
+        normal: 1.5,
+        relaxed: 1.75,
+      },
+    },
+    theme: "light",
+  };
+}
+
+/**
+ * ✅ NUEVA FUNCIÓN: Genera WizardDraft (lo que sale del generador)
+ * No devuelve AppBootResult, solo el draft para que usuario valide
+ */
+export async function generateWizardDraft(): Promise<WizardDraft> {
   const answers = await askQuestions();
 
   console.log("\n⏳ Generando especificación de UI...\n");
@@ -248,18 +362,33 @@ export async function runWizard(): Promise<AppBootResult> {
     identity: { brandName: answers.businessName },
   }).proposals[0]!;
 
+  const moduleInfo = modulesToModuleInfo(spec.modules, answers.businessName);
+  const design = extractDesignFromDesignSystem(designSystem);
+
+  // ✅ Retorna WizardDraft (no AppBootResult)
   return {
-    profileId: `wizard-${answers.companyId}`,
-    brandName: answers.businessName,
     spec,
-    input,
     designSystem,
-    questions: [],
-    roles: input.roles,
-    samplePartes: DEFAULT_SAMPLE_PARTES,
-    sampleRows: [],
-    unrendered: [],
-  } as AppBootResult;
+    input,
+    modules: {
+      detected: moduleInfo,
+      recommended: [],
+      optional: [],
+    },
+    explanations: {
+      whyThisModules: `Basado en que "${answers.businessName}" es un negocio con roles: ${answers.roles.join(", ")}, estados: ${answers.mainStates.join(", ")}`,
+      designRationale: "Diseño moderno y profesional optimizado para usabilidad",
+      risks: [],
+      gaps: [],
+    },
+    design,
+    config: {
+      language: "es",
+      timezone: "Europe/Madrid",
+      currency: "EUR",
+      region: "ES",
+    },
+  };
 }
 
-export type { WizardAnswers, GeneratorInput };
+export type { WizardAnswers, GeneratorInput, WizardDraft };
