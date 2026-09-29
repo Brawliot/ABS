@@ -1256,6 +1256,8 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
               ...(ident.dev.tenantId
                 ? { tenantId: ident.dev.tenantId }
                 : {}),
+              // Modo técnico: solo en desarrollo, nunca con sesión real
+              ...(q.tecnico === "1" && allowDevSession() ? { tecnico: true } : {}),
             };
 
       try {
@@ -1267,7 +1269,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             `$1${csrf}`,
           );
         }
-        html = html.replace(
+        if (session.tecnico) html = html.replace(
           /(<form method="post" action="\/action"[^>]*>)/g,
           `$1<details data-force-panel><summary>Forzar (Observador)</summary>` +
             `<label>Motivo <input name="forceReason" data-force-reason /></label>` +
@@ -1275,7 +1277,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             `<label><input type="checkbox" name="forceEnabled" value="1" data-force-enabled /> Activar forzado</label>` +
             `</details>`,
         );
-        html = html.replace(
+        if (session.tecnico) html = html.replace(
           "<main class=\"main\" id=\"main\">",
           `<main class="main" id="main"><p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
             `<section data-link-devolucion><h3>Devolución vinculada</h3>` +

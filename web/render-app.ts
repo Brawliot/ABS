@@ -14,6 +14,12 @@ import type {
 } from "../presentation/types.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { cssFromTokens } from "./css-from-tokens.js";
+import {
+  crearEtiquetador,
+  humanizarId,
+  pareceIdentificador,
+  type Etiquetador,
+} from "../presentation/etiquetas.js";
 import { rowsForPortal } from "./sample-data.js";
 import type { DevSession, RenderAppOptions, SampleRow } from "./types.js";
 import {
@@ -46,6 +52,7 @@ function qs(session: DevSession, extra?: Record<string, string>): string {
   p.set("parte", session.parteId);
   if (session.processGroupId) p.set("group", session.processGroupId);
   if (session.viewId) p.set("view", session.viewId);
+  if (session.tecnico) p.set("tecnico", "1");
   if (extra) {
     for (const [k, v] of Object.entries(extra)) p.set(k, v);
   }
@@ -162,25 +169,27 @@ function renderDevBar(
       <select name="parte" aria-label="Parte de desarrollo">${parteOpts}</select>
     </label>
     <input type="hidden" name="group" value="${esc(session.processGroupId ?? "")}" />
+    ${session.tecnico ? '<input type="hidden" name="tecnico" value="1" />' : ""}
     <button type="submit">Aplicar</button>
   </form>
+  <a class="dev-tecnico" data-toggle-tecnico href="${esc(qs({ ...session, tecnico: !session.tecnico }))}">${session.tecnico ? "Ocultar detalles técnicos" : "Ver detalles técnicos"}</a>
 </aside>`;
 }
 
-function renderQuestions(boot: RenderAppOptions["boot"]): string {
+function renderQuestions(boot: RenderAppOptions["boot"], tecnico: boolean): string {
   if (boot.questions.length === 0) {
     return `<div class="questions-banner" hidden data-composer-questions="0"></div>`;
   }
   const items = boot.questions
     .map(
       (q) =>
-        `<li data-question-id="${esc(q.id)}" data-field="${esc(q.field)}">${esc(q.question)} <span class="meta">(${esc(q.field)})</span></li>`,
+        `<li data-question-id="${esc(q.id)}" data-field="${esc(q.field)}">${esc(q.question)}${tecnico ? ` <span class="meta">(${esc(q.field)})</span>` : ""}</li>`,
     )
     .join("\n");
   return `
 <section class="questions-banner" data-composer-questions="${boot.questions.length}" role="status" aria-live="polite">
-  <h2>Preguntas pendientes del compositor</h2>
-  <p>Resueltas con defaults de demo para poder materializar; deben confirmarse con el negocio.</p>
+  <h2>Pendiente de confirmar</h2>
+  <p>Mientras tanto se usan valores por defecto; confírmalos para dejar el sistema bien configurado.</p>
   <ul>${items}</ul>
 </section>`;
 }
@@ -192,7 +201,7 @@ function expedienteHref(session: DevSession, id: string, suffix = ""): string {
 
 /** Botón «Nuevo» del proceso activo (solo personal interno, modo vivo). */
 function renderNuevoExpediente(
-  boot: RenderAppOptions["boot"],
+  et: Etiquetador,
   group: ProcessGroupSpec | undefined,
   session: DevSession,
   live: boolean,
@@ -207,13 +216,8 @@ function renderNuevoExpediente(
   });
   return (
     `<p class="nuevo-expediente"><a class="btn-nuevo" href="${esc(`/expedientes/nuevo?${p.toString()}`)}" data-nuevo-expediente="${esc(group.lifecycleId)}">` +
-    `+ Nuevo: ${esc(procesoLabel(boot, group.lifecycleId))}</a></p>`
+    `+ Nuevo: ${esc(et.proceso(group.lifecycleId))}</a></p>`
   );
-}
-
-function procesoLabel(boot: RenderAppOptions["boot"], lifecycleId: string): string {
-  const slice = boot.input.lifecycles.find((l) => l.id === lifecycleId);
-  return slice?.label ?? slice?.archetypeId ?? lifecycleId;
 }
 
 /** Datos maestros (clientes, catálogo): solo personal interno en modo vivo. */
@@ -235,11 +239,17 @@ function renderMaestrosNav(session: DevSession, live: boolean): string {
   );
 }
 
+const ROL_EN_COMPOSICION: Readonly<Record<string, string>> = {
+  dominant: "Principal",
+  secondary: "Secundario",
+};
+
 function renderNav(
   spec: UiSpec,
   groups: readonly ProcessGroupSpec[],
   session: DevSession,
-  live = false,
+  live: boolean,
+  et: Etiquetador,
 ): string {
   const items = groups
     .map((g) => {
@@ -248,8 +258,12 @@ function renderNav(
       return (
         `<li>` +
         `<a href="${esc(href)}" data-process-group="${esc(g.id)}"${current ? ' aria-current="page"' : ""}>` +
-        `${esc(labelOf(spec, g.id, g.labelKey))}` +
-        `<span class="pg-role">${esc(g.role)} · ${esc(g.archetypeId)}</span>` +
+        `${esc(et.proceso(g.lifecycleId))}` +
+        (session.tecnico
+          ? `<span class="pg-role">${esc(labelOf(spec, g.id, g.labelKey))} · ${esc(g.role)} · ${esc(g.archetypeId)}</span>`
+          : ROL_EN_COMPOSICION[g.role]
+            ? `<span class="pg-role">${esc(ROL_EN_COMPOSICION[g.role]!)}</span>`
+            : "") +
         `</a></li>`
       );
     })
@@ -266,6 +280,7 @@ function renderViewTabs(
   spec: UiSpec,
   group: ProcessGroupSpec,
   session: DevSession,
+  et: Etiquetador,
 ): string {
   const ids = [...new Set([...group.viewIds, ...group.panelIds])];
   const links = ids
@@ -276,7 +291,7 @@ function renderViewTabs(
       const href = qs(session, { group: group.id, view: id });
       return (
         `<a href="${esc(href)}" data-view-tab="${esc(id)}"${current ? ' aria-current="page"' : ""}>` +
-        `${esc(labelOf(spec, v.id, v.labelKey))}` +
+        `${esc(et.vista(v, labelOf(spec, v.id, v.labelKey)))}` +
         `</a>`
       );
     })
@@ -287,11 +302,12 @@ function renderViewTabs(
 function renderFlash(
   flash: import("./runtime.js").FlashMessage | undefined,
   session: DevSession,
+  et: Etiquetador,
 ): string {
   if (!flash) return "";
   const link =
     flash.kind === "block" && flash.blockProcessGroupId
-      ? `<p><a data-block-link href="${esc(qs(session, { group: flash.blockProcessGroupId, view: "" }))}">Ir al proceso que bloquea (${esc(flash.blockArchetypeId ?? "")})</a></p>`
+      ? `<p><a data-block-link href="${esc(qs(session, { group: flash.blockProcessGroupId, view: "" }))}">Ir a ${esc(et.arquetipo(flash.blockArchetypeId ?? ""))}</a></p>`
       : "";
   return (
     `<div class="flash flash-${esc(flash.kind)}" role="alert" data-flash="${esc(flash.kind)}" ` +
@@ -306,6 +322,7 @@ function renderActions(
   session: DevSession,
   subjectId: string | undefined,
   live: boolean,
+  et: Etiquetador,
 ): string {
   const acts = actionsForView(spec, view, session.roleId);
   if (acts.length === 0) {
@@ -316,7 +333,7 @@ function renderActions(
       .map(
         (a) =>
           `<button type="button" disabled data-action-id="${esc(a.id)}" data-transition="${esc(a.transitionId)}" title="solo lectura">` +
-          `${esc(labelOf(spec, a.id, a.labelKey))} <span class="meta">(solo lectura)</span>` +
+          `${esc(et.accion(a.lifecycleId, a.transitionId))} <span class="meta">(solo lectura)</span>` +
           `</button>`,
       )
       .join("\n");
@@ -339,7 +356,7 @@ function renderActions(
         `<input type="hidden" name="kind" value="boton" />` +
         `<input type="hidden" name="clientRequestId" value="" data-client-request />` +
         `<button type="submit" data-action-id="${esc(a.id)}" data-transition="${esc(a.transitionId)}" data-subject="${esc(subjectId)}">` +
-        `${esc(labelOf(spec, a.id, a.labelKey))}` +
+        `${esc(et.accion(a.lifecycleId, a.transitionId))}` +
         `</button></form>`
       );
     })
@@ -359,21 +376,22 @@ function renderForm(
   if (!live) {
     return (
       `<section class="form-entity" data-form-id="${esc(form.id)}" data-entity="${esc(form.entityKind)}" data-readonly="1">` +
-      `<h3>Formulario · ${esc(form.entityKind)} <span class="meta">(solo lectura)</span></h3>` +
+      `<h3>Datos del paso <span class="meta">(solo lectura)</span></h3>` +
       `<p class="meta">Los formularios se habilitan con el EventStore en vivo.</p>` +
       `</section>`
     );
   }
   const fields = form.fields
     .map((f) => {
-      const label = t(spec, f.labelKey);
+      const raw = t(spec, f.labelKey);
+      const label = pareceIdentificador(raw) ? humanizarId(f.name) : raw;
       const req = f.required ? " required" : "";
       if (f.type === "boolean") {
         return `<label>${esc(label)}<input type="checkbox" name="field.${esc(f.name)}" value="true"${req} /></label>`;
       }
       if (f.type === "enum" && f.enumValues) {
         const opts = f.enumValues
-          .map((v) => `<option value="${esc(v)}">${esc(v)}</option>`)
+          .map((v) => `<option value="${esc(v)}">${esc(pareceIdentificador(v) ? humanizarId(v) : v)}</option>`)
           .join("");
         return `<label>${esc(label)}<select name="field.${esc(f.name)}"${req}>${opts}</select></label>`;
       }
@@ -384,7 +402,7 @@ function renderForm(
     .join("\n");
   return (
     `<section class="form-entity" data-form-id="${esc(form.id)}" data-entity="${esc(form.entityKind)}">` +
-    `<h3>Formulario · ${esc(form.entityKind)}</h3>` +
+    `<h3>Datos del paso</h3>` +
     `<form method="post" action="/action" class="action-form" data-action-form="${esc(actionId)}">` +
     `<input type="hidden" name="actionId" value="${esc(actionId)}" />` +
     `<input type="hidden" name="subjectId" value="${esc(subjectId)}" />` +
@@ -426,12 +444,13 @@ function rowsForView(
 function renderActiveBlocks(
   session: DevSession,
   blocks: RenderAppOptions["activeBlocks"],
+  et: Etiquetador,
 ): string {
   if (!blocks || blocks.length === 0) return "";
   const items = blocks
     .map((b) => {
       const link = b.processGroupId
-        ? `<a data-block-link href="${esc(qs(session, { group: b.processGroupId, view: "" }))}">Ir a «${esc(b.archetypeId)}»</a>`
+        ? `<a data-block-link href="${esc(qs(session, { group: b.processGroupId, view: "" }))}">Ir a ${esc(et.arquetipo(b.archetypeId))}</a>`
         : "";
       return (
         `<li data-block-archetype="${esc(b.archetypeId)}" data-block-state="${esc(b.blockedStateId)}">` +
@@ -457,8 +476,9 @@ function renderViewBody(
   bindingBoard: string,
   live: boolean,
   activeBlocks: RenderAppOptions["activeBlocks"],
+  et: Etiquetador,
 ): string {
-  const title = labelOf(spec, view.id, view.labelKey);
+  const title = et.vista(view, labelOf(spec, view.id, view.labelKey));
   const kind = view.kind;
   const className =
     kind === "tablero"
@@ -476,7 +496,7 @@ function renderViewBody(
     .map((r) => {
       const acts =
         kind === "tablero" || kind === "lista" || kind === "detalle"
-          ? renderActions(spec, view, session, r.id, live)
+          ? renderActions(spec, view, session, r.id, live, et)
           : "";
       return (
         `<li data-row-id="${esc(r.id)}" data-parte="${esc(r.parteId)}" data-row-state="${esc(r.stateId ?? "")}">` +
@@ -488,7 +508,13 @@ function renderViewBody(
                 .join(" · "),
             )}</span>`
           : `<span>${esc(r.label)}</span>`) +
-        `<span class="meta">${esc(r.meta ?? r.stateId ?? "")}</span>` +
+        `<span class="meta">${esc(
+          session.tecnico
+            ? (r.meta ?? r.stateId ?? "")
+            : r.stateId
+              ? et.estado(r.lifecycleId ?? view.lifecycleId, r.stateId)
+              : "",
+        )}</span>` +
         acts +
         `</li>`
       );
@@ -504,7 +530,7 @@ function renderViewBody(
   const fallbackSubject = viewRows[0]?.id;
   const sharedActions =
     kind.startsWith("panel_") || kind === "portal_filtro"
-      ? renderActions(spec, view, session, fallbackSubject, live)
+      ? renderActions(spec, view, session, fallbackSubject, live, et)
       : "";
 
   const blockHint =
@@ -526,7 +552,7 @@ function renderViewBody(
               .join("\n");
           }
           if (view.presentation?.bloqueaStateId) {
-            return `<p role="status" data-block-indicator>Bloquea estado: <strong>${esc(view.presentation.bloqueaStateId)}</strong>. Complete el proceso secundario enlazado antes de avanzar.</p>`;
+            return `<p role="status" data-block-indicator>Hay que completarlo antes de pasar a <strong>${esc(et.estado(null, view.presentation.bloqueaStateId))}</strong>.</p>`;
           }
           return "";
         })()
@@ -537,15 +563,15 @@ function renderViewBody(
     `data-view-id="${esc(view.id)}" data-view-kind="${esc(kind)}" ` +
     `data-state="${esc(view.stateId ?? "")}" ` +
     `data-listados="${esc(bindingList)}" data-nav="${esc(bindingNav)}" data-tablero="${esc(bindingBoard)}">` +
-    `<h3>${esc(title)}<span class="kind-badge">${esc(kind)}</span></h3>` +
-    (presentation
+    `<h3>${esc(title)}${session.tecnico ? `<span class="kind-badge">${esc(kind)}</span>` : ""}</h3>` +
+    (presentation && session.tecnico
       ? `<p class="meta">${esc(presentation)}</p>`
       : "") +
     (kind === "portal_filtro"
-      ? `<p>Portal (scope propia) · Parte sesión: <strong>${esc(session.parteId)}</strong></p>`
+      ? `<p>Aquí ves solo tus pedidos.${session.tecnico ? ` <span class="meta">(Parte: ${esc(session.parteId)})</span>` : ""}</p>`
       : "") +
     blockHint +
-    `<ul class="row-list">${rowItems || '<li class="empty">Sin expedientes en este estado</li>'}</ul>` +
+    `<ul class="row-list">${rowItems || `<li class="empty">${kind === "tablero" ? "No hay nada en esta situación ahora mismo." : "Nada que mostrar todavía."}</li>`}</ul>` +
     sharedActions +
     renderForm(
       spec,
@@ -585,6 +611,8 @@ export function renderAppHtml(options: RenderAppOptions): string {
     channel: session.channel,
   });
 
+  const et = crearEtiquetador(boot.input);
+  const tecnico = session.tecnico === true;
   const groups = processGroupsForRole(spec, session.roleId);
   const activeGroup =
     groups.find((g) => g.id === session.processGroupId) ?? groups[0];
@@ -619,8 +647,9 @@ export function renderAppHtml(options: RenderAppOptions): string {
         vb?.chosen.tableros ?? "",
         live,
         activeBlocks,
+        et,
       )
-    : `<p class="empty">No hay vistas visibles para este rol.</p>`;
+    : `<p class="empty">No hay nada que mostrar para tu perfil.</p>`;
 
   const unrendered = boot.unrendered
     .filter((u) => !u.startsWith("acciones:"))
@@ -655,33 +684,42 @@ export function renderAppHtml(options: RenderAppOptions): string {
 .btn-nuevo { display: inline-block; padding: var(--espaciado-s) var(--espaciado-l); border-radius: var(--radio-md); background: var(--color-primario); color: var(--color-superficie); font-weight: 600; text-decoration: none; }
 .btn-nuevo:hover { text-decoration: none; opacity: 0.9; }
 .row-detalle { color: var(--color-texto); font-size: 0.9rem; }
+.dev-tecnico { display: inline-block; margin-top: var(--espaciado-s); color: inherit; font-weight: 600; }
 </style>
 </head>
 <body class="${hasQuestions ? "has-questions" : ""}" data-profile="${esc(boot.profileId)}" data-role="${esc(session.roleId)}" data-parte="${esc(session.parteId)}" data-channel="${esc(session.channel)}" data-density="${esc(binding.tokens.density)}" data-live="${liveAttr}">
   <a class="skip-link" href="#main">Saltar al contenido</a>
   <div class="app-shell">
     ${renderDevBar(boot, session, options.showDevSession !== false)}
-    ${renderQuestions(boot)}
+    ${renderQuestions(boot, tecnico)}
     <header class="site-header">
       <div>
         <h1 data-brand>${esc(boot.brandName)}</h1>
-        <p class="meta">UiSpec ${esc(spec.id)} · hash ${esc(spec.contentHash.slice(0, 12))} · rol ${esc(session.roleId)}</p>
+        <p class="meta">${
+          tecnico
+            ? `UiSpec ${esc(spec.id)} · hash ${esc(spec.contentHash.slice(0, 12))} · rol ${esc(session.roleId)}`
+            : esc(humanizarId(boot.roles.find((r) => r.id === session.roleId)?.label ?? session.roleId))
+        }</p>
       </div>
       <p class="meta" data-visible-groups="${groups.length}" data-visible-views="${visibleViews.length}" data-group-actions="${groupActions.length}">
-        ${groups.length} procesos · ${visibleViews.length} vistas · ${esc(headerHint)}
+        ${tecnico ? `${groups.length} procesos · ${visibleViews.length} vistas · ${esc(headerHint)}` : ""}
       </p>
     </header>
-    ${renderNav(spec, groups, session, live)}
+    ${renderNav(spec, groups, session, live, et)}
     <main class="main" id="main">
-      ${renderFlash(flash, session)}
-      ${live ? renderActiveBlocks(session, activeBlocks) : ""}
-      ${renderNuevoExpediente(boot, activeGroup, session, live)}
-      ${activeGroup ? renderViewTabs(spec, activeGroup, session) : ""}
+      ${renderFlash(flash, session, et)}
+      ${live ? renderActiveBlocks(session, activeBlocks, et) : ""}
+      ${renderNuevoExpediente(et, activeGroup, session, live)}
+      ${activeGroup ? renderViewTabs(spec, activeGroup, session, et) : ""}
       ${mainBody}
-      <aside class="unrendered" data-unrendered>
+      ${
+        tecnico
+          ? `<aside class="unrendered" data-unrendered>
         <strong>Notas</strong>
         <ul>${unrendered || (live ? "<li>Acciones conectadas a Intérprete → Juez</li>" : "<li>Modo solo lectura</li>")}</ul>
-      </aside>
+      </aside>`
+          : ""
+      }
     </main>
   </div>
   <script>

@@ -179,6 +179,12 @@ export interface BusinessProfile {
   /** unknown ⇒ ask (v1.2). Ausente en perfiles v1.1. */
   readonly portalCliente?: ProfileField<PortalClienteDecl>;
   readonly pipelineStateIds: ProfileField<readonly string[]>;
+  /**
+   * Nombres propios del negocio en pantalla. Claves exactas
+   * (`accion:t_cerrar`, `estado:aceptada`, `proceso:lc.venta`…) o términos
+   * (`pedido` → `orden de reparación`). Ver presentation/etiquetas.ts.
+   */
+  readonly vocabulario?: Readonly<Record<string, string>>;
 }
 
 export type UnknownPolicy = "ask" | "default_safe" | "block" | "confirm";

@@ -22,6 +22,8 @@ export interface DevSession {
   readonly sedeId?: string;
   /** Rol con ámbito solo-sede (no ve otras sedes). */
   readonly sedeScoped?: boolean;
+  /** Modo técnico (solo desarrollo): ids, hashes y herramientas internas. */
+  readonly tecnico?: boolean;
 }
 
 export interface SampleRow {

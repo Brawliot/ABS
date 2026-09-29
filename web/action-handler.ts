@@ -252,12 +252,9 @@ async function executeUiActionLocked(
 
   const transition = findLifeTransition(slice.lifecycle, action.transitionId);
   if (!transition) {
-    const availableActions = slice.lifecycle.transitions
-      .map(t => t.id)
-      .join(", ");
     const flash: FlashMessage = {
       kind: "error",
-      text: `La acción «${action.transitionId}» no existe en el ciclo de vida actual de este expediente. Acciones disponibles: ${availableActions || "ninguna (estado terminal)"}`,
+      text: `«${runtime.etiquetas.accion(slice.id, action.transitionId)}» no se puede hacer con este expediente. Recarga la página para ver las acciones disponibles.`,
     };
     runtime.setFlash(flash);
     return { ok: false, flash, idempotentReplay: false };
@@ -558,7 +555,7 @@ async function executeUiActionLocked(
       kind: "ok",
       text: idempotentReplay
         ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
-        : `Listo: el expediente pasó a «${judged.event.toStateId}».`,
+        : `Listo: ahora está en «${runtime.etiquetas.estado(slice.id, judged.event.toStateId)}».`,
       ...(idempotentReplay ? { idempotentReplay: true } : {}),
     };
     runtime.setFlash(flash);

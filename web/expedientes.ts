@@ -498,8 +498,7 @@ function describeEvent(ctx: MaestrosContext, e: DomainEvent): string {
 }
 
 function stateLabel(ctx: MaestrosContext, subjectId: string, stateId: string): string {
-  const slice = ctx.runtime.lifecycleForSubject(subjectId);
-  return slice?.lifecycle.states.find((s) => s.id === stateId)?.label ?? stateId;
+  return ctx.runtime.etiquetas.estado(ctx.runtime.lifecycleForSubject(subjectId)?.id, stateId);
 }
 
 function actorLabel(actorId: string): string {
@@ -519,7 +518,7 @@ function noEditable(viewer: Viewer, id: string): string {
 
 function procesoLabel(ctx: MaestrosContext, lifecycleId: string): string {
   const slice = ctx.runtime.boot.input.lifecycles.find((l) => l.id === lifecycleId);
-  return slice?.label ?? slice?.archetypeId ?? lifecycleId;
+  return slice ? ctx.runtime.etiquetas.proceso(slice.id) : lifecycleId;
 }
 
 function subjectLabel(ctx: MaestrosContext, id: string): string {

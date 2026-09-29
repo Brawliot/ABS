@@ -304,6 +304,8 @@ export const businessProfileZod = z.object({
   policyTemplates: fieldSchema(z.array(policyTemplateInvocationSchema)).optional(),
   portalCliente: fieldSchema(portalClienteSchema).optional(),
   pipelineStateIds: fieldSchema(z.array(z.string().min(1))),
+  /** Nombres propios del negocio en pantalla (ver presentation/etiquetas.ts). */
+  vocabulario: z.record(z.string().min(1).max(120), z.string().min(1).max(80)).optional(),
 });
 
 export type BusinessProfileZod = z.infer<typeof businessProfileZod>;

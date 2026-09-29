@@ -66,6 +66,8 @@ export interface GeneratorInput {
   readonly hasFiscalCompliance: boolean;
   readonly hasCalendar: boolean;
   readonly pipelineStateIds?: readonly string[];
+  /** Vocabulario del negocio para las etiquetas visibles. */
+  readonly vocabulario?: Readonly<Record<string, string>>;
 }
 
 export interface ModuleMatch {

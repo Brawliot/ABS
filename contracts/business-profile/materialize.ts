@@ -566,6 +566,9 @@ export function materializeBusinessProfileDetailed(
       hasFiscalCompliance,
       hasCalendar,
       ...(pipeline !== undefined ? { pipelineStateIds: pipeline } : {}),
+      ...(profile.vocabulario !== undefined
+        ? { vocabulario: profile.vocabulario }
+        : {}),
     };
 
     return {

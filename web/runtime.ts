@@ -42,6 +42,7 @@ import {
   type TransaccionProyectada,
 } from "../elements/transaccion.js";
 import { assertNoPiiInEventData } from "../policies/identity.js";
+import { crearEtiquetador, type Etiquetador } from "../presentation/etiquetas.js";
 import { deriveState } from "../core/derivation.js";
 import { findState } from "../core/lifecycle.js";
 import { redactInterfaceCopy } from "../design/copy/index.js";
@@ -106,6 +107,8 @@ export class AppRuntime {
   readonly partes: SqliteParteIdentityStore;
   /** Catálogo de Ofertas (productos / servicios) versionado. */
   readonly ofertas: SqliteOfertaCatalog;
+  /** Nombres visibles (procesos, estados, pasos) según el vocabulario del negocio. */
+  readonly etiquetas: Etiquetador;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -142,6 +145,7 @@ export class AppRuntime {
     this.dbPath = dbPath;
     this.partes = maestros.partes;
     this.ofertas = maestros.ofertas;
+    this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
     this.ledger = new IdempotencyLedger();
@@ -252,14 +256,14 @@ export class AppRuntime {
         id: sub.id,
         label: sub.label,
         lifecycleId: slice.id,
-        proceso: slice.label ?? slice.archetypeId,
+        proceso: this.etiquetas.proceso(slice.id),
         parteId: tx.datos.parteId,
         fecha: tx.datos.fecha,
         ...(tx.datos.referencia ? { referencia: tx.datos.referencia } : {}),
         direccion,
         totalCentimos: total,
         estadoId: derived.currentStateId,
-        estadoLabel: st?.label ?? derived.currentStateId,
+        estadoLabel: this.etiquetas.estado(slice.id, derived.currentStateId),
         situacion: situacionCobro({
           lifecycle: slice.lifecycle,
           stateId: derived.currentStateId,
@@ -289,7 +293,7 @@ export class AppRuntime {
     const st = findState(slice.lifecycle, derived.currentStateId);
     return {
       id: derived.currentStateId,
-      label: st?.label ?? derived.currentStateId,
+      label: this.etiquetas.estado(slice.id, derived.currentStateId),
       kind: st?.kind ?? "",
     };
   }
@@ -493,7 +497,7 @@ export class AppRuntime {
       ) {
         rows.push({
           id: `panel-info-${v.kind}`,
-          label: `Indicador ${v.kind}`,
+          label: `Indicador: ${this.etiquetas.vista(v)}`,
           stateId: null,
           parteId: this.subjects[0]?.parteId ?? "parte-demo-1",
           meta: v.kind,
@@ -546,7 +550,7 @@ export class AppRuntime {
           (g) => g.archetypeId === b.secondaryArchetypeId,
         )?.id;
         out.push({
-          text: `Falta completar «${b.secondaryArchetypeId}» (expediente ${b.instanceId}) para desbloquear «${sec.bloquea}».`,
+          text: `Falta completar ${this.etiquetas.arquetipo(b.secondaryArchetypeId)} (${this.subjects.find((x) => x.id === b.instanceId)?.label ?? "expediente pendiente"}) para poder pasar a «${this.etiquetas.estado(null, sec.bloquea)}».`,
           ...(pgId !== undefined ? { processGroupId: pgId } : {}),
           archetypeId: b.secondaryArchetypeId,
           blockedStateId: sec.bloquea,
@@ -640,7 +644,7 @@ function subjectFromAlta(
   return {
     id: alta.subjectId,
     lifecycleId: alta.lifecycleId,
-    label: `${slice?.label ?? slice?.archetypeId ?? "Expediente"} #${n}`,
+    label: `${slice ? crearEtiquetador(boot.input).proceso(slice.id) : "Expediente"} #${n}`,
     parteId: alta.datos.parteId,
     ...(alta.sedeId ? { sedeId: alta.sedeId } : {}),
   };
