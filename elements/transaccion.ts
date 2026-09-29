@@ -82,20 +82,34 @@ export function totalesLinea(l: LineaDatos): TotalesLinea {
   return { base, iva, total: base + iva };
 }
 
+/**
+ * Totales del documento. Base por línea (redondeada al céntimo); la cuota de
+ * IVA se calcula por tipo sobre la suma de bases de ese tipo, como en la
+ * factura (RD 1619/2012). El IVA por línea es solo orientativo.
+ */
 export function calcularTotales(lineas: readonly LineaDatos[]): Totales {
   const porLinea = lineas.map(totalesLinea);
-  const ivaPorTipo: Record<string, number> = {};
+  const basePorTipo = new Map<number, number>();
   lineas.forEach((l, i) => {
-    const k = String(l.ivaPct);
-    ivaPorTipo[k] = (ivaPorTipo[k] ?? 0) + porLinea[i]!.iva;
+    basePorTipo.set(l.ivaPct, (basePorTipo.get(l.ivaPct) ?? 0) + porLinea[i]!.base);
   });
-  return {
-    lineas: porLinea,
-    base: porLinea.reduce((s, t) => s + t.base, 0),
-    iva: porLinea.reduce((s, t) => s + t.iva, 0),
-    total: porLinea.reduce((s, t) => s + t.total, 0),
-    ivaPorTipo,
-  };
+  const ivaPorTipo: Record<string, number> = {};
+  for (const [tipo, base] of basePorTipo) {
+    ivaPorTipo[String(tipo)] = redondear((base * tipo) / 100);
+  }
+  const base = porLinea.reduce((s, t) => s + t.base, 0);
+  const iva = Object.values(ivaPorTipo).reduce((s, c) => s + c, 0);
+  return { lineas: porLinea, base, iva, total: base + iva, ivaPorTipo };
+}
+
+/** Base imponible por tipo de IVA (céntimos), para el desglose de la factura. */
+export function basesPorTipo(lineas: readonly LineaDatos[]): Readonly<Record<string, number>> {
+  const out: Record<string, number> = {};
+  for (const l of lineas) {
+    const k = String(l.ivaPct);
+    out[k] = (out[k] ?? 0) + totalesLinea(l).base;
+  }
+  return out;
 }
 
 /** "1" | "1,5" | "2.25" | "0,125" → milésimas. null si no es válida o ≤ 0. */

@@ -9,6 +9,17 @@ import { fileURLToPath } from "node:url";
 import { SqliteEventStore } from "../adapters/sqlite-event-store.js";
 import { SqliteParteIdentityStore } from "../adapters/sqlite-identity-store.js";
 import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
+import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
+import {
+  decidirTipo,
+  desgloseIva,
+  lineasRectificativas,
+  normalizarNif,
+  validarEmisor,
+  type DatosEmisor,
+  type DatosReceptor,
+  type Factura,
+} from "../elements/factura.js";
 import type { ArchetypeId } from "../archetypes/types.js";
 import { createLlmClientFromEnv } from "../llm/index.js";
 import type { LlmClient } from "../llm/index.js";
@@ -109,6 +120,8 @@ export class AppRuntime {
   readonly ofertas: SqliteOfertaCatalog;
   /** Nombres visibles (procesos, estados, pasos) según el vocabulario del negocio. */
   readonly etiquetas: Etiquetador;
+  /** Facturas expedidas (inmutables) y datos fiscales del emisor. */
+  readonly facturas: SqliteFacturaStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -137,6 +150,7 @@ export class AppRuntime {
     maestros: {
       readonly partes: SqliteParteIdentityStore;
       readonly ofertas: SqliteOfertaCatalog;
+      readonly facturas: SqliteFacturaStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -145,6 +159,7 @@ export class AppRuntime {
     this.dbPath = dbPath;
     this.partes = maestros.partes;
     this.ofertas = maestros.ofertas;
+    this.facturas = maestros.facturas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -176,10 +191,12 @@ export class AppRuntime {
     const subjects = loadSubjects(boot, store);
     const partes = new SqliteParteIdentityStore(dbPath);
     const ofertas = new SqliteOfertaCatalog(dbPath);
+    const facturas = new SqliteFacturaStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
       ofertas,
+      facturas,
     });
   }
 
@@ -187,6 +204,7 @@ export class AppRuntime {
     this.store.close();
     this.partes.close();
     this.ofertas.close();
+    this.facturas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -273,6 +291,135 @@ export class AppRuntime {
       });
     }
     return out;
+  }
+
+  /**
+   * Situación de facturación del expediente: su factura vigente (la última no
+   * rectificada) o si se puede expedir una y, si no, por qué.
+   */
+  facturacionDe(
+    expedienteId: string,
+  ):
+    | { readonly vigente: Factura; readonly historial: readonly Factura[] }
+    | { readonly vigente?: undefined; readonly historial: readonly Factura[]; readonly puede: true; readonly tipo: "completa" | "simplificada" }
+    | { readonly vigente?: undefined; readonly historial: readonly Factura[]; readonly puede: false; readonly motivo: string } {
+    const historial = this.facturas.porExpediente(this.tenantId, expedienteId);
+    const rectificadas = new Set(historial.filter((f) => f.rectificaA).map((f) => f.rectificaA));
+    const vigente = [...historial]
+      .reverse()
+      .find((f) => f.tipo !== "rectificativa" && !rectificadas.has(f.codigo));
+    if (vigente) return { vigente, historial };
+    const e = this.expedientesDinero().find((x) => x.id === expedienteId);
+    const no = (motivo: string) => ({ historial, puede: false as const, motivo });
+    if (!e) return no("Ese expediente no existe.");
+    if (e.direccion === "sale") return no("Es una compra: la factura la emite el proveedor.");
+    if (e.situacion === "presupuesto") return no("Todavía es un presupuesto: se factura cuando el cliente lo acepta.");
+    if (e.situacion === "sin_importe") return no("Está anulado: no hay nada que facturar.");
+    const emisorErr = validarEmisor(this.facturas.getEmisor(this.tenantId));
+    if (emisorErr.length > 0) return no(`Antes de facturar, completa los datos de la empresa: ${emisorErr.join(" ")}`);
+    const tipo = decidirTipo(this.receptorDe(e.parteId), e.totalCentimos);
+    if (!tipo.ok) return no(tipo.error);
+    return { historial, puede: true, tipo: tipo.tipo };
+  }
+
+  /** Datos fiscales del cliente, tal como están hoy en su ficha. */
+  private receptorDe(parteId: string): DatosReceptor | undefined {
+    const rec = this.partes.get(this.tenantId, parteId);
+    if (!rec || rec.erasedAt || !rec.personal) return undefined;
+    return {
+      nombre: rec.personal.displayName,
+      ...(rec.personal.taxId ? { nif: normalizarNif(rec.personal.taxId) } : {}),
+      ...(rec.personal.address ? { domicilio: rec.personal.address } : {}),
+    };
+  }
+
+  /** Expide la factura del expediente (completa o simplificada). */
+  expedirFactura(
+    expedienteId: string,
+    actorId: string,
+  ): { ok: true; factura: Factura } | { ok: false; error: string } {
+    const estado = this.facturacionDe(expedienteId);
+    if (estado.vigente) return { ok: false, error: `Ya tiene la factura ${estado.vigente.codigo}.` };
+    if (!estado.puede) return { ok: false, error: estado.motivo };
+    const tx = this.datosDe(expedienteId)!;
+    const e = this.expedientesDinero().find((x) => x.id === expedienteId)!;
+    const emisor = this.facturas.getEmisor(this.tenantId) as DatosEmisor;
+    const receptor = this.receptorDe(tx.datos.parteId);
+    const now = new Date().toISOString();
+    const fechaExpedicion = fechaMadrid(now);
+    const cobro = e.movimientos[0];
+    const fechaOperacion = cobro ? fechaMadrid(cobro.at) : undefined;
+    const d = desgloseIva(tx.datos.lineas);
+    const factura = this.facturas.expedir(this.tenantId, {
+      tenantId: this.tenantId,
+      serie: estado.tipo === "completa" ? "F" : "T",
+      tipo: estado.tipo,
+      expedienteId,
+      parteId: tx.datos.parteId,
+      fechaExpedicion,
+      ...(fechaOperacion && fechaOperacion !== fechaExpedicion ? { fechaOperacion } : {}),
+      emisor: {
+        razonSocial: emisor.razonSocial,
+        nif: normalizarNif(emisor.nif),
+        domicilio: emisor.domicilio,
+      },
+      // La simplificada solo lleva datos del cliente si los tiene completos
+      ...(estado.tipo === "completa" && receptor ? { receptor } : {}),
+      lineas: tx.datos.lineas,
+      desglose: d.desglose,
+      base: d.base,
+      iva: d.iva,
+      total: d.total,
+      expedidaEn: now,
+      expedidaPor: actorId,
+    });
+    return { ok: true, factura };
+  }
+
+  /**
+   * Rectificativa total: misma factura en negativo, con motivo. La original
+   * deja de estar vigente y el expediente se puede volver a facturar.
+   */
+  rectificarFactura(
+    facturaId: string,
+    motivo: string,
+    actorId: string,
+  ): { ok: true; factura: Factura } | { ok: false; error: string } {
+    const original = this.facturas.get(this.tenantId, facturaId);
+    if (!original) return { ok: false, error: "Esa factura no existe." };
+    if (original.tipo === "rectificativa") {
+      return { ok: false, error: "Una rectificativa no se rectifica: expide una factura nueva." };
+    }
+    const todas = this.facturas.porExpediente(this.tenantId, original.expedienteId);
+    if (todas.some((f) => f.rectificaA === original.codigo)) {
+      return { ok: false, error: `La factura ${original.codigo} ya está rectificada.` };
+    }
+    const m = motivo.trim();
+    if (!m) return { ok: false, error: "Indica el motivo de la rectificación." };
+    if (m.length > 300) return { ok: false, error: "El motivo es demasiado largo." };
+    const now = new Date().toISOString();
+    const lineas = lineasRectificativas(original.lineas);
+    const d = desgloseIva(lineas);
+    const factura = this.facturas.expedir(this.tenantId, {
+      tenantId: this.tenantId,
+      serie: "R",
+      tipo: "rectificativa",
+      expedienteId: original.expedienteId,
+      parteId: original.parteId,
+      fechaExpedicion: fechaMadrid(now),
+      emisor: original.emisor,
+      ...(original.receptor ? { receptor: original.receptor } : {}),
+      lineas,
+      desglose: d.desglose,
+      base: d.base,
+      iva: d.iva,
+      total: d.total,
+      rectificaA: original.codigo,
+      motivo: m,
+      expedidaEn: now,
+      expedidaPor: actorId,
+    });
+    return { ok: true, factura };
   }
 
   /** Datos de negocio actuales del expediente (cliente, líneas…). */
@@ -575,6 +722,16 @@ export class AppRuntime {
  * Con el almacén vacío, da de alta como clientes las Partes de ejemplo a las
  * que apuntan los expedientes demo, para que tengan nombre y ficha reales.
  */
+/** AAAA-MM-DD en hora de Madrid. */
+function fechaMadrid(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
 function seedDemoPartes(
   partes: SqliteParteIdentityStore,
   tenantId: string,

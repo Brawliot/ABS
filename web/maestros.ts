@@ -573,6 +573,8 @@ export function page(
     `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
     `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
     `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
+    `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
+    `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>` +
     `</nav>`;
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>
@@ -619,6 +621,20 @@ export function page(
   .tile-value { font-size:1.5rem; font-weight:700; font-variant-numeric: tabular-nums; }
   .tile-hint { color:var(--muted); font-size:.8rem; }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
+  .factura { background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; margin:12px 0; }
+  .factura-cab { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; margin-bottom:16px; }
+  .factura-num { text-align:right; }
+  .factura-tipo { font-size:1.2rem; font-weight:700; }
+  .factura-cliente { border:1px solid var(--line); border-radius:6px; padding:10px 12px; margin-bottom:16px; max-width:360px; }
+  .factura-totales { width:auto; margin-left:auto; min-width:280px; margin-top:12px; }
+  .factura-totales tr.total td { font-weight:700; font-size:1.1rem; border-top:2px solid var(--fg); }
+  .factura-pie { margin-top:16px; font-size:.75rem; }
+  @media print {
+    nav.top, .no-print, h1 { display:none !important; }
+    body { background:#fff; }
+    main { max-width:none; padding:0; }
+    .factura { border:0; padding:0; margin:0; }
+  }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
 </style></head>
 <body data-page="maestros">${nav}<main id="main"><h1>${esc(title)}</h1>${body}</main></body></html>`;
@@ -654,6 +670,7 @@ export function withDev(
 export function okNotice(ok: string | undefined): string {
   if (ok === "creada") return `<p class="ok" role="status" data-ok>Alta guardada.</p>`;
   if (ok === "guardada") return `<p class="ok" role="status" data-ok>Cambios guardados.</p>`;
+  if (ok === "factura") return `<p class="ok no-print" role="status" data-ok>Factura expedida.</p>`;
   return "";
 }
 

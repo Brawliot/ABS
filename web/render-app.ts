@@ -235,6 +235,7 @@ function renderMaestrosNav(session: DevSession, live: boolean): string {
     link("/partes", "Clientes y proveedores", "altas, fichas y contacto", "partes") +
     link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
     link("/dinero", "Dinero", "cobros, pagos y quién debe", "dinero") +
+    link("/facturas", "Facturas", "expedidas, imprimir y rectificar", "facturas") +
     `</ul>`
   );
 }

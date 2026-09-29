@@ -220,7 +220,13 @@ describe("Vigilante: ningún identificador en pantalla", () => {
         `partes/parte-demo-1?role=${role}`,
         `ofertas?role=${role}`,
         `dinero?role=${role}`,
+        `facturas?role=${role}`,
+        `empresa?role=${role}`,
       ];
+      rt.facturas.putEmisor(rt.tenantId, { razonSocial: "Concesionaria SL", nif: "B12345674", domicilio: "C/ Mayor 1" }, "2026-01-01T00:00:00.000Z");
+      const fac = rt.expedirFactura(sub.id, "gerente");
+      expect(fac.ok).toBe(true);
+      if (fac.ok) pages.push(`facturas/${fac.factura.id}?role=${role}`);
       for (const p of pages) {
         const res = await fetch(`${h.url}${p}`);
         expect(res.status, p).toBe(200);

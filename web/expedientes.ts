@@ -431,7 +431,31 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     `<tr class="total"><td colspan="5">Total</td><td class="num" data-total>${esc(formatCentimos(totales.total))}</td></tr>` +
     `</tfoot></table></div>`;
 
-  return acciones + cabecera + dineroHtml(ctx, id) + lineas + historialHtml(ctx, id);
+  return acciones + cabecera + dineroHtml(ctx, id) + facturaHtml(ctx, viewer, id) + lineas + historialHtml(ctx, id);
+}
+
+/** Factura del expediente: la vigente, el botón para expedirla o por qué no se puede. */
+function facturaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
+  const f = ctx.runtime.facturacionDe(id);
+  const link = (fac: { id: string; codigo: string }) =>
+    `<a href="${esc(withDev(viewer, `/facturas/${fac.id}`))}">${esc(fac.codigo)}</a>`;
+  const anteriores = f.historial.filter((x) => x.id !== f.vigente?.id);
+  const historia =
+    anteriores.length > 0
+      ? `<br><span class="meta">Anteriores: ${anteriores.map(link).join(", ")}</span>`
+      : "";
+  if (f.vigente) {
+    return `<p class="dinero" data-factura-vigente>Factura ${link(f.vigente)} · ${esc(formatCentimos(f.vigente.total))}${historia}</p>`;
+  }
+  if (!f.puede) {
+    return `<p class="dinero" data-factura-no>${esc(f.motivo)}${historia}</p>`;
+  }
+  return (
+    `<form method="post" action="${esc(`/expedientes/${id}/factura`)}" class="dinero" data-expedir-factura>` +
+    hiddenIdentity(viewer) +
+    `<span>${f.tipo === "completa" ? "Se expedirá una factura completa." : "Se expedirá una factura simplificada (el cliente no tiene NIF y dirección)."}</span> ` +
+    `<button type="submit">Expedir factura</button>${historia}</form>`
+  );
 }
 
 /** Situación económica del expediente: presupuesto, pendiente o liquidado. */
