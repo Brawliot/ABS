@@ -595,10 +595,11 @@ export function page(
     `<div class="aviso aviso-bloqueante" data-tipo="bloqueante"><span>⛔</span></div>` +
     `</div>` +
     `</header>`;
+  const pageTitle = title ? `${title} · ` : "";
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${esc(title)} · ${esc(ctx.boot.brandName)}</title>
+<title>${pageTitle}${esc(ctx.boot.brandName)}</title>
 <style>
   :root { --fg:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#fff; --accent:#2563eb; --err:#b91c1c; }
   * { box-sizing: border-box; }
@@ -653,13 +654,13 @@ export function page(
   .aviso-medio { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
   .aviso-grave { background:#fee2e2; color:#7f1d1d; border:1px solid #dc2626; }
   .aviso-bloqueante { background:#f3e8ff; color:#6b21a8; border:1px solid #a855f7; }
-  .inicio-contenedor { display:flex; flex-direction:column; height:100%; }
-  .inicio-grid { display:grid; grid-template-columns: 30% 70%; gap:0; height:100%; }
-  .menu-izq { display:flex; flex-direction:column; gap:8px; padding:16px; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); overflow-y:auto; }
-  .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; flex-shrink:0; }
+  .inicio-contenedor { display:flex; flex-direction:column; height:100%; justify-content:center; align-items:center; }
+  .inicio-grid { display:grid; grid-template-columns: 30% 70%; gap:0; height:auto; max-height:90vh; width:90%; max-width:1200px; box-shadow:0 4px 20px rgba(0,0,0,.08); border-radius:12px; overflow:hidden; }
+  .menu-izq { display:flex; flex-direction:column; gap:8px; padding:24px 16px; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); overflow-y:auto; align-items:center; justify-content:center; }
+  .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; flex-shrink:0; width:100%; }
   .menu-enlace:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
-  .contenido-der { display:grid; gap:16px; padding:16px; background:rgba(255,255,255,.5); backdrop-filter:blur(8px); overflow-y:auto; align-content:start; }
-  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; }
+  .contenido-der { display:grid; gap:16px; padding:24px; background:rgba(255,255,255,.5); backdrop-filter:blur(8px); overflow-y:auto; align-content:center; justify-items:center; }
+  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; width:100%; max-width:400px; }
   .enlace-contenido h2 { margin-top:0; }
   @media (max-width: 768px) { .inicio-grid { grid-template-columns:1fr; } }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
@@ -679,7 +680,7 @@ export function page(
   }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
 </style></head>
-<body data-page="maestros">${nav}<main id="main"><h1>${esc(title)}</h1>${body}</main></body></html>`;
+<body data-page="maestros">${nav}<main id="main">${title ? `<h1>${esc(title)}</h1>` : ""}${body}</main></body></html>`;
 }
 
 export function hiddenIdentity(viewer: Viewer): string {
