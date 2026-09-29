@@ -91,3 +91,29 @@ describe("Lo no decidido no existe en la app", () => {
     }
   });
 });
+
+describe("Inicio", () => {
+  async function inicio(profile: string) {
+    const dir = mkdtempSync(join(tmpdir(), "abs-ini-"));
+    dirs.push(dir);
+    const h = await startWebServer(bootProfile(profile), { port: 0, dbPath: join(dir, "db.sqlite") });
+    const role = h.boot.roles[0]!.id;
+    const body = await (await fetch(`${h.url}inicio?role=${role}`)).text();
+    const cliente = (await fetch(`${h.url}inicio?role=cliente`)).status;
+    await h.close();
+    return { body, cliente };
+  }
+  it("cada negocio ve solo sus partes, con datos vivos", async () => {
+    const taller = await inicio("p04-taller-mecanico");
+    for (const k of ["clientes", "catalogo", "dinero", "facturas", "stock", "agenda"]) {
+      expect(taller.body).toContain(`data-tarjeta="${k}"`);
+    }
+    expect(taller.body).toContain("Recepcion del vehiculo");
+    expect(taller.body).toContain("por cobrar");
+    expect(taller.cliente).toBe(403);
+    const gestoria = await inicio("p06-gestoria");
+    expect(gestoria.body).not.toContain('data-tarjeta="stock"');
+    expect(gestoria.body).not.toContain('data-tarjeta="facturas"');
+    expect(gestoria.body).toContain('data-tarjeta="cuotas"');
+  });
+});

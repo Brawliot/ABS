@@ -100,7 +100,7 @@ async function main(): Promise<void> {
   );
 
   const handle = await startWebServer(boot, { port });
-  console.log(`\n→ Abrir: ${handle.url}`);
+  console.log(`\n→ Abrir: ${handle.url}inicio`);
   console.log(`  Salud: ${handle.url}health`);
   
   if (hasFlag("--wizard") && storedWizardDraft) {

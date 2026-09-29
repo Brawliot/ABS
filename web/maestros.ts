@@ -587,7 +587,8 @@ export function page(
 ): string {
   const nav =
     `<nav class="top" data-maestros-nav>` +
-    `<a href="${esc(withDev(viewer, "/"))}">← Volver a la app</a>` +
+    `<a href="${esc(withDev(viewer, "/inicio"))}" data-nav-inicio>Inicio</a>` +
+    `<a href="${esc(withDev(viewer, "/"))}">Procesos</a>` +
     `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
     `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
     `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
@@ -641,6 +642,12 @@ export function page(
   .tile-label { color:var(--muted); font-size:.85rem; font-weight:600; }
   .tile-value { font-size:1.5rem; font-weight:700; font-variant-numeric: tabular-nums; }
   .tile-hint { color:var(--muted); font-size:.8rem; }
+  .tarjetas { display:grid; gap:12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-bottom:8px; }
+  .tarjeta { display:grid; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; text-decoration:none; color:var(--fg); }
+  .tarjeta:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
+  .tarjeta-titulo { font-weight:700; font-size:1.05rem; color:var(--accent); }
+  .tarjeta-que { color:var(--muted); font-size:.9rem; }
+  .tarjeta-dato { font-weight:600; font-size:.9rem; }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
   .factura { background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; margin:12px 0; }
   .factura-cab { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; margin-bottom:16px; }

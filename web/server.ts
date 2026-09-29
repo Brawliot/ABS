@@ -57,6 +57,7 @@ import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
+import { handleInicio, isInicioPath } from "./inicio.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -654,6 +655,11 @@ export function startWebServer(
 
       if (path === "/imprimir.js") {
         return send(res, 200, IMPRIMIR_JS, "application/javascript; charset=utf-8");
+      }
+
+      if (isInicioPath(path)) {
+        const out = await handleInicio({ runtime, boot, auth }, req);
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (isStockPath(path)) {

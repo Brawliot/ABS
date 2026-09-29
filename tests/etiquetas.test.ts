@@ -222,6 +222,7 @@ describe("Vigilante: ningún identificador en pantalla", () => {
         `dinero?role=${role}`,
         `facturas?role=${role}`,
         `empresa?role=${role}`,
+        `inicio?role=${role}`,
       ];
       rt.facturas.putEmisor(rt.tenantId, { razonSocial: "Concesionaria SL", nif: "B12345674", domicilio: "C/ Mayor 1" }, "2026-01-01T00:00:00.000Z");
       const fac = rt.expedirFactura(sub.id, "gerente");
