@@ -138,19 +138,8 @@ function inicioHtml(ctx: MaestrosContext, viewer: Viewer): string {
     </div>`
     : `<div class="enlace-contenido"><p class="meta">Sin enlaces disponibles</p></div>`;
 
-  // Avisos placeholder
-  const avisos = `
-    <div class="avisos-contenedor">
-      <div class="aviso aviso-leve" data-tipo="leve"><span>ℹ Aviso leve</span></div>
-      <div class="aviso aviso-medio" data-tipo="medio"><span>⚠ Aviso medio</span></div>
-      <div class="aviso aviso-grave" data-tipo="grave"><span>🔴 Aviso grave</span></div>
-      <div class="aviso aviso-bloqueante" data-tipo="bloqueante"><span>⛔ Bloqueante</span></div>
-    </div>
-  `;
-
   return (
     `<div class="inicio-contenedor">` +
-    avisos +
     `<div class="inicio-grid">` +
     `<aside class="menu-izq">${menuIzq}</aside>` +
     `<main class="contenido-der">${contenidoDerecha}</main>` +

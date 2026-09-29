@@ -586,18 +586,15 @@ export function page(
   body: string,
 ): string {
   const nav =
-    `<nav class="top" data-maestros-nav>` +
-    `<a href="${esc(withDev(viewer, "/inicio"))}" data-nav-inicio>Inicio</a>` +
-    `<a href="${esc(withDev(viewer, "/"))}">Procesos</a>` +
-    `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
-    `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
-    `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
-    (moduloEnApp(ctx, "stock") ? `<a href="${esc(withDev(viewer, "/stock"))}">Stock</a>` : "") +
-    (moduloEnApp(ctx, "facturas")
-      ? `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
-        `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>`
-      : "") +
-    `</nav>`;
+    `<header class="site-header-maestros" data-maestros-nav>` +
+    `<div class="header-rol"><strong>${esc(viewer.roleId)}</strong></div>` +
+    `<div class="header-avisos">` +
+    `<div class="aviso aviso-leve" data-tipo="leve"><span>ℹ</span></div>` +
+    `<div class="aviso aviso-medio" data-tipo="medio"><span>⚠</span></div>` +
+    `<div class="aviso aviso-grave" data-tipo="grave"><span>🔴</span></div>` +
+    `<div class="aviso aviso-bloqueante" data-tipo="bloqueante"><span>⛔</span></div>` +
+    `</div>` +
+    `</header>`;
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -607,6 +604,9 @@ export function page(
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; }
   main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .site-header-maestros { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); gap:16px; }
+  .header-rol { font-size:1rem; font-weight:700; color:var(--fg); }
+  .header-avisos { display:flex; gap:8px; }
   nav.top { display:flex; flex-wrap:wrap; gap:16px; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
   a { color: var(--accent); }
   h1 { font-size: 1.5rem; margin: 16px 0; }
@@ -648,13 +648,12 @@ export function page(
   .tarjeta-titulo { font-weight:700; font-size:1.05rem; color:var(--accent); }
   .tarjeta-que { color:var(--muted); font-size:.9rem; }
   .tarjeta-dato { font-weight:600; font-size:.9rem; }
-  .inicio-contenedor { display:flex; flex-direction:column; gap:16px; }
-  .avisos-contenedor { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-  .aviso { padding:12px 16px; border-radius:6px; font-size:.9rem; font-weight:600; }
+  .aviso { padding:8px 12px; border-radius:6px; font-size:.85rem; font-weight:600; display:flex; align-items:center; }
   .aviso-leve { background:#e0f2fe; color:#0369a1; border:1px solid #0284c7; }
   .aviso-medio { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
   .aviso-grave { background:#fee2e2; color:#7f1d1d; border:1px solid #dc2626; }
   .aviso-bloqueante { background:#f3e8ff; color:#6b21a8; border:1px solid #a855f7; }
+  .inicio-contenedor { display:flex; flex-direction:column; gap:16px; }
   .inicio-grid { display:grid; grid-template-columns: 30% 70%; gap:24px; }
   .menu-izq { display:flex; flex-direction:column; gap:8px; }
   .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; }
