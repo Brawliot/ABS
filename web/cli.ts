@@ -5,6 +5,8 @@
  *   npx tsx web/cli.ts --wizard
  *   npx tsx web/cli.ts --list
  */
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { AppBootResult } from "./types.js";
 import type { WizardDraft, UserDecisions } from "./decision-screen-types.js";
 import { allBootableIds, bootProfile } from "./boot-profile.js";
@@ -116,7 +118,15 @@ async function main(): Promise<void> {
   process.on("SIGINT", stop);
 }
 
-void main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Solo al ejecutarse como programa: server.ts importa este módulo (wizard draft)
+// y el import no debe arrancar otro servidor.
+const invokedDirectly =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+
+if (invokedDirectly) {
+  void main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

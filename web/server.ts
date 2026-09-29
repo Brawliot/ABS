@@ -51,7 +51,8 @@ import {
   isProduction,
   securityHeaders,
 } from "../auth/index.js";
-import { ParteIdentityStore } from "../policies/identity.js";
+import type { ParteIdentityStore } from "../policies/identity.js";
+import { handleMaestros, isMaestrosPath } from "./maestros.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -115,6 +116,22 @@ function formToRecord(raw: string): Record<string, string> {
     out[k] = v;
   });
   return out;
+}
+
+/** Accesos a clientes/proveedores y catálogo (solo personal interno). */
+function maestrosLinks(session: DevSession, authMode: boolean): string {
+  if (session.roleId === "cliente" || session.channel === "autoservicio") {
+    return "";
+  }
+  const qs = authMode
+    ? ""
+    : `?${new URLSearchParams({ role: session.roleId, parte: session.parteId })
+        .toString()
+        .replace(/&/g, "&amp;")}`;
+  return (
+    `<nav data-maestros-links><a href="/partes${qs}">Clientes y proveedores</a> · ` +
+    `<a href="/ofertas${qs}">Catálogo</a></nav>`
+  );
 }
 
 export interface WebServerHandle {
@@ -474,7 +491,7 @@ export function startWebServer(
     (options?.enableAuth || isProduction()
       ? createAuthRuntime(options?.accountsDbPath)
       : undefined);
-  const identities = new ParteIdentityStore();
+  const identities: ParteIdentityStore = runtime.partes;
 
   const renderPage = (
     session: DevSession,
@@ -645,6 +662,15 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (isMaestrosPath(path)) {
+        const out = await handleMaestros(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (path === "/diagnosis") {
@@ -1251,7 +1277,9 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
         );
         html = html.replace(
           "<main class=\"main\" id=\"main\">",
-          `<main class="main" id="main"><p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
+          `<main class="main" id="main">` +
+            maestrosLinks(session, ident.mode === "auth") +
+            `<p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
             `<section data-link-devolucion><h3>Devolución vinculada</h3>` +
             `<form method="post" action="/link-devolucion" data-link-form>` +
             (ident.session

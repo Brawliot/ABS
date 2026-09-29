@@ -7,6 +7,8 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SqliteEventStore } from "../adapters/sqlite-event-store.js";
+import { SqliteParteIdentityStore } from "../adapters/sqlite-identity-store.js";
+import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
 import type { ArchetypeId } from "../archetypes/types.js";
 import { createLlmClientFromEnv } from "../llm/index.js";
 import type { LlmClient } from "../llm/index.js";
@@ -59,6 +61,10 @@ export class AppRuntime {
   readonly tenantId: string;
   readonly dbPath: string;
   readonly subjects: RuntimeSubject[];
+  /** Partes vivas (clientes, proveedores…): identidad persistente y cifrada. */
+  readonly partes: SqliteParteIdentityStore;
+  /** Catálogo de Ofertas (productos / servicios) versionado. */
+  readonly ofertas: SqliteOfertaCatalog;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -84,11 +90,17 @@ export class AppRuntime {
     subjects: RuntimeSubject[],
     copyPack: InterfaceCopyPack,
     tenantId: string,
+    maestros: {
+      readonly partes: SqliteParteIdentityStore;
+      readonly ofertas: SqliteOfertaCatalog;
+    },
     llmClient = createLlmClientFromEnv()
   ) {
     this.boot = boot;
     this.store = store;
     this.dbPath = dbPath;
+    this.partes = maestros.partes;
+    this.ofertas = maestros.ofertas;
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
     this.ledger = new IdempotencyLedger();
@@ -117,11 +129,19 @@ export class AppRuntime {
     });
 
     const subjects = seedSubjects(boot);
-    return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId);
+    const partes = new SqliteParteIdentityStore(dbPath);
+    const ofertas = new SqliteOfertaCatalog(dbPath);
+    seedDemoPartes(partes, tenantId, boot);
+    return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
+      partes,
+      ofertas,
+    });
   }
 
   close(): void {
     this.store.close();
+    this.partes.close();
+    this.ofertas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -272,6 +292,27 @@ export class AppRuntime {
 
   actionById(actionId: string) {
     return this.boot.spec.actions.find((a) => a.id === actionId);
+  }
+}
+
+/**
+ * Con el almacén vacío, da de alta como clientes las Partes de ejemplo a las
+ * que apuntan los expedientes demo, para que tengan nombre y ficha reales.
+ */
+function seedDemoPartes(
+  partes: SqliteParteIdentityStore,
+  tenantId: string,
+  boot: AppBootResult,
+): void {
+  if (partes.list(tenantId).length > 0) return;
+  for (const p of boot.samplePartes) {
+    partes.put(
+      tenantId,
+      p.id,
+      { displayName: p.label },
+      "2026-01-01T00:00:00.000Z",
+      "cliente",
+    );
   }
 }
 
