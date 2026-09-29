@@ -139,11 +139,9 @@ function inicioHtml(ctx: MaestrosContext, viewer: Viewer): string {
     : `<div class="enlace-contenido"><p class="meta">Sin enlaces disponibles</p></div>`;
 
   return (
-    `<div class="inicio-contenedor">` +
     `<div class="inicio-grid">` +
     `<aside class="menu-izq">${menuIzq}</aside>` +
     `<main class="contenido-der">${contenidoDerecha}</main>` +
-    `</div>` +
     `</div>`
   );
 }
