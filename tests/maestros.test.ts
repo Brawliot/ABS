@@ -274,7 +274,10 @@ describe("Web: /partes y /ofertas", () => {
       expect(ofertas).toContain("60,00 €");
 
       const home = await (await fetch(`${h2.url}?role=dueno`)).text();
-      expect(home).toContain("data-maestros-links");
+      expect(home).toContain('data-maestros="partes"');
+      expect(home).toContain('data-maestros="ofertas"');
+      const portal = await (await fetch(`${h2.url}?role=cliente`)).text();
+      expect(portal).not.toContain("data-maestros=");
     } finally {
       await h2.close();
     }

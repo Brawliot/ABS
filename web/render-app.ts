@@ -185,10 +185,29 @@ function renderQuestions(boot: RenderAppOptions["boot"]): string {
 </section>`;
 }
 
+/** Datos maestros (clientes, catálogo): solo personal interno en modo vivo. */
+function renderMaestrosNav(session: DevSession, live: boolean): string {
+  if (!live || session.roleId === "cliente" || session.channel === "autoservicio") {
+    return "";
+  }
+  const p = new URLSearchParams({ role: session.roleId, parte: session.parteId });
+  const link = (path: string, label: string, hint: string, key: string) =>
+    `<li><a href="${esc(`${path}?${p.toString()}`)}" data-maestros="${key}">` +
+    `${esc(label)}<span class="pg-role">${esc(hint)}</span></a></li>`;
+  return (
+    `<h2 data-maestros-links>Datos</h2>` +
+    `<ul>` +
+    link("/partes", "Clientes y proveedores", "altas, fichas y contacto", "partes") +
+    link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
+    `</ul>`
+  );
+}
+
 function renderNav(
   spec: UiSpec,
   groups: readonly ProcessGroupSpec[],
   session: DevSession,
+  live = false,
 ): string {
   const items = groups
     .map((g) => {
@@ -207,6 +226,7 @@ function renderNav(
 <nav class="nav-process" aria-label="Procesos">
   <h2>Procesos</h2>
   <ul>${items || '<li class="empty">Ningún proceso visible para este rol</li>'}</ul>
+  ${renderMaestrosNav(session, live)}
 </nav>`;
 }
 
@@ -603,7 +623,7 @@ export function renderAppHtml(options: RenderAppOptions): string {
         ${groups.length} procesos · ${visibleViews.length} vistas · ${esc(headerHint)}
       </p>
     </header>
-    ${renderNav(spec, groups, session)}
+    ${renderNav(spec, groups, session, live)}
     <main class="main" id="main">
       ${renderFlash(flash, session)}
       ${live ? renderActiveBlocks(session, activeBlocks) : ""}

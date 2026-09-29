@@ -118,22 +118,6 @@ function formToRecord(raw: string): Record<string, string> {
   return out;
 }
 
-/** Accesos a clientes/proveedores y catálogo (solo personal interno). */
-function maestrosLinks(session: DevSession, authMode: boolean): string {
-  if (session.roleId === "cliente" || session.channel === "autoservicio") {
-    return "";
-  }
-  const qs = authMode
-    ? ""
-    : `?${new URLSearchParams({ role: session.roleId, parte: session.parteId })
-        .toString()
-        .replace(/&/g, "&amp;")}`;
-  return (
-    `<nav data-maestros-links><a href="/partes${qs}">Clientes y proveedores</a> · ` +
-    `<a href="/ofertas${qs}">Catálogo</a></nav>`
-  );
-}
-
 export interface WebServerHandle {
   readonly port: number;
   readonly url: string;
@@ -1277,9 +1261,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
         );
         html = html.replace(
           "<main class=\"main\" id=\"main\">",
-          `<main class="main" id="main">` +
-            maestrosLinks(session, ident.mode === "auth") +
-            `<p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
+          `<main class="main" id="main"><p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
             `<section data-link-devolucion><h3>Devolución vinculada</h3>` +
             `<form method="post" action="/link-devolucion" data-link-form>` +
             (ident.session
