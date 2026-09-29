@@ -28,6 +28,8 @@ import {
   html,
   identifyGet,
   identifyPost,
+  moduloEnApp,
+  noDisponible,
   notFound,
   okNotice,
   page,
@@ -67,12 +69,14 @@ export async function handleFacturas(
   if (method === "GET") {
     const who = identifyGet(ctx, req, query);
     if ("response" in who) return who.response;
+    if (!moduloEnApp(ctx, "facturas")) return noDisponible(ctx, who.viewer, "La facturación");
     return routeGet(ctx, who.viewer, path, query);
   }
   if (method === "POST") {
     const form = await readForm();
     const who = identifyPost(ctx, req, form);
     if ("response" in who) return who.response;
+    if (!moduloEnApp(ctx, "facturas")) return noDisponible(ctx, who.viewer, "La facturación");
     return routePost(ctx, who.viewer, who.accountId, path, form);
   }
   return text(405, "Método no permitido");

@@ -222,12 +222,7 @@ describe("Vigilante: ningún identificador en pantalla", () => {
         `dinero?role=${role}`,
         `facturas?role=${role}`,
         `empresa?role=${role}`,
-        `stock?role=${role}`,
       ];
-      rt.ofertas.create(rt.tenantId, "of-coche", { subtype: "bien", nombre: "Coche", precioCentimos: 100, ivaPct: 21, unidad: "ud" }, "2026-01-01T00:00:00.000Z");
-      rt.configurarStock("of-coche", true, 1000);
-      rt.ajustarStock("of-coche", "entrada", 3000, "Inicial", "gerente");
-      pages.push(`stock/of-coche?role=${role}`);
       rt.facturas.putEmisor(rt.tenantId, { razonSocial: "Concesionaria SL", nif: "B12345674", domicilio: "C/ Mayor 1" }, "2026-01-01T00:00:00.000Z");
       const fac = rt.expedirFactura(sub.id, "gerente");
       expect(fac.ok).toBe(true);

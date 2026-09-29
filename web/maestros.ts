@@ -41,6 +41,7 @@ import {
 } from "./auth-bridge.js";
 import type { AppRuntime } from "./runtime.js";
 import type { AppBootResult } from "./types.js";
+import { moduloActivo, type ModuloId } from "../generator/rules/modules.js";
 
 export interface MaestrosResponse {
   readonly status: number;
@@ -65,6 +66,19 @@ export interface Viewer {
 }
 
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
+
+/** ¿El decisor ha puesto este módulo en la app del negocio? */
+export function moduloEnApp(ctx: MaestrosContext, id: ModuloId): boolean {
+  return moduloActivo(ctx.boot.input, id);
+}
+
+/** Respuesta para una parte que este negocio no tiene. */
+export function noDisponible(ctx: MaestrosContext, viewer: Viewer, nombre: string): MaestrosResponse {
+  return html(
+    404,
+    page(ctx, viewer, "No disponible", `<p class="meta" data-modulo-inactivo>${esc(nombre)} no forma parte de la aplicación de este negocio.</p>`),
+  );
+}
 
 /** clientRequestId → id creado (evita duplicados por doble envío). */
 const createdByRequest = new WeakMap<AppRuntime, Map<string, string>>();
@@ -224,7 +238,7 @@ function routeGet(
     const history = runtime.ofertas.history(tenant, id);
     return html(
       200,
-      page(ctx, viewer, rec.nombre, okNotice(query.ok) + ofertaDetail(viewer, rec, history)),
+      page(ctx, viewer, rec.nombre, okNotice(query.ok) + ofertaDetail(ctx, viewer, rec, history)),
     );
   }
 
@@ -492,6 +506,7 @@ function ofertaList(viewer: Viewer, rows: readonly OfertaRecord[]): string {
 }
 
 function ofertaDetail(
+  ctx: MaestrosContext,
   viewer: Viewer,
   rec: OfertaRecord,
   history: readonly OfertaRecord[],
@@ -515,7 +530,7 @@ function ofertaDetail(
       .join("") +
     `</tbody></table>`;
   return (
-    (rec.subtype === "bien"
+    (rec.subtype === "bien" && moduloEnApp(ctx, "stock")
       ? `<p class="toolbar"><a href="${esc(withDev(viewer, `/stock/${rec.ofertaId}`))}" data-ver-stock>Ver y controlar su stock</a></p>`
       : "") +
     ofertaForm(viewer, `/ofertas/${rec.ofertaId}`, {
@@ -576,9 +591,11 @@ export function page(
     `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
     `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
     `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
-    `<a href="${esc(withDev(viewer, "/stock"))}">Stock</a>` +
-    `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
-    `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>` +
+    (moduloEnApp(ctx, "stock") ? `<a href="${esc(withDev(viewer, "/stock"))}">Stock</a>` : "") +
+    (moduloEnApp(ctx, "facturas")
+      ? `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
+        `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>`
+      : "") +
     `</nav>`;
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>

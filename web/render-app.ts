@@ -14,6 +14,7 @@ import type {
 } from "../presentation/types.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { cssFromTokens } from "./css-from-tokens.js";
+import { decidirModulos } from "../generator/rules/modules.js";
 import {
   crearEtiquetador,
   humanizarId,
@@ -221,10 +222,24 @@ function renderNuevoExpediente(
 }
 
 /** Datos maestros (clientes, catálogo): solo personal interno en modo vivo. */
-function renderMaestrosNav(session: DevSession, live: boolean): string {
+function renderMaestrosNav(
+  session: DevSession,
+  live: boolean,
+  boot: RenderAppOptions["boot"],
+): string {
   if (!live || session.roleId === "cliente" || session.channel === "autoservicio") {
     return "";
   }
+  const decision = decidirModulos(boot.input);
+  const activo = (id: string) => decision.some((m) => m.id === id && m.activo);
+  const tecnica = session.tecnico
+    ? `<h2>Módulos decididos</h2><ul data-modulos>${decision
+        .map(
+          (m) =>
+            `<li data-modulo="${m.id}" data-activo="${m.activo ? "1" : "0"}">${m.activo ? "✓" : "✗"} ${esc(m.nombre)}<span class="pg-role">${esc(m.motivo)}</span></li>`,
+        )
+        .join("")}</ul>`
+    : "";
   const p = new URLSearchParams({ role: session.roleId, parte: session.parteId });
   const link = (path: string, label: string, hint: string, key: string) =>
     `<li><a href="${esc(`${path}?${p.toString()}`)}" data-maestros="${key}">` +
@@ -234,10 +249,11 @@ function renderMaestrosNav(session: DevSession, live: boolean): string {
     `<ul>` +
     link("/partes", "Clientes y proveedores", "altas, fichas y contacto", "partes") +
     link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
-    link("/stock", "Stock", "existencias y avisos", "stock") +
+    (activo("stock") ? link("/stock", "Stock", "existencias y avisos", "stock") : "") +
     link("/dinero", "Dinero", "cobros, pagos y quién debe", "dinero") +
-    link("/facturas", "Facturas", "expedidas, imprimir y rectificar", "facturas") +
-    `</ul>`
+    (activo("facturas") ? link("/facturas", "Facturas", "expedidas, imprimir y rectificar", "facturas") : "") +
+    `</ul>` +
+    tecnica
   );
 }
 
@@ -252,6 +268,7 @@ function renderNav(
   session: DevSession,
   live: boolean,
   et: Etiquetador,
+  boot: RenderAppOptions["boot"],
 ): string {
   const items = groups
     .map((g) => {
@@ -274,7 +291,7 @@ function renderNav(
 <nav class="nav-process" aria-label="Procesos">
   <h2>Procesos</h2>
   <ul>${items || '<li class="empty">Ningún proceso visible para este rol</li>'}</ul>
-  ${renderMaestrosNav(session, live)}
+  ${renderMaestrosNav(session, live, boot)}
 </nav>`;
 }
 
@@ -707,7 +724,7 @@ export function renderAppHtml(options: RenderAppOptions): string {
         ${tecnico ? `${groups.length} procesos · ${visibleViews.length} vistas · ${esc(headerHint)}` : ""}
       </p>
     </header>
-    ${renderNav(spec, groups, session, live, et)}
+    ${renderNav(spec, groups, session, live, et, boot)}
     <main class="main" id="main">
       ${renderFlash(flash, session, et)}
       ${live ? renderActiveBlocks(session, activeBlocks, et) : ""}

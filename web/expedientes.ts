@@ -38,6 +38,7 @@ import {
   html,
   identifyGet,
   identifyPost,
+  moduloEnApp,
   notFound,
   okNotice,
   page,
@@ -480,7 +481,15 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     `<tr class="total"><td colspan="5">Total</td><td class="num" data-total>${esc(formatCentimos(totales.total))}</td></tr>` +
     `</tfoot></table></div>`;
 
-  return acciones + cabecera + dineroHtml(ctx, id) + stockAviso(ctx, viewer, id) + facturaHtml(ctx, viewer, id) + lineas + historialHtml(ctx, id);
+  return (
+    acciones +
+    cabecera +
+    dineroHtml(ctx, id) +
+    (moduloEnApp(ctx, "stock") ? stockAviso(ctx, viewer, id) : "") +
+    (moduloEnApp(ctx, "facturas") ? facturaHtml(ctx, viewer, id) : "") +
+    lineas +
+    historialHtml(ctx, id)
+  );
 }
 
 /** Aviso (no bloquea) si faltan existencias para servir el expediente. */
