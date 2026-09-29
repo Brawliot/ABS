@@ -56,6 +56,7 @@ import { handleMaestros, isMaestrosPath } from "./maestros.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
+import { handleStock, isStockPath } from "./stock.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -653,6 +654,15 @@ export function startWebServer(
 
       if (path === "/imprimir.js") {
         return send(res, 200, IMPRIMIR_JS, "application/javascript; charset=utf-8");
+      }
+
+      if (isStockPath(path)) {
+        const out = await handleStock(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (isFacturasPath(path)) {

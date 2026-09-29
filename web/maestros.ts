@@ -515,6 +515,9 @@ function ofertaDetail(
       .join("") +
     `</tbody></table>`;
   return (
+    (rec.subtype === "bien"
+      ? `<p class="toolbar"><a href="${esc(withDev(viewer, `/stock/${rec.ofertaId}`))}" data-ver-stock>Ver y controlar su stock</a></p>`
+      : "") +
     ofertaForm(viewer, `/ofertas/${rec.ofertaId}`, {
       subtype: rec.subtype,
       nombre: rec.nombre,
@@ -573,6 +576,7 @@ export function page(
     `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
     `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
     `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
+    `<a href="${esc(withDev(viewer, "/stock"))}">Stock</a>` +
     `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
     `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>` +
     `</nav>`;

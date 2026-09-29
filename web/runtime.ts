@@ -10,6 +10,14 @@ import { SqliteEventStore } from "../adapters/sqlite-event-store.js";
 import { SqliteParteIdentityStore } from "../adapters/sqlite-identity-store.js";
 import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
 import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
+import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
+import {
+  cantidadesPorOferta,
+  movimientosStockDe,
+  resumenStock,
+  type MovimientoStock,
+  type ResumenProducto,
+} from "../elements/stock.js";
 import {
   decidirTipo,
   desgloseIva,
@@ -122,6 +130,8 @@ export class AppRuntime {
   readonly etiquetas: Etiquetador;
   /** Facturas expedidas (inmutables) y datos fiscales del emisor. */
   readonly facturas: SqliteFacturaStore;
+  /** Productos con control de stock y ajustes manuales. */
+  readonly stockStore: SqliteStockStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -151,6 +161,7 @@ export class AppRuntime {
       readonly partes: SqliteParteIdentityStore;
       readonly ofertas: SqliteOfertaCatalog;
       readonly facturas: SqliteFacturaStore;
+      readonly stock: SqliteStockStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -160,6 +171,7 @@ export class AppRuntime {
     this.partes = maestros.partes;
     this.ofertas = maestros.ofertas;
     this.facturas = maestros.facturas;
+    this.stockStore = maestros.stock;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -192,11 +204,13 @@ export class AppRuntime {
     const partes = new SqliteParteIdentityStore(dbPath);
     const ofertas = new SqliteOfertaCatalog(dbPath);
     const facturas = new SqliteFacturaStore(dbPath);
+    const stock = new SqliteStockStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
       ofertas,
       facturas,
+      stock,
     });
   }
 
@@ -205,6 +219,7 @@ export class AppRuntime {
     this.partes.close();
     this.ofertas.close();
     this.facturas.close();
+    this.stockStore.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -420,6 +435,113 @@ export class AppRuntime {
       expedidaPor: actorId,
     });
     return { ok: true, factura };
+  }
+
+  /**
+   * Existencias de los productos con control de stock: resumen por producto
+   * y todos los movimientos (ajustes + entregas / recepciones).
+   */
+  stock(): { readonly productos: readonly ResumenProducto[]; readonly movimientos: readonly MovimientoStock[] } {
+    const controlados = this.stockStore.controlados(this.tenantId);
+    const ids = new Set(controlados.keys());
+    const movimientos: MovimientoStock[] = [...this.stockStore.ajustes(this.tenantId)];
+    const pendientes: { direccion: Direccion; lineas: readonly LineaDatos[] }[] = [];
+    if (ids.size > 0) {
+      for (const e of this.expedientesDinero()) {
+        const slice = this.boot.input.lifecycles.find((l) => l.id === e.lifecycleId)!;
+        const events = this.store.getBySubject(e.id);
+        const lineas = proyectarTransaccion(events)!.datos.lineas;
+        movimientos.push(
+          ...movimientosStockDe({
+            expedienteId: e.id,
+            archetypeId: slice.archetypeId,
+            lifecycle: slice.lifecycle,
+            direccion: e.direccion,
+            lineas,
+            events,
+            controlados: ids,
+          }),
+        );
+        if (e.situacion === "pendiente" && ["venta", "servicio_proyecto"].includes(slice.archetypeId)) {
+          pendientes.push({ direccion: e.direccion, lineas });
+        }
+      }
+    }
+    movimientos.sort((a, b) => a.at.localeCompare(b.at));
+    return { productos: resumenStock({ controlados, movimientos, pendientes }), movimientos };
+  }
+
+  /** Activa / desactiva el control de stock de un producto y fija su mínimo. */
+  configurarStock(
+    ofertaId: string,
+    control: boolean,
+    minimoMilesimas: number,
+  ): { ok: true } | { ok: false; error: string } {
+    if (!this.ofertas.get(this.tenantId, ofertaId)) return { ok: false, error: "Ese producto no existe." };
+    if (!Number.isSafeInteger(minimoMilesimas) || minimoMilesimas < 0) {
+      return { ok: false, error: "El mínimo no es válido." };
+    }
+    this.stockStore.configurar(
+      this.tenantId,
+      { ofertaId, control, minimo: minimoMilesimas },
+      new Date().toISOString(),
+    );
+    return { ok: true };
+  }
+
+  /**
+   * Ajuste manual: entrada o salida de una cantidad, o recuento (se indica la
+   * cantidad real y se registra la diferencia). Siempre con motivo.
+   */
+  ajustarStock(
+    ofertaId: string,
+    tipo: "entrada" | "salida" | "recuento",
+    cantidadMilesimas: number,
+    motivo: string,
+    actorId: string,
+  ): { ok: true; delta: number } | { ok: false; error: string } {
+    if (!this.stockStore.controlados(this.tenantId).has(ofertaId)) {
+      return { ok: false, error: "Ese producto no tiene activado el control de stock." };
+    }
+    const m = motivo.trim();
+    if (!m) return { ok: false, error: "Indica el motivo del ajuste." };
+    if (m.length > 200) return { ok: false, error: "El motivo es demasiado largo." };
+    if (!Number.isSafeInteger(cantidadMilesimas) || cantidadMilesimas < 0 || (tipo !== "recuento" && cantidadMilesimas === 0)) {
+      return { ok: false, error: "La cantidad no es válida." };
+    }
+    const actual = this.stock().productos.find((p) => p.ofertaId === ofertaId)?.stock ?? 0;
+    const delta =
+      tipo === "entrada" ? cantidadMilesimas : tipo === "salida" ? -cantidadMilesimas : cantidadMilesimas - actual;
+    if (delta === 0) return { ok: true, delta: 0 };
+    this.stockStore.ajustar(this.tenantId, {
+      ofertaId,
+      delta,
+      motivo: m,
+      actorId,
+      at: new Date().toISOString(),
+    });
+    return { ok: true, delta };
+  }
+
+  /**
+   * Productos de un expediente de venta que no hay disponibles en cantidad
+   * suficiente (aviso; no bloquea).
+   */
+  faltasStock(expedienteId: string): { readonly ofertaId: string; readonly necesita: number; readonly disponible: number }[] {
+    const e = this.expedientesDinero().find((x) => x.id === expedienteId);
+    if (!e || e.direccion !== "entra" || (e.situacion !== "presupuesto" && e.situacion !== "pendiente")) return [];
+    const productos = this.stock().productos;
+    if (productos.length === 0) return [];
+    const lineas = this.datosDe(expedienteId)!.datos.lineas;
+    const ids = new Set(productos.map((p) => p.ofertaId));
+    const out: { ofertaId: string; necesita: number; disponible: number }[] = [];
+    for (const [ofertaId, q] of cantidadesPorOferta(lineas, ids)) {
+      const p = productos.find((x) => x.ofertaId === ofertaId)!;
+      // Si ya está aceptado, su propia reserva cuenta como disponible para él
+      const disponible = p.disponible + (e.situacion === "pendiente" ? q : 0);
+      if (q > disponible) out.push({ ofertaId, necesita: q, disponible });
+    }
+    return out;
   }
 
   /** Datos de negocio actuales del expediente (cliente, líneas…). */

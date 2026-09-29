@@ -431,7 +431,24 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     `<tr class="total"><td colspan="5">Total</td><td class="num" data-total>${esc(formatCentimos(totales.total))}</td></tr>` +
     `</tfoot></table></div>`;
 
-  return acciones + cabecera + dineroHtml(ctx, id) + facturaHtml(ctx, viewer, id) + lineas + historialHtml(ctx, id);
+  return acciones + cabecera + dineroHtml(ctx, id) + stockAviso(ctx, viewer, id) + facturaHtml(ctx, viewer, id) + lineas + historialHtml(ctx, id);
+}
+
+/** Aviso (no bloquea) si faltan existencias para servir el expediente. */
+function stockAviso(ctx: MaestrosContext, viewer: Viewer, id: string): string {
+  const faltas = ctx.runtime.faltasStock(id);
+  if (faltas.length === 0) return "";
+  const items = faltas
+    .map((f) => {
+      const o = ctx.runtime.ofertas.get(ctx.runtime.tenantId, f.ofertaId);
+      const u = o?.unidad ?? "ud";
+      return (
+        `<li><a href="${esc(withDev(viewer, `/stock/${f.ofertaId}`))}">${esc(o?.nombre ?? "Producto")}</a>: ` +
+        `hacen falta ${esc(formatCantidad(f.necesita))} ${esc(u)} y hay ${esc(formatCantidad(Math.max(0, f.disponible)))} disponibles</li>`
+      );
+    })
+    .join("");
+  return `<div class="dinero err" role="status" data-falta-stock><strong>Falta stock</strong><ul>${items}</ul></div>`;
 }
 
 /** Factura del expediente: la vigente, el botón para expedirla o por qué no se puede. */
