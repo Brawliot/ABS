@@ -31,6 +31,11 @@ export interface LifecycleSlice {
    * Si hay `composition`, se infiere; si no, independiente.
    */
   readonly compositionRole?: "dominant" | "secondary" | "standalone";
+  /**
+   * Sentido del dinero: la empresa vende (entra) o compra (sale).
+   * Sin declarar se asume venta.
+   */
+  readonly exchangeDirection?: "empresa_vende" | "empresa_compra";
 }
 
 /**

@@ -194,7 +194,12 @@ function routeGet(
     if (!rec) return notFound(ctx, viewer, "Esa parte no existe.");
     return html(
       200,
-      page(ctx, viewer, parteName(rec), okNotice(query.ok) + parteDetail(viewer, rec)),
+      page(
+        ctx,
+        viewer,
+        parteName(rec),
+        okNotice(query.ok) + parteDetail(viewer, rec) + parteExpedientes(ctx, viewer, rec.parteId),
+      ),
     );
   }
 
@@ -377,6 +382,46 @@ function parteList(
   );
 }
 
+/** Lo que esta Parte debe / se le debe, y sus expedientes. */
+function parteExpedientes(ctx: MaestrosContext, viewer: Viewer, parteId: string): string {
+  const exps = ctx.runtime.expedientesDinero().filter((e) => e.parteId === parteId);
+  if (exps.length === 0) {
+    return `<h2>Expedientes</h2><p class="empty">Todavía no tiene expedientes.</p>`;
+  }
+  const pend = (dir: "entra" | "sale") =>
+    exps
+      .filter((e) => e.direccion === dir && e.situacion === "pendiente")
+      .reduce((s, e) => s + e.totalCentimos, 0);
+  const debe = pend("entra");
+  const leDebes = pend("sale");
+  const resumen =
+    `<p class="dinero" data-parte-saldo>` +
+    `Te debe: <strong data-te-debe>${esc(formatCentimos(debe))}</strong>` +
+    (leDebes > 0 ? ` · Le debes: <strong data-le-debes>${esc(formatCentimos(leDebes))}</strong>` : "") +
+    `</p>`;
+  const situacion: Record<string, string> = {
+    presupuesto: "Presupuesto",
+    pendiente: "Pendiente",
+    liquidado: "Liquidado",
+    sin_importe: "Anulado",
+  };
+  const rows = [...exps]
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))
+    .map(
+      (e) =>
+        `<tr><td><a href="${esc(withDev(viewer, `/expedientes/${e.id}`))}">${esc(e.label)}</a></td>` +
+        `<td>${esc(e.fecha)}</td><td>${esc(e.estadoLabel)}</td><td>${esc(situacion[e.situacion] ?? "")}</td>` +
+        `<td class="num">${esc(formatCentimos(e.totalCentimos))}</td></tr>`,
+    )
+    .join("");
+  return (
+    `<h2>Expedientes</h2>` +
+    resumen +
+    `<table data-parte-expedientes><thead><tr><th>Expediente</th><th>Fecha</th><th>Estado</th><th>Cobro</th><th class="num">Total</th></tr></thead>` +
+    `<tbody>${rows}</tbody></table>`
+  );
+}
+
 function parteDetail(viewer: Viewer, rec: ParteIdentityRecord): string {
   if (rec.erasedAt || !rec.personal) {
     return `<p class="err">Los datos personales de esta parte se borraron el ${esc(fecha(rec.erasedAt ?? rec.updatedAt))}. Su historial se conserva de forma anónima.</p>`;
@@ -527,6 +572,7 @@ export function page(
     `<a href="${esc(withDev(viewer, "/"))}">← Volver a la app</a>` +
     `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
     `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
+    `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
     `</nav>`;
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>
@@ -567,6 +613,12 @@ export function page(
   tfoot td { font-weight:600; }
   tfoot tr.total td { font-size:1.1rem; border-top:2px solid var(--fg); }
   .toolbar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
+  .tiles { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin: 8px 0 16px; }
+  .tile { display:grid; gap:4px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .tile-label { color:var(--muted); font-size:.85rem; font-weight:600; }
+  .tile-value { font-size:1.5rem; font-weight:700; font-variant-numeric: tabular-nums; }
+  .tile-hint { color:var(--muted); font-size:.8rem; }
+  .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
 </style></head>
 <body data-page="maestros">${nav}<main id="main"><h1>${esc(title)}</h1>${body}</main></body></html>`;

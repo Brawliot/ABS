@@ -17,6 +17,9 @@ const TERMINAL_STATES = new Set([
   "terminada",
 ]);
 
+/** Estados en los que la Parte debe dinero (impago declarado). */
+const IMPAGO_STATES = new Set(["impagada", "no_devuelta"]);
+
 /**
  * Payload de negocio en event.data para alimentar hechos.
  * Convención estable documentada en docs/facts.md.
@@ -24,6 +27,11 @@ const TERMINAL_STATES = new Set([
 export interface FactEventPayload {
   readonly parteId?: string;
   readonly importe?: number;
+  /**
+   * Sentido del dinero: "sale" = compra (la empresa paga). Las compras no
+   * cuentan como saldo pendiente de la Parte (no es deuda suya).
+   */
+  readonly sentido?: "entra" | "sale";
   readonly recursoId?: string;
   readonly capacityUnits?: number;
   readonly periodStart?: string;
@@ -138,10 +146,31 @@ export class TenantFactProjection {
       case FACT_IDS.PARTE_SALDO_PENDIENTE: {
         const parteId = String(params.parteId);
         const p = this.partes.get(parteId);
-        const key = paramsKey(params);
+        const exclude =
+          params.excludeSubjectId !== undefined && params.excludeSubjectId !== ""
+            ? String(params.excludeSubjectId)
+            : undefined;
+        const own = exclude ? (p?.txAmounts.get(exclude) ?? 0) : 0;
         return {
-          value: p?.pendingBalance ?? 0,
-          version: p?.versions.get(key) ?? 0,
+          value: (p?.pendingBalance ?? 0) - own,
+          version: p?.versions.get(paramsKey({ parteId })) ?? 0,
+          streamPosition: pos,
+        };
+      }
+      case FACT_IDS.PARTE_IMPORTE_IMPAGADO: {
+        const parteId = String(params.parteId);
+        const p = this.partes.get(parteId);
+        const exclude =
+          params.excludeSubjectId !== undefined ? String(params.excludeSubjectId) : "";
+        let value = 0;
+        for (const [subjectId, st] of p?.txStates ?? []) {
+          if (subjectId !== exclude && IMPAGO_STATES.has(st)) {
+            value += p?.txAmounts.get(subjectId) ?? 0;
+          }
+        }
+        return {
+          value,
+          version: p?.versions.get(paramsKey({ parteId })) ?? 0,
           streamPosition: pos,
         };
       }
@@ -275,7 +304,11 @@ export class TenantFactProjection {
     }
 
     const newAmount =
-      payload.importe !== undefined ? Number(payload.importe) : prevAmount;
+      payload.sentido === "sale"
+        ? 0
+        : payload.importe !== undefined
+          ? Number(payload.importe)
+          : prevAmount;
 
     if (willOpen) {
       p.txAmounts.set(subjectId, newAmount);
@@ -365,6 +398,8 @@ function readPayload(event: DomainEvent): FactEventPayload {
   if (parteId !== undefined) out.parteId = parteId;
   const importe = num(facts.importe ?? fieldsAfter.importe);
   if (importe !== undefined) out.importe = importe;
+  const sentido = str(facts.sentido ?? fieldsAfter.sentido);
+  if (sentido === "entra" || sentido === "sale") out.sentido = sentido;
   const recursoId = str(
     facts.recursoId ?? fieldsAfter.recurso_id ?? fieldsAfter.recursoId,
   );

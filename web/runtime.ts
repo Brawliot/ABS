@@ -26,6 +26,14 @@ import type {
 } from "../core/events.js";
 import { formatCentimos } from "../elements/oferta.js";
 import {
+  direccionDe,
+  movimientosDe,
+  situacionCobro,
+  type Direccion,
+  type Movimiento,
+  type SituacionCobro,
+} from "../elements/movimientos.js";
+import {
   calcularTotales,
   diferencias,
   proyectarTransaccion,
@@ -51,6 +59,22 @@ export interface RuntimeSubject {
   readonly parteId: string;
   readonly sedeId?: string;
   readonly vinculadaA?: string;
+}
+
+export interface ExpedienteDinero {
+  readonly id: string;
+  readonly label: string;
+  readonly lifecycleId: string;
+  readonly proceso: string;
+  readonly parteId: string;
+  readonly fecha: string;
+  readonly referencia?: string;
+  readonly direccion: Direccion;
+  readonly totalCentimos: number;
+  readonly estadoId: string;
+  readonly estadoLabel: string;
+  readonly situacion: SituacionCobro;
+  readonly movimientos: readonly Movimiento[];
 }
 
 export interface FlashMessage {
@@ -198,6 +222,53 @@ export class AppRuntime {
   /** Nombre visible de una Parte (o marcador si se borró / no existe). */
   nombreParte(parteId: string): string {
     return this.partes.resolve(this.tenantId, parteId).personal.displayName;
+  }
+
+  /**
+   * Situación económica de cada expediente con datos: total, sentido del
+   * dinero (entra / sale), situación de cobro y movimientos liquidados.
+   */
+  expedientesDinero(): ExpedienteDinero[] {
+    const out: ExpedienteDinero[] = [];
+    for (const sub of this.subjects) {
+      const slice = this.boot.input.lifecycles.find((l) => l.id === sub.lifecycleId);
+      if (!slice) continue;
+      const events = this.store.getBySubject(sub.id);
+      const tx = proyectarTransaccion(events);
+      if (!tx) continue;
+      const derived = deriveState(slice.lifecycle, events);
+      const st = findState(slice.lifecycle, derived.currentStateId);
+      const total = calcularTotales(tx.datos.lineas).total;
+      const direccion = direccionDe(slice.exchangeDirection);
+      const movimientos = movimientosDe({
+        expedienteId: sub.id,
+        parteId: tx.datos.parteId,
+        direccion,
+        lifecycle: slice.lifecycle,
+        events,
+        totalCentimos: total,
+      });
+      out.push({
+        id: sub.id,
+        label: sub.label,
+        lifecycleId: slice.id,
+        proceso: slice.label ?? slice.archetypeId,
+        parteId: tx.datos.parteId,
+        fecha: tx.datos.fecha,
+        ...(tx.datos.referencia ? { referencia: tx.datos.referencia } : {}),
+        direccion,
+        totalCentimos: total,
+        estadoId: derived.currentStateId,
+        estadoLabel: st?.label ?? derived.currentStateId,
+        situacion: situacionCobro({
+          lifecycle: slice.lifecycle,
+          stateId: derived.currentStateId,
+          movimientos,
+        }),
+        movimientos,
+      });
+    }
+    return out;
   }
 
   /** Datos de negocio actuales del expediente (cliente, líneas…). */

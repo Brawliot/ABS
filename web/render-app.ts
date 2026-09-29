@@ -230,6 +230,7 @@ function renderMaestrosNav(session: DevSession, live: boolean): string {
     `<ul>` +
     link("/partes", "Clientes y proveedores", "altas, fichas y contacto", "partes") +
     link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
+    link("/dinero", "Dinero", "cobros, pagos y quién debe", "dinero") +
     `</ul>`
   );
 }

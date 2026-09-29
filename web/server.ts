@@ -54,6 +54,7 @@ import {
 import type { ParteIdentityStore } from "../policies/identity.js";
 import { handleMaestros, isMaestrosPath } from "./maestros.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
+import { handleDinero, isDineroPath } from "./dinero.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -647,6 +648,11 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (isDineroPath(path)) {
+        const out = await handleDinero({ runtime, boot, auth }, req);
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (isExpedientesPath(path)) {

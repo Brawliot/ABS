@@ -431,7 +431,32 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     `<tr class="total"><td colspan="5">Total</td><td class="num" data-total>${esc(formatCentimos(totales.total))}</td></tr>` +
     `</tfoot></table></div>`;
 
-  return acciones + cabecera + lineas + historialHtml(ctx, id);
+  return acciones + cabecera + dineroHtml(ctx, id) + lineas + historialHtml(ctx, id);
+}
+
+/** Situación económica del expediente: presupuesto, pendiente o liquidado. */
+function dineroHtml(ctx: MaestrosContext, id: string): string {
+  const e = ctx.runtime.expedientesDinero().find((x) => x.id === id);
+  if (!e) return "";
+  const cobro = e.direccion === "entra";
+  const total = esc(formatCentimos(e.totalCentimos));
+  let texto: string;
+  switch (e.situacion) {
+    case "presupuesto":
+      texto = `Presupuesto de ${total}: aún no se ${cobro ? "debe" : "ha comprometido"} nada.`;
+      break;
+    case "pendiente":
+      texto = `<strong>Pendiente de ${cobro ? "cobro" : "pago"}: ${total}</strong>`;
+      break;
+    case "liquidado":
+      texto = e.movimientos
+        .map((m) => `${cobro ? "Cobrado" : "Pagado"} ${esc(formatCentimos(m.importeCentimos))} el ${esc(fecha(m.at))}`)
+        .join(" · ") || `${cobro ? "Cobrado" : "Pagado"}: ${total}`;
+      break;
+    default:
+      texto = "Anulado: no hay importe que cobrar ni pagar.";
+  }
+  return `<p class="dinero" data-situacion="${e.situacion}" data-direccion="${e.direccion}">${texto}</p>`;
 }
 
 function historialHtml(ctx: MaestrosContext, id: string): string {

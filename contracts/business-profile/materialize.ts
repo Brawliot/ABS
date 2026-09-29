@@ -406,6 +406,9 @@ export function materializeBusinessProfileDetailed(
       archetypeId: p.archetypeId,
       lifecycle: arch.lifecycle,
       ...(p.label !== undefined ? { label: p.label } : {}),
+      ...(p.exchangeDirection !== undefined
+        ? { exchangeDirection: p.exchangeDirection }
+        : {}),
     };
   });
 

@@ -11,6 +11,8 @@ import {
 import type { ComposedArchetypeSpec } from "../archetypes/types.js";
 import { deriveState, type DerivedState } from "../core/derivation.js";
 import type { TransitionEvent } from "../core/events.js";
+import { calcularTotales } from "../elements/transaccion.js";
+import { direccionDe } from "../elements/movimientos.js";
 import type { ActorKind } from "../core/grammar.js";
 import { findState } from "../core/lifecycle.js";
 import type { Lifecycle, Transition } from "../core/lifecycle.js";
@@ -428,6 +430,18 @@ async function executeUiActionLocked(
   }
   if (fields.importe === "" || fields.importe === undefined) {
     delete fields.importe;
+  }
+  // Expediente con datos: su cliente y su total mandan (no la Parte de quien
+  // pulsa). Un importe escrito en el formulario (cobro parcial) se respeta.
+  fields.subject_id = body.subjectId;
+  const tx = runtime.datosDe(body.subjectId);
+  if (tx) {
+    fields.parte_id = tx.datos.parteId;
+    fields.sentido = direccionDe(slice.exchangeDirection);
+    const typed = request.fields.importe ?? enrichedForm.importe;
+    if (typed === undefined || typed === "") {
+      fields.importe = calcularTotales(tx.datos.lineas).total / 100;
+    }
   }
 
   const factReqs = collectFactRequests(

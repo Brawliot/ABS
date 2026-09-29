@@ -174,7 +174,10 @@ export function compilePolicyTemplate(
       return { policies: [], compliance: [compliance], permissions: [] };
     }
     case "tpl.restriccion_saldo_antes_de": {
-      // Rechaza la transición si parte.saldo_pendiente > 0 (entrega con deuda).
+      // Rechaza la transición si la Parte tiene impagos (entrega con deuda).
+      // Deuda = transacciones en impago, no las que siguen en curso: en los
+      // arquetipos el cobro va con el cierre, así que un trabajo abierto no es
+      // deuda (contarlo bloqueaba mutuamente dos trabajos del mismo cliente).
       const transitionId = transitionOf(inv, "t_cerrar");
       const policy: BusinessPolicy = {
         id: inv.id,
@@ -182,13 +185,13 @@ export function compilePolicyTemplate(
         transitionId,
         requiredFacts: [
           {
-            factId: "parte.saldo_pendiente",
-            params: { parteId: "$fields.parte_id" },
+            factId: "parte.importe_impagado",
+            params: { parteId: "$fields.parte_id", excludeSubjectId: "$fields.subject_id" },
           },
         ],
         factRestriction: {
-          factId: "parte.saldo_pendiente",
-          params: { parteId: "$fields.parte_id" },
+          factId: "parte.importe_impagado",
+          params: { parteId: "$fields.parte_id", excludeSubjectId: "$fields.subject_id" },
           op: "gt",
           value: 0,
         },
