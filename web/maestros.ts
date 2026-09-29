@@ -55,7 +55,7 @@ export interface MaestrosContext {
   readonly auth: AuthRuntime | undefined;
 }
 
-interface Viewer {
+export interface Viewer {
   readonly roleId: string;
   readonly parteId: string;
   /** Token CSRF si hay sesión real. */
@@ -89,44 +89,71 @@ export async function handleMaestros(
   const query = Object.fromEntries(url.searchParams.entries());
 
   if (method === "GET") {
-    const ident = resolveRequestIdentity(ctx.auth, req, ctx.boot, query);
-    if (isProduction() && !ident.session) {
-      return redirect("/login");
-    }
-    const viewer: Viewer = {
-      roleId: ident.dev.roleId,
-      parteId: ident.dev.parteId,
-      ...(ident.session ? { csrfToken: ident.session.csrfToken } : {}),
-      devMode: !ident.session,
-    };
-    if (!isInternal(viewer.roleId, ident.dev.channel)) return forbidden();
-    return routeGet(ctx, viewer, path, query);
+    const who = identifyGet(ctx, req, query);
+    if ("response" in who) return who.response;
+    return routeGet(ctx, who.viewer, path, query);
   }
 
   if (method === "POST") {
     const form = await readForm();
-    let viewer: Viewer;
-    try {
-      const identity = identityForAction(ctx.auth, req, form, ctx.boot);
-      requireCsrf(identity.session, form, req.headers);
-      if (!isInternal(identity.roleId, identity.channel)) return forbidden();
-      viewer = {
-        roleId: identity.roleId,
-        parteId: identity.parteId,
-        ...(identity.session
-          ? { csrfToken: identity.session.csrfToken }
-          : {}),
-        devMode: !identity.session,
-      };
-    } catch (e) {
-      if (e instanceof CsrfError) return text(403, e.message);
-      if (e instanceof AccountsError) return text(401, e.message);
-      throw e;
-    }
-    return routePost(ctx, viewer, path, form);
+    const who = identifyPost(ctx, req, form);
+    if ("response" in who) return who.response;
+    return routePost(ctx, who.viewer, path, form);
   }
 
   return text(405, "Método no permitido");
+}
+
+/** Quién mira (GET): sesión real o, en desarrollo, rol de la URL. Solo internos. */
+export function identifyGet(
+  ctx: MaestrosContext,
+  req: IncomingMessage,
+  query: Record<string, string>,
+): { viewer: Viewer; accountId: string } | { response: MaestrosResponse } {
+  const ident = resolveRequestIdentity(ctx.auth, req, ctx.boot, query);
+  if (isProduction() && !ident.session) {
+    return { response: redirect("/login") };
+  }
+  if (!isInternal(ident.dev.roleId, ident.dev.channel)) {
+    return { response: forbidden() };
+  }
+  return {
+    viewer: {
+      roleId: ident.dev.roleId,
+      parteId: ident.dev.parteId,
+      ...(ident.session ? { csrfToken: ident.session.csrfToken } : {}),
+      devMode: !ident.session,
+    },
+    accountId: ident.session?.accountId ?? `dev:${ident.dev.roleId}`,
+  };
+}
+
+/** Quién escribe (POST): sesión + CSRF, o rol del formulario en desarrollo. */
+export function identifyPost(
+  ctx: MaestrosContext,
+  req: IncomingMessage,
+  form: Record<string, string>,
+): { viewer: Viewer; accountId: string } | { response: MaestrosResponse } {
+  try {
+    const identity = identityForAction(ctx.auth, req, form, ctx.boot);
+    requireCsrf(identity.session, form, req.headers);
+    if (!isInternal(identity.roleId, identity.channel)) {
+      return { response: forbidden() };
+    }
+    return {
+      viewer: {
+        roleId: identity.roleId,
+        parteId: identity.parteId,
+        ...(identity.session ? { csrfToken: identity.session.csrfToken } : {}),
+        devMode: !identity.session,
+      },
+      accountId: identity.session?.accountId ?? `dev:${identity.roleId}`,
+    };
+  } catch (e) {
+    if (e instanceof CsrfError) return { response: text(403, e.message) };
+    if (e instanceof AccountsError) return { response: text(401, e.message) };
+    throw e;
+  }
 }
 
 function isInternal(roleId: string, channel: string): boolean {
@@ -291,12 +318,12 @@ function routePost(
   return notFound(ctx, viewer, "Página no encontrada.");
 }
 
-function seenRequest(runtime: AppRuntime, requestId: string | undefined): string | undefined {
+export function seenRequest(runtime: AppRuntime, requestId: string | undefined): string | undefined {
   if (!requestId) return undefined;
   return createdByRequest.get(runtime)?.get(requestId);
 }
 
-function rememberRequest(runtime: AppRuntime, requestId: string | undefined, id: string): void {
+export function rememberRequest(runtime: AppRuntime, requestId: string | undefined, id: string): void {
   if (!requestId) return;
   let m = createdByRequest.get(runtime);
   if (!m) {
@@ -489,7 +516,7 @@ function ofertaForm(
 
 // ─── Utilidades de página ───────────────────────────────────────────────
 
-function page(
+export function page(
   ctx: MaestrosContext,
   viewer: Viewer,
   title: string,
@@ -527,12 +554,25 @@ function page(
   .ok { color: #15803d; }
   .meta, .empty { color: var(--muted); }
   .filters a[aria-current] { font-weight:700; color: var(--fg); text-decoration:none; }
+  form.wide { max-width: none; }
+  .grid2 { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .scroll { overflow-x:auto; }
+  table.lineas td { padding:4px; }
+  table.lineas input, table.lineas select { width:100%; min-width:80px; }
+  textarea { font: inherit; padding:8px; border:1px solid var(--line); border-radius:6px; font-weight:400; }
+  dl.ficha { display:grid; grid-template-columns: max-content 1fr; gap:6px 16px; background:var(--card); padding:16px; border:1px solid var(--line); border-radius:8px; }
+  dl.ficha dt { color:var(--muted); }
+  dl.ficha dd { margin:0; }
+  .notas { white-space: pre-wrap; }
+  tfoot td { font-weight:600; }
+  tfoot tr.total td { font-size:1.1rem; border-top:2px solid var(--fg); }
+  .toolbar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
 </style></head>
 <body data-page="maestros">${nav}<main id="main"><h1>${esc(title)}</h1>${body}</main></body></html>`;
 }
 
-function hiddenIdentity(viewer: Viewer): string {
+export function hiddenIdentity(viewer: Viewer): string {
   return (
     (viewer.csrfToken
       ? `<input type="hidden" name="csrfToken" value="${esc(viewer.csrfToken)}" />`
@@ -545,7 +585,7 @@ function hiddenIdentity(viewer: Viewer): string {
 }
 
 /** En modo desarrollo el rol viaja en la URL (no hay sesión). */
-function withDev(
+export function withDev(
   viewer: Viewer,
   path: string,
   extra: Record<string, string> = {},
@@ -559,18 +599,18 @@ function withDev(
   return qs ? `${path}?${qs}` : path;
 }
 
-function okNotice(ok: string | undefined): string {
+export function okNotice(ok: string | undefined): string {
   if (ok === "creada") return `<p class="ok" role="status" data-ok>Alta guardada.</p>`;
   if (ok === "guardada") return `<p class="ok" role="status" data-ok>Cambios guardados.</p>`;
   return "";
 }
 
-function errorList(errors: readonly string[]): string {
+export function errorList(errors: readonly string[]): string {
   if (errors.length === 0) return "";
   return `<ul class="err" role="alert" data-form-errors>${errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`;
 }
 
-function fecha(iso: string): string {
+export function fecha(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("es-ES", {
@@ -580,7 +620,7 @@ function fecha(iso: string): string {
   });
 }
 
-function esc(s: string): string {
+export function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -589,15 +629,15 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function html(status: number, body: string): MaestrosResponse {
+export function html(status: number, body: string): MaestrosResponse {
   return { status, body, contentType: "text/html; charset=utf-8" };
 }
 
-function text(status: number, body: string): MaestrosResponse {
+export function text(status: number, body: string): MaestrosResponse {
   return { status, body, contentType: "text/plain; charset=utf-8" };
 }
 
-function redirect(location: string): MaestrosResponse {
+export function redirect(location: string): MaestrosResponse {
   return { status: 303, body: "", contentType: "text/plain", headers: { Location: location } };
 }
 
@@ -605,6 +645,6 @@ function forbidden(): MaestrosResponse {
   return text(403, "Prohibido: solo el personal del negocio gestiona clientes y catálogo.");
 }
 
-function notFound(ctx: MaestrosContext, viewer: Viewer, msg: string): MaestrosResponse {
+export function notFound(ctx: MaestrosContext, viewer: Viewer, msg: string): MaestrosResponse {
   return html(404, page(ctx, viewer, "No encontrado", `<p class="err">${esc(msg)}</p>`));
 }

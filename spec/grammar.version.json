@@ -1,5 +1,5 @@
 {
-  "grammarVersion": "1.1.0",
+  "grammarVersion": "2.0.0",
   "schema": "abs.metaobject.grammar",
-  "notes": "1.1.0: catálogo de subtipos de los 10 elementos, 6 arquetipos, composición, diagnóstico y aprendices bayesianos. Sin cambio de enums de gramática de estados/eventos."
+  "notes": "2.0.0: tipos de evento `alta` y `datos` (datos de negocio de la transacción: parte, líneas, fecha, referencia, notas). No cambian el estado derivado. Aprobado por el propietario del proyecto. 1.1.0: catálogo de subtipos de los 10 elementos, 6 arquetipos, composición, diagnóstico y aprendices bayesianos."
 }

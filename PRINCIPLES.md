@@ -77,7 +77,7 @@ Por debajo del umbral no existe publicación: no hay lectura cruzada disfrazada.
 | **Compromiso** | Obligación pendiente o cumplida entre partes, ligada a una transacción y a evidencia. |
 | **Movimiento de valor** | Transferencia o registro de valor (entrada/salida) asociada a la transacción. |
 | **Evidencia** | Prueba exigida por una transición: aceptación, sistema o física. Sin ella no hay avance. |
-| **Evento** | Hecho inmutable que registra qué pasó, cuándo, qué actor y qué evidencia. Tipos cerrados: transición, excepción, modificación, vencimiento. |
+| **Evento** | Hecho inmutable que registra qué pasó, cuándo, qué actor y qué evidencia. Tipos cerrados: transición, excepción, modificación, vencimiento, alta, datos. `alta` y `datos` registran los datos de negocio de una transacción (parte, líneas, fecha, referencia, notas) y no cambian su estado (gramática 2.0.0). |
 
 ---
 

@@ -57,10 +57,53 @@ export interface ExpirationEvent extends EventBase {
   readonly commitmentId: string;
 }
 
+/** Línea de una transacción: qué, cuánto y a qué precio (copiado al registrar). */
+export interface LineaDatos {
+  /** Oferta del catálogo de la que sale la línea (opcional: línea libre). */
+  readonly ofertaId?: string;
+  readonly ofertaVersion?: number;
+  readonly descripcion: string;
+  /** Cantidad en milésimas (1,5 unidades → 1500). */
+  readonly cantidadMilesimas: number;
+  /** Precio unitario sin IVA en céntimos. */
+  readonly precioCentimos: number;
+  readonly ivaPct: number;
+}
+
+/**
+ * Datos de negocio de una transacción. Solo referencias opacas a Parte:
+ * la PII vive en ParteIdentityStore, nunca en eventos.
+ */
+export interface TransaccionDatos {
+  readonly parteId: string;
+  /** Fecha de negocio (AAAA-MM-DD). */
+  readonly fecha: string;
+  /** Referencia libre del negocio (matrícula, mesa, nº de obra…). */
+  readonly referencia?: string;
+  readonly notas?: string;
+  readonly lineas: readonly LineaDatos[];
+}
+
+/** Nace una transacción con sus datos. Primer evento de su historial. */
+export interface AltaEvent extends EventBase {
+  readonly kind: "alta";
+  readonly lifecycleId: string;
+  readonly sedeId?: string;
+  readonly datos: TransaccionDatos;
+}
+
+/** Cambio de datos de una transacción (no cambia su estado). */
+export interface DatosEvent extends EventBase {
+  readonly kind: "datos";
+  readonly cambios: Partial<TransaccionDatos>;
+}
+
 export type DomainEvent =
   | TransitionEvent
   | ExceptionEvent
   | ModificationEvent
-  | ExpirationEvent;
+  | ExpirationEvent
+  | AltaEvent
+  | DatosEvent;
 
 export type AppendOnlyEvent = Readonly<DomainEvent>;

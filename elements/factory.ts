@@ -8,7 +8,7 @@ import type { InvariantSet } from "../core/invariants.js";
 import type { Lifecycle } from "../core/lifecycle.js";
 import type { MetaObjectSpec } from "../core/metaobject.js";
 
-const GRAMMAR_VERSION = "1.1.0";
+const GRAMMAR_VERSION = "2.0.0";
 
 export function elementSpec(params: {
   id: string;

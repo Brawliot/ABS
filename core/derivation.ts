@@ -262,6 +262,10 @@ function applyEvent(
     case "modificacion":
       // No cambia compromisos; se conserva como señal de aprendizaje.
       return;
+    case "alta":
+    case "datos":
+      // Datos de negocio de la transacción: no cambian su estado.
+      return;
     default: {
       const _exhaustive: never = event;
       return _exhaustive;

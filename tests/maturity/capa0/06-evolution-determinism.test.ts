@@ -38,14 +38,15 @@ describe("Madurez Capa0 · EVOLUCIÓN", () => {
     ).toBe(true);
   });
 
-  it("E2: grammarVersion actual en 1.x.x (Capa 0 estable)", () => {
+  // 2.0.0 (aprobado): tipos de evento `alta` y `datos` para los datos de la transacción.
+  it("E2: grammarVersion actual en 2.x.x (Capa 0 estable)", () => {
     const raw = readFileSync(
       join(process.cwd(), "spec", "grammar.version.json"),
       "utf-8",
     );
     const obj = JSON.parse(raw) as { grammarVersion: string };
     const major = Number(obj.grammarVersion.split(".")[0]);
-    expect(major, "MAJOR debe ser 1 para gramática estable de Capa 0").toBe(1);
+    expect(major, "MAJOR debe ser 2 para gramática estable de Capa 0").toBe(2);
   });
 
   it("E3: las variantes de evidencia reconocidas por el validator no cambian sin MAJOR", () => {

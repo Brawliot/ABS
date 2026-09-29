@@ -16,7 +16,24 @@ import {
   evaluateBlocks,
   type SubTransactionSnapshot,
 } from "../archetypes/composed-runtime.js";
-import type { TransitionEvent } from "../core/events.js";
+import { randomUUID } from "node:crypto";
+import type {
+  AltaEvent,
+  DatosEvent,
+  LineaDatos,
+  TransaccionDatos,
+  TransitionEvent,
+} from "../core/events.js";
+import { formatCentimos } from "../elements/oferta.js";
+import {
+  calcularTotales,
+  diferencias,
+  proyectarTransaccion,
+  validarDatos,
+  type EntradaTransaccion,
+  type TransaccionProyectada,
+} from "../elements/transaccion.js";
+import { assertNoPiiInEventData } from "../policies/identity.js";
 import { deriveState } from "../core/derivation.js";
 import { findState } from "../core/lifecycle.js";
 import { redactInterfaceCopy } from "../design/copy/index.js";
@@ -128,7 +145,7 @@ export class AppRuntime {
       proposedAt: "2026-06-01T00:00:00.000Z",
     });
 
-    const subjects = seedSubjects(boot);
+    const subjects = loadSubjects(boot, store);
     const partes = new SqliteParteIdentityStore(dbPath);
     const ofertas = new SqliteOfertaCatalog(dbPath);
     seedDemoPartes(partes, tenantId, boot);
@@ -178,6 +195,177 @@ export class AppRuntime {
     (this.subjects as RuntimeSubject[]).push(subject);
   }
 
+  /** Nombre visible de una Parte (o marcador si se borró / no existe). */
+  nombreParte(parteId: string): string {
+    return this.partes.resolve(this.tenantId, parteId).personal.displayName;
+  }
+
+  /** Datos de negocio actuales del expediente (cliente, líneas…). */
+  datosDe(subjectId: string): TransaccionProyectada | undefined {
+    return proyectarTransaccion(this.store.getBySubject(subjectId));
+  }
+
+  /** Estado actual del expediente, con su tipo (inicial, intermedio…). */
+  estadoDe(
+    subjectId: string,
+  ): { readonly id: string; readonly label: string; readonly kind: string } | undefined {
+    const slice = this.lifecycleForSubject(subjectId);
+    if (!slice) return undefined;
+    const derived = deriveState(
+      slice.lifecycle,
+      this.store.getBySubject(subjectId),
+    );
+    const st = findState(slice.lifecycle, derived.currentStateId);
+    return {
+      id: derived.currentStateId,
+      label: st?.label ?? derived.currentStateId,
+      kind: st?.kind ?? "",
+    };
+  }
+
+  /** Los datos solo se editan en el estado inicial (presupuesto / propuesta). */
+  puedeEditarDatos(subjectId: string): boolean {
+    return this.estadoDe(subjectId)?.kind === "inicial";
+  }
+
+  /**
+   * Alta de un expediente con sus datos. Resuelve las líneas del catálogo
+   * (copia precio y versión vigentes) y registra un evento `alta`.
+   */
+  crearTransaccion(
+    entrada: EntradaTransaccion,
+    actorId: string,
+  ): { ok: true; id: string } | { ok: false; errors: string[] } {
+    const slice = this.boot.input.lifecycles.find(
+      (l) => l.id === entrada.lifecycleId,
+    );
+    if (!slice) return { ok: false, errors: ["Ese proceso no existe."] };
+    const resolved = this.resolverDatos(entrada, undefined);
+    if (!resolved.ok) return resolved;
+
+    const id = `tx-${randomUUID()}`;
+    const at = new Date().toISOString();
+    const alta: AltaEvent = {
+      id: `alta-${id}`,
+      kind: "alta",
+      subjectId: id,
+      occurredAt: at,
+      actorId,
+      actorKind: "humano",
+      evidence: { kind: "sistema", reference: `alta:${id}`, recordedAt: at },
+      lifecycleId: slice.id,
+      ...(entrada.sedeId ? { sedeId: entrada.sedeId } : {}),
+      datos: resolved.datos,
+    };
+    assertNoPiiInEventData(alta.datos as unknown as Record<string, unknown>);
+    this.store.append(alta);
+    this.facts.applyEvent(this.tenantId, alta);
+    this.addSubject(subjectFromAlta(alta, this.boot, this.subjects.length + 1));
+    return { ok: true, id };
+  }
+
+  /**
+   * Cambia los datos de un expediente en estado inicial. Solo registra los
+   * campos que cambian; si no cambia nada, no escribe ningún evento.
+   */
+  editarTransaccion(
+    subjectId: string,
+    entrada: EntradaTransaccion,
+    actorId: string,
+  ): { ok: true; changed: boolean } | { ok: false; errors: string[] } {
+    const actual = this.datosDe(subjectId);
+    if (!actual) return { ok: false, errors: ["Ese expediente no existe."] };
+    if (!this.puedeEditarDatos(subjectId)) {
+      return {
+        ok: false,
+        errors: [
+          "Este expediente ya no está en su estado inicial: sus datos no se pueden cambiar.",
+        ],
+      };
+    }
+    const resolved = this.resolverDatos(entrada, actual.datos);
+    if (!resolved.ok) return resolved;
+    const cambios = diferencias(actual.datos, resolved.datos);
+    if (Object.keys(cambios).length === 0) return { ok: true, changed: false };
+
+    const at = new Date().toISOString();
+    const ev: DatosEvent = {
+      id: `datos-${randomUUID()}`,
+      kind: "datos",
+      subjectId,
+      occurredAt: at,
+      actorId,
+      actorKind: "humano",
+      evidence: { kind: "sistema", reference: `datos:${subjectId}`, recordedAt: at },
+      cambios,
+    };
+    assertNoPiiInEventData(ev.cambios as unknown as Record<string, unknown>);
+    this.store.append(ev);
+    this.facts.applyEvent(this.tenantId, ev);
+    return { ok: true, changed: true };
+  }
+
+  /**
+   * Convierte la entrada del formulario en datos guardables:
+   * - la Parte debe existir y no estar borrada;
+   * - una línea de catálogo toma descripción, precio e IVA de la Oferta
+   *   (el precio se puede ajustar); una línea que ya estaba conserva su versión.
+   */
+  private resolverDatos(
+    entrada: EntradaTransaccion,
+    previos: TransaccionDatos | undefined,
+  ): { ok: true; datos: TransaccionDatos } | { ok: false; errors: string[] } {
+    const errors: string[] = [];
+    const parte = this.partes.get(this.tenantId, entrada.parteId);
+    if (entrada.parteId && (!parte || parte.erasedAt)) {
+      errors.push("El cliente o proveedor elegido no existe.");
+    }
+    const lineas: LineaDatos[] = [];
+    entrada.lineas.forEach((l, i) => {
+      const n = i + 1;
+      if (l.ofertaId) {
+        const previa = previos?.lineas.find((p) => p.ofertaId === l.ofertaId);
+        const oferta = previa?.ofertaVersion
+          ? this.ofertas.getVersion(this.tenantId, l.ofertaId, previa.ofertaVersion)
+          : this.ofertas.get(this.tenantId, l.ofertaId);
+        if (!oferta || (!previa && !oferta.activa)) {
+          errors.push(`Línea ${n}: esa oferta no está en el catálogo.`);
+          return;
+        }
+        lineas.push({
+          ofertaId: oferta.ofertaId,
+          ofertaVersion: oferta.version,
+          descripcion: l.descripcion?.trim() || oferta.nombre,
+          cantidadMilesimas: l.cantidadMilesimas,
+          precioCentimos: l.precioCentimos ?? oferta.precioCentimos,
+          ivaPct: oferta.ivaPct,
+        });
+        return;
+      }
+      if (l.precioCentimos === undefined) {
+        errors.push(`Línea ${n}: indica el precio.`);
+        return;
+      }
+      lineas.push({
+        descripcion: (l.descripcion ?? "").trim(),
+        cantidadMilesimas: l.cantidadMilesimas,
+        precioCentimos: l.precioCentimos,
+        ivaPct: l.ivaPct ?? 21,
+      });
+    });
+    const referencia = entrada.referencia?.trim();
+    const notas = entrada.notas?.trim();
+    const datos: TransaccionDatos = {
+      parteId: entrada.parteId,
+      fecha: entrada.fecha,
+      ...(referencia ? { referencia } : {}),
+      ...(notas ? { notas } : {}),
+      lineas,
+    };
+    errors.push(...validarDatos(datos));
+    return errors.length > 0 ? { ok: false, errors } : { ok: true, datos };
+  }
+
   /** Filas de UI derivadas solo de eventos (no estado local de cliente). */
   projectRows(filter?: {
     readonly sedeId?: string;
@@ -197,14 +385,27 @@ export class AppRuntime {
         (l) => l.id === sub.lifecycleId,
       );
       if (!slice) continue;
-      const events = this.store.getBySubject(sub.id) as TransitionEvent[];
+      const events = this.store.getBySubject(sub.id);
       const derived = deriveState(slice.lifecycle, events);
       const state = findState(slice.lifecycle, derived.currentStateId);
+      const tx = proyectarTransaccion(events);
+      const parteId = tx?.datos.parteId ?? sub.parteId;
       rows.push({
         id: sub.id,
         label: sub.label,
         stateId: derived.currentStateId,
-        parteId: sub.parteId,
+        lifecycleId: sub.lifecycleId,
+        parteId,
+        ...(tx
+          ? {
+              detalle: {
+                cliente: this.nombreParte(parteId),
+                fecha: tx.datos.fecha,
+                total: formatCentimos(calcularTotales(tx.datos.lineas).total),
+                ...(tx.datos.referencia ? { referencia: tx.datos.referencia } : {}),
+              },
+            }
+          : {}),
         meta: `estado=${derived.currentStateId}${state ? ` (${state.label})` : ""}${sub.vinculadaA ? ` · vinculada_a=${sub.vinculadaA}` : ""}`,
         ...(sub.sedeId !== undefined ? { sedeId: sub.sedeId } : {}),
         ...(sub.vinculadaA !== undefined
@@ -314,6 +515,64 @@ function seedDemoPartes(
       "cliente",
     );
   }
+}
+
+/**
+ * Expedientes = eventos `alta` del almacén. Con el almacén sin altas (negocio
+ * nuevo o base de datos anterior a los datos de transacción), registra las altas
+ * de los expedientes demo con los mismos ids, así el historial previo encaja.
+ */
+function loadSubjects(
+  boot: AppBootResult,
+  store: SqliteEventStore,
+): RuntimeSubject[] {
+  let altas = store.all().filter((e): e is AltaEvent => e.kind === "alta");
+  if (altas.length === 0) {
+    const at = "2026-06-01T00:00:00.000Z";
+    for (const s of seedSubjects(boot)) {
+      store.append({
+        id: `alta-${s.id}`,
+        kind: "alta",
+        subjectId: s.id,
+        occurredAt: at,
+        actorId: "sistema-demo",
+        actorKind: "sistema",
+        evidence: { kind: "sistema", reference: "seed-demo", recordedAt: at },
+        lifecycleId: s.lifecycleId,
+        ...(s.sedeId ? { sedeId: s.sedeId } : {}),
+        datos: {
+          parteId: s.parteId,
+          fecha: at.slice(0, 10),
+          referencia: "demo",
+          lineas: [
+            {
+              descripcion: `Ejemplo · ${s.label}`,
+              cantidadMilesimas: 1000,
+              precioCentimos: 10000,
+              ivaPct: 21,
+            },
+          ],
+        },
+      });
+    }
+    altas = store.all().filter((e): e is AltaEvent => e.kind === "alta");
+  }
+  return altas.map((a, i) => subjectFromAlta(a, boot, i + 1));
+}
+
+function subjectFromAlta(
+  alta: AltaEvent,
+  boot: AppBootResult,
+  n: number,
+): RuntimeSubject {
+  const slice = boot.input.lifecycles.find((l) => l.id === alta.lifecycleId);
+  return {
+    id: alta.subjectId,
+    lifecycleId: alta.lifecycleId,
+    label: `${slice?.label ?? slice?.archetypeId ?? "Expediente"} #${n}`,
+    parteId: alta.datos.parteId,
+    ...(alta.sedeId ? { sedeId: alta.sedeId } : {}),
+  };
 }
 
 function seedSubjects(boot: AppBootResult): RuntimeSubject[] {

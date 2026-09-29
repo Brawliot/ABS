@@ -32,6 +32,15 @@ export interface SampleRow {
   readonly meta?: string;
   readonly sedeId?: string;
   readonly vinculadaA?: string;
+  /** Proceso del expediente (filas vivas). */
+  readonly lifecycleId?: string;
+  /** Datos de negocio del expediente (si tiene alta). */
+  readonly detalle?: {
+    readonly cliente: string;
+    readonly fecha: string;
+    readonly total: string;
+    readonly referencia?: string;
+  };
 }
 
 export interface AppBootResult {

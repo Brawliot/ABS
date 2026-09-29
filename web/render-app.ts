@@ -185,6 +185,37 @@ function renderQuestions(boot: RenderAppOptions["boot"]): string {
 </section>`;
 }
 
+function expedienteHref(session: DevSession, id: string, suffix = ""): string {
+  const p = new URLSearchParams({ role: session.roleId, parte: session.parteId });
+  return `/expedientes/${encodeURIComponent(id)}${suffix}?${p.toString()}`;
+}
+
+/** Botón «Nuevo» del proceso activo (solo personal interno, modo vivo). */
+function renderNuevoExpediente(
+  boot: RenderAppOptions["boot"],
+  group: ProcessGroupSpec | undefined,
+  session: DevSession,
+  live: boolean,
+): string {
+  if (!group || !live || session.roleId === "cliente" || session.channel === "autoservicio") {
+    return "";
+  }
+  const p = new URLSearchParams({
+    proceso: group.lifecycleId,
+    role: session.roleId,
+    parte: session.parteId,
+  });
+  return (
+    `<p class="nuevo-expediente"><a class="btn-nuevo" href="${esc(`/expedientes/nuevo?${p.toString()}`)}" data-nuevo-expediente="${esc(group.lifecycleId)}">` +
+    `+ Nuevo: ${esc(procesoLabel(boot, group.lifecycleId))}</a></p>`
+  );
+}
+
+function procesoLabel(boot: RenderAppOptions["boot"], lifecycleId: string): string {
+  const slice = boot.input.lifecycles.find((l) => l.id === lifecycleId);
+  return slice?.label ?? slice?.archetypeId ?? lifecycleId;
+}
+
 /** Datos maestros (clientes, catálogo): solo personal interno en modo vivo. */
 function renderMaestrosNav(session: DevSession, live: boolean): string {
   if (!live || session.roleId === "cliente" || session.channel === "autoservicio") {
@@ -378,7 +409,12 @@ function rowsForView(
     return rowsForPortal(allRows, session.parteId);
   }
   if (view.kind === "tablero" && view.stateId) {
-    return allRows.filter((r) => r.stateId === view.stateId);
+    // Mismo estado Y mismo proceso: dos procesos pueden tener un estado «propuesta».
+    return allRows.filter(
+      (r) =>
+        r.stateId === view.stateId &&
+        (!view.lifecycleId || !r.lifecycleId || r.lifecycleId === view.lifecycleId),
+    );
   }
   if (view.kind.startsWith("panel_")) {
     return allRows.filter((r) => r.meta === view.kind);
@@ -443,7 +479,14 @@ function renderViewBody(
           : "";
       return (
         `<li data-row-id="${esc(r.id)}" data-parte="${esc(r.parteId)}" data-row-state="${esc(r.stateId ?? "")}">` +
-        `<span>${esc(r.label)}</span>` +
+        (live && r.detalle
+          ? `<span><a href="${esc(expedienteHref(session, r.id))}" data-expediente-link>${esc(r.label)}</a></span>` +
+            `<span class="row-detalle" data-row-detalle>${esc(
+              [r.detalle.cliente, r.detalle.referencia, r.detalle.fecha, r.detalle.total]
+                .filter(Boolean)
+                .join(" · "),
+            )}</span>`
+          : `<span>${esc(r.label)}</span>`) +
         `<span class="meta">${esc(r.meta ?? r.stateId ?? "")}</span>` +
         acts +
         `</li>`
@@ -607,6 +650,10 @@ export function renderAppHtml(options: RenderAppOptions): string {
 .action-form button[aria-busy="true"] { opacity: 0.7; cursor: wait; }
 .action-form button:disabled, .actions[data-readonly] button:disabled { opacity: 0.55; cursor: not-allowed; }
 .block-banner { margin-bottom: var(--espaciado-m); padding: var(--espaciado-m); border: 1px solid var(--color-aviso); border-radius: var(--radio-md); }
+.nuevo-expediente { margin: 0 0 var(--espaciado-m); }
+.btn-nuevo { display: inline-block; padding: var(--espaciado-s) var(--espaciado-l); border-radius: var(--radio-md); background: var(--color-primario); color: var(--color-superficie); font-weight: 600; text-decoration: none; }
+.btn-nuevo:hover { text-decoration: none; opacity: 0.9; }
+.row-detalle { color: var(--color-texto); font-size: 0.9rem; }
 </style>
 </head>
 <body class="${hasQuestions ? "has-questions" : ""}" data-profile="${esc(boot.profileId)}" data-role="${esc(session.roleId)}" data-parte="${esc(session.parteId)}" data-channel="${esc(session.channel)}" data-density="${esc(binding.tokens.density)}" data-live="${liveAttr}">
@@ -627,6 +674,7 @@ export function renderAppHtml(options: RenderAppOptions): string {
     <main class="main" id="main">
       ${renderFlash(flash, session)}
       ${live ? renderActiveBlocks(session, activeBlocks) : ""}
+      ${renderNuevoExpediente(boot, activeGroup, session, live)}
       ${activeGroup ? renderViewTabs(spec, activeGroup, session) : ""}
       ${mainBody}
       <aside class="unrendered" data-unrendered>

@@ -53,6 +53,7 @@ import {
 } from "../auth/index.js";
 import type { ParteIdentityStore } from "../policies/identity.js";
 import { handleMaestros, isMaestrosPath } from "./maestros.js";
+import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -646,6 +647,15 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (isExpedientesPath(path)) {
+        const out = await handleExpedientes(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (isMaestrosPath(path)) {
