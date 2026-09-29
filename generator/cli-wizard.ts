@@ -6,12 +6,8 @@
 
 import { createHash } from "node:crypto";
 import * as readline from "node:readline";
-import type {
-  Lifecycle,
-  StateNode,
-  Transition,
-} from "../core/lifecycle.js";
-import type { EvidenceKind } from "../core/grammar.js";
+import { ARCHETYPES, requireArchetype } from "../archetypes/catalog.js";
+import type { ArchetypeId } from "../archetypes/types.js";
 import type { GeneratorInput, LifecycleSlice } from "../generator/types.js";
 import type { CompiledRuleSet, RoleDef } from "../policies/types.js";
 import { generateUiSpec } from "../generator/index.js";
@@ -28,11 +24,35 @@ interface WizardAnswers {
   businessName: string;
   companyId: string;
   roles: string[];
-  mainStates: string[];
+  archetypeId: ArchetypeId;
   secondaryProcesses: string[];
   hasCalendar: boolean;
   hasFormalDocuments: boolean;
   hasFiscalCompliance: boolean;
+}
+
+/**
+ * Tipos de ciclo que se ofrecen al usuario, en el orden del catálogo.
+ * El ciclo de vida sale siempre del arquetipo ya validado; el usuario
+ * no escribe estados a mano.
+ */
+const ARCHETYPE_HINTS: Record<ArchetypeId, string> = {
+  venta: "vendes productos (tienda, ferretería, concesionario)",
+  servicio_proyecto:
+    "haces un trabajo por encargo (peluquería, taller, gestoría, reformas)",
+  suscripcion: "cobras un acceso recurrente (gimnasio, academia, software)",
+  uso_temporal: "alquilas algo por un tiempo (maquinaria, alojamiento, parking)",
+  intermediacion: "pones en contacto a dos partes (inmobiliaria, marketplace)",
+  financiera: "gestionas dinero: cobros, pagos, crédito",
+};
+
+function parseArchetypeChoice(raw: string): ArchetypeId | undefined {
+  const v = raw.trim().toLowerCase();
+  const n = Number(v);
+  if (Number.isInteger(n) && n >= 1 && n <= ARCHETYPES.length) {
+    return ARCHETYPES[n - 1]!.id;
+  }
+  return ARCHETYPES.find((a) => a.id === v)?.id;
 }
 
 /**
@@ -56,9 +76,21 @@ async function askQuestions(): Promise<WizardAnswers> {
   const rolesInput = await question(
     "¿Roles (separados por coma)? Ej: gerente, vendedor, cliente\n> "
   );
-  const statesInput = await question(
-    "¿Estados principales (separados por coma)? Ej: propuesta, aceptada, completada\n> "
-  );
+  // TODO(futuro): tras elegir el tipo, mostrar los estados del arquetipo y
+  // dejar que el usuario los renombre (p. ej. "acordado" → "citado") y
+  // active/desactive pasos opcionales. Hoy se usan los estados tal cual.
+  const archetypeMenu = ARCHETYPES.map(
+    (a, i) => `  ${i + 1}. ${a.label} — ${ARCHETYPE_HINTS[a.id]}`
+  ).join("\n");
+  let archetypeId: ArchetypeId | undefined;
+  while (!archetypeId) {
+    archetypeId = parseArchetypeChoice(
+      await question(`¿Qué tipo de negocio es?\n${archetypeMenu}\n> `)
+    );
+    if (!archetypeId) {
+      console.log(`Opción no válida. Escribe un número del 1 al ${ARCHETYPES.length}.`);
+    }
+  }
   const secondaryInput = await question(
     "¿Procesos secundarios (separados por coma, o dejar en blanco)? Ej: pago, inventario\n> "
   );
@@ -76,7 +108,7 @@ async function askQuestions(): Promise<WizardAnswers> {
     businessName,
     companyId: `company-${businessName.toLowerCase().replace(/\s+/g, "-")}`,
     roles: rolesInput.split(",").map((r) => r.trim()),
-    mainStates: statesInput.split(",").map((s) => s.trim()),
+    archetypeId,
     secondaryProcesses: secondaryInput
       .split(",")
       .map((s) => s.trim())
@@ -87,90 +119,13 @@ async function askQuestions(): Promise<WizardAnswers> {
   };
 }
 /**
- * Crea un ciclo de vida mínimo a partir de estados
- * Reordena automáticamente para que terminales vayan al final
- */
-function buildMinimalLifecycle(stateIds: string[]): Lifecycle {
-  // ✅ NUEVO: Reordenar estados para que terminales vayan al final
-  const isCancelTerminal = (id: string) => {
-    const lower = id.toLowerCase();
-    return lower.includes("cancel") || lower.includes("rechaz") || lower.includes("abort");
-  };
-
-  const isLastTerminal = (id: string, idx: number, all: string[]) => {
-    return idx === all.length - 1 && !isCancelTerminal(id);
-  };
-
-  // Separar: terminales de cancelación, terminales finales, intermedios
-  const terminals = stateIds.filter(isCancelTerminal);
-  const intermediate = stateIds.filter(id => !isCancelTerminal(id) && stateIds.indexOf(id) !== stateIds.length - 1);
-  const finalState = stateIds[stateIds.length - 1];
-
-  // Reordenar: intermedios → final → cancelables
-  const orderedStateIds = [...intermediate, finalState!, ...terminals];
-
-  console.log(`ℹ️  Estados reordenados: ${orderedStateIds.join(" → ")}`);
-
-  const commitments = Array.from({ length: Math.max(1, orderedStateIds.length - 1) }, (_, i) => ({
-    id: `commit_${i}`,
-    label: `Paso ${i + 1}`,
-  }));
-
-  const states: StateNode[] = orderedStateIds.map((id, idx) => ({
-    id,
-    kind: idx === 0 
-      ? "inicial" 
-      : isCancelTerminal(id)
-        ? "terminal_excepcion"
-        : idx === orderedStateIds.length - 1
-          ? "terminal_exito"
-          : "intermedio",
-    label: id.replace(/_/g, " "),
-    situations: [
-      {
-        fulfilled: commitments.slice(0, idx).map((c) => c.id),
-        pending: commitments.slice(idx).map((c) => c.id),
-      },
-    ],
-  }));
-
-  // ✅ NO crear transiciones saliendo de estados terminales
-  const transitions: Transition[] = [];
-  for (let i = 0; i < orderedStateIds.length - 1; i++) {
-    const from = orderedStateIds[i]!;
-    const fromState = states[i]!;
-    const to = orderedStateIds[i + 1]!;
-    
-    // Si el estado de origen es terminal, NO crear transición
-    if (fromState.kind.startsWith("terminal")) {
-      continue;
-    }
-    
-    transitions.push({
-      id: `t_${from}_to_${to}`,
-      from,
-      to,
-      requiredEvidence: "aceptacion" as EvidenceKind,
-      condition: "true",
-      allowedActor: "humano",
-      fulfills: [`commit_${i}`],
-    } as unknown as Transition);
-  }
-
-  return {
-    states,
-    transitions,
-    commitments,
-  } as Lifecycle;
-}
-/**
  * Crea un RuleSet mínimo con guard rules
  */
 function buildMinimalRuleSet(
   roles: string[],
   transitions: any[],
   companyId: string,
-  businessName: string
+  archetypeId: ArchetypeId
 ): CompiledRuleSet {
   const roleDefs: RoleDef[] = roles.map((r) => ({
     id: r,
@@ -198,7 +153,7 @@ function buildMinimalRuleSet(
     sourceDocumentId: `policy-${companyId}`,
     sourceDocumentVersion: "1.0.0",
     companyId,
-    archetypeId: `archetype-${businessName.toLowerCase().replace(/\s+/g, "-")}`,
+    archetypeId,
     contentHash,
     roles: roleDefs,
     rules: rules as any,
@@ -212,20 +167,20 @@ function buildMinimalRuleSet(
  * Construye GeneratorInput mínimo
  */
 function buildGeneratorInput(answers: WizardAnswers): GeneratorInput {
-  const lifecycle = buildMinimalLifecycle(answers.mainStates);
+  const { lifecycle } = requireArchetype(answers.archetypeId);
   const ruleSet = buildMinimalRuleSet(
     answers.roles,
     lifecycle.transitions as any,
     answers.companyId,
-    answers.businessName
+    answers.archetypeId
   );
 
   const lifecycleSlice: LifecycleSlice = {
-    id: "lc.main",
-    archetypeId: ruleSet.archetypeId,
+    id: `lc.${answers.archetypeId}`,
+    archetypeId: answers.archetypeId,
     lifecycle,
     label: answers.businessName,
-    compositionRole: "standalone",
+    compositionRole: "dominant",
   };
 
   return {
@@ -246,7 +201,7 @@ function buildGeneratorInput(answers: WizardAnswers): GeneratorInput {
     hasFiscalCompliance: answers.hasFiscalCompliance,
     hasCalendar: answers.hasCalendar,
     composition: {
-      dominant: "venta" as any,
+      dominant: answers.archetypeId,
       secondaries: [],
     },
   };
@@ -376,7 +331,7 @@ export async function generateWizardDraft(): Promise<WizardDraft> {
       optional: [],
     },
     explanations: {
-      whyThisModules: `Basado en que "${answers.businessName}" es un negocio con roles: ${answers.roles.join(", ")}, estados: ${answers.mainStates.join(", ")}`,
+      whyThisModules: `Basado en que "${answers.businessName}" es un negocio con roles: ${answers.roles.join(", ")}, tipo de ciclo: ${requireArchetype(answers.archetypeId).label}`,
       designRationale: "Diseño moderno y profesional optimizado para usabilidad",
       risks: [],
       gaps: [],
