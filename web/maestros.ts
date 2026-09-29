@@ -648,6 +648,21 @@ export function page(
   .tarjeta-titulo { font-weight:700; font-size:1.05rem; color:var(--accent); }
   .tarjeta-que { color:var(--muted); font-size:.9rem; }
   .tarjeta-dato { font-weight:600; font-size:.9rem; }
+  .inicio-contenedor { display:flex; flex-direction:column; gap:16px; }
+  .avisos-contenedor { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .aviso { padding:12px 16px; border-radius:6px; font-size:.9rem; font-weight:600; }
+  .aviso-leve { background:#e0f2fe; color:#0369a1; border:1px solid #0284c7; }
+  .aviso-medio { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+  .aviso-grave { background:#fee2e2; color:#7f1d1d; border:1px solid #dc2626; }
+  .aviso-bloqueante { background:#f3e8ff; color:#6b21a8; border:1px solid #a855f7; }
+  .inicio-grid { display:grid; grid-template-columns: 30% 70%; gap:24px; }
+  .menu-izq { display:flex; flex-direction:column; gap:8px; }
+  .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; }
+  .menu-enlace:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
+  .contenido-der { display:grid; gap:16px; }
+  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; }
+  .enlace-contenido h2 { margin-top:0; }
+  @media (max-width: 768px) { .inicio-grid { grid-template-columns:1fr; } }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
   .factura { background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; margin:12px 0; }
   .factura-cab { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; margin-bottom:16px; }
