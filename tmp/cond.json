@@ -1,0 +1,328 @@
+{
+  "p02-clinica-dental": [
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:inferred-evidencia",
+      "priority": 300,
+      "transitionId": "t_ejecutar",
+      "evidenceKind": "sistema",
+      "referenceType": "consentimiento_informado",
+      "sourcePolicyId": "inferred-evidencia",
+      "sourceKind": "cumplimiento",
+      "binding": {
+        "mode": "live"
+      }
+    },
+    {
+      "kind": "condition",
+      "id": "restr:inferred-limite-plazos",
+      "priority": 150,
+      "transitionId": "t_aprobar",
+      "predicate": {
+        "field": "plazos_meses",
+        "op": "gt",
+        "value": 12
+      },
+      "sourcePolicyId": "inferred-limite-plazos",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "isRestriction": true
+    },
+    {
+      "kind": "condition",
+      "id": "restr:sample-pol-0",
+      "priority": 150,
+      "transitionId": "t_acordar",
+      "predicate": {
+        "field": "descuento_pct",
+        "op": "gt",
+        "value": 5
+      },
+      "sourcePolicyId": "sample-pol-0",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "isRestriction": true
+    },
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:sample-pol-1",
+      "priority": 100,
+      "transitionId": "t_acordar",
+      "evidenceKind": "aceptacion",
+      "requiredRole": "director_medico",
+      "when": {
+        "field": "importe",
+        "op": "gte",
+        "value": 3000
+      },
+      "sourcePolicyId": "sample-pol-1",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ],
+  "p03-ferreteria": [
+    {
+      "kind": "condition",
+      "id": "restr-fact:sample-pol-0",
+      "priority": 150,
+      "transitionId": "t_aceptar",
+      "predicate": {
+        "field": "_fact",
+        "op": "gt",
+        "value": 1500
+      },
+      "sourcePolicyId": "sample-pol-0",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "factBinding": {
+        "factId": "parte.saldo_pendiente",
+        "params": {
+          "parteId": "{{parte_id}}"
+        }
+      },
+      "isRestriction": true,
+      "requiredFacts": [
+        {
+          "factId": "parte.saldo_pendiente",
+          "params": {
+            "parteId": "{{parte_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "condition",
+      "id": "restr-fact:tpl-limite-credito",
+      "priority": 150,
+      "transitionId": "t_aceptar",
+      "predicate": {
+        "field": "_fact",
+        "op": "gt",
+        "value": 1500
+      },
+      "sourcePolicyId": "tpl-limite-credito",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "factBinding": {
+        "factId": "parte.saldo_pendiente",
+        "params": {
+          "parteId": "{{parte_id}}"
+        }
+      },
+      "isRestriction": true,
+      "requiredFacts": [
+        {
+          "factId": "parte.saldo_pendiente",
+          "params": {
+            "parteId": "{{parte_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "condition",
+      "id": "restr:sample-pol-1",
+      "priority": 150,
+      "transitionId": "t_aceptar",
+      "predicate": {
+        "field": "dias_impago",
+        "op": "gte",
+        "value": 45
+      },
+      "sourcePolicyId": "sample-pol-1",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "isRestriction": true
+    },
+    {
+      "kind": "condition",
+      "id": "restr:tpl-bloqueo-impago",
+      "priority": 150,
+      "transitionId": "t_aceptar",
+      "predicate": {
+        "field": "dias_impago",
+        "op": "gte",
+        "value": 45
+      },
+      "sourcePolicyId": "tpl-bloqueo-impago",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "isRestriction": true
+    }
+  ],
+  "p08-alquiler-maquinaria": [
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:inferred-evidencia",
+      "priority": 300,
+      "transitionId": "t_reservar",
+      "evidenceKind": "aceptacion",
+      "referenceType": "contrato_firmado",
+      "sourcePolicyId": "inferred-evidencia",
+      "sourceKind": "cumplimiento",
+      "binding": {
+        "mode": "live"
+      }
+    },
+    {
+      "kind": "condition",
+      "id": "restr-fact:sample-pol-1",
+      "priority": 150,
+      "transitionId": "t_reservar",
+      "predicate": {
+        "field": "_fact",
+        "op": "gt",
+        "value": 5000
+      },
+      "sourcePolicyId": "sample-pol-1",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "factBinding": {
+        "factId": "parte.saldo_pendiente",
+        "params": {
+          "parteId": "{{parte_id}}"
+        }
+      },
+      "isRestriction": true,
+      "requiredFacts": [
+        {
+          "factId": "parte.saldo_pendiente",
+          "params": {
+            "parteId": "{{parte_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "condition",
+      "id": "restr:inferred-fianza-retencion",
+      "priority": 150,
+      "transitionId": "t_cerrar",
+      "predicate": {
+        "field": "fianza_eur",
+        "op": "lte",
+        "value": 0
+      },
+      "sourcePolicyId": "inferred-fianza-retencion",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "isRestriction": true
+    },
+    {
+      "kind": "condition",
+      "id": "cond:inferred-fianza-retencion",
+      "priority": 100,
+      "transitionId": "t_cerrar",
+      "predicate": {
+        "field": "retencion_abierta",
+        "op": "gte",
+        "value": 1
+      },
+      "sourcePolicyId": "inferred-fianza-retencion",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      }
+    },
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:sample-pol-0",
+      "priority": 100,
+      "transitionId": "t_reservar",
+      "evidenceKind": "aceptacion",
+      "requiredRole": "gerente",
+      "when": {
+        "field": "importe",
+        "op": "gte",
+        "value": 500
+      },
+      "sourcePolicyId": "sample-pol-0",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ],
+  "p04-taller-mecanico": [
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:inferred-evidencia",
+      "priority": 300,
+      "transitionId": "t_acordar",
+      "evidenceKind": "aceptacion",
+      "referenceType": "presupuesto_escrito",
+      "sourcePolicyId": "inferred-evidencia",
+      "sourceKind": "cumplimiento",
+      "binding": {
+        "mode": "live"
+      }
+    },
+    {
+      "kind": "condition",
+      "id": "restr-fact:tpl-saldo-antes-cerrar",
+      "priority": 150,
+      "transitionId": "t_cerrar",
+      "predicate": {
+        "field": "_fact",
+        "op": "gt",
+        "value": 0
+      },
+      "sourcePolicyId": "tpl-saldo-antes-cerrar",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      },
+      "factBinding": {
+        "factId": "parte.saldo_pendiente",
+        "params": {
+          "parteId": "$fields.parte_id"
+        }
+      },
+      "isRestriction": true,
+      "requiredFacts": [
+        {
+          "factId": "parte.saldo_pendiente",
+          "params": {
+            "parteId": "$fields.parte_id"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:sample-pol-0",
+      "priority": 100,
+      "transitionId": "t_acordar",
+      "evidenceKind": "aceptacion",
+      "requiredRole": "dueno",
+      "when": {
+        "field": "importe",
+        "op": "gte",
+        "value": 1500
+      },
+      "sourcePolicyId": "sample-pol-0",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ]
+}

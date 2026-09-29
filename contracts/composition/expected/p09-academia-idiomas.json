@@ -1,0 +1,188 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p09-academia-idiomas",
+  "profileName": "Academia de idiomas con tres centros",
+  "decisionsVersion": "2026-09-28-user",
+  "summary": "suscripcion dominante + capacidad/plazas de grupo (no servicio_proyecto por curso). Tutor→hijo. naturalezaBienes confianza 0.5 → MUST_ASK inventario.",
+  "processes": [
+    {
+      "id": "proc.matricula",
+      "label": "Matrícula y cuota mensual",
+      "dominant": "suscripcion",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "groupCapacity": {
+        "semantics": "plaza_grupo",
+        "under": "suscripcion",
+        "not": "servicio_proyecto_por_curso",
+        "status": "REQUIERE_EXTENSION",
+        "extension": "plazas",
+        "notes": "Asistencia/evaluación = hechos/campos bajo la suscripción; asignación bloqueada hasta matrícula pagada.",
+        "trace": [
+          { "field": "procesos", "value": ["asignacion a grupo", "asistencia", "evaluacion"], "decision": "capacidad+campos, no servicio dominante" },
+          { "field": "userDecision", "value": "p09.d1 ACCEPTED suscripcion_mas_capacidad_grupo", "decision": "sin servicio_proyecto de curso" }
+        ]
+      },
+      "trace": [
+        { "field": "procesos", "value": ["matricula", "cobro de cuota mensual", "baja"], "decision": "suscripcion" },
+        { "field": "cobros.cuotasRecurrentes", "value": "mensual domiciliada", "decision": "t_periodo" },
+        { "field": "cobros.fianzas", "value": "matricula no reembolsable", "decision": "cargo/retencion" },
+        { "field": "bloqueos", "value": "no se asigna a grupo sin matricula pagada", "decision": "restriction" },
+        { "field": "calendario.temporadas", "value": "curso septiembre-junio", "decision": "seasons" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "plaza_grupo",
+      "status": "REQUIERE_EXTENSION",
+      "extension": "plazas",
+      "trace": [
+        { "field": "descripcion", "value": "grupos por nivel", "decision": "plazas" },
+        { "field": "modulosEsperados", "value": ["grupos y horarios"], "decision": "aforo grupo" }
+      ]
+    },
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "confianza": 0.5,
+      "status": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "questionId": "p09.d2",
+      "notes": "No activar ni desactivar inventario sin pregunta.",
+      "trace": [
+        { "field": "naturalezaBienes", "value": ["propios_por_cantidad"], "confianza": 0.5, "decision": "MUST_ASK" }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "descuento_maximo_sin_aprobacion",
+      "parametros": { "porcentaje": 15, "aplica_a": "hermanos" },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[0]", "value": "descuento hermanos 15%", "decision": "descuento" }]
+    },
+    {
+      "plantilla": "bloqueo_por_impago",
+      "parametros": { "recibos_pendientes": 2 },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[1]", "value": "2 recibos", "decision": "bloqueo" }]
+    },
+    {
+      "plantilla": "matricula_no_reembolsable",
+      "parametros": { "movimiento": "cargo_o_retencion" },
+      "status": "REQUIERE_EXTENSION",
+      "extension": "liquidacion_fianza",
+      "trace": [
+        { "field": "cobros.fianzas", "value": "matricula no reembolsable", "decision": "cargo tipado" }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": ["alumno_adulto"],
+      "fields": ["asistencia", "notas", "recibos"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "alumnos adultos lo suyo", "decision": "propia" }
+      ]
+    },
+    {
+      "scope": "delegada_tutor",
+      "roles": ["padre_tutor"],
+      "subject": "hijo_menor",
+      "fields": ["asistencia", "notas", "recibos"],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "filtro_dato_sensible",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "padres ven datos de sus hijos", "decision": "visibilidad delegada" },
+        { "field": "datosSensibles", "value": ["menores"], "decision": "Filtro menores" },
+        { "field": "necesidadesNoExpresables", "value": "relacion tutor-menor", "decision": "extensión" }
+      ]
+    },
+    {
+      "scope": "sede",
+      "roles": ["coordinador_centro"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "organizacion.sedes", "value": ["Chamberi", "Retiro", "Pozuelo"], "decision": "multisede" },
+        { "field": "excepcionesPermiso", "value": "coordinadores solo su centro", "decision": "scope sede" }
+      ]
+    },
+    {
+      "scope": "equipo",
+      "roles": ["profesor"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "excepcionesPermiso", "value": "profesores solo ven sus grupos", "decision": "scope equipo" }
+      ]
+    }
+  ],
+  "composerMustAsk": [
+    {
+      "id": "p09.d2",
+      "field": "naturalezaBienes",
+      "question": "¿Gestionáis inventario de material didáctico (libros, etc.) o es marginal?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "ifTrue": "naturalezaBienes propios_por_cantidad → inventario",
+      "ifFalse": "naturalezaBienes not_applicable / vacío → sin inventario",
+      "trace": [
+        { "field": "naturalezaBienes", "value": ["propios_por_cantidad"], "confianza": 0.5, "decision": "preguntar" }
+      ]
+    }
+  ],
+  "oracleFailIf": [
+    {
+      "code": "CHOSE_INVENTARIO_WITHOUT_ASK",
+      "when": "composer enables or disables inventario/naturaleza without emitting p09.d2",
+      "message": "confianza 0.5 exige pregunta"
+    },
+    {
+      "code": "UNEXPECTED_SERVICIO_CURSO",
+      "when": "composer adds servicio_proyecto as course process instead of capacidad under suscripcion",
+      "message": "p09.d1: suscripcion + plazas, no servicio por curso"
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p09.d1",
+      "question": "¿Grupo = servicio o capacidad bajo suscripción?",
+      "resolution": "ACCEPTED",
+      "chosen": "suscripcion_mas_capacidad_grupo",
+      "alternatives": [
+        { "option": "suscripcion_mas_capacidad_grupo" },
+        { "option": "servicio_proyecto_por_curso", "rejected": true }
+      ]
+    },
+    {
+      "id": "p09.d2",
+      "question": "¿Inventario con confianza 0.5?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "chosen": null,
+      "alternatives": [
+        { "option": "sin_inventario" },
+        { "option": "con_inventario" }
+      ]
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "suscripcion",
+      "processes": ["suscripcion"],
+      "composition": null,
+      "panels": ["panel_agenda", "panel_periodos", "portal_filtro"]
+    },
+    "differences": [
+      "Esperado MUST_ASK inventario; heurístico activa inventorio si propios_por_cantidad",
+      "Esperado plazas + tutor→hijo; heurístico portal genérico",
+      "Esperado NO servicio_proyecto de curso; alineado con heurístico (solo suscripcion)",
+      "Alineado: dominante suscripcion, panel periodos, multisede"
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p07-tienda-online",
+  "profileName": "Tienda online de cosmetica natural",
+  "decisionsVersion": "2026-09-28-user",
+  "summary": "Pedido online (venta) dominante; devolución vinculada; compras MP; lotes; sin servicio_proyecto como par. cuotasRecurrentes unknown → MUST_ASK (oráculo falla si el compositor elige).",
+  "processes": [
+    {
+      "id": "proc.pedido",
+      "label": "Pedido online, cobro, envío",
+      "dominant": "venta",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "procesos", "value": ["pedido online", "cobro", "preparacion y envio"], "decision": "dominante venta" },
+        { "field": "bloqueos", "value": "no se envia sin cobro confirmado", "decision": "restriction pre-entrega" },
+        { "field": "descripcion", "value": "solo por internet", "decision": "canales web/autoservicio" }
+      ]
+    },
+    {
+      "id": "proc.devolucion",
+      "label": "Devolución y reembolso",
+      "dominant": "venta",
+      "link": "vinculada_a",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "procesos", "value": ["devolucion", "reembolso"], "decision": "tx vinculada" },
+        { "field": "bloqueos", "value": "no se reembolsa sin devolucion recibida", "decision": "evidence/restriction" },
+        { "field": "politicas", "value": "plazo_devolucion 14d", "decision": "legalDeadline / condition" },
+        { "field": "cumplimiento", "value": "desistimiento 14 dias", "decision": "compliance" }
+      ]
+    },
+    {
+      "id": "proc.compras_mp",
+      "label": "Compra de materia prima",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "trace": [
+        { "field": "procesos", "value": ["compra de materia prima"], "decision": "compra" },
+        { "field": "modulosEsperados", "value": ["compras"], "decision": "proceso" }
+      ]
+    },
+    {
+      "id": "proc.produccion",
+      "label": "Fabricación por lotes",
+      "dominant": null,
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "lotes",
+      "notes": "No es servicio_proyecto ni 7º arquetipo.",
+      "trace": [
+        { "field": "procesos", "value": ["fabricacion por lotes"], "decision": "extensión lotes" },
+        { "field": "necesidadesNoExpresables", "value": ["produccion propia", "lotes y caducidades"], "decision": "extensión" },
+        { "field": "cumplimiento", "value": "trazabilidad por lote", "decision": "lote" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "REQUIERE_EXTENSION",
+      "extension": "lotes",
+      "trace": [
+        { "field": "naturalezaBienes", "value": ["propios_por_cantidad"], "decision": "inventario base + lotes" }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "plazo_devolucion",
+      "parametros": { "dias": 14 },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[0]", "value": "plazo_devolucion 14", "decision": "desistimiento" }]
+    },
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": { "importe_eur": 200, "aprueba": "fundadora", "aplica_a": "reembolsos" },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[1]", "value": "reembolsos 200", "decision": "aprobación" }]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": ["cliente"],
+      "fields": ["pedidos", "seguimiento", "devoluciones"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "pedidos, seguimiento y solicitud de devolucion", "decision": "portal" }
+      ]
+    }
+  ],
+  "integrations": {
+    "tienda_online_mensajeria": {
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "integraciones_externas",
+      "trace": [
+        { "field": "necesidadesNoExpresables", "value": "integracion con tienda online y mensajeria", "decision": "fuera de núcleo" }
+      ]
+    }
+  },
+  "composerMustAsk": [
+    {
+      "id": "p07.d1",
+      "field": "cobros.cuotasRecurrentes",
+      "question": "¿Vendéis suscripción / caja mensual recurrente además del pedido unitario?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "ifTrue": "añadir proceso suscripcion (caja mensual)",
+      "ifFalse": "solo venta",
+      "trace": [
+        { "field": "cobros.cuotasRecurrentes", "value": "unknown", "decision": "preguntar; no elegir" }
+      ]
+    }
+  ],
+  "oracleFailIf": [
+    {
+      "code": "CHOSE_CUOTAS_WITHOUT_ASK",
+      "when": "composer adds or omits suscripcion based on assuming cuotasRecurrentes without emitting p07.d1",
+      "message": "cuotasRecurrentes unknown exige pregunta"
+    },
+    {
+      "code": "UNEXPECTED_SERVICIO_PAR",
+      "when": "composer adds servicio_proyecto as peer process for online order",
+      "message": "Fabricación/envío no es servicio_proyecto par de venta"
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p07.d1",
+      "question": "¿cuotasRecurrentes → suscripción?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "chosen": null,
+      "alternatives": [
+        { "option": "suscripcion_caja_mensual" },
+        { "option": "solo_venta" }
+      ]
+    },
+    {
+      "id": "p07.d2",
+      "question": "¿Mantener servicio_proyecto del heurístico?",
+      "resolution": "ACCEPTED",
+      "chosen": "no_como_proceso_par",
+      "alternatives": [
+        { "option": "no_como_proceso_par" },
+        { "option": "servicio_para_envio", "rejected": true }
+      ]
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "venta",
+      "processes": ["venta", "servicio_proyecto"],
+      "composition": null,
+      "panels": ["portal_filtro"]
+    },
+    "differences": [
+      "Esperado MUST_ASK cuotas; heurístico no pregunta",
+      "Esperado NO servicio_proyecto par; heurístico lo añade (falso positivo)",
+      "Esperado devolución + compras + lotes; heurístico incompleto",
+      "Alineado: dominante venta, portal, sin agenda"
+    ]
+  }
+}

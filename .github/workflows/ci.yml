@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_USER: abs
+          POSTGRES_PASSWORD: abs-ci
+          POSTGRES_DB: abs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U abs -d abs"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ABS_POSTGRES_URL: postgres://abs:abs-ci@localhost:5432/abs
+      ABS_POSTGRES_RESTORE_URL: postgres://abs:abs-ci@localhost:5432/abs_restore
+      ABS_POSTGRES_DEDICATED_URL: postgres://abs:abs-ci@localhost:5432/abs_dedicated
+      ABS_PERF_FULL: "1"
+      ABS_PROPERTY_SEEDS: "200"
+      ABS_SESSION_SECRET: "ci-session-secret-at-least-32-chars!!"
+      ABS_IDENTITY_KEY: "ci-identity-key-32-bytes-long!!!!"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Cliente PostgreSQL (pg_dump / psql)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Crear BD restore + dedicada + rol abs_app
+        run: |
+          psql "$ABS_POSTGRES_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE abs_restore OWNER abs;"
+          psql "$ABS_POSTGRES_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE abs_dedicated OWNER abs;" || true
+          psql "$ABS_POSTGRES_URL" -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'abs_app') THEN CREATE ROLE abs_app LOGIN PASSWORD 'ci-only'; END IF; END\$\$;"
+          psql "$ABS_POSTGRES_RESTORE_URL" -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'abs_app') THEN CREATE ROLE abs_app LOGIN PASSWORD 'ci-only'; END IF; END\$\$;"
+        env:
+          ABS_POSTGRES_DEDICATED_URL: postgres://abs:abs-ci@localhost:5432/abs_dedicated
+      - name: Gate — PG obligatorio (skip = fallo)
+        run: node scripts/pg-gate.mjs
+      - name: Auditoría de dependencias
+        run: npm run audit:deps
+      - name: Typecheck (obligatorio)
+        run: npx tsc --noEmit
+      - name: Migraciones PostgreSQL
+        run: npx tsx db/cli-migrate.ts up
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Suite completa (PG + PERF_FULL + E2E)
+        run: npm run test:unit
+      - name: Verificar que no hubo skips PG/backup/perf
+        run: |
+          npx vitest run \
+            tests/event-store.conformance.test.ts \
+            tests/event-store.perf.test.ts \
+            tests/backup.restore.test.ts \
+            --reporter=json --outputFile=tmp/pg-vitest.json || true
+          node -e "
+            const r=require('./tmp/pg-vitest.json');
+            const skipped=(r.testResults||[]).flatMap(f=>f.assertionResults||[]).filter(t=>t.status==='skipped');
+            if(skipped.length){console.error('SKIP prohibido:', skipped.map(s=>s.fullName||s.title)); process.exit(1);}
+            console.log('Sin skips en suites PG/backup/perf');
+          "
+      - name: Informe calidad
+        run: npx vitest run tests/quality.report.test.ts
+      - name: Subir informe E2E
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-browser-report
+          path: |
+            tmp/e2e/
+            web/E2E-REPORT.md
+          if-no-files-found: ignore
+
+  deploy-staging:
+    needs: quality
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build imagen
+        run: docker build -t abs-app:${{ github.sha }} .
+      - name: Placeholder deploy staging
+        run: |
+          echo "Despliegue staging: empujar imagen al registry del proveedor UE elegido"
+          echo "Ejecutar migraciones: npx tsx db/cli-migrate.ts up"
+          echo "Healthcheck HTTPS obligatorio"
+
+  deploy-production:
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aprobación manual requerida (GitHub Environment)
+        run: echo "Producción solo tras approve en Environment protection rules"
+      - name: Placeholder deploy production
+        run: |
+          echo "1. Migraciones up"
+          echo "2. Rolling deploy contenedor"
+          echo "3. Healthcheck"
+          echo "Rollback: redeploy imagen anterior + migrate down si aplica"

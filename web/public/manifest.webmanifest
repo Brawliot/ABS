@@ -1,0 +1,11 @@
+{
+  "name": "__BRAND__ — ABS",
+  "short_name": "__PROFILE__",
+  "description": "Aplicación ABS generada desde UiSpec validada (PWA básica)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "__BG__",
+  "theme_color": "__THEME__",
+  "lang": "es",
+  "icons": []
+}

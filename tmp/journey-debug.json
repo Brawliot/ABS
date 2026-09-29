@@ -1,0 +1,210 @@
+{
+  "p02": [
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_aprobar",
+        "role": "director_medico"
+      },
+      "ok": true,
+      "state": "aprobada"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_desembolsar",
+        "role": "director_medico"
+      },
+      "ok": true,
+      "state": "desembolsada"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_amortizar",
+        "role": "director_medico"
+      },
+      "ok": true,
+      "state": "en_amortizacion"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_cerrar",
+        "role": "director_medico"
+      },
+      "ok": true,
+      "state": "cerrada"
+    },
+    {
+      "step": {
+        "arch": "servicio_proyecto",
+        "tid": "t_acordar",
+        "role": "director_medico"
+      },
+      "ok": true,
+      "state": "acordado"
+    },
+    {
+      "step": {
+        "arch": "servicio_proyecto",
+        "tid": "t_ejecutar",
+        "role": "director_medico"
+      },
+      "flash": "No se pudo completar «ejecutar». Revisa los datos del pedido tx-p02-clinica-dental-lc.servicio_proyecto-3 e inténtalo de nuevo.",
+      "deep": "{\"reason\":\"Evidencia de política: se exige kind=aceptacion; recibida=sistema\",\"guards\":[{\"phase\":\"cumplimiento\",\"ruleId\":\"evidence:inferred-evidencia\",\"result\":\"rejected\",\"reason\":\"Evidencia de política: se exige kind=aceptacion; recibida=sistema\"}],\"form\":{\"parte_id\":\"parte-demo-1\",\"evidence.referenceType\":\"consentimiento_informado\",\"evidence.kind\":\"aceptacion\"}}",
+      "state": "acordado"
+    }
+  ],
+  "p08": [
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_aprobar",
+        "role": "gerente"
+      },
+      "ok": true,
+      "state": "aprobada"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_desembolsar",
+        "role": "gerente"
+      },
+      "ok": true,
+      "state": "desembolsada"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_amortizar",
+        "role": "gerente"
+      },
+      "ok": true,
+      "state": "en_amortizacion"
+    },
+    {
+      "step": {
+        "arch": "financiera",
+        "tid": "t_cerrar",
+        "role": "gerente"
+      },
+      "flash": "No se pudo completar «cerrar». Revisa los datos del pedido tx-p08-alquiler-maquinaria-lc.financiera-1 e inténtalo de nuevo.",
+      "deep": "{\"reason\":\"Restricción: fianza_eur lte 0\",\"guards\":[{\"phase\":\"permiso\",\"ruleId\":\"guard:perm-t_cerrar\",\"result\":\"accepted\",\"reason\":\"Permiso OK: rol autorizado para t_cerrar\"},{\"phase\":\"politica\",\"ruleId\":\"restr:inferred-fianza-retencion\",\"result\":\"rejected\",\"reason\":\"Restricción: fianza_eur lte 0\"}],\"form\":{\"parte_id\":\"parte-demo-1\",\"fianza_eur\":\"0\",\"retencion_abierta\":\"1\",\"evidence.kind\":\"sistema\"}}",
+      "state": "en_amortizacion"
+    }
+  ],
+  "p10": [
+    {
+      "step": {
+        "arch": "servicio_proyecto",
+        "tid": "t_acordar",
+        "role": "gerente"
+      },
+      "ok": true,
+      "state": "acordado"
+    },
+    {
+      "step": {
+        "arch": "servicio_proyecto",
+        "tid": "t_ejecutar",
+        "role": "gerente"
+      },
+      "flash": "No se pudo completar «ejecutar». Revisa los datos del pedido tx-p10-reformas-lc.servicio_proyecto-2 e inténtalo de nuevo.",
+      "deep": "{\"reason\":\"Evidencia de política: se exige kind=aceptacion; recibida=sistema\",\"guards\":[{\"phase\":\"cumplimiento\",\"ruleId\":\"evidence:inferred-evidencia\",\"result\":\"rejected\",\"reason\":\"Evidencia de política: se exige kind=aceptacion; recibida=sistema\"}],\"form\":{\"parte_id\":\"parte-demo-2\",\"evidence.referenceType\":\"contrato_firmado\",\"evidence.kind\":\"aceptacion\"}}",
+      "state": "acordado"
+    }
+  ],
+  "market": {
+    "actions": [
+      {
+        "id": "action.lc.intermediacion.t_abrir_disputa",
+        "tid": "t_abrir_disputa",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_cancelar",
+        "tid": "t_cancelar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_cerrar",
+        "tid": "t_cerrar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_emparejar",
+        "tid": "t_emparejar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_fallar",
+        "tid": "t_fallar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_iniciar",
+        "tid": "t_iniciar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_resolver_liberar",
+        "tid": "t_resolver_liberar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      },
+      {
+        "id": "action.lc.intermediacion.t_resolver_reembolsar",
+        "tid": "t_resolver_reembolsar",
+        "roles": [
+          "operador",
+          "vendedor"
+        ],
+        "lc": "lc.intermediacion"
+      }
+    ],
+    "roles": [
+      {
+        "id": "operador",
+        "label": "Operador"
+      },
+      {
+        "id": "vendedor",
+        "label": "Vendedor"
+      },
+      {
+        "id": "cliente",
+        "label": "Cliente (portal)"
+      }
+    ],
+    "views": 9
+  }
+}

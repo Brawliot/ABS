@@ -1,0 +1,119 @@
+{
+  "measuredAt": "2026-09-28T14:50:25.454Z",
+  "dimension": 6,
+  "label": "Determinismo extremo a extremo",
+  "extractor": {
+    "provider": "heuristic",
+    "model": "HeuristicDiagnosisExtractor",
+    "mode": "heuristic_offline"
+  },
+  "n": 42,
+  "extractorAccuracyPct": 35.71,
+  "finalAccuracyPct": 73.81,
+  "reaskRatePct": 23.81,
+  "extractorCorrect": 15,
+  "finalCorrect": 31,
+  "reasks": 10,
+  "below90": true,
+  "top5Failures": [
+    {
+      "cause": "extractor_no_activó_ningún_flag→sin_candidato",
+      "count": 4
+    },
+    {
+      "cause": "extractor_confianza_baja_o_contradicción_fantasma",
+      "count": 2
+    },
+    {
+      "cause": "extractor_flags_desplazaron_dominante (querían venta, obtuvo financiera)",
+      "count": 1
+    },
+    {
+      "cause": "extractor_flags_desplazaron_dominante (querían uso_temporal, obtuvo intermediacion)",
+      "count": 1
+    },
+    {
+      "cause": "extractor_flags_desplazaron_dominante (querían suscripcion, obtuvo intermediacion)",
+      "count": 1
+    }
+  ],
+  "failures": [
+    {
+      "id": "b07",
+      "expected": "venta",
+      "got": "financiera",
+      "cause": "esperado venta",
+      "category": "extractor_flags_desplazaron_dominante (querían venta, obtuvo financiera)"
+    },
+    {
+      "id": "b12",
+      "expected": "NONE",
+      "got": "LOW_CONF",
+      "cause": "repregunta inesperada",
+      "category": "extractor_confianza_baja_o_contradicción_fantasma"
+    },
+    {
+      "id": "b13",
+      "expected": "venta",
+      "got": "ERROR",
+      "cause": "Clasificador: ninguna regla produjo candidato; más cercanos: venta, uso_temporal",
+      "category": "extractor_no_activó_ningún_flag→sin_candidato"
+    },
+    {
+      "id": "b16",
+      "expected": "uso_temporal",
+      "got": "intermediacion",
+      "cause": "esperado uso_temporal",
+      "category": "extractor_flags_desplazaron_dominante (querían uso_temporal, obtuvo intermediacion)"
+    },
+    {
+      "id": "b21",
+      "expected": "servicio_proyecto",
+      "got": "ERROR",
+      "cause": "Clasificador: ninguna regla produjo candidato; más cercanos: venta, uso_temporal",
+      "category": "extractor_no_activó_ningún_flag→sin_candidato"
+    },
+    {
+      "id": "b25",
+      "expected": "NONE",
+      "got": "LOW_CONF",
+      "cause": "repregunta inesperada",
+      "category": "extractor_confianza_baja_o_contradicción_fantasma"
+    },
+    {
+      "id": "b30",
+      "expected": "suscripcion",
+      "got": "intermediacion",
+      "cause": "esperado suscripcion",
+      "category": "extractor_flags_desplazaron_dominante (querían suscripcion, obtuvo intermediacion)"
+    },
+    {
+      "id": "b32",
+      "expected": "LOW_CONF",
+      "got": "suscripcion",
+      "cause": "se esperaba LOW_CONF/repregunta pero clasificó",
+      "category": "extractor_no_marcó_baja_confianza_en_caso_ambiguo"
+    },
+    {
+      "id": "b36",
+      "expected": "venta",
+      "got": "suscripcion",
+      "cause": "esperado venta",
+      "category": "extractor_flags_desplazaron_dominante (querían venta, obtuvo suscripcion)"
+    },
+    {
+      "id": "b37",
+      "expected": "servicio_proyecto",
+      "got": "ERROR",
+      "cause": "Clasificador: ninguna regla produjo candidato; más cercanos: venta, uso_temporal",
+      "category": "extractor_no_activó_ningún_flag→sin_candidato"
+    },
+    {
+      "id": "b38",
+      "expected": "LOW_CONF",
+      "got": "ERROR",
+      "cause": "Clasificador: ninguna regla produjo candidato; más cercanos: venta, uso_temporal",
+      "category": "extractor_no_activó_ningún_flag→sin_candidato"
+    }
+  ]
+}

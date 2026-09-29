@@ -1,0 +1,220 @@
+[
+  {
+    "id": "p01-peluqueria",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "arch": "servicio_proyecto",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.venta",
+        "arch": "venta",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p02-clinica-dental",
+    "composition": {
+      "dominant": "servicio_proyecto",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "acordado",
+          "bloquea": "en_ejecucion"
+        }
+      ]
+    },
+    "lcs": [
+      {
+        "id": "lc.cita",
+        "arch": "uso_temporal",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.financiera",
+        "arch": "financiera",
+        "role": "secondary"
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "arch": "servicio_proyecto",
+        "role": "dominant"
+      }
+    ]
+  },
+  {
+    "id": "p03-ferreteria",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.venta",
+        "arch": "venta",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p04-taller-mecanico",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "arch": "servicio_proyecto",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p05-restaurante",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.uso_temporal",
+        "arch": "uso_temporal",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p06-gestoria",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.suscripcion",
+        "arch": "suscripcion",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p07-tienda-online",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.venta",
+        "arch": "venta",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p08-alquiler-maquinaria",
+    "composition": {
+      "dominant": "uso_temporal",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "reservada",
+          "bloquea": "en_uso"
+        }
+      ]
+    },
+    "lcs": [
+      {
+        "id": "lc.financiera",
+        "arch": "financiera",
+        "role": "secondary"
+      },
+      {
+        "id": "lc.uso_temporal",
+        "arch": "uso_temporal",
+        "role": "dominant"
+      }
+    ]
+  },
+  {
+    "id": "p09-academia-idiomas",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.suscripcion",
+        "arch": "suscripcion",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "p10-reformas",
+    "composition": null,
+    "lcs": [
+      {
+        "id": "lc.compras",
+        "arch": "venta",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "arch": "servicio_proyecto",
+        "role": "standalone"
+      },
+      {
+        "id": "lc.subcontrata",
+        "arch": "servicio_proyecto",
+        "role": "standalone"
+      }
+    ]
+  },
+  {
+    "id": "concesionaria",
+    "composition": {
+      "dominant": "venta",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "aceptada",
+          "bloquea": "en_entrega"
+        },
+        {
+          "secondaryArchetypeId": "servicio_proyecto",
+          "bornInDominantState": "cerrada",
+          "bloquea": "en_entrega"
+        }
+      ]
+    },
+    "lcs": [
+      {
+        "id": "lc.financiera",
+        "arch": "financiera",
+        "role": "secondary"
+      },
+      {
+        "id": "lc.taller",
+        "arch": "servicio_proyecto",
+        "role": "secondary"
+      },
+      {
+        "id": "lc.venta",
+        "arch": "venta",
+        "role": "dominant"
+      }
+    ]
+  }
+]

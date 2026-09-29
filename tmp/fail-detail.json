@@ -1,0 +1,42 @@
+[
+  {
+    "profileId": "p07-tienda-online",
+    "tid": "t_aceptar",
+    "lc": "lc.compras",
+    "roles": [
+      "fundadora"
+    ],
+    "detail": "{\"reason\":\"Plazo legal: falta ancla \\\"compra_at\\\" — Plazo de devolución / desistimiento 14 días\",\"guards\":[{\"phase\":\"cumplimiento\",\"ruleId\":\"legal:sample-pol-0\",\"result\":\"rejected\",\"reason\":\"Plazo legal: falta ancla \\\"compra_at\\\" — Plazo de devolución / desistimiento 14 días\"}],\"appliedRuleId\":\"legal:sample-pol-0\",\"evidenceKind\":\"aceptacion\",\"actorKind\":\"humano\",\"roles\":[\"fundadora\"],\"factReqs\":[]}"
+  },
+  {
+    "profileId": "p08-alquiler-maquinaria",
+    "tid": "t_reservar",
+    "lc": "lc.uso_temporal",
+    "roles": [
+      "gerente"
+    ],
+    "detail": "{\"reason\":\"Evidencia de cumplimiento: se exige referenceType=contrato_firmado; recibida=ui\",\"guards\":[{\"phase\":\"cumplimiento\",\"ruleId\":\"evidence:inferred-evidencia\",\"result\":\"rejected\",\"reason\":\"Evidencia de cumplimiento: se exige referenceType=contrato_firmado; recibida=ui\"}],\"appliedRuleId\":\"evidence:inferred-evidencia\",\"evidenceKind\":\"aceptacion\",\"actorKind\":\"humano\",\"roles\":[\"gerente\"],\"factReqs\":[{\"factId\":\"parte.saldo_pendiente\",\"params\":{\"parteId\":\"{{parte_id}}\"}}]}"
+  },
+  {
+    "profileId": "p09-academia-idiomas",
+    "tid": "t_activar",
+    "lc": "lc.suscripcion",
+    "roles": [
+      "directora"
+    ],
+    "detail": "{\"reason\":\"Evidencia de cumplimiento: se exige referenceType=consentimiento_informado; recibida=ui\",\"guards\":[{\"phase\":\"cumplimiento\",\"ruleId\":\"evidence:inferred-evidencia\",\"result\":\"rejected\",\"reason\":\"Evidencia de cumplimiento: se exige referenceType=consentimiento_informado; recibida=ui\"}],\"appliedRuleId\":\"evidence:inferred-evidencia\",\"evidenceKind\":\"aceptacion\",\"actorKind\":\"humano\",\"roles\":[\"directora\"],\"factReqs\":[]}"
+  },
+  {
+    "profileId": "p04-taller-mecanico",
+    "tid": "t_cerrar",
+    "lc": "lc.compras",
+    "pre": [
+      "t_aceptar",
+      "t_iniciar_entrega"
+    ],
+    "roles": [
+      "dueno"
+    ],
+    "detail": "{\"reason\":\"Restricción: hecho parte.saldo_pendiente cumple gt 0 (eval=100)\",\"guards\":[{\"phase\":\"permiso\",\"ruleId\":\"guard:perm-t_cerrar\",\"result\":\"accepted\",\"reason\":\"Permiso OK: rol autorizado para t_cerrar\"},{\"phase\":\"politica\",\"ruleId\":\"restr-fact:tpl-saldo-antes-cerrar\",\"result\":\"rejected\",\"reason\":\"Restricción: hecho parte.saldo_pendiente cumple gt 0 (eval=100)\"}],\"appliedRuleId\":\"restr-fact:tpl-saldo-antes-cerrar\",\"evidenceKind\":\"fisica\",\"actorKind\":\"sistema\",\"roles\":[\"dueno\"],\"factReqs\":[{\"factId\":\"parte.saldo_pendiente\",\"params\":{\"parteId\":\"parte-demo-1\"}}]}"
+  }
+]

@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p10-reformas",
+  "profileName": "Empresa de reformas integrales",
+  "decisionsVersion": "2026-09-28-user",
+  "summary": "servicio_proyecto dominante; modificados = nueva versión de alcance/presupuesto con nueva aceptación DENTRO de la misma tx (extensión versionado_alcance). Hitos = compromisos pagar + bloqueos. naturalezaBienes y portal unknown → MUST_ASK.",
+  "processes": [
+    {
+      "id": "proc.obra",
+      "label": "Obra / reforma integral",
+      "dominant": "servicio_proyecto",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "servicio_proyecto",
+          "bornInDominantState": "en_ejecucion",
+          "bloquea": "cerrada",
+          "label": "subcontrata",
+          "status": "EXPRESABLE_HOY",
+          "notes": "Subcontrata = secundaria servicio o Parte proveedor en tx vinculada.",
+          "trace": [
+            { "field": "procesos", "value": ["encargo a subcontrata"], "decision": "secundaria servicio o vinculada" },
+            { "field": "descripcion", "value": "Subcontratamos fontaneria y electricidad", "decision": "subcontrata" },
+            { "field": "cumplimiento", "value": "coordinacion de seguridad con subcontratas", "decision": "docs" }
+          ]
+        }
+      ],
+      "milestones": {
+        "status": "REQUIERE_EXTENSION",
+        "extension": "hitos",
+        "pattern": "compromisos_pagar_con_bloqueos",
+        "parametros": {
+          "hitos": [
+            { "pct": 30, "fase": "inicio", "bloqueaAvanceA": "en_ejecucion" },
+            { "pct": 40, "fase": "mitad", "bloqueaCertificacionSiguiente": true },
+            { "pct": 30, "fase": "fin", "bloqueaCierre": true }
+          ]
+        },
+        "notes": "No secundaria financiera única; no N financieras. p10.d2 ACCEPTED.",
+        "trace": [
+          { "field": "cobros.pagosPorHitos", "value": "30% inicio, 40% mitad, 30% fin", "decision": "hitos" },
+          { "field": "bloqueos", "value": "no se empieza sin contrato y primer pago", "decision": "hito inicio" },
+          { "field": "bloqueos", "value": "no se certifica siguiente fase sin cobrar anterior", "decision": "hitos encadenados" }
+        ]
+      },
+      "scopeVersioning": {
+        "status": "REQUIERE_EXTENSION",
+        "extension": "versionado_alcance",
+        "pattern": "nueva_version_alcance_misma_tx",
+        "notes": "Modificado = nueva versión del alcance/presupuesto + nueva aceptación del cliente, dentro de la misma transacción servicio_proyecto. venta tiene t_proponer_renegociacion; servicio_proyecto HOY no — falta extensión.",
+        "trace": [
+          { "field": "necesidadesNoExpresables", "value": "cambios sobre presupuesto aceptado (modificados)", "decision": "versionado_alcance" },
+          { "field": "excepcionesPermiso", "value": "solo el gerente aprueba cambios de presupuesto", "decision": "guarda sobre nueva versión" },
+          { "field": "userDecision", "value": "p10.d1 ACCEPTED misma_tx_servicio", "decision": "no venta separada" }
+        ]
+      },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "procesos", "value": ["presupuesto", "contrato", "planificacion de obra", "entrega y repaso"], "decision": "servicio_proyecto" },
+        { "field": "descripcion", "value": "reformas de pisos y locales", "decision": "obra = servicio" }
+      ]
+    },
+    {
+      "id": "proc.visita",
+      "label": "Visita técnica",
+      "dominant": "uso_temporal",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Agenda periférica, no módulo central.",
+      "trace": [
+        { "field": "procesos", "value": ["visita tecnica"], "decision": "uso_temporal puntual" },
+        { "field": "calendario.tieneCitas", "value": "visitas tecnicas", "decision": "slots" },
+        { "field": "modulosNoEsperados", "value": ["agenda de citas como modulo central"], "decision": "periférica" }
+      ]
+    },
+    {
+      "id": "proc.compras_material",
+      "label": "Compra de materiales por obra",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "trace": [
+        { "field": "procesos", "value": ["compra de materiales"], "decision": "compra" },
+        { "field": "politicas", "value": "importe 2000 gerente aplica_a compras", "decision": "aprobación" }
+      ]
+    },
+    {
+      "id": "proc.garantia",
+      "label": "Garantía post-entrega",
+      "dominant": "servicio_proyecto",
+      "link": "vinculada_a",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "procesos", "value": ["garantia"], "decision": "tx vinculada" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "consumible",
+      "naturaleza": null,
+      "status": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "questionId": "p10.d3",
+      "contractField": "naturalezaBienes_ask_flow",
+      "notes": "unknown en sample — no default_safe silencioso en el oráculo de composición.",
+      "trace": [
+        { "field": "naturalezaBienes", "value": "unknown", "decision": "MUST_ASK" },
+        { "field": "queEstresa", "value": "naturalezaBienes desconocido", "decision": "pregunta" }
+      ]
+    },
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "visita_y_cuadrilla",
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "modulosEsperados", "value": ["planificacion de personal por obra"], "decision": "turnos/recursos" }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": { "importe_eur": 2000, "aprueba": "gerente", "aplica_a": "compras_material" },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[0]", "value": "2000 compras", "decision": "aprobación" }]
+    },
+    {
+      "plantilla": "evidence_requirement",
+      "parametros": { "transitionId": "t_ejecutar", "evidence": "contrato_firmado" },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "cumplimiento", "value": "contrato por escrito", "decision": "evidencia" },
+        { "field": "excepcionesPermiso", "value": "solo el gerente firma contratos", "decision": "guarda" }
+      ]
+    },
+    {
+      "plantilla": "hitos_pago",
+      "parametros": { "hitos": [{ "pct": 30, "fase": "inicio" }, { "pct": 40, "fase": "mitad" }, { "pct": 30, "fase": "fin" }] },
+      "status": "REQUIERE_EXTENSION",
+      "extension": "hitos",
+      "trace": [
+        { "field": "cobros.pagosPorHitos", "value": "30/40/30", "decision": "extensión hitos" }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": null,
+      "roles": ["cliente"],
+      "status": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "questionId": "p10.d4",
+      "contractField": "portalCliente_ask_when_unknown",
+      "notes": "portalCliente.autoservicio unknown — fallar si el compositor inventa o niega portal sin preguntar.",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "unknown", "decision": "MUST_ASK" }
+      ]
+    }
+  ],
+  "composerMustAsk": [
+    {
+      "id": "p10.d3",
+      "field": "naturalezaBienes",
+      "question": "¿El material de obra es stock propio, compra por obra, o del cliente?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "alternatives": ["propios_por_cantidad", "por_obra_sin_stock", "del_cliente", "mixto"],
+      "trace": [
+        { "field": "naturalezaBienes", "value": "unknown", "decision": "preguntar" }
+      ]
+    },
+    {
+      "id": "p10.d4",
+      "field": "portalCliente.autoservicio",
+      "question": "¿Queréis portal de cliente (estado de obra, certificaciones, pagos)?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "ifTrue": "canal autoservicio + visibility propia",
+      "ifFalse": "sin portal_filtro",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "unknown", "decision": "preguntar" }
+      ]
+    }
+  ],
+  "oracleFailIf": [
+    {
+      "code": "CHOSE_NATURALEZA_WITHOUT_ASK",
+      "when": "composer sets naturalezaBienes without emitting p10.d3",
+      "message": "naturalezaBienes unknown exige pregunta"
+    },
+    {
+      "code": "CHOSE_PORTAL_WITHOUT_ASK",
+      "when": "composer adds or omits portal without emitting p10.d4",
+      "message": "portalCliente unknown exige pregunta"
+    },
+    {
+      "code": "UNEXPECTED_VENTA_PRESUPUESTO_SEPARADO",
+      "when": "composer models modificados as separate venta renegotiation instead of versionado_alcance in same servicio tx",
+      "message": "p10.d1: modificado = versión de alcance en la misma tx servicio_proyecto"
+    },
+    {
+      "code": "UNEXPECTED_FINANCIERA_HITOS",
+      "when": "composer uses N financieras as primary hitos model instead of compromisos_pagar_con_bloqueos",
+      "message": "p10.d2: hitos = compromisos + bloqueos (extensión hitos)"
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p10.d1",
+      "question": "¿Modificados = venta versionada o alcance en servicio?",
+      "resolution": "ACCEPTED",
+      "chosen": "versionado_alcance_misma_tx_servicio",
+      "extensionIfNeeded": "versionado_alcance",
+      "alternatives": [
+        { "option": "venta_presupuesto_luego_servicio_obra", "rejected": true },
+        { "option": "versionado_alcance_misma_tx_servicio", "pros": "una tx; nueva aceptación de alcance" }
+      ]
+    },
+    {
+      "id": "p10.d2",
+      "question": "¿Hitos = compromisos, N financieras o N ventas?",
+      "resolution": "ACCEPTED",
+      "chosen": "compromisos_pagar_con_bloqueos",
+      "alternatives": [
+        { "option": "compromisos_pagar_con_bloqueos" },
+        { "option": "n_financieras", "rejected": true },
+        { "option": "n_ventas_vinculadas", "rejected": true }
+      ]
+    },
+    {
+      "id": "p10.d3",
+      "question": "¿naturalezaBienes?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "chosen": null
+    },
+    {
+      "id": "p10.d4",
+      "question": "¿Portal cliente?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "chosen": null
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "servicio_proyecto",
+      "processes": ["servicio_proyecto"],
+      "composition": null,
+      "panels": ["panel_agenda"]
+    },
+    "differences": [
+      "Esperado hitos + subcontrata + versionado_alcance + compras; heurístico solo servicio",
+      "Esperado MUST_ASK naturaleza y portal; heurístico default_safe y sin portal (sin preguntar)",
+      "Esperado visita periférica; heurístico agenda genérica",
+      "Alineado: dominante servicio_proyecto"
+    ]
+  }
+}

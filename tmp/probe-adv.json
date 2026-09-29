@@ -1,0 +1,23 @@
+{
+  "sub": {
+    "id": "tx-p03-ferreteria-lc.compras-1",
+    "lifecycleId": "lc.compras",
+    "label": "Compras a proveedor #1",
+    "parteId": "parte-demo-1",
+    "sedeId": "sede-centro"
+  },
+  "act": "action.lc.compras.t_aceptar",
+  "role": [
+    "dueno"
+  ],
+  "r": {
+    "ok": true,
+    "flash": {
+      "kind": "ok",
+      "text": "Listo: el expediente pasó a «aceptada»."
+    },
+    "idempotentReplay": false,
+    "eventId": "req:90ba41110661b2d523925e82",
+    "newStateId": "aceptada"
+  }
+}

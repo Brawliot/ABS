@@ -1,0 +1,5 @@
+{
+  "grammarVersion": "1.1.0",
+  "schema": "abs.metaobject.grammar",
+  "notes": "1.1.0: catálogo de subtipos de los 10 elementos, 6 arquetipos, composición, diagnóstico y aprendices bayesianos. Sin cambio de enums de gramática de estados/eventos."
+}

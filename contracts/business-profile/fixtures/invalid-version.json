@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "9.9.9",
+  "identity": { "companyId": "c" },
+  "policyMeta": {
+    "documentVersion": "1",
+    "dominantArchetypeId": "venta"
+  },
+  "processes": { "status": "unknown" },
+  "channels": { "status": "unknown" },
+  "paymentMode": { "status": "unknown" },
+  "resourceSubtypes": { "status": "unknown" },
+  "naturalezaBienes": { "status": "unknown" },
+  "location": { "status": "unknown" },
+  "capabilities": {
+    "hasPartes": { "status": "unknown" },
+    "hasMovimientos": { "status": "unknown" },
+    "hasFormalDocuments": { "status": "unknown" },
+    "hasFiscalCompliance": { "status": "unknown" },
+    "hasCalendar": { "status": "unknown" }
+  },
+  "roles": { "status": "unknown" },
+  "calendar": { "status": "unknown" },
+  "permissions": { "status": "unknown" },
+  "permissionFallback": { "status": "unknown" },
+  "compliance": { "status": "unknown" },
+  "catalogFields": { "status": "unknown" },
+  "organization": { "status": "not_applicable" },
+  "businessPolicies": { "status": "not_applicable" },
+  "pipelineStateIds": { "status": "not_applicable" }
+}

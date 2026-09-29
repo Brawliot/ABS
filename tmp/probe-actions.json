@@ -1,0 +1,238 @@
+[
+  {
+    "profileId": "p01-peluqueria",
+    "ok": {
+      "role": "duena",
+      "action": "action.lc.compras.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "duena",
+      "action": "action.lc.compras.t_aceptar_nueva_version",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "duena",
+      "peluquera",
+      "cliente"
+    ],
+    "actions": 27
+  },
+  {
+    "profileId": "p02-clinica-dental",
+    "ok": {
+      "role": "director_medico",
+      "action": "action.lc.cita.t_reservar",
+      "transition": "t_reservar",
+      "state": "reservada"
+    },
+    "rej": {
+      "role": "director_medico",
+      "action": "action.lc.cita.t_cancelar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "director_medico",
+      "dentista",
+      "higienista",
+      "recepcion",
+      "cliente"
+    ],
+    "actions": 18
+  },
+  {
+    "profileId": "p03-ferreteria",
+    "ok": {
+      "role": "dueno",
+      "action": "action.lc.compras.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "dueno",
+      "action": "action.lc.compras.t_aceptar_nueva_version",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "dueno",
+      "dependiente",
+      "almacen",
+      "cliente"
+    ],
+    "actions": 20
+  },
+  {
+    "profileId": "p04-taller-mecanico",
+    "ok": {
+      "role": "dueno",
+      "action": "action.lc.compras.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "dueno",
+      "action": "action.lc.compras.t_aceptar_nueva_version",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "dueno",
+      "mecanico",
+      "administracion",
+      "cliente"
+    ],
+    "actions": 17
+  },
+  {
+    "profileId": "p05-restaurante",
+    "ok": {
+      "role": "gerente",
+      "action": "action.lc.compras.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "gerente",
+      "action": "action.lc.compras.t_aceptar_nueva_version",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "gerente",
+      "jefe_cocina",
+      "cocina",
+      "sala",
+      "cliente"
+    ],
+    "actions": 15
+  },
+  {
+    "profileId": "p06-gestoria",
+    "ok": {
+      "role": "socio",
+      "action": "action.lc.suscripcion.t_activar",
+      "transition": "t_activar",
+      "state": "activa"
+    },
+    "rej": {
+      "role": "socio",
+      "action": "action.lc.suscripcion.t_cancelar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "socio",
+      "gestor",
+      "administrativo",
+      "cliente"
+    ],
+    "actions": 8
+  },
+  {
+    "profileId": "p07-tienda-online",
+    "ok": {
+      "role": "fundadora",
+      "action": "action.lc.compras.t_cancelar_propuesta",
+      "transition": "t_cancelar_propuesta",
+      "state": "cancelada"
+    },
+    "rej": {
+      "role": "fundadora",
+      "action": "action.lc.compras.t_aceptar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "fundadora",
+      "logistica",
+      "atencion_cliente",
+      "cliente"
+    ],
+    "actions": 20
+  },
+  {
+    "profileId": "p08-alquiler-maquinaria",
+    "ok": {
+      "role": "gerente",
+      "action": "action.lc.financiera.t_aprobar",
+      "transition": "t_aprobar",
+      "state": "aprobada"
+    },
+    "rej": {
+      "role": "gerente",
+      "action": "action.lc.financiera.t_amortizar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "gerente",
+      "comercial",
+      "tecnico_taller",
+      "transportista",
+      "cliente"
+    ],
+    "actions": 11
+  },
+  {
+    "profileId": "p09-academia-idiomas",
+    "ok": {
+      "role": "directora",
+      "action": "action.lc.suscripcion.t_cancelar",
+      "transition": "t_cancelar",
+      "state": "cancelada"
+    },
+    "rej": {
+      "role": "directora",
+      "action": "action.lc.suscripcion.t_activar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "directora",
+      "coordinador_centro",
+      "profesor",
+      "secretaria",
+      "cliente"
+    ],
+    "actions": 8
+  },
+  {
+    "profileId": "p10-reformas",
+    "ok": {
+      "role": "gerente",
+      "action": "action.lc.compras.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "gerente",
+      "action": "action.lc.compras.t_aceptar_nueva_version",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "gerente",
+      "jefe_obra",
+      "operario",
+      "administracion",
+      "cliente"
+    ],
+    "actions": 24
+  },
+  {
+    "profileId": "concesionaria",
+    "ok": {
+      "role": "comercial",
+      "action": "action.lc.venta.t_aceptar",
+      "transition": "t_aceptar",
+      "state": "aceptada"
+    },
+    "rej": {
+      "role": "gerente",
+      "action": "action.lc.financiera.t_amortizar",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "roles": [
+      "comercial",
+      "gerente",
+      "taller",
+      "finanzas",
+      "cliente"
+    ],
+    "actions": 23
+  }
+]

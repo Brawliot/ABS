@@ -1,0 +1,67 @@
+{
+  "results": [
+    {
+      "id": "p01-peluqueria",
+      "ok": true,
+      "views": 23,
+      "ms": 12.456500000000233
+    },
+    {
+      "id": "p02-clinica-dental",
+      "ok": true,
+      "views": 25,
+      "ms": 8.033199999999852
+    },
+    {
+      "id": "p03-ferreteria",
+      "ok": true,
+      "views": 15,
+      "ms": 9.299599999999828
+    },
+    {
+      "id": "p04-taller-mecanico",
+      "ok": true,
+      "views": 16,
+      "ms": 8.848700000000008
+    },
+    {
+      "id": "p05-restaurante",
+      "ok": true,
+      "views": 16,
+      "ms": 14.46979999999985
+    },
+    {
+      "id": "p06-gestoria",
+      "ok": true,
+      "views": 10,
+      "ms": 4.540600000000268
+    },
+    {
+      "id": "p07-tienda-online",
+      "ok": true,
+      "views": 15,
+      "ms": 9.836099999999988
+    },
+    {
+      "id": "p08-alquiler-maquinaria",
+      "ok": true,
+      "views": 18,
+      "ms": 12.686500000000251
+    },
+    {
+      "id": "p09-academia-idiomas",
+      "ok": true,
+      "views": 10,
+      "ms": 4.565300000000207
+    },
+    {
+      "id": "p10-reformas",
+      "ok": true,
+      "views": 22,
+      "ms": 15.81100000000015
+    }
+  ],
+  "largestId": "p02-clinica-dental",
+  "largestViews": 25,
+  "validateMs": 5.2981000000004315
+}

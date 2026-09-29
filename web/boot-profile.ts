@@ -1,0 +1,310 @@
+/**
+ * Arranque: BusinessProfile / sample / concesionaria
+ * → compositor → Generador → UiSpec sellada + DesignSystem.
+ */
+
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  composeBusinessProfile,
+  mapSampleToV12,
+  unifyComposerQuestions,
+  applyComposerToMaterialize,
+} from "../composer/index.js";
+import type { ComposerQuestion } from "../composer/types.js";
+import {
+  known,
+  validateBusinessProfile,
+} from "../contracts/business-profile/index.js";
+import type { SampleProfile } from "../contracts/business-profile/samples/sample-types.js";
+import { proposeDesignSystems } from "../design/index.js";
+import {
+  generateUiSpec,
+  buildConcesionariaGeneratorInputWithComposition,
+} from "../generator/index.js";
+import { requireArchetype } from "../archetypes/catalog.js";
+import type { GeneratorInput } from "../generator/types.js";
+import type { CompiledRuleSet } from "../policies/types.js";
+import { isValidatedUiSpec } from "../presentation/validated.js";
+import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "./sample-data.js";
+import type { AppBootResult } from "./types.js";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SAMPLES_PATH = join(
+  ROOT,
+  "contracts/business-profile/samples/business-profiles-10.json",
+);
+
+export function listSampleProfileIds(): readonly string[] {
+  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
+    perfiles: SampleProfile[];
+  };
+  return raw.perfiles.map((p) => p.id);
+}
+
+export function loadSampleProfile(id: string): SampleProfile {
+  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
+    perfiles: SampleProfile[];
+  };
+  const p = raw.perfiles.find((x) => x.id === id);
+  if (!p) {
+    throw new Error(
+      `Perfil desconocido: ${id}. Disponibles: ${listSampleProfileIds().join(", ")}, concesionaria`,
+    );
+  }
+  return p;
+}
+
+/**
+ * Completa asks bloqueantes con defaults de demo (materialize).
+ * Las preguntas originales se conservan para el aviso en UI.
+ */
+function resolveAsksForDemo(
+  profile: Record<string, unknown>,
+): Record<string, unknown> {
+  const raw = structuredClone(profile) as Record<string, unknown>;
+  if ((raw.naturalezaBienes as { status?: string })?.status === "unknown") {
+    raw.naturalezaBienes = known(["propios_por_cantidad"]);
+  }
+  if ((raw.portalCliente as { status?: string })?.status === "unknown") {
+    // false evita contradicción canal; la pregunta original sigue en el banner
+    raw.portalCliente = known({ autoservicio: false });
+  }
+  if (raw.cobros) {
+    const cobros = raw.cobros as Record<string, { status?: string }>;
+    for (const key of ["aCredito", "aPlazos", "cuotasRecurrentes"] as const) {
+      if (cobros[key]?.status === "unknown") {
+        cobros[key] = known(false) as never;
+      }
+    }
+  }
+  return raw;
+}
+
+function unrenderedNotes(spec: AppBootResult["spec"]): string[] {
+  const notes: string[] = [];
+  // Acciones: conectadas vía Intérprete→Juez
+  if (spec.recorridos.length > 0) {
+    notes.push(
+      "recorridos: visibles como lista de pasos; wizard interactivo pendiente",
+    );
+  }
+  // modules legacy no son navegación primaria
+  if (spec.modules.length > 0) {
+    notes.push(
+      "modules (mod.*): etiquetas legacy; la navegación usa processGroups",
+    );
+  }
+  return notes;
+}
+
+/**
+ * Arranca un perfil sample (p01…p10) hasta UiSpec sellada.
+ */
+export function bootSampleProfile(profileId: string): AppBootResult {
+  const sample = loadSampleProfile(profileId);
+  const { profile, scheduleQuestions } = mapSampleToV12(sample);
+
+  // Preguntas antes de resolver asks (usuario debe verlas)
+  const rawValidated = validateBusinessProfile(profile);
+  const preCompose = composeBusinessProfile(rawValidated, {
+    extraQuestions: scheduleQuestions,
+  });
+  const questions: ComposerQuestion[] = preCompose.ok
+    ? [...unifyComposerQuestions(rawValidated, preCompose).questions]
+    : [...scheduleQuestions];
+
+  const resolved = resolveAsksForDemo(profile as Record<string, unknown>);
+  const validated = validateBusinessProfile(resolved);
+  const composed = composeBusinessProfile(validated, {
+    extraQuestions: scheduleQuestions,
+  });
+  if (!composed.ok) {
+    throw new Error(`Compositor ${profileId}: ${composed.message}`);
+  }
+  const unified = unifyComposerQuestions(validated, composed);
+  const pipe = applyComposerToMaterialize(validated, unified, {
+    generatedAt: "2026-06-01T00:00:00.000Z",
+    systemIds: {
+      caseId: `case-${profileId}`,
+      caseVersion: "1.0.0",
+      documentId: `pol-${profileId}`,
+      compiledVersion: "compiled:web-1",
+      activationAt: "2026-01-01T00:00:00.000Z",
+    },
+  });
+
+  const spec = generateUiSpec(pipe.input);
+  if (!isValidatedUiSpec(spec)) {
+    throw new Error("generateUiSpec no devolvió UiSpec sellada");
+  }
+
+  const ds = proposeDesignSystems({
+    companyId: profileId,
+    businessDescription: sample.descripcion,
+    identity: { brandName: sample.nombre },
+  }).proposals[0]!;
+
+  const roles = pipe.input.roles.map((r) => ({
+    id: r.id,
+    label: r.label,
+  }));
+  if (!roles.some((r) => r.id === "cliente")) {
+    roles.push({ id: "cliente", label: "Cliente (portal)" });
+  }
+
+  return {
+    profileId,
+    brandName: sample.nombre,
+    spec,
+    input: pipe.input,
+    designSystem: ds,
+    questions,
+    roles,
+    samplePartes: [...DEFAULT_SAMPLE_PARTES],
+    sampleRows: buildSampleRows(spec),
+    unrendered: unrenderedNotes(spec),
+  };
+}
+
+/**
+ * Arranca la concesionaria (pack + compositor).
+ */
+export function bootConcesionaria(): AppBootResult {
+  const input = buildConcesionariaGeneratorInputWithComposition();
+  const spec = generateUiSpec(input);
+  if (!isValidatedUiSpec(spec)) {
+    throw new Error("generateUiSpec no devolvió UiSpec sellada");
+  }
+  const ds = proposeDesignSystems({
+    companyId: "concesionaria",
+    businessDescription:
+      "Concesionario de vehículos: venta, financiación y taller",
+    identity: { brandName: "Concesionaria ABS" },
+  }).proposals[0]!;
+
+  const roles = input.roles.map((r) => ({ id: r.id, label: r.label }));
+  if (!roles.some((r) => r.id === "cliente")) {
+    roles.push({ id: "cliente", label: "Cliente (portal)" });
+  }
+
+  return {
+    profileId: "concesionaria",
+    brandName: "Concesionaria ABS",
+    spec,
+    input,
+    designSystem: ds,
+    questions: [],
+    roles,
+    samplePartes: [...DEFAULT_SAMPLE_PARTES],
+    sampleRows: buildSampleRows(spec),
+    unrendered: unrenderedNotes(spec),
+  };
+}
+
+/**
+ * Perfil demo de intermediación (marketplace) — cubre el 6º arquetipo
+ * cuando ningún sample lo trae como dominante.
+ */
+export function bootMarketplaceIntermediacion(): AppBootResult {
+  const arch = requireArchetype("intermediacion");
+  const roles = [
+    { id: "operador", label: "Operador" },
+    { id: "vendedor", label: "Vendedor" },
+    { id: "cliente", label: "Cliente" },
+  ] as const;
+  const permissionGuards = arch.lifecycle.transitions.map((t, i) => ({
+    kind: "guard" as const,
+    id: `guard:mkt-${t.id}`,
+    priority: 100 + i,
+    transitionId: t.id,
+    action: "ejecutar" as const,
+    allowedRoles: ["operador", "vendedor"],
+    sourcePolicyId: "perm-marketplace",
+    sourceKind: "permiso" as const,
+    binding: { mode: "live" as const, phase: "permiso" as const },
+  }));
+  const emptyRules: CompiledRuleSet = {
+    version: "1",
+    activationAt: "2026-01-01T00:00:00.000Z",
+    sourceDocumentId: "pol-marketplace",
+    sourceDocumentVersion: "1",
+    companyId: "marketplace-intermediacion",
+    archetypeId: "intermediacion",
+    contentHash: "demo-intermediacion",
+    roles: [...roles],
+    rules: permissionGuards,
+    actorDirectory: {},
+    deadlines: [],
+    goals: [],
+  };
+  const input: GeneratorInput = {
+    caseId: "case-marketplace-intermediacion",
+    caseVersion: "1.0.0",
+    companyId: "marketplace-intermediacion",
+    generatedAt: "2026-06-01T00:00:00.000Z",
+    lifecycles: [
+      {
+        id: "lc.intermediacion",
+        archetypeId: "intermediacion",
+        lifecycle: arch.lifecycle,
+        label: "Marketplace",
+        compositionRole: "dominant",
+      },
+    ],
+    composition: { dominant: "intermediacion", secondaries: [] },
+    ruleSet: emptyRules,
+    roles: [...roles],
+    channels: ["backoffice", "web", "autoservicio"],
+    resourceSubtypes: [],
+    naturalezaBienes: ["propios_por_cantidad"],
+    paymentMode: "inmediato",
+    hasPartes: true,
+    hasMovimientos: true,
+    hasFormalDocuments: true,
+    hasFiscalCompliance: false,
+    hasCalendar: false,
+  };
+  const spec = generateUiSpec(input);
+  if (!isValidatedUiSpec(spec)) {
+    throw new Error("marketplace: UiSpec no sellada");
+  }
+  const ds = proposeDesignSystems({
+    companyId: "marketplace-intermediacion",
+    businessDescription: "Marketplace de intermediación entre partes",
+    identity: { brandName: "ABS Marketplace" },
+  }).proposals[0]!;
+  return {
+    profileId: "marketplace-intermediacion",
+    brandName: "ABS Marketplace",
+    spec,
+    input,
+    designSystem: ds,
+    questions: [],
+    roles: [
+      { id: "operador", label: "Operador" },
+      { id: "vendedor", label: "Vendedor" },
+      { id: "cliente", label: "Cliente (portal)" },
+    ],
+    samplePartes: [...DEFAULT_SAMPLE_PARTES],
+    sampleRows: buildSampleRows(spec),
+    unrendered: unrenderedNotes(spec),
+  };
+}
+
+export function bootProfile(id: string): AppBootResult {
+  if (id === "concesionaria") return bootConcesionaria();
+  if (id === "marketplace-intermediacion") {
+    return bootMarketplaceIntermediacion();
+  }
+  return bootSampleProfile(id);
+}
+
+export function allBootableIds(): readonly string[] {
+  return [
+    ...listSampleProfileIds(),
+    "concesionaria",
+    "marketplace-intermediacion",
+  ];
+}

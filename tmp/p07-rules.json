@@ -1,0 +1,38 @@
+{
+  "legal": [
+    {
+      "kind": "legal_deadline",
+      "id": "legal:sample-pol-0",
+      "priority": 300,
+      "transitionId": "t_aceptar",
+      "anchorField": "compra_at",
+      "durationMs": 1209600000,
+      "description": "Plazo de devolución / desistimiento 14 días",
+      "sourcePolicyId": "sample-pol-0",
+      "sourceKind": "cumplimiento",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ],
+  "evid": [
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:sample-pol-1",
+      "priority": 100,
+      "transitionId": "t_aceptar",
+      "evidenceKind": "aceptacion",
+      "requiredRole": "fundadora",
+      "when": {
+        "field": "importe",
+        "op": "gte",
+        "value": 200
+      },
+      "sourcePolicyId": "sample-pol-1",
+      "sourceKind": "politica",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ]
+}

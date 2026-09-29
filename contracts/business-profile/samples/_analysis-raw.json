@@ -1,0 +1,924 @@
+[
+  {
+    "id": "p01-peluqueria",
+    "nombre": "Peluqueria de barrio",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: venta",
+      "processes inferidos: venta",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio,presencial",
+      "paymentMode inferido: inmediato",
+      "horario known como string (\"M-S 9:30-20:00, lunes cerrado…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "clientes sin cita que entran si hay hueco (cola/huecos libres)"
+    ],
+    "bloqueosSample": [],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "presencial"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente",
+      "mod.tpv"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente",
+      "mod.tpv"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.agenda",
+      "mod.tpv",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.crm"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "compras a proveedor"
+    ],
+    "esperadosPresentes": [
+      "mod.agenda",
+      "mod.tpv",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.crm"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [
+      "portal completo"
+    ],
+    "modulosExtraNoPedidos": [
+      "mod.portal_cliente"
+    ]
+  },
+  {
+    "id": "p02-clinica-dental",
+    "nombre": "Clinica dental con dos sedes",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: servicio_proyecto",
+      "processes inferidos: servicio_proyecto,financiera",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio",
+      "paymentMode inferido: financiado",
+      "horario known como string (\"L-V 9:00-21:00; sede Norte tambien S 9:0…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "historia clinica como documento de acceso restringido por rol profesional",
+      "financiera externa como tercero en el cobro"
+    ],
+    "bloqueosSample": [
+      "no se inicia tratamiento sin consentimiento firmado",
+      "no se inicia tratamiento sin senal pagada (si el plan la exige)"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio"
+    ],
+    "paymentMode": "financiado",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.portal_cliente",
+      "mod.inventario"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "presupuestos",
+      "tratamientos por sesiones",
+      "credito/plazos"
+    ],
+    "esperadosPresentes": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.portal_cliente",
+      "mod.inventario"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.facturacion"
+    ]
+  },
+  {
+    "id": "p03-ferreteria",
+    "nombre": "Ferreteria con venta a profesionales",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: venta",
+      "processes inferidos: venta",
+      "hasCalendar(tieneCitas)=false",
+      "channels inferidos: backoffice,autoservicio,presencial",
+      "paymentMode inferido: financiado"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "albaran mensual agrupado en una factura"
+    ],
+    "bloqueosSample": [
+      "no se vende a cuenta si el profesional supera su limite o tiene impagos"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "presencial"
+    ],
+    "paymentMode": "financiado",
+    "hasCalendar": false,
+    "modulosGenerados": [
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.crm",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "compras a proveedor"
+    ],
+    "esperadosPresentes": [
+      "mod.crm",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.facturacion"
+    ]
+  },
+  {
+    "id": "p04-taller-mecanico",
+    "nombre": "Taller mecanico",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: servicio_proyecto",
+      "processes inferidos: servicio_proyecto",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio,taller",
+      "paymentMode inferido: inmediato",
+      "calendar=unknown → política confirm (default L-V 9-18)",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "el coche del cliente como objeto custodiado con su propio ciclo (entra, queda en deposito, sale)",
+      "garantia posterior a la entrega"
+    ],
+    "bloqueosSample": [
+      "no se entrega el vehiculo sin pago",
+      "no se repara sin presupuesto aceptado"
+    ],
+    "unknownStress": [
+      "calendario.horario unknown → v1.1 calendar confirm (confirm)",
+      "cobros.aPlazos unknown → SIN campo v1.1 (no activa política)"
+    ],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad",
+      "del_cliente"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "taller"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.portal_cliente",
+      "mod.agenda"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "ordenes de reparacion",
+      "presupuestos",
+      "compras a proveedor"
+    ],
+    "esperadosPresentes": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.portal_cliente",
+      "mod.agenda"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": []
+  },
+  {
+    "id": "p05-restaurante",
+    "nombre": "Restaurante con reservas",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: venta",
+      "processes inferidos: venta",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio,presencial,web",
+      "paymentMode inferido: inmediato",
+      "horario known como string (\"X-D 13:00-16:00 y 20:30-23:30…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "aforo por turno (capacidad, no cita individual)",
+      "mermas y caducidades",
+      "TPV de sala (el pack concesionaria excluye TPV: aqui es imprescindible)"
+    ],
+    "bloqueosSample": [
+      "no se confirma reserva de grupo sin senal"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "presencial",
+      "web"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente",
+      "mod.tpv"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente",
+      "mod.tpv"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.facturacion"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "reservas con aforo",
+      "compras a proveedor",
+      "turnos"
+    ],
+    "esperadosPresentes": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.facturacion"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.agenda",
+      "mod.portal_cliente",
+      "mod.tpv"
+    ]
+  },
+  {
+    "id": "p06-gestoria",
+    "nombre": "Gestoria para autonomos y pymes",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: suscripcion",
+      "processes inferidos: suscripcion",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio,taller",
+      "paymentMode inferido: inmediato",
+      "horario known como string (\"L-J 8:30-18:00, V 8:30-15:00; agosto int…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "cuotas recurrentes (suscripcion)",
+      "plazos externos fijos (calendario fiscal), no derivados del horario del negocio",
+      "cientos de expedientes recurrentes por periodo"
+    ],
+    "bloqueosSample": [
+      "no se presenta el modelo sin documentacion completa (o se marca como presentado con incidencias)"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "taller"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "calendario fiscal con plazos",
+      "cuotas recurrentes"
+    ],
+    "esperadosPresentes": [
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.agenda"
+    ]
+  },
+  {
+    "id": "p07-tienda-online",
+    "nombre": "Tienda online de cosmetica natural",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: venta",
+      "processes inferidos: venta,servicio_proyecto",
+      "hasCalendar(tieneCitas)=false",
+      "channels inferidos: backoffice,autoservicio,taller,web",
+      "paymentMode inferido: inmediato"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "produccion propia (materia prima a producto terminado)",
+      "lotes y caducidades",
+      "integracion con tienda online y mensajeria (externos)"
+    ],
+    "bloqueosSample": [
+      "no se envia sin cobro confirmado",
+      "no se reembolsa sin devolucion recibida"
+    ],
+    "unknownStress": [
+      "cobros.cuotasRecurrentes unknown → SIN campo v1.1"
+    ],
+    "validate": "ok",
+    "confirmations": [],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio",
+      "taller",
+      "web"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": false,
+    "modulosGenerados": [
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "pedidos",
+      "envios",
+      "devoluciones",
+      "compras"
+    ],
+    "esperadosPresentes": [
+      "mod.inventario",
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.facturacion"
+    ]
+  },
+  {
+    "id": "p08-alquiler-maquinaria",
+    "nombre": "Alquiler de maquinaria de obra",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: uso_temporal",
+      "processes inferidos: uso_temporal",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio",
+      "paymentMode inferido: financiado",
+      "horario known como string (\"L-V 7:30-18:00, S 8:00-13:00…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "disponibilidad de unidades por fechas (reserva de recursos)",
+      "fianza como dinero del cliente retenido y liquidado",
+      "unidad que se traslada entre sedes"
+    ],
+    "bloqueosSample": [
+      "no se entrega sin contrato firmado y fianza cobrada (o credito aprobado)",
+      "no se vuelve a alquilar una unidad sin revision tras devolucion"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_unitarios",
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio"
+    ],
+    "paymentMode": "financiado",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.inventario",
+      "mod.crm"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "flota de unidades con disponibilidad",
+      "contratos de alquiler",
+      "fianzas",
+      "entregas y recogidas",
+      "mantenimiento",
+      "credito",
+      "multisede"
+    ],
+    "esperadosPresentes": [
+      "mod.inventario",
+      "mod.crm"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [
+      "agenda de citas personales"
+    ],
+    "modulosExtraNoPedidos": [
+      "mod.agenda",
+      "mod.facturacion",
+      "mod.portal_cliente"
+    ]
+  },
+  {
+    "id": "p09-academia-idiomas",
+    "nombre": "Academia de idiomas con tres centros",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: suscripcion",
+      "processes inferidos: suscripcion",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice,autoservicio",
+      "paymentMode inferido: inmediato",
+      "horario known como string (\"L-V 16:00-21:30, S 10:00-14:00…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "relacion tutor-menor con visibilidad delegada",
+      "cuotas recurrentes",
+      "curso academico como temporada que abre y cierre ciclos"
+    ],
+    "bloqueosSample": [
+      "no se asigna a grupo sin matricula pagada"
+    ],
+    "unknownStress": [],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [
+      "propios_por_cantidad"
+    ],
+    "channelsMaterializados": [
+      "backoffice",
+      "autoservicio"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion",
+      "mod.inventario",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "grupos y horarios",
+      "asistencia",
+      "evaluaciones",
+      "cuotas recurrentes",
+      "multisede"
+    ],
+    "esperadosPresentes": [
+      "mod.crm",
+      "mod.portal_cliente"
+    ],
+    "esperadosAusentes": [],
+    "prohibidosViolados": [],
+    "modulosExtraNoPedidos": [
+      "mod.agenda",
+      "mod.facturacion",
+      "mod.inventario"
+    ]
+  },
+  {
+    "id": "p10-reformas",
+    "nombre": "Empresa de reformas integrales",
+    "mappingNotes": [
+      "dominantArchetypeId inferido: servicio_proyecto",
+      "processes inferidos: servicio_proyecto",
+      "hasCalendar(tieneCitas)=true",
+      "channels inferidos: backoffice",
+      "paymentMode inferido: inmediato",
+      "horario known como string (\"L-V 8:00-17:00…\") no cabe en CalendarDef → tratado como unknown/confirm",
+      "resourceSubtypes+=capacidad_temporal (inferido por citas)",
+      "portalCliente.autoservicio unknown: no hay campo v1.1; channels no incluyen autoservicio (política ask no aplicable al portal)",
+      "naturalezaBienes unknown → política default_safe ([])"
+    ],
+    "unmappedSampleFields": [
+      "nombre",
+      "descripcion",
+      "procesos[] (texto libre → solo se infiere archetype)",
+      "cobros.aCredito",
+      "cobros.aPlazos",
+      "cobros.fianzas",
+      "cobros.cuotasRecurrentes",
+      "cobros.pagosPorHitos",
+      "portalCliente.autoservicio (detalle semántico; solo canal sí/no)",
+      "permissionFallback (prosa → solo roleId)",
+      "excepcionesPermiso (prosa)",
+      "politicas[].plantilla (no implementadas)",
+      "cumplimiento[] (prosa)",
+      "datosSensibles",
+      "calendario.horario (string libre ≠ CalendarDef estructurado)",
+      "calendario.turnosPersonal",
+      "calendario.temporadas (texto)",
+      "organizacion.roles[].n (cardinalidad)",
+      "bloqueos",
+      "modulosEsperados/NoEsperados (análisis)"
+    ],
+    "necesidadesNoExpresables": [
+      "proyecto con fases y pagos por hito",
+      "subcontrata como proveedor de servicio con su propia documentacion",
+      "cambios sobre presupuesto aceptado (modificados)"
+    ],
+    "bloqueosSample": [
+      "no se empieza la obra sin contrato firmado y primer pago",
+      "no se certifica la siguiente fase sin cobrar la anterior"
+    ],
+    "unknownStress": [
+      "naturalezaBienes unknown → default_safe",
+      "portalCliente.autoservicio unknown → SIN campo v1.1 (channels.ask no cubre el detalle)"
+    ],
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "naturalezaMaterializada": [],
+    "channelsMaterializados": [
+      "backoffice"
+    ],
+    "paymentMode": "inmediato",
+    "hasCalendar": true,
+    "modulosGenerados": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion"
+    ],
+    "uiSpecModuleIds": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion"
+    ],
+    "modulosEsperadosMapeables": [
+      "mod.inventario"
+    ],
+    "modulosEsperadosSinModuloGenerador": [
+      "obras/proyectos",
+      "presupuestos y cambios",
+      "cobros por hitos",
+      "subcontratas",
+      "planificacion de personal por obra"
+    ],
+    "esperadosPresentes": [],
+    "esperadosAusentes": [
+      "mod.inventario"
+    ],
+    "prohibidosViolados": [
+      "agenda de citas como modulo central"
+    ],
+    "modulosExtraNoPedidos": [
+      "mod.agenda",
+      "mod.crm",
+      "mod.facturacion"
+    ]
+  }
+]

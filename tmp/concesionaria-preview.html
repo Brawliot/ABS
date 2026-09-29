@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>case-concesionaria — ABS UI</title>
+  <style>
+    :root { 
+    --color-primario: #2563EB;
+    --color-secundario: #64748B;
+    --color-fondo: #F8FAFC;
+    --color-superficie: #FFFFFF;
+    --color-texto: #0F172A;
+    --color-borde: #E2E8F0;
+    --espaciado-m: 12px;
+    --tipografia-titulos: IBM Plex Sans, sans-serif;
+    --tipografia-cuerpo: IBM Plex Sans, sans-serif;
+    --tactil-minimo: 40px;
+    --densidad: normal;
+   }
+    body { font-family: var(--tipografia-cuerpo); margin: 0;
+      background: var(--color-fondo); color: var(--color-texto); }
+    header { display: flex; align-items: center; gap: var(--espaciado-m);
+      padding: var(--espaciado-m); background: var(--color-primario); color: #fff; }
+    header .logo { height: var(--tactil-minimo); }
+    main { padding: var(--espaciado-m); display: grid; gap: var(--espaciado-m); }
+    .module { background: var(--color-superficie); border-left: 4px solid var(--color-primario);
+      padding: var(--espaciado-m); border: 1px solid var(--color-borde); }
+    h2, h3 { font-family: var(--tipografia-titulos); }
+    .view { margin-top: var(--espaciado-m); padding-top: var(--espaciado-m);
+      border-top: 1px solid var(--color-borde); }
+    .meta { font-size: 0.85rem; opacity: 0.75; }
+    .action { margin: 0.35rem 0; display: flex; align-items: center; }
+    .hash { font-family: ui-monospace, monospace; font-size: 0.75rem; opacity: 0.6; }
+    .warnings { background: #fff3cd; padding: var(--espaciado-m); }
+  </style>
+</head>
+<body>
+  <header>
+    
+    <div>
+      <div style="font-size:1.4rem;font-weight:600;font-family:var(--tipografia-titulos)">case-concesionaria</div>
+      <div class="hash">bb99800d4b81b79c… · 2.0.0-mvp</div>
+      <div class="hash" data-tokens="color.primario">color.primario / espaciado.m</div>
+    </div>
+  </header>
+  <aside class="warnings"><p>Patrón listados=tabla incompatible con vista view.lc.financiera.aprobada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.cerrada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.desembolsada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.en_amortizacion; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.impagada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.rechazada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.financiera.solicitud; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.acordado; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.cancelada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.cerrada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.en_ejecucion; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.en_espera; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.fallida; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.taller.propuesta; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.aceptada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.cancelada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.cerrada; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.en_entrega; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.incumplida; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.propuesta; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.lc.venta.renegociacion; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.panel.agenda_disponibilidad; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.panel.credito.lc.financiera; se usa lista</p><p>Patrón listados=tabla incompatible con vista view.panel.portal_filtro; se usa lista</p></aside>
+  <main>
+    <article class="module" data-module="mod.agenda" data-channel="taller" data-density="normal"><h2>Agenda del taller</h2><p class="meta">canal=taller · ds=c.ds.a</p><section class="view" id="view.lc.taller.acordado" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: acordado</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.cancelada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cancelada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.en_ejecucion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_ejecucion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.en_espera" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_espera</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.fallida" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: fallida</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.propuesta" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: propuesta</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section></article>
+<article class="module" data-module="mod.crm" data-channel="backoffice" data-density="normal"><h2>CRM</h2><p class="meta">canal=backoffice · ds=c.ds.a</p><section class="view" id="view.lc.financiera.aprobada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: aprobada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.desembolsada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: desembolsada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.en_amortizacion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_amortizacion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.impagada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: impagada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.rechazada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: rechazada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.solicitud" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: solicitud</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.acordado" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: acordado</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.cancelada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cancelada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.en_ejecucion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_ejecucion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.en_espera" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_espera</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.fallida" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: fallida</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.taller.propuesta" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: propuesta</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.aceptada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: aceptada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.cancelada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cancelada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.en_entrega" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_entrega</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.incumplida" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: incumplida</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.propuesta" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: propuesta</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="action" style="min-height:var(--tactil-minimo)"><strong>t_aceptar</strong> <span class="meta">t_aceptar</span></li></ul></section>
+<section class="view" id="view.lc.venta.renegociacion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: renegociacion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section></article>
+<article class="module" data-module="mod.facturacion" data-channel="backoffice" data-density="normal"><h2>Facturación</h2><p class="meta">canal=backoffice · ds=c.ds.a</p><section class="view" id="view.lc.financiera.aprobada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: aprobada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.desembolsada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: desembolsada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.en_amortizacion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_amortizacion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.impagada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: impagada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.rechazada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: rechazada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.financiera.solicitud" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: solicitud</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.aceptada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: aceptada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.cancelada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cancelada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.cerrada" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: cerrada</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.en_entrega" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: en_entrega</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.incumplida" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: incumplida</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section>
+<section class="view" id="view.lc.venta.propuesta" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: propuesta</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="action" style="min-height:var(--tactil-minimo)"><strong>t_aceptar</strong> <span class="meta">t_aceptar</span></li></ul></section>
+<section class="view" id="view.lc.venta.renegociacion" data-listados="lista" data-nav="superior" data-tablero="lista_agrupada"><h3>Tablero: renegociacion</h3><p class="meta">patrones=lista/lista_agrupada</p><ul><li class="empty">Sin acciones</li></ul></section></article>
+  </main>
+</body>
+</html>

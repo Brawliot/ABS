@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p06-gestoria",
+  "profileName": "Gestoria para autonomos y pymes",
+  "summary": "Cuota mensual (suscripcion) dominante; expedientes/periodos fiscales como servicio o parámetros de periodo; trabajos extra presupuestados; plazos externos fiscales; portal documental.",
+  "processes": [
+    {
+      "id": "proc.cuota",
+      "label": "Alta de cliente y cuota mensual",
+      "dominant": "suscripcion",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "t_periodo / t_renovar + domiciliación como cálculo/comunicación.",
+      "trace": [
+        {
+          "field": "cobros.cuotasRecurrentes",
+          "value": "cuota mensual por cliente, domiciliada",
+          "decision": "suscripcion"
+        },
+        {
+          "field": "procesos",
+          "value": [
+            "alta de cliente",
+            "cobro de cuota mensual"
+          ],
+          "decision": "dominante suscripcion"
+        },
+        {
+          "field": "naturalezaBienes",
+          "value": "not_applicable",
+          "decision": "servicio puro sin inventario"
+        }
+      ]
+    },
+    {
+      "id": "proc.expediente_periodo",
+      "label": "Expediente trimestral / modelos",
+      "dominant": "servicio_proyecto",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Un expediente por cliente×periodo como servicio (preparación→presentación). Recurrencia masiva = muchas txs, no arquetipo nuevo.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "recepcion de documentacion",
+            "preparacion de modelos",
+            "presentacion en plazo"
+          ],
+          "decision": "servicio_proyecto por expediente"
+        },
+        {
+          "field": "bloqueos",
+          "value": "no se presenta sin documentacion completa",
+          "decision": "evidence_requirement / restriction"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "cientos de expedientes recurrentes",
+          "decision": "escala operativa, no pieza nuclear"
+        }
+      ]
+    },
+    {
+      "id": "proc.trabajos_extra",
+      "label": "Trabajos extra presupuestados",
+      "dominant": "servicio_proyecto",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "trabajos extra presupuestados"
+          ],
+          "decision": "servicio standalone"
+        }
+      ]
+    }
+  ],
+  "resources": [],
+  "calendar": {
+    "businessHours": true,
+    "externalDeadlines": true,
+    "seasons": "picos trimestrales y renta",
+    "status": "REQUIERE_EXTENSION",
+    "extension": "plazos_externos",
+    "notes": "Horario negocio expresable; plazos de modelos fiscales NO son weeklyHours — requieren calendario fiscal externo / legalDeadline masivo.",
+    "trace": [
+      {
+        "field": "calendario.temporadas",
+        "value": "picos trimestrales y renta",
+        "decision": "seasons + plazos externos"
+      },
+      {
+        "field": "cumplimiento",
+        "value": "plazos legales de presentacion de modelos",
+        "decision": "extensión plazos externos"
+      },
+      {
+        "field": "politicas",
+        "value": "aviso_plazo dias_antes 10",
+        "decision": "aviso sobre deadline externo"
+      },
+      {
+        "field": "necesidadesNoExpresables",
+        "value": "plazos externos fijos",
+        "decision": "extensión"
+      }
+    ]
+  },
+  "policies": [
+    {
+      "plantilla": "aviso_plazo",
+      "parametros": {
+        "dias_antes": 10
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "notes": "Depende también de plazos_externos.",
+      "trace": [
+        {
+          "field": "politicas[0]",
+          "value": "aviso_plazo 10d",
+          "decision": "aviso"
+        }
+      ]
+    },
+    {
+      "plantilla": "evidence_requirement",
+      "parametros": {
+        "transitionId": "t_presentar_o_cerrar",
+        "evidence": "documentacion_completa"
+      },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "bloqueos",
+          "value": "documentacion completa o incidencias",
+          "decision": "evidencia / flag incidencias"
+        }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": [
+        "cliente"
+      ],
+      "fields": [
+        "documentos",
+        "estado_presentaciones"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "partialGap": "REQUIERE_EXTENSION",
+      "extension": "filtro_dato_sensible",
+      "notes": "Datos económicos de clientes: clasificación + fieldRules.",
+      "trace": [
+        {
+          "field": "portalCliente.autoservicio",
+          "value": "subir documentos y ver estado",
+          "decision": "portal"
+        },
+        {
+          "field": "datosSensibles",
+          "value": [
+            "economicos"
+          ],
+          "decision": "Filtro sensible"
+        },
+        {
+          "field": "cumplimiento",
+          "value": "RGPD datos economicos",
+          "decision": "cumplimiento"
+        }
+      ]
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p06.d1",
+      "question": "¿El expediente trimestral es servicio_proyecto hijo de la suscripción o periodos de la misma suscripcion?",
+      "chosen": "servicio_por_expediente",
+      "alternatives": [
+        {
+          "option": "servicio_por_expediente",
+          "pros": "cierre autónomo por modelo",
+          "cons": "muchas txs"
+        },
+        {
+          "option": "periodo_de_suscripcion",
+          "pros": "unifica cuota+trabajo",
+          "cons": "mezcla cobro con cumplimiento fiscal"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    },
+    {
+      "id": "p06.d2",
+      "question": "¿tieneCitas 'ocasionales' activa agenda?",
+      "chosen": "agenda_opcional_no_central",
+      "alternatives": [
+        {
+          "option": "agenda_opcional_no_central",
+          "pros": "no forzar mod.agenda como núcleo",
+          "cons": "heurístico sí activa agenda"
+        },
+        {
+          "option": "sin_agenda",
+          "pros": "modulosNo implícito",
+          "cons": "pierde citas puntuales"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "suscripcion",
+      "processes": [
+        "suscripcion"
+      ],
+      "composition": null,
+      "panels": [
+        "panel_agenda",
+        "panel_periodos",
+        "portal_filtro"
+      ]
+    },
+    "differences": [
+      "Esperado también expedientes (servicio_proyecto) y trabajos extra; heurístico solo suscripcion",
+      "Esperado plazos fiscales externos; heurístico no",
+      "Esperado Filtro datos económicos; heurístico portal genérico",
+      "Esperado NO tratar agenda como módulo central (citas ocasionales); heurístico activa panel_agenda",
+      "Alineado: dominante suscripcion, panel periodos/cuotas, portal, sin inventario"
+    ]
+  },
+  "decisionsVersion": "2026-09-28-user"
+}

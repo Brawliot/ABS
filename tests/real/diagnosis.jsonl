@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "component": "diagnosis_extractor",
+  "note": "Vacío a propósito. Aportar textos reales anonimizados aquí. Smoke = tests/bank/raw-businesses.ts (limitación).",
+  "cases": []
+}

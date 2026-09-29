@@ -1,0 +1,351 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p08-alquiler-maquinaria",
+  "profileName": "Alquiler de maquinaria de obra",
+  "summary": "uso_temporal dominante (reserva→uso→devolución); fianza como retención; crédito a constructoras (financiera); mantenimiento post-devolución; flota unitaria + consumibles; multisede.",
+  "processes": [
+    {
+      "id": "proc.alquiler",
+      "label": "Contrato de alquiler de unidad",
+      "dominant": "uso_temporal",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "reservada",
+          "bloquea": "en_uso",
+          "status": "EXPRESABLE_HOY",
+          "notes": "Constructoras a 30 días: crédito aprobado bloquea entrega/inicio de uso si no hay fianza cobrada ni crédito.",
+          "trace": [
+            {
+              "field": "cobros.aCredito",
+              "value": "constructoras habituales a 30 dias",
+              "decision": "secundaria financiera"
+            },
+            {
+              "field": "bloqueos",
+              "value": "no se entrega sin contrato y fianza o credito",
+              "decision": "bloquea en_uso"
+            },
+            {
+              "field": "politicas",
+              "value": "limite_credito_por_cliente 5000",
+              "decision": "límite"
+            }
+          ]
+        }
+      ],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Prórroga = renovación/extensión del uso (parámetro o t vinculada). Fianza = movimiento retencion (liquidación requiere extensión).",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "reserva de maquina",
+            "contrato",
+            "entrega",
+            "devolucion",
+            "prorroga"
+          ],
+          "decision": "uso_temporal"
+        },
+        {
+          "field": "descripcion",
+          "value": "alquiler por dias o semanas",
+          "decision": "uso_temporal"
+        },
+        {
+          "field": "cobros.fianzas",
+          "value": true,
+          "decision": "retencion"
+        },
+        {
+          "field": "cobros.cuotasRecurrentes",
+          "value": "alquileres largos facturados por semana",
+          "decision": "periodos de facturación (ajuste), no necesariamente suscripcion dominante"
+        }
+      ]
+    },
+    {
+      "id": "proc.mantenimiento",
+      "label": "Revisión/mantenimiento tras devolución",
+      "dominant": "servicio_proyecto",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Puede ser secundaria bornIn cerrada del alquiler bloqueando nueva reserva de la unidad, o tx vinculada. Bloqueo 'no alquilar sin revisión'.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "revision",
+            "mantenimiento"
+          ],
+          "decision": "servicio_proyecto"
+        },
+        {
+          "field": "bloqueos",
+          "value": "no se vuelve a alquilar sin revision",
+          "decision": "bloquea disponibilidad de recurso"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "retornable",
+      "naturaleza": "propios_unitarios",
+      "semantics": "unidad_flota",
+      "status": "EXPRESABLE_HOY",
+      "partialGap": "REQUIERE_EXTENSION",
+      "extension": "plazas",
+      "notes": "Disponibilidad por fechas = capacidad_comprometida; carrera por unidad. Traspaso entre sedes = ajuste organización/recurso.",
+      "trace": [
+        {
+          "field": "naturalezaBienes",
+          "value": [
+            "propios_unitarios",
+            "propios_por_cantidad"
+          ],
+          "decision": "flota unitaria + andamios cantidad"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "disponibilidad de unidades por fechas",
+          "decision": "hecho capacidad + UI"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "unidad que se traslada entre sedes",
+          "decision": "traspaso sede"
+        },
+        {
+          "field": "organizacion.sedes",
+          "value": [
+            "Nave Getafe",
+            "Nave Alcobendas"
+          ],
+          "decision": "multisede"
+        }
+      ]
+    },
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "modulosEsperados",
+          "value": [
+            "inventario de consumibles (andamios por piezas)"
+          ],
+          "decision": "consumible"
+        }
+      ]
+    },
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "ventana_entrega_recogida",
+      "status": "EXPRESABLE_HOY",
+      "notes": "No es agenda de citas personales (modulosNoEsperados).",
+      "trace": [
+        {
+          "field": "calendario.tieneCitas",
+          "value": "entregas y recogidas programadas",
+          "decision": "slots logística"
+        },
+        {
+          "field": "modulosNoEsperados",
+          "value": [
+            "agenda de citas personales"
+          ],
+          "decision": "no CRM-cita"
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": {
+        "importe_eur": 500,
+        "aprueba": "gerente",
+        "aplica_a": "retencion_fianza"
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [
+        {
+          "field": "politicas[0]",
+          "value": "retencion fianza 500",
+          "decision": "aprobación daños"
+        }
+      ]
+    },
+    {
+      "plantilla": "limite_credito_por_cliente",
+      "parametros": {
+        "por_defecto_eur": 5000
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [
+        {
+          "field": "politicas[1]",
+          "value": "limite 5000",
+          "decision": "crédito"
+        }
+      ]
+    },
+    {
+      "plantilla": "fianza_retencion",
+      "parametros": {
+        "movimiento": "retencion",
+        "liquidacion_en": "devolucion"
+      },
+      "status": "REQUIERE_EXTENSION",
+      "extension": "liquidacion_fianza",
+      "notes": "DUDA1: cierre no admite saldo≠0; hace falta liquidar retención.",
+      "trace": [
+        {
+          "field": "cobros.fianzas",
+          "value": true,
+          "decision": "retencion"
+        },
+        {
+          "field": "procesos",
+          "value": [
+            "cobro de fianza",
+            "liquidacion de fianza"
+          ],
+          "decision": "ciclo fianza"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "fianza retenida y liquidada",
+          "decision": "extensión"
+        }
+      ]
+    },
+    {
+      "plantilla": "evidence_requirement",
+      "parametros": {
+        "transitionId": "t_iniciar_uso",
+        "evidence": "contrato_firmado"
+      },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "cumplimiento",
+          "value": "contrato de alquiler firmado",
+          "decision": "evidencia"
+        },
+        {
+          "field": "bloqueos",
+          "value": "no entrega sin contrato",
+          "decision": "guarda"
+        }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": [
+        "cliente"
+      ],
+      "fields": [
+        "alquileres_activos"
+      ],
+      "actions": [
+        "pedir_prorroga",
+        "pedir_recogida"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "portalCliente.autoservicio",
+          "value": "ver alquileres y pedir prorroga o recogida",
+          "decision": "portal"
+        }
+      ]
+    },
+    {
+      "scope": "sede",
+      "roles": [
+        "comercial",
+        "tecnico_taller",
+        "transportista"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "organizacion.sedes",
+          "value": [
+            "Nave Getafe",
+            "Nave Alcobendas"
+          ],
+          "decision": "visibility sede"
+        }
+      ]
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p08.d1",
+      "question": "¿Facturación semanal de alquileres largos es suscripcion secundaria o periodos del uso_temporal?",
+      "chosen": "periodos_facturacion_en_uso",
+      "alternatives": [
+        {
+          "option": "periodos_facturacion_en_uso",
+          "pros": "un dominante uso_temporal",
+          "cons": "hay que tipar facturación periódica"
+        },
+        {
+          "option": "suscripcion_secundaria",
+          "pros": "t_periodo nativo",
+          "cons": "dos máquinas para un alquiler"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    },
+    {
+      "id": "p08.d2",
+      "question": "¿Mantenimiento bloquea el dominante alquiler o solo el recurso?",
+      "chosen": "bloquea_recurso_disponibilidad",
+      "alternatives": [
+        {
+          "option": "bloquea_recurso_disponibilidad",
+          "pros": "no reabre tx cerrada",
+          "cons": "hecho/recurso, no solo bloquea estado"
+        },
+        {
+          "option": "secundaria_bornIn_cerrada",
+          "pros": "composition explícita",
+          "cons": "bornIn en terminal es raro (como concesionaria servicio)"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "uso_temporal",
+      "processes": [
+        "uso_temporal"
+      ],
+      "composition": null,
+      "panels": [
+        "panel_agenda",
+        "panel_retencion",
+        "portal_filtro"
+      ]
+    },
+    "differences": [
+      "Esperado secundaria financiera (crédito constructoras); heurístico sin composition",
+      "Esperado mantenimiento como proceso; heurístico ausente",
+      "Esperado liquidación tipada de fianza; heurístico solo panel_retencion genérico",
+      "Esperado traspaso sede / flota; heurístico no",
+      "Alineado: dominante uso_temporal, panel retención, portal, inventario, entregas programadas"
+    ]
+  },
+  "decisionsVersion": "2026-09-28-user"
+}

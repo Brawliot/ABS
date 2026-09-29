@@ -1,0 +1,252 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p01-peluqueria",
+  "profileName": "Peluqueria de barrio",
+  "summary": "Dos procesos principales (cita/servicio y venta de producto) más compras a proveedor; capacidad por hueco/silla; cobro inmediato; portal solo reserva.",
+  "processes": [
+    {
+      "id": "proc.cita_servicio",
+      "label": "Cita y servicio en el momento",
+      "dominant": "servicio_proyecto",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Happy path acordar→ejecutar→cerrar cubre cita aceptada + servicio. Walk-in comparte el mismo proceso sobre capacidad libre.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "cita",
+            "servicio en el momento"
+          ],
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "field": "descripcion",
+          "value": "Trabajamos con cita, aunque si hay hueco cogemos a quien entre",
+          "decision": "mismo proceso; huecos → capacidad, no arquetipo nuevo"
+        }
+      ]
+    },
+    {
+      "id": "proc.venta_mostrador",
+      "label": "Venta de producto en mostrador",
+      "dominant": "venta",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Proceso independiente (no bloquea la cita). Pago inmediato.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "venta de producto en mostrador"
+          ],
+          "decision": "proceso venta standalone"
+        },
+        {
+          "field": "cobros.aCredito",
+          "value": false,
+          "decision": "paymentMode inmediato; sin secundaria financiera"
+        },
+        {
+          "field": "naturalezaBienes",
+          "value": [
+            "propios_por_cantidad"
+          ],
+          "decision": "inventario de champús/tintes"
+        }
+      ]
+    },
+    {
+      "id": "proc.compras_proveedor",
+      "label": "Pedidos a proveedor",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "notes": "Misma máquina venta con Partes invertidas (proveedor=vendedor). Sesgo semántico de estados.",
+      "trace": [
+        {
+          "field": "excepcionesPermiso",
+          "value": "solo la duena hace pedidos a proveedor",
+          "decision": "proceso compra + permiso restringido"
+        },
+        {
+          "field": "modulosEsperados",
+          "value": [
+            "compras a proveedor"
+          ],
+          "decision": "proceso explícito"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "capacidad_temporal",
+      "naturaleza": null,
+      "semantics": "plaza_o_hueco",
+      "status": "REQUIERE_EXTENSION",
+      "extension": "plazas",
+      "notes": "Hoy capacidad_temporal + hecho capacidad_comprometida; falta semántica 'hueco libre / cola walk-in' vs cita 1:1.",
+      "trace": [
+        {
+          "field": "calendario.tieneCitas",
+          "value": true,
+          "decision": "capacidad temporal"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "cola/huecos libres",
+          "decision": "extensión plazas/aforo"
+        }
+      ]
+    },
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "naturalezaBienes",
+          "value": [
+            "propios_por_cantidad"
+          ],
+          "decision": "inventario por cantidad"
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "descuento_maximo_sin_aprobacion",
+      "parametros": {
+        "porcentaje": 10
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "notes": "Plantilla nombrada en sample; runtime hoy exige BusinessPolicy JSON crudo.",
+      "trace": [
+        {
+          "field": "politicas[0]",
+          "value": "descuento_maximo_sin_aprobacion",
+          "decision": "política de descuento"
+        }
+      ]
+    },
+    {
+      "plantilla": "permiso_excepcion",
+      "parametros": {
+        "accion": "anular_cobro",
+        "roles": [
+          "duena"
+        ]
+      },
+      "status": "EXPRESABLE_HOY",
+      "notes": "PermissionPolicy explícita; el texto del sample no compila solo.",
+      "trace": [
+        {
+          "field": "excepcionesPermiso",
+          "value": "solo la duena anula cobros",
+          "decision": "guarda restringida"
+        }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": [
+        "cliente"
+      ],
+      "fields": [
+        "citas"
+      ],
+      "excludeFields": [
+        "caja",
+        "compras",
+        "inventario"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Portal = proyección Filtro; alcance 'solo reserva' no tipado fino en v1.1.",
+      "trace": [
+        {
+          "field": "portalCliente.autoservicio",
+          "value": "solo reserva de cita",
+          "decision": "visibility propia + canal autoservicio"
+        }
+      ],
+      "partialGap": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "portal_scopes_detallados"
+    }
+  ],
+  "organization": {
+    "sedes": "not_applicable",
+    "status": "EXPRESABLE_HOY",
+    "trace": [
+      {
+        "field": "organizacion.sedes",
+        "value": "not_applicable",
+        "decision": "sin multisede"
+      }
+    ]
+  },
+  "userDecisions": [
+    {
+      "id": "p01.d1",
+      "question": "¿La cita/servicio es servicio_proyecto o uso_temporal?",
+      "chosen": "servicio_proyecto",
+      "alternatives": [
+        {
+          "option": "servicio_proyecto",
+          "pros": "encaja atención + cierre de servicio",
+          "cons": "menos énfasis en reserva de recurso"
+        },
+        {
+          "option": "uso_temporal",
+          "pros": "reserva de silla/tiempo",
+          "cons": "semántica de 'uso de recurso' menos natural para corte"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    },
+    {
+      "id": "p01.d2",
+      "question": "¿Walk-in es el mismo proceso que cita o un modo de entrada?",
+      "chosen": "mismo_proceso_capacidad_libre",
+      "alternatives": [
+        {
+          "option": "mismo_proceso_capacidad_libre",
+          "pros": "un solo flujo",
+          "cons": "requiere UI de huecos"
+        },
+        {
+          "option": "proceso_cola_separado",
+          "pros": "aislado",
+          "cons": "duplica estados"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "venta",
+      "processes": [
+        "venta"
+      ],
+      "composition": null,
+      "panels": [
+        "panel_agenda",
+        "portal_filtro"
+      ]
+    },
+    "differences": [
+      "Esperado: dos procesos (servicio_proyecto + venta); heurístico colapsa todo a venta",
+      "Esperado: proceso compras a proveedor; heurístico no lo genera",
+      "Esperado: capacidad con semántica plazas/huecos; heurístico solo panel_agenda genérico",
+      "Alineado: portal_filtro y capacidad_temporal por citas; payment inmediato → TPV etiqueta"
+    ]
+  },
+  "decisionsVersion": "2026-09-28-user"
+}

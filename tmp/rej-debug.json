@@ -1,0 +1,11 @@
+{
+  "r": {
+    "ok": false,
+    "flash": {
+      "kind": "error",
+      "text": "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes."
+    },
+    "idempotentReplay": false
+  },
+  "redactorDetail": "REDACTOR_FAIL: Hecho faltante para plantilla error.generico: accion_label | codes=undefined"
+}

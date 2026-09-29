@@ -1,0 +1,351 @@
+{"at":"2026-09-28T00:43:53.559Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:43:53.580Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T00:43:53.585Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:44:24.717Z","kind":"login_ok","accountId":"acc_6cb80e2d-654","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T00:44:33.389Z","kind":"login_ok","accountId":"acc_7ec4993b-694","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T00:44:33.399Z","kind":"role_change","accountId":"acc_7ec4993b-694","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T00:44:37.517Z","kind":"login_ok","accountId":"acc_e5299b33-9b6","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T00:44:48.440Z","kind":"login_ok","accountId":"acc_62ce76a7-e9b","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T00:44:48.739Z","kind":"login_ok","accountId":"acc_3d8b3d28-af3","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T00:44:55.412Z","kind":"login_ok","accountId":"acc_8d1779cc-799","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T00:44:55.419Z","kind":"membership_revoked","accountId":"acc_8d1779cc-799","companyId":"co"}
+{"at":"2026-09-28T00:45:03.751Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:45:04.849Z","kind":"login_ok","accountId":"acc_81cfbd3d-1be","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T00:45:22.693Z","kind":"login_ok","accountId":"acc_c640ce05-03a","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:45:25.367Z","kind":"login_ok","accountId":"acc_9d0cce68-b4d","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T00:45:30.743Z","kind":"login_ok","accountId":"acc_c640ce05-03a","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:45:30.751Z","kind":"logout_all","accountId":"acc_c640ce05-03a","companyId":"co"}
+{"at":"2026-09-28T00:45:31.074Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T00:45:42.955Z","kind":"login_ok","accountId":"acc_56404b58-bb2","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T00:45:59.659Z","kind":"login_ok","accountId":"acc_22f3af6e-b17","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T00:46:18.146Z","kind":"login_ok","accountId":"acc_a084157c-7db","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T00:46:33.556Z","kind":"login_ok","accountId":"acc_053f593e-05a","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T00:46:48.862Z","kind":"login_ok","accountId":"acc_8e2ee123-ee5","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T00:47:03.622Z","kind":"login_ok","accountId":"acc_f7519dfe-a96","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T00:47:18.034Z","kind":"login_ok","accountId":"acc_59889fd9-b65","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T00:47:32.189Z","kind":"login_ok","accountId":"acc_845df1a9-34c","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T00:47:32.411Z","kind":"logout_all","accountId":"acc_845df1a9-34c","companyId":"concesionaria"}
+{"at":"2026-09-28T00:47:47.430Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:49:39.113Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:49:39.121Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T00:49:39.123Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:49:45.716Z","kind":"login_ok","accountId":"acc_7f1aa833-4bd","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T00:49:45.722Z","kind":"role_change","accountId":"acc_7f1aa833-4bd","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T00:49:46.745Z","kind":"login_ok","accountId":"acc_55a29e6b-7a3","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T00:49:46.985Z","kind":"login_ok","accountId":"acc_78dfc26e-def","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T00:49:47.012Z","kind":"login_ok","accountId":"acc_69a1aba9-bd7","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T00:49:47.014Z","kind":"membership_revoked","accountId":"acc_69a1aba9-bd7","companyId":"co"}
+{"at":"2026-09-28T00:49:47.314Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:49:47.921Z","kind":"login_ok","accountId":"acc_8a32bfa3-b63","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:49:48.179Z","kind":"login_ok","accountId":"acc_8a32bfa3-b63","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:49:48.182Z","kind":"logout_all","accountId":"acc_8a32bfa3-b63","companyId":"co"}
+{"at":"2026-09-28T00:49:48.198Z","kind":"login_ok","accountId":"acc_5778acca-be0","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T00:49:48.270Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T00:49:49.287Z","kind":"login_ok","accountId":"acc_3280035a-55a","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T00:49:50.244Z","kind":"login_ok","accountId":"acc_d96599f5-332","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T00:49:51.157Z","kind":"login_ok","accountId":"acc_686cb192-0e2","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T00:49:52.041Z","kind":"login_ok","accountId":"acc_22aa2c21-428","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T00:49:52.949Z","kind":"login_ok","accountId":"acc_a34ffad2-b96","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T00:49:53.896Z","kind":"login_ok","accountId":"acc_53b10b52-316","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T00:49:54.934Z","kind":"login_ok","accountId":"acc_2cb19ceb-93e","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T00:49:56.188Z","kind":"login_ok","accountId":"acc_071b346f-ea4","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T00:49:57.458Z","kind":"login_ok","accountId":"acc_06cd89bc-8aa","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T00:49:58.582Z","kind":"login_ok","accountId":"acc_57d6693d-3e4","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T00:49:59.619Z","kind":"login_ok","accountId":"acc_ed998612-015","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T00:49:59.677Z","kind":"logout_all","accountId":"acc_ed998612-015","companyId":"concesionaria"}
+{"at":"2026-09-28T00:50:00.430Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:50:44.827Z","kind":"login_ok","accountId":"acc_9957c39a-e0a","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T00:50:44.839Z","kind":"role_change","accountId":"acc_9957c39a-e0a","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T00:50:48.107Z","kind":"login_ok","accountId":"acc_1b646b10-958","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T00:50:49.140Z","kind":"login_ok","accountId":"acc_d49654b3-5af","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T00:50:49.156Z","kind":"membership_revoked","accountId":"acc_d49654b3-5af","companyId":"co"}
+{"at":"2026-09-28T00:50:49.817Z","kind":"login_ok","accountId":"acc_4bfd057f-341","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T00:50:50.148Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:50:52.517Z","kind":"login_ok","accountId":"acc_eb041ae8-5d9","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:50:53.499Z","kind":"login_ok","accountId":"acc_eb041ae8-5d9","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:50:53.504Z","kind":"logout_all","accountId":"acc_eb041ae8-5d9","companyId":"co"}
+{"at":"2026-09-28T00:50:54.089Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T00:50:58.872Z","kind":"login_ok","accountId":"acc_1f74b0d2-e22","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T00:51:02.562Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:51:02.578Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T00:51:02.583Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:51:03.555Z","kind":"login_ok","accountId":"acc_557c6316-2a3","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T00:51:06.858Z","kind":"login_ok","accountId":"acc_25828493-1f5","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T00:51:09.574Z","kind":"login_ok","accountId":"acc_1c7fe3a0-3b8","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T00:51:12.172Z","kind":"login_ok","accountId":"acc_059a77d7-582","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T00:51:14.553Z","kind":"login_ok","accountId":"acc_eb441cb0-2e6","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T00:51:17.266Z","kind":"login_ok","accountId":"acc_eb9a398e-9ce","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T00:51:19.836Z","kind":"login_ok","accountId":"acc_8e06d00b-9d3","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T00:51:22.625Z","kind":"login_ok","accountId":"acc_6054ca8f-a7c","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T00:51:24.805Z","kind":"login_ok","accountId":"acc_f51e862b-b26","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T00:51:26.930Z","kind":"login_ok","accountId":"acc_aea5fb86-76f","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T00:51:29.205Z","kind":"login_ok","accountId":"acc_f52c94cd-175","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T00:51:29.365Z","kind":"logout_all","accountId":"acc_f52c94cd-175","companyId":"concesionaria"}
+{"at":"2026-09-28T00:51:30.538Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:57:51.455Z","kind":"login_ok","accountId":"acc_e1ee5944-7d1","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T00:57:51.463Z","kind":"role_change","accountId":"acc_e1ee5944-7d1","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T00:57:54.335Z","kind":"login_ok","accountId":"acc_374dfdab-dc7","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T00:57:55.253Z","kind":"login_ok","accountId":"acc_52d089ec-02d","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T00:57:55.258Z","kind":"membership_revoked","accountId":"acc_52d089ec-02d","companyId":"co"}
+{"at":"2026-09-28T00:57:56.223Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T00:57:58.098Z","kind":"login_ok","accountId":"acc_88b4aa3f-18b","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:57:58.987Z","kind":"login_ok","accountId":"acc_88b4aa3f-18b","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T00:57:58.992Z","kind":"logout_all","accountId":"acc_88b4aa3f-18b","companyId":"co"}
+{"at":"2026-09-28T00:57:59.347Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T00:58:03.469Z","kind":"login_ok","accountId":"acc_8d7e801d-941","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T00:58:07.435Z","kind":"login_ok","accountId":"acc_c44813b8-e12","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T00:58:10.205Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:58:10.231Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T00:58:10.236Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T00:58:12.788Z","kind":"login_ok","accountId":"acc_1ae712a2-f1c","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T00:58:15.899Z","kind":"login_ok","accountId":"acc_e7e3fff8-246","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T00:58:18.897Z","kind":"login_ok","accountId":"acc_77c93338-b46","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T00:58:21.998Z","kind":"login_ok","accountId":"acc_343415c2-42a","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T00:58:25.047Z","kind":"login_ok","accountId":"acc_adfdd59e-6d8","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T00:58:28.079Z","kind":"login_ok","accountId":"acc_6cb6f5a6-157","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T00:58:30.957Z","kind":"login_ok","accountId":"acc_af6abb39-edf","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T00:58:33.931Z","kind":"login_ok","accountId":"acc_23cdd129-d68","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T00:58:36.969Z","kind":"login_ok","accountId":"acc_933243f7-c50","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T00:58:39.800Z","kind":"login_ok","accountId":"acc_05ea144f-408","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T00:58:43.184Z","kind":"login_ok","accountId":"acc_39c991aa-e0d","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T00:58:43.357Z","kind":"logout_all","accountId":"acc_39c991aa-e0d","companyId":"concesionaria"}
+{"at":"2026-09-28T00:58:45.318Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:09:52.284Z","kind":"login_ok","accountId":"acc_24bac240-cb2","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T01:09:52.292Z","kind":"role_change","accountId":"acc_24bac240-cb2","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T01:09:54.358Z","kind":"login_ok","accountId":"acc_b118f967-830","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T01:09:55.072Z","kind":"login_ok","accountId":"acc_06e9013f-884","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T01:09:55.077Z","kind":"membership_revoked","accountId":"acc_06e9013f-884","companyId":"co"}
+{"at":"2026-09-28T01:09:55.741Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:09:55.851Z","kind":"login_ok","accountId":"acc_76f654b1-fa3","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T01:09:57.082Z","kind":"login_ok","accountId":"acc_9215285b-2e7","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:09:57.823Z","kind":"login_ok","accountId":"acc_9215285b-2e7","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:09:57.826Z","kind":"logout_all","accountId":"acc_9215285b-2e7","companyId":"co"}
+{"at":"2026-09-28T01:09:58.011Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T01:09:58.380Z","kind":"login_ok","accountId":"acc_2f08a180-92c","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T01:10:02.213Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:10:02.225Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T01:10:02.227Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:10:03.013Z","kind":"login_ok","accountId":"acc_0c1f4efe-412","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T01:10:05.654Z","kind":"login_ok","accountId":"acc_774c7c5e-a2f","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T01:10:07.293Z","kind":"login_ok","accountId":"acc_25028e9b-317","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T01:10:09.062Z","kind":"login_ok","accountId":"acc_e2d02a87-cce","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T01:10:10.754Z","kind":"login_ok","accountId":"acc_cfb81267-f73","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T01:10:12.221Z","kind":"login_ok","accountId":"acc_206cc5b1-ea9","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T01:10:13.445Z","kind":"login_ok","accountId":"acc_4f62262a-403","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T01:10:14.549Z","kind":"login_ok","accountId":"acc_f688bb64-685","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T01:10:15.656Z","kind":"login_ok","accountId":"acc_5af5a742-4f9","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T01:10:17.006Z","kind":"login_ok","accountId":"acc_06eaaf98-74b","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T01:10:18.383Z","kind":"login_ok","accountId":"acc_321ead9c-eec","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T01:10:18.461Z","kind":"logout_all","accountId":"acc_321ead9c-eec","companyId":"concesionaria"}
+{"at":"2026-09-28T01:10:19.319Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:20:00.858Z","kind":"login_ok","accountId":"acc_3b5f442a-e06","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T01:20:00.864Z","kind":"role_change","accountId":"acc_3b5f442a-e06","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T01:20:02.379Z","kind":"login_ok","accountId":"acc_a65e6d6a-73f","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T01:20:02.869Z","kind":"login_ok","accountId":"acc_2ec40fa6-bbd","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T01:20:02.871Z","kind":"membership_revoked","accountId":"acc_2ec40fa6-bbd","companyId":"co"}
+{"at":"2026-09-28T01:20:03.333Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:20:04.508Z","kind":"login_ok","accountId":"acc_16b555dd-6fe","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:20:05.028Z","kind":"login_ok","accountId":"acc_16b555dd-6fe","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:20:05.030Z","kind":"logout_all","accountId":"acc_16b555dd-6fe","companyId":"co"}
+{"at":"2026-09-28T01:20:05.187Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T01:20:05.679Z","kind":"login_ok","accountId":"acc_05e93edd-7f4","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T01:20:07.623Z","kind":"login_ok","accountId":"acc_01ea14f6-bd6","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T01:20:09.534Z","kind":"login_ok","accountId":"acc_20e49b00-606","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T01:20:11.964Z","kind":"login_ok","accountId":"acc_00c41d10-4ef","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T01:20:13.038Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:20:13.046Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T01:20:13.048Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:20:14.040Z","kind":"login_ok","accountId":"acc_ddb579d4-ebf","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T01:20:15.570Z","kind":"login_ok","accountId":"acc_4342a13f-800","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T01:20:16.879Z","kind":"login_ok","accountId":"acc_9dffcc39-d65","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T01:20:18.124Z","kind":"login_ok","accountId":"acc_5efc041a-8dc","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T01:20:19.548Z","kind":"login_ok","accountId":"acc_26c58b50-b47","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T01:20:20.895Z","kind":"login_ok","accountId":"acc_7da24038-56d","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T01:20:22.244Z","kind":"login_ok","accountId":"acc_02aca2ba-b87","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T01:20:23.525Z","kind":"login_ok","accountId":"acc_414227a4-46f","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T01:20:24.939Z","kind":"login_ok","accountId":"acc_bb1417a5-712","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T01:20:25.045Z","kind":"logout_all","accountId":"acc_bb1417a5-712","companyId":"concesionaria"}
+{"at":"2026-09-28T01:20:25.930Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:22:25.983Z","kind":"login_ok","accountId":"acc_eefdb656-015","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T01:22:25.990Z","kind":"role_change","accountId":"acc_eefdb656-015","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T01:22:27.443Z","kind":"login_ok","accountId":"acc_5cf9f9a3-761","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T01:22:27.956Z","kind":"login_ok","accountId":"acc_454862c6-038","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T01:22:27.959Z","kind":"membership_revoked","accountId":"acc_454862c6-038","companyId":"co"}
+{"at":"2026-09-28T01:22:28.456Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:22:29.493Z","kind":"login_ok","accountId":"acc_5c1d6b52-7e8","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:22:30.064Z","kind":"login_ok","accountId":"acc_5c1d6b52-7e8","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:22:30.067Z","kind":"logout_all","accountId":"acc_5c1d6b52-7e8","companyId":"co"}
+{"at":"2026-09-28T01:22:30.231Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T01:22:31.081Z","kind":"login_ok","accountId":"acc_d9fb5a4a-3a9","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T01:22:33.634Z","kind":"login_ok","accountId":"acc_e1b9c624-28a","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T01:22:35.966Z","kind":"login_ok","accountId":"acc_64261d49-d19","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T01:22:37.170Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:22:37.179Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T01:22:37.182Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:22:37.990Z","kind":"login_ok","accountId":"acc_e8c96da7-959","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T01:22:39.282Z","kind":"login_ok","accountId":"acc_30b1afbb-a91","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T01:22:40.515Z","kind":"login_ok","accountId":"acc_82588402-d28","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T01:22:41.652Z","kind":"login_ok","accountId":"acc_21d7e128-605","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T01:22:42.806Z","kind":"login_ok","accountId":"acc_e9a5f879-22d","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T01:22:43.988Z","kind":"login_ok","accountId":"acc_fd5b5fe0-4f1","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T01:22:45.241Z","kind":"login_ok","accountId":"acc_4b9ddf07-3ed","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T01:22:46.411Z","kind":"login_ok","accountId":"acc_67d7aada-885","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T01:22:47.529Z","kind":"login_ok","accountId":"acc_c98d9d98-a28","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T01:22:48.557Z","kind":"login_ok","accountId":"acc_9a9d5def-d0c","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T01:22:48.617Z","kind":"logout_all","accountId":"acc_9a9d5def-d0c","companyId":"concesionaria"}
+{"at":"2026-09-28T01:22:49.275Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:33:57.352Z","kind":"login_ok","accountId":"acc_8a2671ab-a67","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T01:33:57.358Z","kind":"role_change","accountId":"acc_8a2671ab-a67","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T01:33:58.826Z","kind":"login_ok","accountId":"acc_e010ad06-3b9","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T01:33:59.369Z","kind":"login_ok","accountId":"acc_8fab9517-6ed","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T01:33:59.379Z","kind":"membership_revoked","accountId":"acc_8fab9517-6ed","companyId":"co"}
+{"at":"2026-09-28T01:34:00.021Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T01:34:01.424Z","kind":"login_ok","accountId":"acc_72f2d7ca-0e3","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:34:01.454Z","kind":"login_ok","accountId":"acc_a8d2ca5a-ef6","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T01:34:02.007Z","kind":"login_ok","accountId":"acc_72f2d7ca-0e3","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T01:34:02.011Z","kind":"logout_all","accountId":"acc_72f2d7ca-0e3","companyId":"co"}
+{"at":"2026-09-28T01:34:02.192Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T01:34:03.995Z","kind":"login_ok","accountId":"acc_55640271-bac","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T01:34:06.580Z","kind":"login_ok","accountId":"acc_fa4de253-5ab","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T01:34:08.690Z","kind":"login_ok","accountId":"acc_092195bc-6b7","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T01:34:08.857Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:34:08.865Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T01:34:08.866Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T01:34:11.319Z","kind":"login_ok","accountId":"acc_6b869cb5-7e7","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T01:34:13.075Z","kind":"login_ok","accountId":"acc_483a5ddb-706","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T01:34:14.475Z","kind":"login_ok","accountId":"acc_4ab8e217-5ce","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T01:34:16.133Z","kind":"login_ok","accountId":"acc_36d492d1-669","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T01:34:18.010Z","kind":"login_ok","accountId":"acc_93e8af5d-cef","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T01:34:19.727Z","kind":"login_ok","accountId":"acc_aeb3a126-378","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T01:34:21.930Z","kind":"login_ok","accountId":"acc_55ce32e5-fd0","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T01:34:23.681Z","kind":"login_ok","accountId":"acc_3d96efe7-806","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T01:34:25.129Z","kind":"login_ok","accountId":"acc_742163a3-2e1","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T01:34:25.241Z","kind":"logout_all","accountId":"acc_742163a3-2e1","companyId":"concesionaria"}
+{"at":"2026-09-28T01:34:26.388Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T10:16:40.773Z","kind":"login_ok","accountId":"acc_7bb6161f-f2a","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T10:16:40.895Z","kind":"role_change","accountId":"acc_7bb6161f-f2a","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T10:16:45.049Z","kind":"login_ok","accountId":"acc_4ef9e308-d5e","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T10:16:46.444Z","kind":"login_ok","accountId":"acc_2e109cd4-cdc","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T10:16:46.451Z","kind":"membership_revoked","accountId":"acc_2e109cd4-cdc","companyId":"co"}
+{"at":"2026-09-28T10:16:47.757Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T10:16:50.734Z","kind":"login_ok","accountId":"acc_47c9c7ea-4bd","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T10:16:52.031Z","kind":"login_ok","accountId":"acc_47c9c7ea-4bd","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T10:16:52.036Z","kind":"logout_all","accountId":"acc_47c9c7ea-4bd","companyId":"co"}
+{"at":"2026-09-28T10:16:52.654Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T10:16:53.432Z","kind":"login_ok","accountId":"acc_79208f90-d52","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T10:16:59.308Z","kind":"login_ok","accountId":"acc_f151d8fd-114","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T10:17:05.631Z","kind":"login_ok","accountId":"acc_9d46b5d6-be5","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T10:17:11.259Z","kind":"login_ok","accountId":"acc_0a7246e6-917","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T10:17:17.103Z","kind":"login_ok","accountId":"acc_0f2052de-3d7","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T10:17:19.278Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T10:17:19.309Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T10:17:19.378Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T10:17:23.127Z","kind":"login_ok","accountId":"acc_43fc5460-22d","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T10:17:27.479Z","kind":"login_ok","accountId":"acc_b76895b9-5b2","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T10:17:32.050Z","kind":"login_ok","accountId":"acc_12a96450-b38","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T10:17:37.063Z","kind":"login_ok","accountId":"acc_0439643b-407","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T10:17:41.436Z","kind":"login_ok","accountId":"acc_c45caa65-5f2","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T10:17:45.902Z","kind":"login_ok","accountId":"acc_712b9290-093","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T10:17:50.407Z","kind":"login_ok","accountId":"acc_52abf74f-034","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T10:17:55.026Z","kind":"login_ok","accountId":"acc_7af30929-9db","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T10:17:55.397Z","kind":"logout_all","accountId":"acc_7af30929-9db","companyId":"concesionaria"}
+{"at":"2026-09-28T10:17:58.674Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:24:21.050Z","kind":"login_ok","accountId":"acc_66ab6699-8e7","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T12:24:22.229Z","kind":"login_ok","accountId":"acc_753bddb3-35a","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T12:24:23.376Z","kind":"login_ok","accountId":"acc_b43f10c4-cc4","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T12:24:24.322Z","kind":"login_ok","accountId":"acc_52fc3a9a-4cc","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T12:24:25.201Z","kind":"login_ok","accountId":"acc_5ac14db3-f49","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T12:24:26.123Z","kind":"login_ok","accountId":"acc_1892f3b1-43d","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T12:24:27.155Z","kind":"login_ok","accountId":"acc_6ee852b6-dc3","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T12:24:28.161Z","kind":"login_ok","accountId":"acc_e916bb3c-875","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T12:24:29.339Z","kind":"login_ok","accountId":"acc_0cd749dd-9d9","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T12:24:30.319Z","kind":"login_ok","accountId":"acc_6dd70be5-282","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T12:24:31.242Z","kind":"login_ok","accountId":"acc_8caa2803-53c","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T12:24:32.424Z","kind":"login_ok","accountId":"acc_9de1b76b-556","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T12:24:33.371Z","kind":"login_ok","accountId":"acc_f42352c3-f49","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T12:24:33.431Z","kind":"logout_all","accountId":"acc_f42352c3-f49","companyId":"concesionaria"}
+{"at":"2026-09-28T12:24:34.133Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:24:46.226Z","kind":"login_ok","accountId":"acc_8ee80d98-784","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T12:24:46.232Z","kind":"role_change","accountId":"acc_8ee80d98-784","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T12:24:47.187Z","kind":"login_ok","accountId":"acc_3368821c-c47","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T12:24:48.479Z","kind":"login_ok","accountId":"acc_268e125c-70f","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T12:24:48.482Z","kind":"membership_revoked","accountId":"acc_268e125c-70f","companyId":"co"}
+{"at":"2026-09-28T12:24:48.888Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:24:49.483Z","kind":"login_ok","accountId":"acc_52d57cb1-139","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:24:49.745Z","kind":"login_ok","accountId":"acc_52d57cb1-139","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:24:49.747Z","kind":"logout_all","accountId":"acc_52d57cb1-139","companyId":"co"}
+{"at":"2026-09-28T12:24:49.829Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T12:25:08.512Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:25:08.519Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T12:25:08.522Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:39:38.306Z","kind":"login_ok","accountId":"acc_244ae77d-51b","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T12:39:38.312Z","kind":"role_change","accountId":"acc_244ae77d-51b","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T12:39:39.022Z","kind":"login_ok","accountId":"acc_7b6f9664-8f8","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T12:39:39.269Z","kind":"login_ok","accountId":"acc_080920ef-c15","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T12:39:39.272Z","kind":"membership_revoked","accountId":"acc_080920ef-c15","companyId":"co"}
+{"at":"2026-09-28T12:39:39.526Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:39:40.063Z","kind":"login_ok","accountId":"acc_bcb6be0f-682","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:39:40.426Z","kind":"login_ok","accountId":"acc_bcb6be0f-682","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:39:40.428Z","kind":"logout_all","accountId":"acc_bcb6be0f-682","companyId":"co"}
+{"at":"2026-09-28T12:39:40.509Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T12:39:46.630Z","kind":"login_ok","accountId":"acc_c40dd7f7-b60","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T12:39:47.668Z","kind":"login_ok","accountId":"acc_619d5c83-fea","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T12:39:48.650Z","kind":"login_ok","accountId":"acc_d4bc374d-f99","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T12:39:49.791Z","kind":"login_ok","accountId":"acc_2d017708-73c","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T12:39:50.559Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:39:50.565Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T12:39:50.567Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:39:50.778Z","kind":"login_ok","accountId":"acc_ec719327-aab","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T12:39:51.988Z","kind":"login_ok","accountId":"acc_b192f96f-bba","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T12:39:53.178Z","kind":"login_ok","accountId":"acc_887e622a-3bf","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T12:39:54.158Z","kind":"login_ok","accountId":"acc_e6df275f-420","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T12:39:55.129Z","kind":"login_ok","accountId":"acc_b80c7d3a-7fe","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T12:39:55.995Z","kind":"login_ok","accountId":"acc_42e2dd6f-4be","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T12:39:57.093Z","kind":"login_ok","accountId":"acc_0cc42cea-400","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T12:39:58.022Z","kind":"login_ok","accountId":"acc_83db3c1d-b94","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T12:39:58.992Z","kind":"login_ok","accountId":"acc_4c921849-52f","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T12:39:59.067Z","kind":"logout_all","accountId":"acc_4c921849-52f","companyId":"concesionaria"}
+{"at":"2026-09-28T12:39:59.744Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:44:59.899Z","kind":"login_ok","accountId":"acc_17a157b5-0f0","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-09-28T12:44:59.910Z","kind":"role_change","accountId":"acc_17a157b5-0f0","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-09-28T12:45:01.406Z","kind":"login_ok","accountId":"acc_5915615e-d32","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-09-28T12:45:01.884Z","kind":"login_ok","accountId":"acc_7e938a6d-d89","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-09-28T12:45:01.887Z","kind":"membership_revoked","accountId":"acc_7e938a6d-d89","companyId":"co"}
+{"at":"2026-09-28T12:45:02.387Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T12:45:03.453Z","kind":"login_ok","accountId":"acc_68976fdb-023","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:45:04.040Z","kind":"login_ok","accountId":"acc_68976fdb-023","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-09-28T12:45:04.044Z","kind":"logout_all","accountId":"acc_68976fdb-023","companyId":"co"}
+{"at":"2026-09-28T12:45:04.158Z","kind":"login_ok","accountId":"acc_b51fd7e1-70c","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T12:45:04.193Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-09-28T12:45:06.720Z","kind":"login_ok","accountId":"acc_ffa36891-9df","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T12:45:09.720Z","kind":"login_ok","accountId":"acc_e1f3fd51-34f","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T12:45:12.202Z","kind":"login_ok","accountId":"acc_f8111670-dd8","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T12:45:14.240Z","kind":"login_ok","accountId":"acc_4d322527-7dd","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T12:45:16.002Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:45:16.012Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-09-28T12:45:16.015Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-09-28T12:45:16.669Z","kind":"login_ok","accountId":"acc_7b4296d9-b01","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T12:45:18.946Z","kind":"login_ok","accountId":"acc_e0df3bc4-541","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T12:45:20.467Z","kind":"login_ok","accountId":"acc_26e091eb-569","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T12:45:21.814Z","kind":"login_ok","accountId":"acc_5707bc85-5bd","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T12:45:23.466Z","kind":"login_ok","accountId":"acc_a3893199-792","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T12:45:25.176Z","kind":"login_ok","accountId":"acc_e2bdca07-d8b","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T12:45:26.884Z","kind":"login_ok","accountId":"acc_4b4d8326-b32","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T12:45:28.509Z","kind":"login_ok","accountId":"acc_c78578c9-014","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T12:45:28.640Z","kind":"logout_all","accountId":"acc_c78578c9-014","companyId":"concesionaria"}
+{"at":"2026-09-28T12:45:29.744Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-09-28T14:50:31.910Z","kind":"login_ok","accountId":"acc_8e9c6e89-20e","companyId":"p01-peluqueria","emailFp":"ca75f468d7865a8e"}
+{"at":"2026-09-28T14:50:32.981Z","kind":"login_ok","accountId":"acc_8965dda0-ab4","companyId":"p02-clinica-dental","emailFp":"e536e3149355d042"}
+{"at":"2026-09-28T14:50:33.966Z","kind":"login_ok","accountId":"acc_76a4c8d8-e0d","companyId":"p03-ferreteria","emailFp":"87a17f405a8ac262"}
+{"at":"2026-09-28T14:50:34.875Z","kind":"login_ok","accountId":"acc_6265d0ba-6c9","companyId":"p04-taller-mecanico","emailFp":"a40bbfdfea0d0a50"}
+{"at":"2026-09-28T14:50:35.687Z","kind":"login_ok","accountId":"acc_d48a7515-e8b","companyId":"p05-restaurante","emailFp":"5797b8f887b73821"}
+{"at":"2026-09-28T14:50:36.399Z","kind":"login_ok","accountId":"acc_56765a41-3b6","companyId":"p06-gestoria","emailFp":"4bad43ba6f9486a8"}
+{"at":"2026-09-28T14:50:37.198Z","kind":"login_ok","accountId":"acc_b4ac052d-673","companyId":"p07-tienda-online","emailFp":"b73503f75bc3f41a"}
+{"at":"2026-09-28T14:50:38.075Z","kind":"login_ok","accountId":"acc_0af2f8d9-641","companyId":"p08-alquiler-maquinaria","emailFp":"e898ef197929daa9"}
+{"at":"2026-09-28T14:50:38.989Z","kind":"login_ok","accountId":"acc_0b74d54f-48b","companyId":"p09-academia-idiomas","emailFp":"354082bca83f1c03"}
+{"at":"2026-09-28T14:50:39.808Z","kind":"login_ok","accountId":"acc_7cd704ea-f82","companyId":"p10-reformas","emailFp":"c6dd674e753f9394"}
+{"at":"2026-09-28T14:50:40.615Z","kind":"login_ok","accountId":"acc_dd9b6382-3b1","companyId":"concesionaria","emailFp":"18836e662afea51a"}
+{"at":"2026-09-28T14:50:41.352Z","kind":"login_ok","accountId":"acc_97c32607-877","companyId":"marketplace-intermediacion","emailFp":"649dfc1595c042f4"}
+{"at":"2026-09-28T14:50:42.137Z","kind":"login_ok","accountId":"acc_d160220e-452","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-09-28T14:50:42.212Z","kind":"logout_all","accountId":"acc_d160220e-452","companyId":"concesionaria"}
+{"at":"2026-09-28T14:50:42.691Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}

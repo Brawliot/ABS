@@ -1,0 +1,241 @@
+{
+  "measuredAt": "2026-09-28T12:45:04.279Z",
+  "classification": {
+    "n": 32,
+    "correct": 32,
+    "accuracy": 1,
+    "accuracyPct": 100,
+    "failures": []
+  },
+  "rupture": [
+    {
+      "scenario": "pedido con entregas parciales",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "granularidad: cada entrega es compromiso propio; t_entrega_parcial en venta",
+      "severity": "alto"
+    },
+    {
+      "scenario": "renegociación de precio tras aceptación",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "nueva versión de oferta + t_aceptar_nueva_version (evidencia aceptación)",
+      "severity": "alto"
+    },
+    {
+      "scenario": "devolución después del cierre",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "terminal no se reabre; createDevolucionVinculada crea tx nueva vinculada",
+      "severity": "alto"
+    },
+    {
+      "scenario": "pago dividido entre tres partes",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "movimientos con parte_id; computeBalanceByParty + cierre exige saldo 0 en todas",
+      "severity": "alto"
+    },
+    {
+      "scenario": "suscripción pausada",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "estado pausada (en_espera) con t_pausar / t_reanudar",
+      "severity": "medio"
+    },
+    {
+      "scenario": "marketplace con disputa",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "en_disputa (en_espera) + retención liberable/reembolsable",
+      "severity": "alto"
+    },
+    {
+      "scenario": "negocio que no encaja en ningún arquetipo",
+      "coveredByModel": true,
+      "needsEscapeValve": false,
+      "detail": "NoArchetypeMatchError con 2 arquetipos cercanos y preguntas distintivas",
+      "severity": "medio"
+    }
+  ],
+  "escapeValve": {
+    "scenarios": 7,
+    "needingEscape": 0,
+    "frictionPct": 0,
+    "groups": []
+  },
+  "escapeValveCoverage": {
+    "score": 3,
+    "scenarios": 7,
+    "needingEscape": 0,
+    "frictionPct": 0,
+    "allCoveredWithoutModificacion": true,
+    "detail": "Los 7 escenarios de ruptura cubiertos sin evento modificacion"
+  },
+  "compositionHoles": [
+    "ciclo de 3 estados (aceptada→en_entrega→propuesta→aceptada) SÍ detectado (DFS)",
+    "par circular propuesta↔aceptada SÍ detectado (control positivo)"
+  ],
+  "composition": {
+    "score": 3,
+    "cycleDetection": "dfs",
+    "detectsLength3Plus": true,
+    "detectsPairCycle": true,
+    "bloqueaEnforcedAtRuntime": true,
+    "deliveryBlockedByFinanciera": true,
+    "detail": "bloquea opera en runtime (attemptComposedAdvance); DFS detecta ciclos ≥3"
+  },
+  "observability": {
+    "score": 3,
+    "transitionTrace": true,
+    "rejectionExplainableFromTrace": true,
+    "detail": "Cada intento genera traza (origen, destino, condición, evidencia, bloqueos, resultado); explainRejection reconstruye el motivo"
+  },
+  "closureBypass": {
+    "canBypass": false,
+    "detail": "deriveState rechaza terminal de éxito si saldo≠0, recursos abiertos o evidencia incompleta (assertTransactionClosure como defensa redundante)"
+  },
+  "grammarGate": {
+    "registryBlocks": true,
+    "rawUsable": false,
+    "detail": "validateLifecycle se impone en deriveState (y assertCanAdvance); máquina inválida no es usable en crudo"
+  },
+  "derivedProjection": {
+    "score": 3,
+    "wired": true,
+    "cancelReleasesResource": true,
+    "directMutationBlocked": true,
+    "detail": "Proyección suscrita al EventStore: Acuerdo reserva, Cancelada libera; mutación directa prohibida"
+  },
+  "learning": {
+    "score": 3,
+    "priorsInherited": true,
+    "convergesUp": true,
+    "detectsDriftDirection": true,
+    "hasDriftDetector": true,
+    "writesOnlyProfile": true,
+    "model": "dirichlet_beta+gamma",
+    "detail": "Dirichlet/Beta salidas, Gamma permanencia; DriftDetector alerta cambio sostenido; solo escribe perfil"
+  },
+  "derivation": {
+    "exceptionBypassesGraph": false,
+    "matchesSituationIsTautology": false
+  },
+  "privacy": {
+    "score": 3,
+    "aggregation": true,
+    "anonymization": true,
+    "multiTenantControls": true,
+    "aggregateMinCompanies": 5,
+    "belowThresholdUnpublished": true,
+    "detail": "Aislamiento por empresa; agregado solo suficientes; publicación con umbral ≥5; sin reconstrucción de eventos"
+  },
+  "layer1": {
+    "score": 3,
+    "phase": "fase3_ampliada_capa1",
+    "facturaBlocksCloseWithoutFormalDoc": true,
+    "formalDocumentBecomesEvidence": true,
+    "legalDeadlineBlocksReturnRejection": true,
+    "cumplimientoNeverForceable": true,
+    "piiErasureLeavesEventsIntact": true,
+    "businessHours48FriToTue": true,
+    "goalsNeverBlockTransitions": true,
+    "segmentDiscountRespectsBinding": true,
+    "passCount": 8,
+    "totalChecks": 8,
+    "detail": "Capa 1 completa: comunicación, cumplimiento (factura+plazo legal), PII fuera de eventos, objetivo/calendario/clasificación"
+  },
+  "layer2": {
+    "score": 3,
+    "phase": "fase3_ampliada_capa2",
+    "abandonDoesNotWriteBusinessEvents": true,
+    "funnelIdentifiesTopAbandonStep": true,
+    "noCleartextPiiInTelemetry": true,
+    "retention90Days": true,
+    "readOnlyIntelligenceView": true,
+    "telemetryStoreSeparatedFromEventStore": true,
+    "passCount": 6,
+    "totalChecks": 6,
+    "detail": "Capa 2 completa: telemetría UX en puente, embudo/abandonos, Insights, seudónimos+90d, capa 3 solo vía Layer3PresentationIntelligence"
+  },
+  "bridges": {
+    "score": 3,
+    "phase": "fase3_ampliada_puentes",
+    "consultantMarchByCanalWithCalculation": true,
+    "consultantOutOfCatalogClarifies": true,
+    "consultantRespectsSedeFilter": true,
+    "prioritizerInterruptCap": true,
+    "registrarVariantAcceptanceRates": true,
+    "registrarReadOnlyPort": true,
+    "presentationIntelligenceReadPort": true,
+    "passCount": 7,
+    "totalChecks": 7,
+    "detail": "Puentes completos: Consultor (catálogo+Filtro), Priorizador (tope interrupciones), Registrador (tasas), presentation-intelligence RO"
+  },
+  "designerGenerator": {
+    "score": 3,
+    "phase": "fase3_ampliada_disenador_generador",
+    "structureIndependentOfDesign": true,
+    "uiSpecHasNoLiteralColors": true,
+    "incompatiblePatternFallsBackWithWarning": true,
+    "appliedAccessibilityValidation": true,
+    "passCount": 4,
+    "totalChecks": 4,
+    "detail": "Diseñador↔Generador: tokens semánticos, estructura estable, fallback de patrones, a11y aplicada"
+  },
+  "fourSpecialists": {
+    "score": 3,
+    "phase": "fase3_ampliada_cuatro_especialistas",
+    "architectIa": true,
+    "redactor": true,
+    "qaTester": true,
+    "securityReviewer": true,
+    "passCount": 4,
+    "totalChecks": 4,
+    "details": {
+      "architectIa": "IA por rol (5) con menú ≤7",
+      "redactor": "Redactor: sin jerga, hash estable al regenerar",
+      "qaTester": "Probador: venta a crédito→cerrada en 201ms",
+      "securityReviewer": "Seguridad: concesionaria sin críticos (propuestas no aplicadas)"
+    },
+    "detail": "Cuatro especialistas OK: IA, Redactor, Probador, Revisor seguridad"
+  },
+  "grammarBypassNote": "validateLifecycle se impone en toda función que recibe una máquina (deriveState, assertCanAdvance, Registry)",
+  "determinism": {
+    "score": 2,
+    "endToEndMeasured": true,
+    "stubOnly": false,
+    "extractorProvider": "heuristic",
+    "extractorModel": "HeuristicDiagnosisExtractor",
+    "n": 42,
+    "extractorAccuracyPct": 35.71,
+    "finalAccuracyPct": 73.81,
+    "reaskRatePct": 23.81,
+    "below90": true,
+    "top5Failures": [
+      {
+        "cause": "extractor_no_activó_ningún_flag→sin_candidato",
+        "count": 4
+      },
+      {
+        "cause": "extractor_confianza_baja_o_contradicción_fantasma",
+        "count": 2
+      },
+      {
+        "cause": "extractor_flags_desplazaron_dominante (querían venta, obtuvo financiera)",
+        "count": 1
+      },
+      {
+        "cause": "extractor_flags_desplazaron_dominante (querían uso_temporal, obtuvo intermediacion)",
+        "count": 1
+      },
+      {
+        "cause": "extractor_flags_desplazaron_dominante (querían suscripcion, obtuvo intermediacion)",
+        "count": 1
+      }
+    ],
+    "g15ContradictionTriggersReask": true,
+    "detail": "E2E texto→extractor→clasificador medido en tests/bank (≥40). El 96.88% previo solo era classifyFromAnswers con booleanos oro.",
+    "reportPath": "C:\\Users\\34689\\Desktop\\PROYECTOS\\ABS\\tests\\bank\\e2e-diagnosis-report.json"
+  }
+}

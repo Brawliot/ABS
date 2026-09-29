@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p05-restaurante",
+  "profileName": "Restaurante con reservas",
+  "summary": "Reserva con aforo (uso_temporal + plazas); cobro de servicio (venta/TPV); señal de grupos; compras diarias; mermas/caducidad como extensión.",
+  "processes": [
+    {
+      "id": "proc.reserva",
+      "label": "Reserva de mesa/aforo por turno",
+      "dominant": "uso_temporal",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "plazas",
+      "notes": "uso_temporal + capacidad_temporal; extensión plazas (aforo 60) vs cita 1:1. Señal de grupo = retención antes de confirmar.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "reserva"
+          ],
+          "decision": "uso_temporal"
+        },
+        {
+          "field": "calendario.tieneCitas",
+          "value": "reservas por turno",
+          "decision": "capacidad por turno"
+        },
+        {
+          "field": "descripcion",
+          "value": "60 cubiertos",
+          "decision": "aforo plazas"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "aforo por turno",
+          "decision": "extensión plazas"
+        },
+        {
+          "field": "cobros.fianzas",
+          "value": "senal para grupos de mas de 10",
+          "decision": "retención + bloqueo confirmación"
+        },
+        {
+          "field": "bloqueos",
+          "value": "no se confirma reserva de grupo sin senal",
+          "decision": "guarda pre t_reservar/t_iniciar"
+        }
+      ]
+    },
+    {
+      "id": "proc.servicio_mesa",
+      "label": "Servicio en mesa y cobro",
+      "dominant": "venta",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Ticket/TPV: canal presencial + payment inmediato. Puede nacer tras sentar (reserva→servicio).",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "servicio en mesa",
+            "cobro"
+          ],
+          "decision": "venta inmediata"
+        },
+        {
+          "field": "cobros.aCredito",
+          "value": false,
+          "decision": "inmediato → TPV"
+        },
+        {
+          "field": "necesidadesNoExpresables",
+          "value": "TPV de sala",
+          "decision": "etiqueta mod.tpv / canal presencial"
+        }
+      ]
+    },
+    {
+      "id": "proc.compras_diarias",
+      "label": "Compra diaria de producto",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "compra diaria de producto"
+          ],
+          "decision": "compra"
+        },
+        {
+          "field": "excepcionesPermiso",
+          "value": "solo el jefe de cocina hace pedidos de mas de 500",
+          "decision": "aprobación compra"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "plazas_turno",
+      "capacidad": 60,
+      "status": "REQUIERE_EXTENSION",
+      "extension": "plazas",
+      "trace": [
+        {
+          "field": "descripcion",
+          "value": "60 cubiertos",
+          "decision": "aforo"
+        },
+        {
+          "field": "calendario.turnosPersonal",
+          "value": true,
+          "decision": "turnos calendario"
+        }
+      ]
+    },
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "REQUIERE_EXTENSION",
+      "extension": "lotes",
+      "notes": "Inventario base expresable; mermas/caducidad/APPCC requieren extensión lote.",
+      "trace": [
+        {
+          "field": "naturalezaBienes",
+          "value": [
+            "propios_por_cantidad"
+          ],
+          "decision": "inventario"
+        },
+        {
+          "field": "procesos",
+          "value": [
+            "control de mermas"
+          ],
+          "decision": "extensión merma/lote"
+        },
+        {
+          "field": "cumplimiento",
+          "value": [
+            "APPCC",
+            "alergenos"
+          ],
+          "decision": "trazabilidad alimentaria"
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": {
+        "importe_eur": 500,
+        "aprueba": "jefe_cocina",
+        "aplica_a": "compras"
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [
+        {
+          "field": "politicas[0]",
+          "value": "500 jefe_cocina",
+          "decision": "aprobación compras"
+        }
+      ]
+    },
+    {
+      "plantilla": "fianza_grupo",
+      "parametros": {
+        "umbral_comensales": 10,
+        "movimiento": "retencion"
+      },
+      "status": "REQUIERE_EXTENSION",
+      "extension": "liquidacion_fianza",
+      "trace": [
+        {
+          "field": "cobros.fianzas",
+          "value": "senal grupos >10",
+          "decision": "retención tipada"
+        }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": [
+        "cliente"
+      ],
+      "fields": [
+        "reservas"
+      ],
+      "actions": [
+        "reservar",
+        "cancelar"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "portalCliente.autoservicio",
+          "value": "reservar y cancelar",
+          "decision": "portal"
+        }
+      ]
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p05.d1",
+      "question": "¿Reserva y ticket son dos procesos (uso_temporal + venta) o uno solo?",
+      "chosen": "dos_procesos",
+      "alternatives": [
+        {
+          "option": "dos_procesos",
+          "pros": "aforo separado del cobro TPV",
+          "cons": "hay que vincular mesa→ticket"
+        },
+        {
+          "option": "solo_venta_con_capacidad",
+          "pros": "como heurístico",
+          "cons": "pierde semántica de reserva/aforo"
+        },
+        {
+          "option": "solo_uso_temporal",
+          "pros": "énfasis reserva",
+          "cons": "cobro de carta menos natural"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "venta",
+      "processes": [
+        "venta"
+      ],
+      "composition": null,
+      "panels": [
+        "panel_agenda",
+        "portal_filtro"
+      ]
+    },
+    "differences": [
+      "Esperado uso_temporal (reserva/aforo) + venta (TPV); heurístico solo venta",
+      "Esperado extensión plazas y fianza grupo; heurístico no",
+      "Esperado compras diarias; heurístico ausente",
+      "Esperado lotes/mermas; heurístico solo inventario por cantidad",
+      "Alineado: agenda panel, portal, TPV etiqueta, inventario, presencial"
+    ]
+  },
+  "decisionsVersion": "2026-09-28-user"
+}

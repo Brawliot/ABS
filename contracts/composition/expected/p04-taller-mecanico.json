@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p04-taller-mecanico",
+  "profileName": "Taller mecanico",
+  "decisionsVersion": "2026-09-28-user",
+  "summary": "Reparación (servicio_proyecto) dominante; cobro = restriction (no entregar con saldo pendiente), no secundaria. Financiera solo si aPlazos=true — hoy unknown → MUST_ASK. Custodia del vehículo; compras; garantía vinculada.",
+  "processes": [
+    {
+      "id": "proc.reparacion",
+      "label": "Orden de reparación",
+      "dominant": "servicio_proyecto",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "paymentBlock": {
+        "kind": "restriction",
+        "predicate": "parte.saldo_pendiente == 0 OR evidencia_pago",
+        "blocks": "entrega_vehiculo / t_cerrar",
+        "status": "EXPRESABLE_HOY",
+        "notes": "No secundaria venta/financiera por cobro al contado.",
+        "trace": [
+          { "field": "bloqueos", "value": "no se entrega el vehiculo sin pago", "decision": "restriction saldo" },
+          { "field": "procesos", "value": ["cobro", "entrega del vehiculo"], "decision": "restriction, no secundaria" }
+        ]
+      },
+      "conditionalSecondary": {
+        "ifField": "cobros.aPlazos",
+        "ifEquals": true,
+        "then": {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "acordado",
+          "bloquea": "cerrada",
+          "status": "EXPRESABLE_HOY"
+        },
+        "elseIfUnknown": {
+          "resolution": "MUST_ASK",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+          "questionId": "p04.d3"
+        }
+      },
+      "trace": [
+        { "field": "procesos", "value": ["diagnostico", "presupuesto", "reparacion"], "decision": "dominante servicio_proyecto" },
+        { "field": "descripcion", "value": "lo miro y le llamo con el presupuesto", "decision": "propuesta→acordado" },
+        { "field": "bloqueos", "value": "no se repara sin presupuesto aceptado", "decision": "no t_ejecutar sin aceptación" }
+      ]
+    },
+    {
+      "id": "proc.compras_piezas",
+      "label": "Pedido de piezas a proveedor",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "trace": [
+        { "field": "procesos", "value": ["pedido de piezas"], "decision": "compra" },
+        { "field": "descripcion", "value": "pido las piezas", "decision": "proveedor" },
+        { "field": "modulosEsperados", "value": ["compras a proveedor"], "decision": "proceso" }
+      ]
+    },
+    {
+      "id": "proc.garantia",
+      "label": "Garantía post-entrega",
+      "dominant": "servicio_proyecto",
+      "link": "vinculada_a",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Tx nueva vinculada tras terminal; no reapertura.",
+      "trace": [
+        { "field": "cumplimiento", "value": "garantia de reparacion", "decision": "linked-transaction" },
+        { "field": "necesidadesNoExpresables", "value": "garantia posterior a la entrega", "decision": "tx vinculada" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "EXPRESABLE_HOY",
+      "notes": "Inventario solo por piezas propias.",
+      "trace": [
+        { "field": "naturalezaBienes", "value": ["propios_por_cantidad", "del_cliente"], "decision": "inventario solo propios_por_cantidad" }
+      ]
+    },
+    {
+      "subtype": "retornable",
+      "naturaleza": "del_cliente",
+      "ownership": "parte_cliente",
+      "status": "REQUIERE_EXTENSION",
+      "extension": "custodia",
+      "notes": "Vehículo en depósito: ciclo entra→deposito→sale.",
+      "trace": [
+        { "field": "naturalezaBienes", "value": "del_cliente", "decision": "custodia" },
+        { "field": "procesos", "value": ["recepcion del vehiculo", "entrega del vehiculo"], "decision": "ciclo custodia" },
+        { "field": "cumplimiento", "value": "resguardo de deposito del vehiculo", "decision": "evidencia depósito" },
+        { "field": "necesidadesNoExpresables", "value": "coche custodiado con ciclo propio", "decision": "extensión custodia" }
+      ]
+    },
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "cita_box",
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "calendario.tieneCitas", "value": true, "decision": "agenda" },
+        { "field": "calendario.horario", "value": "unknown", "decision": "política confirm default" }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": { "importe_eur": 1500, "aprueba": "dueno" },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [
+        { "field": "politicas[0]", "value": "1500 dueno", "decision": "aprobación" },
+        { "field": "excepcionesPermiso", "value": "solo el dueno aprueba presupuestos de mas de 1500", "decision": "guarda" }
+      ]
+    },
+    {
+      "plantilla": "evidence_requirement",
+      "parametros": { "transitionId": "t_acordar", "evidence": "presupuesto_escrito" },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "cumplimiento", "value": "presupuesto previo por escrito", "decision": "evidencia" }
+      ]
+    },
+    {
+      "plantilla": "restriction_entrega_sin_saldo",
+      "parametros": { "fact": "parte.saldo_pendiente", "op": "eq", "value": 0 },
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "bloqueos", "value": "no se entrega el vehiculo sin pago", "decision": "restriction" }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": ["cliente"],
+      "fields": ["presupuesto", "estado_reparacion"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "aceptar presupuesto y ver estado", "decision": "portal" }
+      ]
+    }
+  ],
+  "composerMustAsk": [
+    {
+      "id": "p04.d3",
+      "field": "cobros.aPlazos",
+      "question": "¿Ofrecéis pago a plazos en el taller?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "ifTrue": "añadir secundaria financiera bornIn acordado bloquea cerrada",
+      "ifFalse": "solo restriction de saldo; sin financiera",
+      "trace": [
+        { "field": "cobros.aPlazos", "value": "unknown", "decision": "preguntar; no asumir" }
+      ]
+    }
+  ],
+  "oracleFailIf": [
+    {
+      "code": "UNEXPECTED_COBRO_SECONDARY",
+      "when": "composer adds venta/financiera secondary only to model cash payment block",
+      "message": "Cobro al contado = restriction, no secundaria"
+    },
+    {
+      "code": "CHOSE_APLAZOS_WITHOUT_ASK",
+      "when": "composer sets aPlazos true/false or adds/omits financiera without emitting question p04.d3",
+      "message": "aPlazos unknown exige pregunta al usuario"
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p04.d1",
+      "question": "¿El cobro que bloquea entrega es secundaria o restriction?",
+      "resolution": "ACCEPTED",
+      "chosen": "restriction_saldo",
+      "alternatives": [
+        { "option": "secundaria_venta_cobro", "rejected": true },
+        { "option": "restriction_saldo", "pros": "simple y correcto para contado" }
+      ]
+    },
+    {
+      "id": "p04.d2",
+      "question": "¿Custodia del coche es recurso retornable del cliente o uso_temporal invertido?",
+      "resolution": "ACCEPTED",
+      "chosen": "retornable_owned_by_parte",
+      "alternatives": [
+        { "option": "retornable_owned_by_parte" },
+        { "option": "uso_temporal_invertido", "rejected": true }
+      ]
+    },
+    {
+      "id": "p04.d3",
+      "question": "¿Pago a plazos (aPlazos)?",
+      "resolution": "MUST_ASK",
+      "oracleRule": "FAIL_IF_COMPOSER_CHOOSES",
+      "chosen": null,
+      "alternatives": [
+        { "option": true, "implies": "secundaria financiera" },
+        { "option": false, "implies": "solo restriction" }
+      ]
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "servicio_proyecto",
+      "processes": ["servicio_proyecto"],
+      "composition": null,
+      "panels": ["panel_agenda", "portal_filtro"]
+    },
+    "differences": [
+      "Esperado restriction de cobro (no secundaria); heurístico sin composition (alineado en absence de secundaria)",
+      "Esperado MUST_ASK aPlazos; heurístico no pregunta",
+      "Esperado compras + custodia + garantía; heurístico ausente",
+      "Alineado: dominante servicio, agenda, portal, inventario por piezas"
+    ]
+  }
+}

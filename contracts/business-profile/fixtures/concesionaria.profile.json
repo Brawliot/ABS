@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.1.0",
+  "identity": {
+    "companyId": "concesionaria-demo"
+  },
+  "policyMeta": {
+    "documentVersion": "1.0.0",
+    "dominantArchetypeId": "venta"
+  },
+  "processes": {
+    "status": "known",
+    "value": [
+      {
+        "id": "lc.venta",
+        "archetypeId": "venta",
+        "label": "Venta vehículo"
+      },
+      {
+        "id": "lc.financiera",
+        "archetypeId": "financiera",
+        "label": "Financiación"
+      },
+      {
+        "id": "lc.taller",
+        "archetypeId": "servicio_proyecto",
+        "label": "taller"
+      }
+    ],
+    "confidence": 1
+  },
+  "channels": {
+    "status": "known",
+    "value": ["backoffice", "taller"],
+    "confidence": 1
+  },
+  "paymentMode": {
+    "status": "known",
+    "value": "financiado",
+    "confidence": 1
+  },
+  "resourceSubtypes": {
+    "status": "known",
+    "value": ["capacidad_temporal"],
+    "confidence": 1
+  },
+  "naturalezaBienes": {
+    "status": "known",
+    "value": ["propios_unitarios"],
+    "confidence": 1
+  },
+  "location": {
+    "status": "not_applicable"
+  },
+  "capabilities": {
+    "hasPartes": { "status": "known", "value": true, "confidence": 1 },
+    "hasMovimientos": { "status": "known", "value": true, "confidence": 1 },
+    "hasFormalDocuments": { "status": "known", "value": true, "confidence": 1 },
+    "hasFiscalCompliance": { "status": "known", "value": true, "confidence": 1 },
+    "hasCalendar": { "status": "known", "value": true, "confidence": 1 }
+  },
+  "roles": {
+    "status": "known",
+    "value": [
+      { "id": "comercial", "label": "Comercial" },
+      { "id": "gerente", "label": "Gerente" },
+      { "id": "taller", "label": "Jefe de taller" },
+      { "id": "finanzas", "label": "Finanzas" },
+      { "id": "cliente", "label": "Cliente" }
+    ],
+    "confidence": 1
+  },
+  "calendar": {
+    "status": "known",
+    "value": {
+      "id": "cal-taller",
+      "weeklyHours": {
+        "1": [{ "start": "08:00", "end": "18:00" }],
+        "2": [{ "start": "08:00", "end": "18:00" }],
+        "3": [{ "start": "08:00", "end": "18:00" }],
+        "4": [{ "start": "08:00", "end": "18:00" }],
+        "5": [{ "start": "08:00", "end": "18:00" }]
+      },
+      "seasons": [],
+      "shifts": [
+        {
+          "id": "turno-taller",
+          "label": "Taller mañana",
+          "weekdays": [1, 2, 3, 4, 5],
+          "window": { "start": "08:00", "end": "14:00" },
+          "actorIds": ["u-taller"],
+          "recursoIds": ["box-1"]
+        }
+      ]
+    },
+    "confidence": 1
+  },
+  "permissions": {
+    "status": "known",
+    "value": [
+      {
+        "id": "perm-aceptar",
+        "kind": "permiso",
+        "transitionId": "t_aceptar",
+        "allowedRoles": ["comercial", "gerente"]
+      },
+      {
+        "id": "perm-cerrar",
+        "kind": "permiso",
+        "transitionId": "t_cerrar",
+        "allowedRoles": ["finanzas", "gerente"]
+      },
+      {
+        "id": "perm-taller-acordar",
+        "kind": "permiso",
+        "transitionId": "t_acordar",
+        "allowedRoles": ["taller", "gerente"]
+      },
+      {
+        "id": "perm-ver-cliente",
+        "kind": "permiso",
+        "action": "consultar",
+        "allowedRoles": ["cliente"],
+        "visibility": { "scope": "propia" }
+      }
+    ],
+    "confidence": 1
+  },
+  "permissionFallback": {
+    "status": "known",
+    "value": {
+      "roleId": "gerente",
+      "excludeTransitionIds": ["t_aceptar", "t_cerrar", "t_acordar"]
+    },
+    "confidence": 1
+  },
+  "compliance": {
+    "status": "known",
+    "value": [
+      {
+        "id": "comp-factura",
+        "kind": "cumplimiento",
+        "transitionId": "t_cerrar",
+        "dataRetention": {
+          "description": "Conservación fiscal de facturas 5 años"
+        }
+      }
+    ],
+    "confidence": 1
+  },
+  "catalogFields": {
+    "status": "known",
+    "value": ["importe", "factura_id", "parte_id", "compra_at"],
+    "confidence": 1
+  },
+  "organization": { "status": "not_applicable" },
+  "businessPolicies": { "status": "not_applicable" },
+  "pipelineStateIds": { "status": "not_applicable" }
+}

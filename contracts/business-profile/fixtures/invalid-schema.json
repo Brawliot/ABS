@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.1.0",
+  "identity": { "companyId": "" },
+  "policyMeta": {
+    "documentVersion": "1",
+    "dominantArchetypeId": "venta"
+  },
+  "processes": { "status": "known", "value": [] },
+  "channels": { "status": "known", "value": ["canal-inventado"] },
+  "paymentMode": { "status": "known", "value": "inmediato" },
+  "resourceSubtypes": { "status": "known", "value": [] },
+  "naturalezaBienes": { "status": "known", "value": ["inventado"] },
+  "location": { "status": "not_applicable" },
+  "capabilities": {
+    "hasPartes": { "status": "known", "value": true },
+    "hasMovimientos": { "status": "known", "value": true },
+    "hasFormalDocuments": { "status": "known", "value": false },
+    "hasFiscalCompliance": { "status": "known", "value": false },
+    "hasCalendar": { "status": "known", "value": false }
+  },
+  "roles": { "status": "known", "value": [{ "id": "r", "label": "R" }] },
+  "calendar": { "status": "not_applicable" },
+  "permissions": { "status": "known", "value": [] },
+  "permissionFallback": {
+    "status": "known",
+    "value": { "roleId": "r" }
+  },
+  "compliance": { "status": "known", "value": [] },
+  "catalogFields": { "status": "known", "value": ["importe"] },
+  "organization": { "status": "not_applicable" },
+  "businessPolicies": { "status": "not_applicable" },
+  "pipelineStateIds": { "status": "not_applicable" }
+}

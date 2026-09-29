@@ -1,0 +1,176 @@
+{
+  "generatedAt": "2026-09-28T00:10:55.122Z",
+  "corpus": {
+    "path": "C:\\Users\\34689\\Desktop\\PROYECTOS\\ABS\\tests\\real\\interpreter\\corpus.synthetic.test.jsonl",
+    "n": 187,
+    "syntheticCount": 187,
+    "realAnonymizedCount": 0,
+    "targetRealN": 139,
+    "limitation": "Conjunto de prueba con 0 casos reales anonimizados (< 139). Resultados actuales son sobre corpus SINTÉTICO (n=187)."
+  },
+  "providers": {
+    "heuristic": "HeuristicInterpreterExtractor",
+    "llmPath": "LlmInterpreterExtractor + EvalSimulatorLlmAdapter (NO es OpenAI; proxy de evaluación)",
+    "openai": "error: Falta OPENAI_API_KEY (necesario salvo ABS_LLM_MODE=replay con cassettes)"
+  },
+  "heuristic": {
+    "label": "heuristic",
+    "n": 187,
+    "accuracy": {
+      "n": 187,
+      "p": 0.7593582887700535,
+      "low": 0.6932635087923684,
+      "high": 0.8150114165907766
+    },
+    "clarificationRate": {
+      "n": 187,
+      "p": 0.5721925133689839,
+      "low": 0.5005278557406468,
+      "high": 0.6409507317371357
+    },
+    "severeErrorRate": {
+      "n": 187,
+      "p": 0,
+      "low": 0,
+      "high": 0.020129783024246284
+    },
+    "perType": {
+      "aceptacion": {
+        "n": 30,
+        "p": 0.4,
+        "low": 0.24590394326083398,
+        "high": 0.5767994750172617,
+        "correct": 12
+      },
+      "cancelacion": {
+        "n": 40,
+        "p": 0.7,
+        "low": 0.545696893456796,
+        "high": 0.819253290843047,
+        "correct": 28
+      },
+      "declaracion_pago": {
+        "n": 25,
+        "p": 1,
+        "low": 0.8668035060468212,
+        "high": 1,
+        "correct": 25
+      },
+      "cobro_parcial": {
+        "n": 35,
+        "p": 0.5714285714285714,
+        "low": 0.4085712925897337,
+        "high": 0.7201566691832108,
+        "correct": 20
+      },
+      "entrega": {
+        "n": 25,
+        "p": 1,
+        "low": 0.8668035060468212,
+        "high": 1,
+        "correct": 25
+      },
+      "saludo": {
+        "n": 24,
+        "p": 1,
+        "low": 0.8620194241710247,
+        "high": 1,
+        "correct": 24
+      },
+      "ambiguo": {
+        "n": 8,
+        "p": 1,
+        "low": 0.6755843804891231,
+        "high": 1,
+        "correct": 8
+      }
+    },
+    "causes": {
+      "falso_positivo_aclaracion": 45
+    }
+  },
+  "llmOrSimulator": {
+    "label": "eval_simulator",
+    "n": 187,
+    "accuracy": {
+      "n": 187,
+      "p": 0.9786096256684492,
+      "low": 0.9462994905570941,
+      "high": 0.9916511449437609
+    },
+    "clarificationRate": {
+      "n": 187,
+      "p": 0.3315508021390374,
+      "low": 0.26806296422612236,
+      "high": 0.4018203316590514
+    },
+    "severeErrorRate": {
+      "n": 187,
+      "p": 0.0213903743315508,
+      "low": 0.008348855056238929,
+      "high": 0.0537005094429059
+    },
+    "perType": {
+      "aceptacion": {
+        "n": 30,
+        "p": 1,
+        "low": 0.886482908609522,
+        "high": 1,
+        "correct": 30
+      },
+      "cancelacion": {
+        "n": 40,
+        "p": 1,
+        "low": 0.9123754607496077,
+        "high": 1,
+        "correct": 40
+      },
+      "declaracion_pago": {
+        "n": 25,
+        "p": 1,
+        "low": 0.8668035060468212,
+        "high": 1,
+        "correct": 25
+      },
+      "cobro_parcial": {
+        "n": 35,
+        "p": 1,
+        "low": 0.9010957324106112,
+        "high": 1,
+        "correct": 35
+      },
+      "entrega": {
+        "n": 25,
+        "p": 0.84,
+        "low": 0.6534598601976184,
+        "high": 0.9359665239142201,
+        "correct": 21
+      },
+      "saludo": {
+        "n": 24,
+        "p": 1,
+        "low": 0.8620194241710247,
+        "high": 1,
+        "correct": 24
+      },
+      "ambiguo": {
+        "n": 8,
+        "p": 1,
+        "low": 0.6755843804891231,
+        "high": 1,
+        "correct": 8
+      }
+    },
+    "causes": {
+      "transicion": 4
+    }
+  },
+  "openai": null,
+  "openaiSevereErrors": [],
+  "thresholdProposal": null,
+  "guardrail": {
+    "sampled": 30,
+    "illegalTransitionsReachingJudge": 0
+  },
+  "userMustProvide": "Mensajes reales anonimizados en JSONL (origin=real_anonymized, split=test), n≥139, etiquetados según LABELING.md. No usar el split=dev para ajustar prompts del informe de prueba."
+}

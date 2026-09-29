@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.1.0",
+  "identity": { "companyId": "inc-co" },
+  "policyMeta": {
+    "documentVersion": "1.0.0",
+    "dominantArchetypeId": "venta"
+  },
+  "processes": {
+    "status": "known",
+    "value": [{ "id": "lc.venta", "archetypeId": "venta" }]
+  },
+  "channels": { "status": "unknown" },
+  "paymentMode": { "status": "unknown" },
+  "resourceSubtypes": { "status": "known", "value": [] },
+  "naturalezaBienes": { "status": "known", "value": [] },
+  "location": { "status": "unknown" },
+  "capabilities": {
+    "hasPartes": { "status": "known", "value": true },
+    "hasMovimientos": { "status": "known", "value": true },
+    "hasFormalDocuments": { "status": "unknown" },
+    "hasFiscalCompliance": { "status": "unknown" },
+    "hasCalendar": { "status": "known", "value": false }
+  },
+  "roles": {
+    "status": "known",
+    "value": [{ "id": "vendedor", "label": "Vendedor" }]
+  },
+  "calendar": { "status": "not_applicable" },
+  "permissions": { "status": "known", "value": [] },
+  "permissionFallback": { "status": "unknown" },
+  "compliance": { "status": "known", "value": [] },
+  "catalogFields": { "status": "known", "value": ["importe"] },
+  "organization": { "status": "not_applicable" },
+  "businessPolicies": { "status": "not_applicable" },
+  "pipelineStateIds": { "status": "not_applicable" }
+}

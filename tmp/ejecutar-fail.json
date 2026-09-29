@@ -1,0 +1,45 @@
+{
+  "form": {
+    "parte_id": "parte-demo-1",
+    "evidence.referenceType": "consentimiento_informado",
+    "evidence.kind": "aceptacion"
+  },
+  "evidenceKind": "aceptacion",
+  "transitionRequired": "sistema",
+  "evidenceRules": [
+    {
+      "kind": "evidence_requirement",
+      "id": "evidence:inferred-evidencia",
+      "priority": 300,
+      "transitionId": "t_ejecutar",
+      "evidenceKind": "aceptacion",
+      "referenceType": "consentimiento_informado",
+      "sourcePolicyId": "inferred-evidencia",
+      "sourceKind": "cumplimiento",
+      "binding": {
+        "mode": "live"
+      }
+    }
+  ],
+  "reason": "Evidencia exigida: sistema; recibida: aceptacion",
+  "guards": [
+    {
+      "phase": "cumplimiento",
+      "ruleId": "evidence:inferred-evidencia",
+      "result": "accepted",
+      "reason": "Requisito de evidencia OK (aceptacion)"
+    },
+    {
+      "phase": "permiso",
+      "ruleId": "guard:perm-t_ejecutar",
+      "result": "accepted",
+      "reason": "Permiso OK: rol autorizado para t_ejecutar"
+    },
+    {
+      "phase": "nucleo",
+      "ruleId": "nucleo:assertCanAdvance",
+      "result": "rejected",
+      "reason": "Evidencia exigida: sistema; recibida: aceptacion"
+    }
+  ]
+}

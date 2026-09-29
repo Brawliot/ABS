@@ -1,0 +1,151 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p03-ferreteria",
+  "profileName": "Ferreteria con venta a profesionales",
+  "decisionsVersion": "2026-09-28-user",
+  "summary": "Venta dominante (mostrador y a cuenta) SIN secundaria financiera. Crédito de cuenta: factCondition+restriction por parte.saldo_pendiente e impago; cobro mensual vía facturación agregada. Compras a proveedor; portal de cuenta; sin agenda.",
+  "processes": [
+    {
+      "id": "proc.venta",
+      "label": "Venta mostrador y a cuenta",
+      "dominant": "venta",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Crédito = atributo de la Parte (cuenta), no secundaria financiera por cada venta. Venta a cuenta condicionada por políticas sobre saldo/impago.",
+      "accountCredit": {
+        "model": "cuenta_parte",
+        "not": "secundaria_financiera_por_venta",
+        "mechanisms": [
+          {
+            "kind": "factCondition",
+            "fact": "parte.saldo_pendiente",
+            "op": "lte",
+            "param": "limite_credito",
+            "status": "EXPRESABLE_HOY"
+          },
+          {
+            "kind": "restriction",
+            "on": "venta_a_cuenta",
+            "when": "impago_o_sobre_limite",
+            "status": "EXPRESABLE_HOY"
+          }
+        ],
+        "monthlySettlement": {
+          "status": "REQUIERE_EXTENSION",
+          "extension": "facturacion_agregada",
+          "notes": "Albaranes del mes → una factura; no es amortización de financiera."
+        },
+        "trace": [
+          { "field": "cobros.aCredito", "value": "cuenta mensual para profesionales", "decision": "cuenta Parte, no secundaria financiera" },
+          { "field": "bloqueos", "value": "no se vende a cuenta si supera limite o impagos", "decision": "factCondition + restriction" },
+          { "field": "politicas", "value": ["limite_credito_por_cliente", "bloqueo_por_impago"], "decision": "plantillas → factCondition/restriction" },
+          { "field": "procesos", "value": ["cierre y cobro mensual de cuentas"], "decision": "facturacion_agregada" }
+        ]
+      },
+      "trace": [
+        { "field": "procesos", "value": ["venta de mostrador", "venta a cuenta de profesional"], "decision": "dominante venta" }
+      ]
+    },
+    {
+      "id": "proc.compras",
+      "label": "Pedido y recepción a proveedor",
+      "dominant": "venta",
+      "direction": "empresa_como_comprador",
+      "secondaries": [],
+      "status": "REQUIERE_EXTENSION",
+      "extension": "direccion_compra",
+      "trace": [
+        { "field": "procesos", "value": ["pedido a proveedor", "recepcion de mercancia"], "decision": "proceso compra" },
+        { "field": "descripcion", "value": "compramos a unos quince proveedores", "decision": "Partes proveedor" },
+        { "field": "modulosEsperados", "value": ["compras a proveedor"], "decision": "proceso explícito" }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "EXPRESABLE_HOY",
+      "notes": "Miles de referencias — escala, no pieza nueva.",
+      "trace": [
+        { "field": "naturalezaBienes", "value": ["propios_por_cantidad"], "decision": "inventario" },
+        { "field": "descripcion", "value": "miles de referencias", "decision": "volumen, no extensión" }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "limite_credito_por_cliente",
+      "parametros": { "por_defecto_eur": 1500 },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "notes": "Runtime: factCondition parte.saldo_pendiente <= limite.",
+      "trace": [{ "field": "politicas[0]", "value": "limite_credito_por_cliente 1500", "decision": "límite de cuenta" }]
+    },
+    {
+      "plantilla": "bloqueo_por_impago",
+      "parametros": { "dias": 45 },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [{ "field": "politicas[1]", "value": "bloqueo_por_impago 45d", "decision": "restriction venta a cuenta" }]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": ["cliente_profesional"],
+      "fields": ["cuenta", "albaranes", "saldo"],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        { "field": "portalCliente.autoservicio", "value": "profesionales consultan su cuenta y albaranes", "decision": "portal propia" }
+      ]
+    }
+  ],
+  "billingAggregation": {
+    "pattern": "albaranes_a_factura_mensual",
+    "status": "REQUIERE_EXTENSION",
+    "extension": "facturacion_agregada",
+    "trace": [
+      { "field": "necesidadesNoExpresables", "value": "albaran mensual agrupado en una factura", "decision": "extensión batch" },
+      { "field": "cumplimiento", "value": ["facturacion", "albaranes"], "decision": "docs formales" }
+    ]
+  },
+  "organization": {
+    "sedes": "not_applicable",
+    "status": "EXPRESABLE_HOY",
+    "trace": [{ "field": "organizacion.sedes", "value": "not_applicable", "decision": "sin multisede" }]
+  },
+  "oracleFailIf": [
+    {
+      "code": "UNEXPECTED_FINANCIERA_SECONDARY",
+      "when": "composer adds secundaria financiera under venta for account credit",
+      "message": "Crédito de ferretería es de cuenta (factCondition/restriction), no secundaria financiera por venta"
+    }
+  ],
+  "userDecisions": [
+    {
+      "id": "p03.d1",
+      "question": "¿Crédito profesional = secundaria financiera o cuenta Parte con factCondition?",
+      "resolution": "ACCEPTED",
+      "chosen": "cuenta_parte_factCondition_restriction",
+      "alternatives": [
+        { "option": "secundaria_financiera", "pros": "panel crédito", "cons": "no modela cuenta mensual agregada", "rejected": true },
+        { "option": "cuenta_parte_factCondition_restriction", "pros": "crédito de cuenta + facturación agregada", "cons": "sin sub-tablero amortización" }
+      ]
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "venta",
+      "processes": ["venta"],
+      "composition": null,
+      "panels": ["portal_filtro"]
+    },
+    "differences": [
+      "Esperado SIN secundaria financiera (crédito de cuenta); heurístico tampoco la añade (alineado en absence)",
+      "Esperado factCondition+restriction + facturación agregada; heurístico no tipa cuenta",
+      "Esperado proceso compras; heurístico ausente",
+      "Alineado: dominante venta, sin agenda, portal, inventario"
+    ]
+  }
+}

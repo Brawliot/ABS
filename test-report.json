@@ -1,0 +1,171 @@
+{
+  "generatedAt": "2026-09-28T12:45:17.020Z",
+  "phase": "B",
+  "propertySeeds": 200,
+  "thresholds": {
+    "transitionP95MsWithRealDb": 200,
+    "replay100kMs": 10000,
+    "uiSpecGenMedianMsWithLlm": 30000,
+    "uiSpecGenMedianMsWithoutLlm": 2000
+  },
+  "adapters": [
+    {
+      "id": "sqlite_event_store",
+      "built": true,
+      "notes": "SqliteEventStore (better-sqlite3) implementa EventStore append-only"
+    },
+    {
+      "id": "postgres_event_store",
+      "built": true,
+      "notes": "PostgresEventStore async: RLS, trigger append-only, stream_version, outbox, identidad cifrada"
+    },
+    {
+      "id": "playwright",
+      "built": true,
+      "notes": "E2E humo por perfil: arranque, transición, rechazo Juez, idempotencia, persistencia, axe + móvil"
+    },
+    {
+      "id": "llm",
+      "built": true,
+      "notes": "llm/: adaptador único (OpenAI + heurístico + cassettes), Zod, timeout/reintento, minimización RGPD, log sin PII"
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "name": "Propiedades generativas",
+      "status": "executed",
+      "notes": "200 seeds (CI=200, nightly=2000)"
+    },
+    {
+      "level": 2,
+      "name": "Integración puentes",
+      "status": "executed",
+      "notes": "Puentes 0-1, hechos, intérprete, filtro, UX, presentador, diseño, qa/sec"
+    },
+    {
+      "level": 3,
+      "name": "E2E NL→navegador→cierre",
+      "status": "not_built",
+      "notes": "Playwright scaffold; sin E2E concesionaria en navegador",
+      "pilotBlocking": true,
+      "productionBlocking": true
+    },
+    {
+      "level": 4,
+      "name": "Operación 10 empresas × 90 días",
+      "status": "not_built",
+      "notes": "Arnés no construido",
+      "productionBlocking": true
+    },
+    {
+      "level": 5,
+      "name": "Concurrencia e idempotencia",
+      "status": "partial",
+      "notes": "Ejecutado: carrera crédito in-process, idempotencia intérprete, SQLite dup id. Pendiente: stock multi-proceso",
+      "pilotBlocking": true
+    },
+    {
+      "level": 6,
+      "name": "Fallos (LLM/integración/reinicio)",
+      "status": "not_built",
+      "notes": "Sin pérdida/duplicado bajo fallo — no construido",
+      "pilotBlocking": true,
+      "productionBlocking": true
+    },
+    {
+      "level": 7,
+      "name": "Seguridad",
+      "status": "executed",
+      "notes": "Tenancy, filtro sede, forzado, SoD, concesionaria sin falsos críticos"
+    },
+    {
+      "level": 8,
+      "name": "Componentes IA (n≥139)",
+      "status": "blocked_adapter",
+      "notes": "Corpus real diagnosis cases=0. Bancos sintéticos = smoke (limitación). LLM real parcial (diagnóstico OpenAI opcional).",
+      "productionBlocking": true
+    },
+    {
+      "level": 9,
+      "name": "Rendimiento",
+      "status": "blocked_adapter",
+      "notes": "Umbrales fijados: p95 transición <200ms (BD real); replay 100k <10000ms; UiSpec mediana con LLM <30000ms; sin LLM <2000ms. Medición con BD real pendiente de harness.",
+      "productionBlocking": true
+    }
+  ],
+  "pilotBlockingGaps": [
+    {
+      "level": 3,
+      "name": "E2E NL→navegador→cierre",
+      "status": "not_built",
+      "notes": "Playwright scaffold; sin E2E concesionaria en navegador"
+    },
+    {
+      "level": 5,
+      "name": "Concurrencia e idempotencia",
+      "status": "partial",
+      "notes": "Ejecutado: carrera crédito in-process, idempotencia intérprete, SQLite dup id. Pendiente: stock multi-proceso"
+    },
+    {
+      "level": 6,
+      "name": "Fallos (LLM/integración/reinicio)",
+      "status": "not_built",
+      "notes": "Sin pérdida/duplicado bajo fallo — no construido"
+    }
+  ],
+  "productionBlockingGaps": [
+    {
+      "level": 3,
+      "name": "E2E NL→navegador→cierre",
+      "status": "not_built",
+      "notes": "Playwright scaffold; sin E2E concesionaria en navegador"
+    },
+    {
+      "level": 4,
+      "name": "Operación 10 empresas × 90 días",
+      "status": "not_built",
+      "notes": "Arnés no construido"
+    },
+    {
+      "level": 6,
+      "name": "Fallos (LLM/integración/reinicio)",
+      "status": "not_built",
+      "notes": "Sin pérdida/duplicado bajo fallo — no construido"
+    },
+    {
+      "level": 8,
+      "name": "Componentes IA (n≥139)",
+      "status": "blocked_adapter",
+      "notes": "Corpus real diagnosis cases=0. Bancos sintéticos = smoke (limitación). LLM real parcial (diagnóstico OpenAI opcional)."
+    },
+    {
+      "level": 9,
+      "name": "Rendimiento",
+      "status": "blocked_adapter",
+      "notes": "Umbrales fijados: p95 transición <200ms (BD real); replay 100k <10000ms; UiSpec mediana con LLM <30000ms; sin LLM <2000ms. Medición con BD real pendiente de harness."
+    }
+  ],
+  "limitations": [
+    "/tests/real vacío o sin casos — bancos sintéticos solo smoke",
+    "Niveles 3,4,6,8,9 no_construido o blocked_adapter — nunca en verde"
+  ],
+  "priorityFixes": [
+    "1. Completar SqliteEventStore en caminos de transición + medir p95",
+    "2. Playwright E2E concesionaria (criterio piloto)",
+    "3. Suite fallos sin pérdida/duplicado (criterio piloto)",
+    "4. Aportar corpus /tests/real para extractor (nivel 8)",
+    "5. Adaptador LLM real para Diseñador/Redactor/Consultor/Intérprete",
+    "6. Arnés 10×90 días (producción)"
+  ],
+  "verdict": {
+    "readyForPilot": false,
+    "reason": "Faltan criterios bloqueantes de piloto: E2E concesionaria (navegador), fallos sin pérdida/duplicado, concurrencia completa con BD real, aislamiento multiempresa bajo carga",
+    "criteria": {
+      "zeroCriticalFailures": "unknown_not_fully_executed",
+      "invariantsAndReplay100": "partial_properties_only",
+      "noEventLossOnFailure": "not_built",
+      "aiComponentsAboveThresholdWithCiLowerBound": "blocked_no_real_corpus"
+    }
+  }
+}

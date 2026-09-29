@@ -1,0 +1,365 @@
+{
+  "schemaVersion": "expected-composition/1.1",
+  "profileId": "p02-clinica-dental",
+  "profileName": "Clinica dental con dos sedes",
+  "summary": "Tratamiento (servicio_proyecto) dominante; financiera (propia o externa) secundaria que bloquea inicio/cierre; citas por sede; HC y consentimiento como cumplimiento/Filtro.",
+  "processes": [
+    {
+      "id": "proc.tratamiento",
+      "label": "Presupuesto y tratamiento por sesiones",
+      "dominant": "servicio_proyecto",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "acordado",
+          "bloquea": "en_ejecucion",
+          "status": "EXPRESABLE_HOY",
+          "notes": "Tras aceptación del presupuesto nace el plan de plazos/señal; no se inicia tratamiento (en_ejecucion) sin cobertura/señal si el plan la exige. Variante externa: Parte tercero_intermediado + misma secundaria.",
+          "trace": [
+            {
+              "field": "procesos",
+              "value": [
+                "aceptacion del presupuesto",
+                "cobro a plazos"
+              ],
+              "decision": "secundaria financiera en acordado"
+            },
+            {
+              "field": "cobros.aPlazos",
+              "value": "propios y via financiera externa",
+              "decision": "financiera; externa = Parte tercero"
+            },
+            {
+              "field": "cobros.pagosPorHitos",
+              "value": "senal al aceptar presupuesto",
+              "decision": "bloquea en_ejecucion hasta señal/desembolso"
+            },
+            {
+              "field": "bloqueos",
+              "value": "no se inicia tratamiento sin senal pagada",
+              "decision": "bloquea en_ejecucion (no solo cerrada)"
+            }
+          ]
+        }
+      ],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Sesiones = tramos de ejecución del mismo servicio_proyecto (o txs vinculadas por sesión — DECISIÓN).",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "presupuesto de tratamiento",
+            "tratamiento en varias sesiones"
+          ],
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "field": "descripcion",
+          "value": "presupuestos de tratamiento",
+          "decision": "estado propuesta→acordado"
+        }
+      ]
+    },
+    {
+      "id": "proc.cita",
+      "label": "Agenda de citas (primera visita y sesiones)",
+      "dominant": "uso_temporal",
+      "secondaries": [],
+      "status": "EXPRESABLE_HOY",
+      "notes": "Cita = reserva de capacidad (profesional × sede). Puede vincularse al tratamiento sin ser el dominante clínico.",
+      "trace": [
+        {
+          "field": "procesos",
+          "value": [
+            "primera visita"
+          ],
+          "decision": "uso_temporal o panel agenda sobre capacidad"
+        },
+        {
+          "field": "calendario.tieneCitas",
+          "value": true,
+          "decision": "capacidad_temporal"
+        },
+        {
+          "field": "organizacion.sedes",
+          "value": [
+            "Centro",
+            "Norte"
+          ],
+          "decision": "agenda por sede"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "subtype": "capacidad_temporal",
+      "semantics": "cita_profesional_sede",
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "calendario.tieneCitas",
+          "value": true,
+          "decision": "capacidad"
+        },
+        {
+          "field": "modulosEsperados",
+          "value": [
+            "agenda por sede y profesional"
+          ],
+          "decision": "turnos/actorIds"
+        }
+      ]
+    },
+    {
+      "subtype": "consumible",
+      "naturaleza": "propios_por_cantidad",
+      "status": "EXPRESABLE_HOY",
+      "notes": "Material clínico; confianza 0.7 en sample.",
+      "trace": [
+        {
+          "field": "naturalezaBienes",
+          "value": [
+            "propios_por_cantidad"
+          ],
+          "decision": "inventario material"
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "plantilla": "descuento_maximo_sin_aprobacion",
+      "parametros": {
+        "porcentaje": 5
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "trace": [
+        {
+          "field": "politicas[0]",
+          "value": "descuento_maximo_sin_aprobacion",
+          "decision": "descuento"
+        }
+      ]
+    },
+    {
+      "plantilla": "importe_requiere_aprobacion",
+      "parametros": {
+        "importe_eur": 3000,
+        "aprueba": "director_medico"
+      },
+      "status": "REQUIERE_CAMPO_CONTRATO",
+      "contractField": "catalogo_plantillas_politica_runtime",
+      "notes": "Equivalente expresable hoy como ThresholdApproval / PermissionPolicy si se materializa a mano.",
+      "trace": [
+        {
+          "field": "politicas[1]",
+          "value": "importe_requiere_aprobacion 3000",
+          "decision": "aprobación director"
+        }
+      ]
+    },
+    {
+      "plantilla": "evidence_requirement",
+      "parametros": {
+        "transitionId": "t_ejecutar",
+        "evidence": "consentimiento_informado"
+      },
+      "status": "EXPRESABLE_HOY",
+      "notes": "Compliance requiredEvidence antes de iniciar tratamiento.",
+      "trace": [
+        {
+          "field": "bloqueos",
+          "value": "no se inicia tratamiento sin consentimiento firmado",
+          "decision": "evidence_requirement"
+        },
+        {
+          "field": "cumplimiento",
+          "value": "consentimiento informado firmado antes del tratamiento",
+          "decision": "compliance"
+        }
+      ]
+    },
+    {
+      "plantilla": "limite_plazos_propios",
+      "parametros": {
+        "meses_max_sin_aprobacion": 12,
+        "aprueba": "director_medico"
+      },
+      "status": "EXPRESABLE_HOY",
+      "notes": "Restriction/guard sobre parámetros de financiera.",
+      "trace": [
+        {
+          "field": "excepcionesPermiso",
+          "value": "solo el director aprueba plazos propios de mas de 12 meses",
+          "decision": "guarda plazos"
+        }
+      ]
+    }
+  ],
+  "visibility": [
+    {
+      "scope": "propia",
+      "roles": [
+        "cliente"
+      ],
+      "fields": [
+        "citas",
+        "presupuestos",
+        "pagos_pendientes"
+      ],
+      "excludeFields": [
+        "historia_clinica"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "partialGap": "REQUIERE_EXTENSION",
+      "extension": "filtro_dato_sensible",
+      "notes": "Portal paciente sin HC completa; HC = clasificación salud + allowedRoles sanitarios.",
+      "trace": [
+        {
+          "field": "portalCliente.autoservicio",
+          "value": "citas, presupuestos y pagos; nunca HC completa",
+          "decision": "portal filtrado"
+        },
+        {
+          "field": "datosSensibles",
+          "value": [
+            "salud"
+          ],
+          "decision": "extensión Filtro categoría especial"
+        },
+        {
+          "field": "excepcionesPermiso",
+          "value": "solo el profesional sanitario accede a la historia clinica",
+          "decision": "fieldRules HC"
+        }
+      ]
+    },
+    {
+      "scope": "sede",
+      "roles": [
+        "dentista",
+        "higienista",
+        "recepcion"
+      ],
+      "status": "EXPRESABLE_HOY",
+      "trace": [
+        {
+          "field": "organizacion.sedes",
+          "value": [
+            "Centro",
+            "Norte"
+          ],
+          "decision": "visibility sede"
+        }
+      ]
+    }
+  ],
+  "organization": {
+    "sedes": [
+      "Centro",
+      "Norte"
+    ],
+    "status": "EXPRESABLE_HOY",
+    "trace": [
+      {
+        "field": "organizacion.sedes",
+        "value": [
+          "Centro",
+          "Norte"
+        ],
+        "decision": "OrganizationDef"
+      }
+    ]
+  },
+  "userDecisions": [
+    {
+      "id": "p02.d1",
+      "question": "¿Financiera propia y externa son la misma secundaria o dos bindings?",
+      "chosen": "misma_secundaria_con_parte_distinta",
+      "alternatives": [
+        {
+          "option": "misma_secundaria_con_parte_distinta",
+          "pros": "un solo bloquea",
+          "cons": "hay que tipar Parte garante/tercero"
+        },
+        {
+          "option": "dos_secundarias_financiera",
+          "pros": "aisla riesgo externo",
+          "cons": "posible multi-bloquea al mismo estado (válido pero más UI)"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    },
+    {
+      "id": "p02.d2",
+      "question": "¿bloquea en_ejecucion o cerrada?",
+      "chosen": "en_ejecucion",
+      "alternatives": [
+        {
+          "option": "en_ejecucion",
+          "pros": "cumple 'no iniciar sin señal'",
+          "cons": "más estricto"
+        },
+        {
+          "option": "cerrada",
+          "pros": "como heurístico actual",
+          "cons": "permite iniciar tratamiento sin señal"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    },
+    {
+      "id": "p02.d3",
+      "question": "¿Sesiones = un servicio_proyecto o N txs vinculadas?",
+      "chosen": "un_servicio_con_tramos",
+      "alternatives": [
+        {
+          "option": "un_servicio_con_tramos",
+          "pros": "presupuesto único",
+          "cons": "menos granularidad de fallo por sesión"
+        },
+        {
+          "option": "n_txs_vinculadas",
+          "pros": "GRANULARITY por sesión",
+          "cons": "más composición"
+        }
+      ],
+      "resolution": "ACCEPTED"
+    }
+  ],
+  "diffVsHeuristic": {
+    "heuristic": {
+      "dominant": "servicio_proyecto",
+      "processes": [
+        "servicio_proyecto",
+        "financiera"
+      ],
+      "composition": {
+        "dominant": "servicio_proyecto",
+        "secondaries": [
+          {
+            "secondaryArchetypeId": "financiera",
+            "bornInDominantState": "acordado",
+            "bloquea": "cerrada"
+          }
+        ]
+      },
+      "panels": [
+        "panel_agenda",
+        "panel_bloqueo",
+        "panel_credito",
+        "portal_filtro"
+      ]
+    },
+    "differences": [
+      "Esperado bloquea en_ejecucion (señal/consentimiento de inicio); heurístico bloquea cerrada",
+      "Esperado proceso cita (uso_temporal) aparte; heurístico solo agenda panel sobre servicio",
+      "Esperado Filtro HC/salud; heurístico no modela dato sensible",
+      "Esperado financiera externa tipada (Parte tercero); heurístico no distingue",
+      "Alineado: dominante servicio + secundaria financiera + portal + inventario material"
+    ]
+  },
+  "decisionsVersion": "2026-09-28-user"
+}

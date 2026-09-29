@@ -1,0 +1,4125 @@
+[
+  {
+    "profileId": "p01-peluqueria",
+    "roles": [
+      "duena",
+      "peluquera",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      },
+      {
+        "id": "lc.venta",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "duena"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "duena"
+        ]
+      },
+      {
+        "id": "proceso.lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "duena"
+        ]
+      },
+      {
+        "id": "proceso.lc.venta",
+        "archetypeId": "venta",
+        "roleIds": [
+          "duena"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p02-clinica-dental",
+    "roles": [
+      "director_medico",
+      "dentista",
+      "higienista",
+      "recepcion",
+      "cliente"
+    ],
+    "composition": {
+      "dominant": "servicio_proyecto",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "acordado",
+          "bloquea": "en_ejecucion"
+        }
+      ]
+    },
+    "lifecycles": [
+      {
+        "id": "lc.cita",
+        "archetypeId": "uso_temporal",
+        "happyTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "reservada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.financiera",
+        "archetypeId": "financiera",
+        "happyTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.cita.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.cita",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.cita.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.cita",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.cita.t_iniciar_uso",
+        "transitionId": "t_iniciar_uso",
+        "lifecycleId": "lc.cita",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.cita.t_no_devolver",
+        "transitionId": "t_no_devolver",
+        "lifecycleId": "lc.cita",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.cita.t_reservar",
+        "transitionId": "t_reservar",
+        "lifecycleId": "lc.cita",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_amortizar",
+        "transitionId": "t_amortizar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_aprobar",
+        "transitionId": "t_aprobar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_desembolsar",
+        "transitionId": "t_desembolsar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_impago",
+        "transitionId": "t_impago",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_rechazar",
+        "transitionId": "t_rechazar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "director_medico"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.cita",
+        "archetypeId": "uso_temporal",
+        "roleIds": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "proceso.lc.financiera",
+        "archetypeId": "financiera",
+        "roleIds": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "proceso.lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "director_medico"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p03-ferreteria",
+    "roles": [
+      "dueno",
+      "dependiente",
+      "almacen",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.venta",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "dueno"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "proceso.lc.venta",
+        "archetypeId": "venta",
+        "roleIds": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p04-taller-mecanico",
+    "roles": [
+      "dueno",
+      "mecanico",
+      "administracion",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "dueno"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "proceso.lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "dueno"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p05-restaurante",
+    "roles": [
+      "gerente",
+      "jefe_cocina",
+      "cocina",
+      "sala",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.uso_temporal",
+        "archetypeId": "uso_temporal",
+        "happyTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "reservada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_iniciar_uso",
+        "transitionId": "t_iniciar_uso",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_no_devolver",
+        "transitionId": "t_no_devolver",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_reservar",
+        "transitionId": "t_reservar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.lc.uso_temporal",
+        "archetypeId": "uso_temporal",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p06-gestoria",
+    "roles": [
+      "socio",
+      "gestor",
+      "administrativo",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.suscripcion",
+        "archetypeId": "suscripcion",
+        "happyTransitions": [
+          {
+            "id": "t_activar",
+            "from": "propuesta",
+            "to": "activa",
+            "actor": "humano"
+          },
+          {
+            "id": "t_pausar",
+            "from": "activa",
+            "to": "pausada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_reanudar",
+            "from": "pausada",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_periodo",
+            "from": "activa",
+            "to": "en_renovacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_renovar",
+            "from": "en_renovacion",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "activa",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_renovacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_activar",
+            "from": "propuesta",
+            "to": "activa",
+            "actor": "humano"
+          },
+          {
+            "id": "t_pausar",
+            "from": "activa",
+            "to": "pausada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_reanudar",
+            "from": "pausada",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_periodo",
+            "from": "activa",
+            "to": "en_renovacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_renovar",
+            "from": "en_renovacion",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "activa",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_renovacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.suscripcion.t_activar",
+        "transitionId": "t_activar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_impago",
+        "transitionId": "t_impago",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_pausar",
+        "transitionId": "t_pausar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_periodo",
+        "transitionId": "t_periodo",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_reanudar",
+        "transitionId": "t_reanudar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_renovar",
+        "transitionId": "t_renovar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "socio"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.suscripcion",
+        "archetypeId": "suscripcion",
+        "roleIds": [
+          "socio"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p07-tienda-online",
+    "roles": [
+      "fundadora",
+      "logistica",
+      "atencion_cliente",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.venta",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "fundadora"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "proceso.lc.venta",
+        "archetypeId": "venta",
+        "roleIds": [
+          "fundadora"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p08-alquiler-maquinaria",
+    "roles": [
+      "gerente",
+      "comercial",
+      "tecnico_taller",
+      "transportista",
+      "cliente"
+    ],
+    "composition": {
+      "dominant": "uso_temporal",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "reservada",
+          "bloquea": "en_uso"
+        }
+      ]
+    },
+    "lifecycles": [
+      {
+        "id": "lc.financiera",
+        "archetypeId": "financiera",
+        "happyTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.uso_temporal",
+        "archetypeId": "uso_temporal",
+        "happyTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_reservar",
+            "from": "propuesta",
+            "to": "reservada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_uso",
+            "from": "reservada",
+            "to": "en_uso",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_uso",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "reservada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_no_devolver",
+            "from": "en_uso",
+            "to": "no_devuelta",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.financiera.t_amortizar",
+        "transitionId": "t_amortizar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_aprobar",
+        "transitionId": "t_aprobar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_desembolsar",
+        "transitionId": "t_desembolsar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_impago",
+        "transitionId": "t_impago",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_rechazar",
+        "transitionId": "t_rechazar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_iniciar_uso",
+        "transitionId": "t_iniciar_uso",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_no_devolver",
+        "transitionId": "t_no_devolver",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.uso_temporal.t_reservar",
+        "transitionId": "t_reservar",
+        "lifecycleId": "lc.uso_temporal",
+        "roles": [
+          "gerente"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.financiera",
+        "archetypeId": "financiera",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.lc.uso_temporal",
+        "archetypeId": "uso_temporal",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p09-academia-idiomas",
+    "roles": [
+      "directora",
+      "coordinador_centro",
+      "profesor",
+      "secretaria",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.suscripcion",
+        "archetypeId": "suscripcion",
+        "happyTransitions": [
+          {
+            "id": "t_activar",
+            "from": "propuesta",
+            "to": "activa",
+            "actor": "humano"
+          },
+          {
+            "id": "t_pausar",
+            "from": "activa",
+            "to": "pausada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_reanudar",
+            "from": "pausada",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_periodo",
+            "from": "activa",
+            "to": "en_renovacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_renovar",
+            "from": "en_renovacion",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "activa",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_renovacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_activar",
+            "from": "propuesta",
+            "to": "activa",
+            "actor": "humano"
+          },
+          {
+            "id": "t_pausar",
+            "from": "activa",
+            "to": "pausada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_reanudar",
+            "from": "pausada",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_periodo",
+            "from": "activa",
+            "to": "en_renovacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_renovar",
+            "from": "en_renovacion",
+            "to": "activa",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "activa",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_renovacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.suscripcion.t_activar",
+        "transitionId": "t_activar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_impago",
+        "transitionId": "t_impago",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_pausar",
+        "transitionId": "t_pausar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_periodo",
+        "transitionId": "t_periodo",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_reanudar",
+        "transitionId": "t_reanudar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      },
+      {
+        "id": "action.lc.suscripcion.t_renovar",
+        "transitionId": "t_renovar",
+        "lifecycleId": "lc.suscripcion",
+        "roles": [
+          "directora"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.suscripcion",
+        "archetypeId": "suscripcion",
+        "roleIds": [
+          "directora"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "p10-reformas",
+    "roles": [
+      "gerente",
+      "jefe_obra",
+      "operario",
+      "administracion",
+      "cliente"
+    ],
+    "lifecycles": [
+      {
+        "id": "lc.compras",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      },
+      {
+        "id": "lc.subcontrata",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.compras.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.compras.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.compras",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.servicio_proyecto.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.servicio_proyecto",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.subcontrata.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.subcontrata",
+        "roles": [
+          "gerente"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.compras",
+        "archetypeId": "venta",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.lc.servicio_proyecto",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.lc.subcontrata",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "gerente"
+        ]
+      }
+    ]
+  },
+  {
+    "profileId": "concesionaria",
+    "roles": [
+      "comercial",
+      "gerente",
+      "taller",
+      "finanzas",
+      "cliente"
+    ],
+    "composition": {
+      "dominant": "venta",
+      "secondaries": [
+        {
+          "secondaryArchetypeId": "financiera",
+          "bornInDominantState": "aceptada",
+          "bloquea": "en_entrega"
+        },
+        {
+          "secondaryArchetypeId": "servicio_proyecto",
+          "bornInDominantState": "cerrada",
+          "bloquea": "en_entrega"
+        }
+      ]
+    },
+    "lifecycles": [
+      {
+        "id": "lc.financiera",
+        "archetypeId": "financiera",
+        "happyTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aprobar",
+            "from": "solicitud",
+            "to": "aprobada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_desembolsar",
+            "from": "aprobada",
+            "to": "desembolsada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_amortizar",
+            "from": "desembolsada",
+            "to": "en_amortizacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_amortizacion",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar",
+            "from": "solicitud",
+            "to": "rechazada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_impago",
+            "from": "en_amortizacion",
+            "to": "impagada",
+            "actor": "sistema"
+          }
+        ]
+      },
+      {
+        "id": "lc.taller",
+        "archetypeId": "servicio_proyecto",
+        "happyTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_acordar",
+            "from": "propuesta",
+            "to": "acordado",
+            "actor": "humano"
+          },
+          {
+            "id": "t_ejecutar",
+            "from": "acordado",
+            "to": "en_ejecucion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_presentar",
+            "from": "en_ejecucion",
+            "to": "en_espera",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_espera",
+            "to": "cerrada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar",
+            "from": "acordado",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_fallar",
+            "from": "en_ejecucion",
+            "to": "fallida",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_rechazar_entrega",
+            "from": "en_espera",
+            "to": "fallida",
+            "actor": "humano"
+          }
+        ]
+      },
+      {
+        "id": "lc.venta",
+        "archetypeId": "venta",
+        "happyTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          }
+        ],
+        "allTransitions": [
+          {
+            "id": "t_aceptar",
+            "from": "propuesta",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_proponer_renegociacion",
+            "from": "aceptada",
+            "to": "renegociacion",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_aceptar_nueva_version",
+            "from": "renegociacion",
+            "to": "aceptada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_iniciar_entrega",
+            "from": "aceptada",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_entrega_parcial",
+            "from": "en_entrega",
+            "to": "en_entrega",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cerrar",
+            "from": "en_entrega",
+            "to": "cerrada",
+            "actor": "sistema"
+          },
+          {
+            "id": "t_cancelar_propuesta",
+            "from": "propuesta",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_aceptada",
+            "from": "aceptada",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_cancelar_renegociacion",
+            "from": "renegociacion",
+            "to": "cancelada",
+            "actor": "humano"
+          },
+          {
+            "id": "t_incumplir_entrega",
+            "from": "en_entrega",
+            "to": "incumplida",
+            "actor": "sistema"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "action.lc.financiera.t_amortizar",
+        "transitionId": "t_amortizar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_aprobar",
+        "transitionId": "t_aprobar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "finanzas",
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_desembolsar",
+        "transitionId": "t_desembolsar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_impago",
+        "transitionId": "t_impago",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.financiera.t_rechazar",
+        "transitionId": "t_rechazar",
+        "lifecycleId": "lc.financiera",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_acordar",
+        "transitionId": "t_acordar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente",
+          "taller"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_cancelar",
+        "transitionId": "t_cancelar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "finanzas",
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_ejecutar",
+        "transitionId": "t_ejecutar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_fallar",
+        "transitionId": "t_fallar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_presentar",
+        "transitionId": "t_presentar",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.taller.t_rechazar_entrega",
+        "transitionId": "t_rechazar_entrega",
+        "lifecycleId": "lc.taller",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar",
+        "transitionId": "t_aceptar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "comercial",
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_aceptar_nueva_version",
+        "transitionId": "t_aceptar_nueva_version",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_aceptada",
+        "transitionId": "t_cancelar_aceptada",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_propuesta",
+        "transitionId": "t_cancelar_propuesta",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cancelar_renegociacion",
+        "transitionId": "t_cancelar_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_cerrar",
+        "transitionId": "t_cerrar",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "finanzas",
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_entrega_parcial",
+        "transitionId": "t_entrega_parcial",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_incumplir_entrega",
+        "transitionId": "t_incumplir_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_iniciar_entrega",
+        "transitionId": "t_iniciar_entrega",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      },
+      {
+        "id": "action.lc.venta.t_proponer_renegociacion",
+        "transitionId": "t_proponer_renegociacion",
+        "lifecycleId": "lc.venta",
+        "roles": [
+          "gerente"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "id": "proceso.lc.financiera",
+        "archetypeId": "financiera",
+        "roleIds": [
+          "finanzas",
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.lc.taller",
+        "archetypeId": "servicio_proyecto",
+        "roleIds": [
+          "finanzas",
+          "gerente",
+          "taller"
+        ]
+      },
+      {
+        "id": "proceso.lc.venta",
+        "archetypeId": "venta",
+        "roleIds": [
+          "comercial",
+          "finanzas",
+          "gerente"
+        ]
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "archetypeId": "__portal__",
+        "roleIds": [
+          "cliente"
+        ]
+      }
+    ]
+  }
+]

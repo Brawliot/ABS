@@ -1,0 +1,1172 @@
+[
+  {
+    "id": "p01-peluqueria",
+    "nombre": "Peluqueria de barrio",
+    "mappingNotes": [
+      "dominant=servicio_proyecto",
+      "processes=servicio_proyecto,venta,venta"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "249fa6b5a3b21e8c",
+      "dominant": "servicio_proyecto",
+      "questions": [],
+      "policyTemplates": [
+        "tpl.descuento_maximo_sin_aprobacion"
+      ],
+      "nonComposable": [],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "elementId": "capacity.plazas",
+          "field": "capacityMode",
+          "ruleId": "R_CAPACITY_PLAZAS",
+          "decision": "plazas"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p01-peluqueria",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante servicio_proyecto"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política descuento_maximo_sin_aprobacion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política permiso_excepcion"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 1,
+        "policiesExpected": 2,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "processGroups": [
+      {
+        "id": "proceso.lc.compras",
+        "role": "standalone",
+        "archetypeId": "venta"
+      },
+      {
+        "id": "proceso.lc.servicio_proyecto",
+        "role": "standalone",
+        "archetypeId": "servicio_proyecto"
+      },
+      {
+        "id": "proceso.lc.venta",
+        "role": "standalone",
+        "archetypeId": "venta"
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "role": "standalone",
+        "archetypeId": "__portal__"
+      }
+    ],
+    "oracle": {
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "stateViews": 21,
+        "actions": 27,
+        "blockIndicators": 0,
+        "processGroups": 4
+      }
+    }
+  },
+  {
+    "id": "p02-clinica-dental",
+    "nombre": "Clinica dental con dos sedes",
+    "mappingNotes": [
+      "dominant=servicio_proyecto",
+      "processes=servicio_proyecto,uso_temporal,financiera"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "2842391a475aeda7",
+      "dominant": "servicio_proyecto",
+      "composition": {
+        "dominant": "servicio_proyecto",
+        "secondaries": [
+          {
+            "secondaryArchetypeId": "financiera",
+            "bornInDominantState": "acordado",
+            "bloquea": "en_ejecucion"
+          }
+        ]
+      },
+      "questions": [],
+      "policyTemplates": [
+        "tpl.descuento_maximo_sin_aprobacion",
+        "tpl.importe_requiere_aprobacion"
+      ],
+      "nonComposable": [
+        {
+          "extension": "hitos_como_n_financieras",
+          "reason": "Los hitos se modelan como compromisos pagar + bloqueos de fase, no N financieras",
+          "ruleId": "R_HITOS",
+          "field": "cobros.pagosPorHitos"
+        }
+      ],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_APLAZOS_FINANCIERA",
+          "decision": "acordado→bloquea en_ejecucion"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_PROCESS_FINANCIERA",
+          "decision": "acordado→bloquea en_ejecucion"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_PAYMENT_FINANCIADO",
+          "decision": "acordado→bloquea en_ejecucion"
+        },
+        {
+          "elementId": "hitos_como_n_financieras",
+          "field": "cobros.pagosPorHitos",
+          "ruleId": "R_HITOS",
+          "decision": "Los hitos se modelan como compromisos pagar + bloqueos de fase, no N financieras"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_HITOS",
+          "decision": "acordado→bloquea en_ejecucion"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "hitos",
+          "field": "cobros.pagosPorHitos",
+          "ruleId": "R_HITOS_VALIDATE",
+          "decision": "1 hitos validados"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p02-clinica-dental",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante servicio_proyecto"
+        },
+        {
+          "code": "SECONDARY_HIT",
+          "severity": "hit",
+          "message": "secundaria financiera acordado→en_ejecucion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política descuento_maximo_sin_aprobacion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política evidence_requirement"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política limite_plazos_propios"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 1,
+        "secondariesExpected": 1,
+        "policiesHit": 2,
+        "policiesExpected": 4,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "MATERIALIZE",
+      "message": "Transición inexistente en el catálogo de capa 0: \"t_aceptar\"",
+      "details": []
+    }
+  },
+  {
+    "id": "p03-ferreteria",
+    "nombre": "Ferreteria con venta a profesionales",
+    "mappingNotes": [
+      "dominant=venta",
+      "processes=venta,venta"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "2a06eff62da2ac55",
+      "dominant": "venta",
+      "questions": [],
+      "policyTemplates": [
+        "tpl.limite_credito_por_cliente",
+        "tpl.bloqueo_por_impago",
+        "tpl.bloqueo_por_impago",
+        "tpl.limite_credito_por_cliente"
+      ],
+      "nonComposable": [],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante venta"
+        },
+        {
+          "elementId": "forbid.financiera",
+          "field": "cobros.aCredito",
+          "ruleId": "R_CUENTA_PARTE",
+          "decision": "Crédito = cuenta Parte, no secundaria financiera"
+        },
+        {
+          "elementId": "tpl-limite-credito",
+          "field": "policyTemplates",
+          "ruleId": "R_CUENTA_PARTE",
+          "decision": "tpl.limite_credito_por_cliente"
+        },
+        {
+          "elementId": "tpl-bloqueo-impago",
+          "field": "policyTemplates",
+          "ruleId": "R_CUENTA_PARTE",
+          "decision": "tpl.bloqueo_por_impago"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p03-ferreteria",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante venta"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política limite_credito_por_cliente"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política bloqueo_por_impago"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 2,
+        "policiesExpected": 2,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "ok",
+    "confirmations": [],
+    "processGroups": [
+      {
+        "id": "proceso.lc.compras",
+        "role": "standalone",
+        "archetypeId": "venta"
+      },
+      {
+        "id": "proceso.lc.venta",
+        "role": "standalone",
+        "archetypeId": "venta"
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "role": "standalone",
+        "archetypeId": "__portal__"
+      }
+    ],
+    "oracle": {
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "stateViews": 14,
+        "actions": 20,
+        "blockIndicators": 0,
+        "processGroups": 3
+      }
+    }
+  },
+  {
+    "id": "p04-taller-mecanico",
+    "nombre": "Taller mecanico",
+    "mappingNotes": [
+      "dominant=servicio_proyecto",
+      "processes=servicio_proyecto,venta"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "186fb51e0f5b76df",
+      "dominant": "servicio_proyecto",
+      "questions": [
+        {
+          "id": "ask.cobros.aPlazos",
+          "field": "cobros.aPlazos",
+          "question": "¿El negocio ofrece pago a plazos?",
+          "ruleId": "R_ASK_APLAZOS",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES"
+        }
+      ],
+      "policyTemplates": [
+        "tpl.importe_requiere_aprobacion"
+      ],
+      "nonComposable": [],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "elementId": "ask.cobros.aPlazos",
+          "field": "cobros.aPlazos",
+          "ruleId": "R_ASK_APLAZOS",
+          "decision": "¿El negocio ofrece pago a plazos?"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p04-taller-mecanico",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante servicio_proyecto"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política evidence_requirement"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política restriction_entrega_sin_saldo"
+        },
+        {
+          "code": "ASK_HIT",
+          "severity": "hit",
+          "message": "pregunta cobros.aPlazos"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 1,
+        "policiesExpected": 3,
+        "questionsHit": 1,
+        "questionsExpected": 1
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "INCOMPLETE",
+      "message": "Campo \"cobros.aPlazos\" desconocido: se requiere respuesta del usuario",
+      "details": [
+        "cobros.aPlazos"
+      ]
+    }
+  },
+  {
+    "id": "p05-restaurante",
+    "nombre": "Restaurante con reservas",
+    "mappingNotes": [
+      "dominant=uso_temporal",
+      "processes=uso_temporal,venta"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "158afb1d90abb763",
+      "dominant": "uso_temporal",
+      "questions": [],
+      "policyTemplates": [
+        "tpl.importe_requiere_aprobacion"
+      ],
+      "nonComposable": [
+        {
+          "extension": "liquidacion_fianza",
+          "reason": "Retención abierta bloquea cierre (liquidacion_fianza)",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION"
+        }
+      ],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante uso_temporal"
+        },
+        {
+          "elementId": "retention",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "Retención abierta bloquea cierre (liquidacion_fianza)"
+        },
+        {
+          "elementId": "retention.rule",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "aplica assertRetentionSettledBeforeClosure en cierre"
+        },
+        {
+          "elementId": "capacity.plazas",
+          "field": "capacityMode",
+          "ruleId": "R_CAPACITY_PLAZAS",
+          "decision": "plazas"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p05-restaurante",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante uso_temporal"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política fianza_grupo"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 1,
+        "policiesExpected": 2,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "processGroups": [
+      {
+        "id": "proceso.lc.compras",
+        "role": "standalone",
+        "archetypeId": "venta"
+      },
+      {
+        "id": "proceso.lc.uso_temporal",
+        "role": "standalone",
+        "archetypeId": "uso_temporal"
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "role": "standalone",
+        "archetypeId": "__portal__"
+      }
+    ],
+    "oracle": {
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "stateViews": 13,
+        "actions": 15,
+        "blockIndicators": 0,
+        "processGroups": 3
+      }
+    }
+  },
+  {
+    "id": "p06-gestoria",
+    "nombre": "Gestoria para autonomos y pymes",
+    "mappingNotes": [
+      "dominant=suscripcion",
+      "processes=suscripcion"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "0e68d8fe2effa819",
+      "dominant": "suscripcion",
+      "questions": [],
+      "policyTemplates": [
+        "tpl.aviso_plazo"
+      ],
+      "nonComposable": [],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante suscripcion"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p06-gestoria",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante suscripcion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política aviso_plazo"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política evidence_requirement"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 1,
+        "policiesExpected": 2,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "ok",
+    "confirmations": [
+      "calendar: aplicado default L-V 09:00-18:00 (confidence≈0.35); confirmar con el usuario"
+    ],
+    "processGroups": [
+      {
+        "id": "proceso.lc.suscripcion",
+        "role": "standalone",
+        "archetypeId": "suscripcion"
+      },
+      {
+        "id": "proceso.portal_filtro",
+        "role": "standalone",
+        "archetypeId": "__portal__"
+      }
+    ],
+    "oracle": {
+      "ok": true,
+      "findings": [],
+      "stats": {
+        "stateViews": 7,
+        "actions": 8,
+        "blockIndicators": 0,
+        "processGroups": 2
+      }
+    }
+  },
+  {
+    "id": "p07-tienda-online",
+    "nombre": "Tienda online de cosmetica natural",
+    "mappingNotes": [
+      "dominant=venta",
+      "processes=venta,venta"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "79e75f7c3ef7f1b7",
+      "dominant": "venta",
+      "questions": [
+        {
+          "id": "ask.cobros.cuotasRecurrentes",
+          "field": "cobros.cuotasRecurrentes",
+          "question": "¿Hay cuotas recurrentes / suscripción?",
+          "ruleId": "R_ASK_CUOTAS",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES"
+        }
+      ],
+      "policyTemplates": [
+        "tpl.plazo_devolucion",
+        "tpl.importe_requiere_aprobacion"
+      ],
+      "nonComposable": [],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante venta"
+        },
+        {
+          "elementId": "ask.cobros.cuotasRecurrentes",
+          "field": "cobros.cuotasRecurrentes",
+          "ruleId": "R_ASK_CUOTAS",
+          "decision": "¿Hay cuotas recurrentes / suscripción?"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p07-tienda-online",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante venta"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política plazo_devolucion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "ASK_HIT",
+          "severity": "hit",
+          "message": "pregunta cobros.cuotasRecurrentes"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 2,
+        "policiesExpected": 2,
+        "questionsHit": 1,
+        "questionsExpected": 1
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "INCOMPLETE",
+      "message": "Campo \"cobros.cuotasRecurrentes\" desconocido: se requiere respuesta del usuario",
+      "details": [
+        "cobros.cuotasRecurrentes"
+      ]
+    }
+  },
+  {
+    "id": "p08-alquiler-maquinaria",
+    "nombre": "Alquiler de maquinaria de obra",
+    "mappingNotes": [
+      "dominant=uso_temporal",
+      "processes=uso_temporal,financiera"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "0cfa2cbdc39a2cf0",
+      "dominant": "uso_temporal",
+      "composition": {
+        "dominant": "uso_temporal",
+        "secondaries": [
+          {
+            "secondaryArchetypeId": "financiera",
+            "bornInDominantState": "reservada",
+            "bloquea": "en_uso"
+          }
+        ]
+      },
+      "questions": [],
+      "policyTemplates": [
+        "tpl.importe_requiere_aprobacion",
+        "tpl.limite_credito_por_cliente"
+      ],
+      "nonComposable": [
+        {
+          "extension": "liquidacion_fianza",
+          "reason": "Retención abierta bloquea cierre (liquidacion_fianza)",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION"
+        }
+      ],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante uso_temporal"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_PROCESS_FINANCIERA",
+          "decision": "reservada→bloquea en_uso"
+        },
+        {
+          "elementId": "retention",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "Retención abierta bloquea cierre (liquidacion_fianza)"
+        },
+        {
+          "elementId": "retention.rule",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "aplica assertRetentionSettledBeforeClosure en cierre"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p08-alquiler-maquinaria",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante uso_temporal"
+        },
+        {
+          "code": "SECONDARY_HIT",
+          "severity": "hit",
+          "message": "secundaria financiera reservada→en_uso"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política limite_credito_por_cliente"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política fianza_retencion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política evidence_requirement"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 1,
+        "secondariesExpected": 1,
+        "policiesHit": 2,
+        "policiesExpected": 4,
+        "questionsHit": 0,
+        "questionsExpected": 0
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "MATERIALIZE",
+      "message": "Transición inexistente en el catálogo de capa 0: \"t_aceptar\"",
+      "details": []
+    }
+  },
+  {
+    "id": "p09-academia-idiomas",
+    "nombre": "Academia de idiomas con tres centros",
+    "mappingNotes": [
+      "dominant=suscripcion",
+      "processes=suscripcion"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "73aa5e0c5585ef5c",
+      "dominant": "suscripcion",
+      "questions": [
+        {
+          "id": "ask.naturalezaBienes",
+          "field": "naturalezaBienes",
+          "question": "¿Qué naturaleza tienen los bienes (stock / unitarios / del cliente)?",
+          "ruleId": "R_ASK_NATURALEZA",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES"
+        }
+      ],
+      "policyTemplates": [
+        "tpl.descuento_maximo_sin_aprobacion",
+        "tpl.bloqueo_por_impago"
+      ],
+      "nonComposable": [
+        {
+          "extension": "liquidacion_fianza",
+          "reason": "Retención abierta bloquea cierre (liquidacion_fianza)",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION"
+        }
+      ],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante suscripcion"
+        },
+        {
+          "elementId": "ask.naturalezaBienes",
+          "field": "naturalezaBienes",
+          "ruleId": "R_ASK_NATURALEZA",
+          "decision": "¿Qué naturaleza tienen los bienes (stock / unitarios / del cliente)?"
+        },
+        {
+          "elementId": "retention",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "Retención abierta bloquea cierre (liquidacion_fianza)"
+        },
+        {
+          "elementId": "retention.rule",
+          "field": "cobros.fianzas",
+          "ruleId": "R_FIANZAS_RETENCION",
+          "decision": "aplica assertRetentionSettledBeforeClosure en cierre"
+        },
+        {
+          "elementId": "capacity.plazas",
+          "field": "capacityMode",
+          "ruleId": "R_CAPACITY_PLAZAS",
+          "decision": "plazas"
+        },
+        {
+          "elementId": "vis.propia",
+          "field": "portalCliente",
+          "ruleId": "R_PORTAL_VISIBILITY",
+          "decision": "scope propia"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p09-academia-idiomas",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante suscripcion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política descuento_maximo_sin_aprobacion"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política bloqueo_por_impago"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política matricula_no_reembolsable"
+        },
+        {
+          "code": "ASK_HIT",
+          "severity": "hit",
+          "message": "pregunta naturalezaBienes"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 0,
+        "policiesHit": 2,
+        "policiesExpected": 3,
+        "questionsHit": 1,
+        "questionsExpected": 1
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "INCOMPLETE",
+      "message": "Campo \"naturalezaBienes\" desconocido: se requiere respuesta del usuario",
+      "details": [
+        "naturalezaBienes"
+      ]
+    }
+  },
+  {
+    "id": "p10-reformas",
+    "nombre": "Empresa de reformas integrales",
+    "mappingNotes": [
+      "dominant=servicio_proyecto",
+      "processes=servicio_proyecto,venta,servicio_proyecto"
+    ],
+    "adapter": "composer/mapSampleToV12",
+    "composer": {
+      "hash": "8eb6bc976df96d83",
+      "dominant": "servicio_proyecto",
+      "composition": {
+        "dominant": "servicio_proyecto",
+        "secondaries": [
+          {
+            "secondaryArchetypeId": "financiera",
+            "bornInDominantState": "acordado",
+            "bloquea": "en_ejecucion"
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "ask.naturalezaBienes",
+          "field": "naturalezaBienes",
+          "question": "¿Qué naturaleza tienen los bienes (stock / unitarios / del cliente)?",
+          "ruleId": "R_ASK_NATURALEZA",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES"
+        },
+        {
+          "id": "ask.portalCliente",
+          "field": "portalCliente.autoservicio",
+          "question": "¿Hay portal de cliente (autoservicio)?",
+          "ruleId": "R_ASK_PORTAL",
+          "oracleRule": "FAIL_IF_COMPOSER_CHOOSES"
+        }
+      ],
+      "policyTemplates": [
+        "tpl.importe_requiere_aprobacion"
+      ],
+      "nonComposable": [
+        {
+          "extension": "hitos_como_n_financieras",
+          "reason": "Los hitos se modelan como compromisos pagar + bloqueos de fase, no N financieras",
+          "ruleId": "R_HITOS",
+          "field": "cobros.pagosPorHitos"
+        }
+      ],
+      "traces": [
+        {
+          "elementId": "dominant",
+          "field": "policyMeta.dominantArchetypeId",
+          "ruleId": "R_DOMINANT",
+          "decision": "dominante servicio_proyecto"
+        },
+        {
+          "elementId": "ask.naturalezaBienes",
+          "field": "naturalezaBienes",
+          "ruleId": "R_ASK_NATURALEZA",
+          "decision": "¿Qué naturaleza tienen los bienes (stock / unitarios / del cliente)?"
+        },
+        {
+          "elementId": "ask.portalCliente",
+          "field": "portalCliente.autoservicio",
+          "ruleId": "R_ASK_PORTAL",
+          "decision": "¿Hay portal de cliente (autoservicio)?"
+        },
+        {
+          "elementId": "hitos_como_n_financieras",
+          "field": "cobros.pagosPorHitos",
+          "ruleId": "R_HITOS",
+          "decision": "Los hitos se modelan como compromisos pagar + bloqueos de fase, no N financieras"
+        },
+        {
+          "elementId": "sec.financiera",
+          "field": "composition.secondaries",
+          "ruleId": "R_HITOS",
+          "decision": "acordado→bloquea en_ejecucion"
+        },
+        {
+          "elementId": "hitos",
+          "field": "cobros.pagosPorHitos",
+          "ruleId": "R_HITOS_VALIDATE",
+          "decision": "3 hitos validados"
+        },
+        {
+          "elementId": "lc.compras",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        },
+        {
+          "elementId": "lc.subcontrata",
+          "field": "processes.exchangeDirection",
+          "ruleId": "R_DIR_COMPRA",
+          "decision": "empresa_compra (venta como compra a proveedor)"
+        }
+      ]
+    },
+    "fitOracle": {
+      "profileId": "p10-reformas",
+      "ok": true,
+      "findings": [
+        {
+          "code": "DOMINANT_HIT",
+          "severity": "hit",
+          "message": "dominante servicio_proyecto"
+        },
+        {
+          "code": "SECONDARY_MISS",
+          "severity": "miss",
+          "message": "falta secundaria servicio_proyecto"
+        },
+        {
+          "code": "POLICY_HIT",
+          "severity": "hit",
+          "message": "política importe_requiere_aprobacion"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política evidence_requirement"
+        },
+        {
+          "code": "POLICY_MISS",
+          "severity": "miss",
+          "message": "falta política hitos_pago"
+        },
+        {
+          "code": "ASK_HIT",
+          "severity": "hit",
+          "message": "pregunta naturalezaBienes"
+        },
+        {
+          "code": "ASK_HIT",
+          "severity": "hit",
+          "message": "pregunta portalCliente.autoservicio"
+        }
+      ],
+      "summary": {
+        "dominantHit": true,
+        "secondariesHit": 0,
+        "secondariesExpected": 1,
+        "policiesHit": 1,
+        "policiesExpected": 3,
+        "questionsHit": 2,
+        "questionsExpected": 2
+      }
+    },
+    "validate": "compose_ok_materialize_blocked",
+    "materializeError": {
+      "code": "INCOMPLETE",
+      "message": "Campo \"naturalezaBienes\" desconocido: se requiere respuesta del usuario",
+      "details": [
+        "naturalezaBienes"
+      ]
+    }
+  }
+]

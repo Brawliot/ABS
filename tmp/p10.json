@@ -1,0 +1,37 @@
+{
+  "templates": "n/a",
+  "life": [
+    {
+      "id": "lc.compras",
+      "arch": "venta"
+    },
+    {
+      "id": "lc.servicio_proyecto",
+      "arch": "servicio_proyecto"
+    },
+    {
+      "id": "lc.subcontrata",
+      "arch": "servicio_proyecto"
+    }
+  ],
+  "ruleIds": [
+    "evidence:inferred-evidencia",
+    "guard:perm-t_aceptar",
+    "guard:perm-t_aceptar_nueva_version",
+    "guard:perm-t_acordar",
+    "guard:perm-t_cancelar",
+    "guard:perm-t_cancelar_aceptada",
+    "guard:perm-t_cancelar_propuesta",
+    "guard:perm-t_cancelar_renegociacion",
+    "guard:perm-t_cerrar",
+    "guard:perm-t_ejecutar",
+    "guard:perm-t_entrega_parcial",
+    "guard:perm-t_fallar",
+    "guard:perm-t_incumplir_entrega",
+    "guard:perm-t_iniciar_entrega",
+    "guard:perm-t_presentar",
+    "guard:perm-t_proponer_renegociacion",
+    "guard:perm-t_rechazar_entrega",
+    "evidence:sample-pol-0"
+  ]
+}

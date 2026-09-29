@@ -1,0 +1,306 @@
+{
+  "results": [
+    {
+      "id": "exc-venta-rechazo",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_cancelar_propuesta → estado «cancelada»"
+    },
+    {
+      "id": "exc-servicio-rechazo-entrega",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_rechazar_entrega → estado «fallida»"
+    },
+    {
+      "id": "exc-financiera-impago",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_impago → estado «impagada»"
+    },
+    {
+      "id": "exc-uso-cancelar",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_cancelar → estado «cancelada»"
+    },
+    {
+      "id": "exc-suscripcion-pausa",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_pausar → estado «pausada»"
+    },
+    {
+      "id": "exc-intermediacion-disputa",
+      "category": "excepciones",
+      "ok": true,
+      "detail": "t_abrir_disputa → estado «en_disputa»"
+    },
+    {
+      "id": "rup-1-parciales",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Recorrido t_aceptar→t_iniciar_entrega→t_entrega_parcial"
+    },
+    {
+      "id": "rup-2-renegociacion",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Recorrido renegociación + re-aceptación"
+    },
+    {
+      "id": "rup-3-devolucion-vinculada",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Terminal bloqueado; devolución tx-p07-tienda-online-lc.compras-1-devolucion vinculada_a=tx-p07-tienda-online-lc.compras-1"
+    },
+    {
+      "id": "rup-4-multiparte",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Saldo 0 en a/b/c vía UI: {\"a\":0,\"b\":0,\"c\":0}"
+    },
+    {
+      "id": "rup-5-pausa",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "t_activar→t_pausar→t_reanudar en UI"
+    },
+    {
+      "id": "rup-6-disputa",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Disputa + liberación de retención en UI"
+    },
+    {
+      "id": "rup-7-no-encaja",
+      "category": "rupturas",
+      "ok": true,
+      "detail": "Diagnóstico UI: 2 cercanos, 3 preguntas"
+    },
+    {
+      "id": "regla-taller-saldo",
+      "category": "reglas",
+      "ok": true,
+      "detail": "Rechazo t_cerrar con mensaje: No se pudo completar «cerrar». Revisa los datos del pedido tx-p04-taller-mecanico-lc.servicio_proyecto-2 e inténtalo de "
+    },
+    {
+      "id": "regla-clinica-consentimiento",
+      "category": "reglas",
+      "ok": true,
+      "detail": "Rechazo sin consentimiento/señal: No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2)."
+    },
+    {
+      "id": "regla-ferreteria-credito",
+      "category": "reglas",
+      "ok": true,
+      "detail": "Rechazo t_aceptar sobre límite: No se pudo completar «aceptar». Revisa los datos del pedido tx-p03-ferreteria-lc.compras-1 e inténtalo de nuevo."
+    },
+    {
+      "id": "regla-maquinaria-fianza",
+      "category": "reglas",
+      "ok": true,
+      "detail": "Rechazo cierre con fianza (estado=reservada; setupWarn=t_iniciar_uso: No se puede avanzar a «en_uso»: falta completar el proceso secundario «financiera» (expediente tx-p08-alquiler-maquinaria-lc.financiera-1).\n\nIr al proceso que bloquea (financiera)): No se pudo completar «cerrar». Revisa los datos del pedido tx-p08-alquiler-maquinaria-lc.uso_temporal-2 e inténtalo de n"
+    },
+    {
+      "id": "regla-reformas-hito",
+      "category": "reglas",
+      "ok": true,
+      "detail": "Rechazo t_presentar sin hito (tpl.hitos_pago nativo): No se pudo completar «presentar». Revisa los datos del pedido tx-p10-reformas-lc.servicio_proyecto-2"
+    },
+    {
+      "id": "perm-rol-indebido",
+      "category": "permisos",
+      "ok": true,
+      "detail": "Rol «dependiente» sin botón; POST rechazado"
+    },
+    {
+      "id": "perm-forzado-observador",
+      "category": "permisos",
+      "ok": true,
+      "detail": "Política force flash=Restricción: hecho parte.saldo_pendiente cumple gt 1500 (eval=2000); Cumplimiento: No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2)."
+    },
+    {
+      "id": "iso-multiempresa",
+      "category": "aislamiento",
+      "ok": true,
+      "detail": "UI A no lista B; POST cross-tenant 403"
+    },
+    {
+      "id": "iso-sede",
+      "category": "aislamiento",
+      "ok": true,
+      "detail": "Rol sede-centro no ve ni toca sede-norte"
+    },
+    {
+      "id": "conc-transicion",
+      "category": "concurrencia",
+      "ok": true,
+      "detail": "1 ganador / 1 rechazo claro (events=1): No se pudo completar «aceptar». Revisa los datos del pedido tx-p03-ferreteria-lc.compras-1 e inténta"
+    },
+    {
+      "id": "conc-unidad",
+      "category": "concurrencia",
+      "ok": true,
+      "detail": "Reserva exclusiva excavadora-1: La unidad o plaza «excavadora-1» ya está reservada (expediente tx-p08-alquiler-maquinaria-lc.uso_tem"
+    }
+  ],
+  "byCat": {
+    "excepciones": [
+      {
+        "id": "exc-venta-rechazo",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_cancelar_propuesta → estado «cancelada»"
+      },
+      {
+        "id": "exc-servicio-rechazo-entrega",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_rechazar_entrega → estado «fallida»"
+      },
+      {
+        "id": "exc-financiera-impago",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_impago → estado «impagada»"
+      },
+      {
+        "id": "exc-uso-cancelar",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_cancelar → estado «cancelada»"
+      },
+      {
+        "id": "exc-suscripcion-pausa",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_pausar → estado «pausada»"
+      },
+      {
+        "id": "exc-intermediacion-disputa",
+        "category": "excepciones",
+        "ok": true,
+        "detail": "t_abrir_disputa → estado «en_disputa»"
+      }
+    ],
+    "rupturas": [
+      {
+        "id": "rup-1-parciales",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Recorrido t_aceptar→t_iniciar_entrega→t_entrega_parcial"
+      },
+      {
+        "id": "rup-2-renegociacion",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Recorrido renegociación + re-aceptación"
+      },
+      {
+        "id": "rup-3-devolucion-vinculada",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Terminal bloqueado; devolución tx-p07-tienda-online-lc.compras-1-devolucion vinculada_a=tx-p07-tienda-online-lc.compras-1"
+      },
+      {
+        "id": "rup-4-multiparte",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Saldo 0 en a/b/c vía UI: {\"a\":0,\"b\":0,\"c\":0}"
+      },
+      {
+        "id": "rup-5-pausa",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "t_activar→t_pausar→t_reanudar en UI"
+      },
+      {
+        "id": "rup-6-disputa",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Disputa + liberación de retención en UI"
+      },
+      {
+        "id": "rup-7-no-encaja",
+        "category": "rupturas",
+        "ok": true,
+        "detail": "Diagnóstico UI: 2 cercanos, 3 preguntas"
+      }
+    ],
+    "reglas": [
+      {
+        "id": "regla-taller-saldo",
+        "category": "reglas",
+        "ok": true,
+        "detail": "Rechazo t_cerrar con mensaje: No se pudo completar «cerrar». Revisa los datos del pedido tx-p04-taller-mecanico-lc.servicio_proyecto-2 e inténtalo de "
+      },
+      {
+        "id": "regla-clinica-consentimiento",
+        "category": "reglas",
+        "ok": true,
+        "detail": "Rechazo sin consentimiento/señal: No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2)."
+      },
+      {
+        "id": "regla-ferreteria-credito",
+        "category": "reglas",
+        "ok": true,
+        "detail": "Rechazo t_aceptar sobre límite: No se pudo completar «aceptar». Revisa los datos del pedido tx-p03-ferreteria-lc.compras-1 e inténtalo de nuevo."
+      },
+      {
+        "id": "regla-maquinaria-fianza",
+        "category": "reglas",
+        "ok": true,
+        "detail": "Rechazo cierre con fianza (estado=reservada; setupWarn=t_iniciar_uso: No se puede avanzar a «en_uso»: falta completar el proceso secundario «financiera» (expediente tx-p08-alquiler-maquinaria-lc.financiera-1).\n\nIr al proceso que bloquea (financiera)): No se pudo completar «cerrar». Revisa los datos del pedido tx-p08-alquiler-maquinaria-lc.uso_temporal-2 e inténtalo de n"
+      },
+      {
+        "id": "regla-reformas-hito",
+        "category": "reglas",
+        "ok": true,
+        "detail": "Rechazo t_presentar sin hito (tpl.hitos_pago nativo): No se pudo completar «presentar». Revisa los datos del pedido tx-p10-reformas-lc.servicio_proyecto-2"
+      }
+    ],
+    "permisos": [
+      {
+        "id": "perm-rol-indebido",
+        "category": "permisos",
+        "ok": true,
+        "detail": "Rol «dependiente» sin botón; POST rechazado"
+      },
+      {
+        "id": "perm-forzado-observador",
+        "category": "permisos",
+        "ok": true,
+        "detail": "Política force flash=Restricción: hecho parte.saldo_pendiente cumple gt 1500 (eval=2000); Cumplimiento: No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2)."
+      }
+    ],
+    "aislamiento": [
+      {
+        "id": "iso-multiempresa",
+        "category": "aislamiento",
+        "ok": true,
+        "detail": "UI A no lista B; POST cross-tenant 403"
+      },
+      {
+        "id": "iso-sede",
+        "category": "aislamiento",
+        "ok": true,
+        "detail": "Rol sede-centro no ve ni toca sede-norte"
+      }
+    ],
+    "concurrencia": [
+      {
+        "id": "conc-transicion",
+        "category": "concurrencia",
+        "ok": true,
+        "detail": "1 ganador / 1 rechazo claro (events=1): No se pudo completar «aceptar». Revisa los datos del pedido tx-p03-ferreteria-lc.compras-1 e inténta"
+      },
+      {
+        "id": "conc-unidad",
+        "category": "concurrencia",
+        "ok": true,
+        "detail": "Reserva exclusiva excavadora-1: La unidad o plaza «excavadora-1» ya está reservada (expediente tx-p08-alquiler-maquinaria-lc.uso_tem"
+      }
+    ]
+  }
+}

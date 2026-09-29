@@ -1,0 +1,45 @@
+{
+  "name": "abs-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Núcleo operativo determinista basado en eventos — metaobjeto y gramática",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run typecheck && vitest run",
+    "test:unit": "vitest run",
+    "test:maturity:capa0": "npx vitest run --config vitest.maturity.config.ts",
+    "test:e2e": "vitest run tests/e2e",
+    "test:nightly": "vitest run",
+    "test:watch": "vitest",
+    "quality:report": "vitest run tests/quality.report.test.ts",
+    "eval:interpreter": "npx tsx tests/real/interpreter/evaluate.ts",
+    "corpus:interpreter": "npx tsx tests/real/interpreter/generate-synthetic.ts",
+    "web": "npx tsx web/cli.ts",
+    "web:list": "npx tsx web/cli.ts --list",
+    "db:migrate": "npx tsx db/cli-migrate.ts up",
+    "db:migrate:down": "npx tsx db/cli-migrate.ts down",
+    "hosting:export": "npx tsx hosting/cli.ts export",
+    "hosting:move": "npx tsx hosting/cli.ts move",
+    "hosting:bootstrap": "npx tsx hosting/cli.ts bootstrap-on-client",
+    "infra:restore-test": "node infra/self-hosted-postgres/scripts/restore-pitr-test.mjs",
+    "playwright:install": "npx playwright install chromium",
+    "audit:deps": "npm audit --omit=dev --audit-level=high"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/pg": "^8.23.1",
+    "axe-core": "^4.10.2",
+    "fast-check": "^4.10.2",
+    "playwright": "^1.63.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.4.0",
+    "better-sqlite3": "^12.11.1",
+    "pg": "^8.23.0",
+    "zod": "^3.25.76"
+  }
+}

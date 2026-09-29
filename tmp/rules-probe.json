@@ -1,0 +1,564 @@
+[
+  {
+    "id": "p04-taller-mecanico",
+    "kinds": {
+      "evidence_requirement": 2,
+      "guard": 16,
+      "visibility": 1,
+      "condition": 1
+    },
+    "interesting": [
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:inferred-evidencia",
+        "tid": "t_acordar",
+        "phase": "cumplimiento"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar",
+        "tid": "t_aceptar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar_nueva_version",
+        "tid": "t_aceptar_nueva_version",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_acordar",
+        "tid": "t_acordar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar",
+        "tid": "t_cancelar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_aceptada",
+        "tid": "t_cancelar_aceptada",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_propuesta",
+        "tid": "t_cancelar_propuesta",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_renegociacion",
+        "tid": "t_cancelar_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cerrar",
+        "tid": "t_cerrar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_ejecutar",
+        "tid": "t_ejecutar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_entrega_parcial",
+        "tid": "t_entrega_parcial",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_fallar",
+        "tid": "t_fallar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_incumplir_entrega",
+        "tid": "t_incumplir_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_iniciar_entrega",
+        "tid": "t_iniciar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_presentar",
+        "tid": "t_presentar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_proponer_renegociacion",
+        "tid": "t_proponer_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_rechazar_entrega",
+        "tid": "t_rechazar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "condition",
+        "id": "restr-fact:tpl-saldo-antes-cerrar",
+        "tid": "t_cerrar",
+        "phase": "politica"
+      },
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:sample-pol-0",
+        "tid": "t_acordar",
+        "phase": "politica"
+      }
+    ]
+  },
+  {
+    "id": "p02-clinica-dental",
+    "kinds": {
+      "evidence_requirement": 2,
+      "guard": 15,
+      "visibility": 1,
+      "condition": 2
+    },
+    "interesting": [
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:inferred-evidencia",
+        "tid": "t_ejecutar",
+        "phase": "cumplimiento"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_acordar",
+        "tid": "t_acordar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_amortizar",
+        "tid": "t_amortizar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aprobar",
+        "tid": "t_aprobar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar",
+        "tid": "t_cancelar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cerrar",
+        "tid": "t_cerrar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_desembolsar",
+        "tid": "t_desembolsar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_ejecutar",
+        "tid": "t_ejecutar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_fallar",
+        "tid": "t_fallar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_impago",
+        "tid": "t_impago",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_iniciar_uso",
+        "tid": "t_iniciar_uso",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_no_devolver",
+        "tid": "t_no_devolver",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_presentar",
+        "tid": "t_presentar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_rechazar",
+        "tid": "t_rechazar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_rechazar_entrega",
+        "tid": "t_rechazar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_reservar",
+        "tid": "t_reservar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "condition",
+        "id": "restr:inferred-limite-plazos",
+        "tid": "t_aprobar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "restr:sample-pol-0",
+        "tid": "t_acordar",
+        "phase": "politica"
+      },
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:sample-pol-1",
+        "tid": "t_acordar",
+        "phase": "politica"
+      }
+    ]
+  },
+  {
+    "id": "p03-ferreteria",
+    "kinds": {
+      "guard": 10,
+      "visibility": 1,
+      "condition": 4
+    },
+    "interesting": [
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar",
+        "tid": "t_aceptar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar_nueva_version",
+        "tid": "t_aceptar_nueva_version",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_aceptada",
+        "tid": "t_cancelar_aceptada",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_propuesta",
+        "tid": "t_cancelar_propuesta",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_renegociacion",
+        "tid": "t_cancelar_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cerrar",
+        "tid": "t_cerrar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_entrega_parcial",
+        "tid": "t_entrega_parcial",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_incumplir_entrega",
+        "tid": "t_incumplir_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_iniciar_entrega",
+        "tid": "t_iniciar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_proponer_renegociacion",
+        "tid": "t_proponer_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "condition",
+        "id": "restr-fact:sample-pol-0",
+        "tid": "t_aceptar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "restr-fact:tpl-limite-credito",
+        "tid": "t_aceptar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "restr:sample-pol-1",
+        "tid": "t_aceptar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "restr:tpl-bloqueo-impago",
+        "tid": "t_aceptar",
+        "phase": "politica"
+      }
+    ]
+  },
+  {
+    "id": "p08-alquiler-maquinaria",
+    "kinds": {
+      "evidence_requirement": 2,
+      "guard": 10,
+      "visibility": 1,
+      "condition": 3
+    },
+    "interesting": [
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:inferred-evidencia",
+        "tid": "t_reservar",
+        "phase": "cumplimiento"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_amortizar",
+        "tid": "t_amortizar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aprobar",
+        "tid": "t_aprobar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar",
+        "tid": "t_cancelar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cerrar",
+        "tid": "t_cerrar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_desembolsar",
+        "tid": "t_desembolsar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_impago",
+        "tid": "t_impago",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_iniciar_uso",
+        "tid": "t_iniciar_uso",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_no_devolver",
+        "tid": "t_no_devolver",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_rechazar",
+        "tid": "t_rechazar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_reservar",
+        "tid": "t_reservar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "condition",
+        "id": "restr-fact:sample-pol-1",
+        "tid": "t_reservar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "restr:inferred-fianza-retencion",
+        "tid": "t_cerrar",
+        "phase": "politica"
+      },
+      {
+        "kind": "condition",
+        "id": "cond:inferred-fianza-retencion",
+        "tid": "t_cerrar",
+        "phase": "politica"
+      },
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:sample-pol-0",
+        "tid": "t_reservar",
+        "phase": "politica"
+      }
+    ]
+  },
+  {
+    "id": "p10-reformas",
+    "kinds": {
+      "evidence_requirement": 2,
+      "guard": 16
+    },
+    "interesting": [
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:inferred-evidencia",
+        "tid": "t_ejecutar",
+        "phase": "cumplimiento"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar",
+        "tid": "t_aceptar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_aceptar_nueva_version",
+        "tid": "t_aceptar_nueva_version",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_acordar",
+        "tid": "t_acordar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar",
+        "tid": "t_cancelar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_aceptada",
+        "tid": "t_cancelar_aceptada",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_propuesta",
+        "tid": "t_cancelar_propuesta",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cancelar_renegociacion",
+        "tid": "t_cancelar_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_cerrar",
+        "tid": "t_cerrar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_ejecutar",
+        "tid": "t_ejecutar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_entrega_parcial",
+        "tid": "t_entrega_parcial",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_fallar",
+        "tid": "t_fallar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_incumplir_entrega",
+        "tid": "t_incumplir_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_iniciar_entrega",
+        "tid": "t_iniciar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_presentar",
+        "tid": "t_presentar",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_proponer_renegociacion",
+        "tid": "t_proponer_renegociacion",
+        "phase": "permiso"
+      },
+      {
+        "kind": "guard",
+        "id": "guard:perm-t_rechazar_entrega",
+        "tid": "t_rechazar_entrega",
+        "phase": "permiso"
+      },
+      {
+        "kind": "evidence_requirement",
+        "id": "evidence:sample-pol-0",
+        "tid": "t_acordar",
+        "phase": "politica"
+      }
+    ]
+  }
+]

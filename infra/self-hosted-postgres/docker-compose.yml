@@ -1,0 +1,117 @@
+# PostgreSQL auto-gestionado (sin proveedor managed)
+# Herramientas OSS: Patroni (HA + failover), etcd (DCS), HAProxy (endpoint único),
+# pgBackRest (backup continuo + PITR), PostgreSQL 16 vanilla.
+#
+# Justificación:
+# - Patroni: estándar de facto para HA PG en K8s/VMs; conmutación automática probada.
+# - pgBackRest: backups diferenciales/WAL archiving más robusto que pg_basebackup solo.
+# - Sin extensiones propietarias ni APIs de cloud.
+#
+# Uso (Linux/CI con Docker):
+#   docker compose -f infra/self-hosted-postgres/docker-compose.yml up -d
+#   ./infra/self-hosted-postgres/scripts/failover-test.sh
+#   ./infra/self-hosted-postgres/scripts/restore-pitr-test.sh
+
+name: abs-pg-ha
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    command:
+      - etcd
+      - --advertise-client-urls=http://etcd:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --data-dir=/etcd-data
+    volumes:
+      - etcd_data:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pg-primary:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: abs
+      POSTGRES_PASSWORD: abs-ha-dev-only
+      POSTGRES_DB: abs
+      # Réplica vía slot (init scripts)
+    volumes:
+      - ./primary/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./primary/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./primary/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+      - pg_primary_data:/var/lib/postgresql/data
+      - pgbackrest_repos:/var/lib/pgbackrest
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abs -d abs"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    depends_on:
+      etcd:
+        condition: service_healthy
+
+  pg-replica:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: abs
+      POSTGRES_PASSWORD: abs-ha-dev-only
+      PGUSER: abs
+      PGPASSWORD: abs-ha-dev-only
+    volumes:
+      - ./replica/docker-entrypoint.sh:/docker-entrypoint-replica.sh:ro
+      - pg_replica_data:/var/lib/postgresql/data
+    entrypoint: ["/bin/bash", "/docker-entrypoint-replica.sh"]
+    ports:
+      - "55433:5432"
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abs -d abs || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # Endpoint único de escritura (en prod: HAProxy + Patroni REST).
+  # Aquí apunta al primario; el script de failover actualiza / promociona réplica.
+  haproxy:
+    image: haproxy:2.9-alpine
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "55434:5432"
+      - "55435:8404"
+    depends_on:
+      - pg-primary
+      - pg-replica
+
+  # Sidecar de backups (pgBackRest stanza). En prod corre en el nodo de datos.
+  pgbackrest:
+    image: postgres:16-bookworm
+    profiles: ["backup"]
+    volumes:
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest.conf:ro
+      - ./pgbackrest/entrypoint.sh:/entrypoint.sh:ro
+      - pgbackrest_repos:/var/lib/pgbackrest
+      - pg_primary_data:/var/lib/postgresql/data:ro
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+
+volumes:
+  etcd_data:
+  pg_primary_data:
+  pg_replica_data:
+  pgbackrest_repos:

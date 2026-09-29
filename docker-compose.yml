@@ -1,0 +1,69 @@
+# Desarrollo / staging local — NO para producción real sin revisar secretos.
+services:
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: abs
+      POSTGRES_PASSWORD: abs-dev-only
+      POSTGRES_DB: abs
+    ports:
+      - "5432:5432"
+    volumes:
+      - abs_pg_data:/var/lib/postgresql/data
+      - ./db/docker-init:/docker-entrypoint-initdb.d:ro
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=off
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+      - -c
+      - max_wal_size=2GB
+      - -c
+      - shared_buffers=256MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abs -d abs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Segunda instancia limpia para pruebas de restore (mismo motor, otro contenedor)
+  postgres-restore:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: abs
+      POSTGRES_PASSWORD: abs-dev-only
+      POSTGRES_DB: abs_restore
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/docker-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abs -d abs_restore"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    profiles: ["app"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ABS_ENV: development
+      ABS_POSTGRES_URL: postgres://abs:abs-dev-only@postgres:5432/abs
+      ABS_POSTGRES_RESTORE_URL: postgres://abs:abs-dev-only@postgres-restore:5432/abs_restore
+      ABS_SESSION_SECRET: "dev-local-session-secret-32chars-min"
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+
+volumes:
+  abs_pg_data:

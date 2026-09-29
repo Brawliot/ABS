@@ -1,0 +1,320 @@
+[
+  {
+    "profileId": "p01-peluqueria",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "p02-clinica-dental",
+    "dominant": "servicio_proyecto",
+    "lifecycleId": "lc.servicio_proyecto",
+    "path": [
+      "t_acordar",
+      "t_ejecutar",
+      "t_presentar",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_acordar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «acordado».",
+        "state": "acordado"
+      },
+      {
+        "transitionId": "t_ejecutar",
+        "ok": false,
+        "text": "No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2)."
+      }
+    ],
+    "failed": "No se puede avanzar a «en_ejecucion»: falta completar el proceso secundario «financiera» (expediente tx-p02-clinica-dental-lc.financiera-2).",
+    "finalEvents": 1
+  },
+  {
+    "profileId": "p03-ferreteria",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "p04-taller-mecanico",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "p05-restaurante",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "p06-gestoria",
+    "dominant": "suscripcion",
+    "lifecycleId": "lc.suscripcion",
+    "path": [
+      "t_activar",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_activar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «activa».",
+        "state": "activa"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 2
+  },
+  {
+    "profileId": "p07-tienda-online",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "p08-alquiler-maquinaria",
+    "dominant": "uso_temporal",
+    "lifecycleId": "lc.uso_temporal",
+    "path": [
+      "t_reservar",
+      "t_iniciar_uso",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_reservar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «reservada».",
+        "state": "reservada"
+      },
+      {
+        "transitionId": "t_iniciar_uso",
+        "ok": false,
+        "text": "No se puede avanzar a «en_uso»: falta completar el proceso secundario «financiera» (expediente tx-p08-alquiler-maquinaria-lc.financiera-1)."
+      }
+    ],
+    "failed": "No se puede avanzar a «en_uso»: falta completar el proceso secundario «financiera» (expediente tx-p08-alquiler-maquinaria-lc.financiera-1).",
+    "finalEvents": 1
+  },
+  {
+    "profileId": "p09-academia-idiomas",
+    "dominant": "suscripcion",
+    "lifecycleId": "lc.suscripcion",
+    "path": [
+      "t_activar",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_activar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «activa».",
+        "state": "activa"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 2
+  },
+  {
+    "profileId": "p10-reformas",
+    "dominant": "venta",
+    "lifecycleId": "lc.compras",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «en_entrega».",
+        "state": "en_entrega"
+      },
+      {
+        "transitionId": "t_cerrar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «cerrada».",
+        "state": "cerrada"
+      }
+    ],
+    "failed": null,
+    "finalEvents": 3
+  },
+  {
+    "profileId": "concesionaria",
+    "dominant": "venta",
+    "lifecycleId": "lc.venta",
+    "path": [
+      "t_aceptar",
+      "t_iniciar_entrega",
+      "t_cerrar"
+    ],
+    "walk": [
+      {
+        "transitionId": "t_aceptar",
+        "ok": true,
+        "text": "Listo: el expediente pasó a «aceptada».",
+        "state": "aceptada"
+      },
+      {
+        "transitionId": "t_iniciar_entrega",
+        "ok": false,
+        "text": "No se puede avanzar a «en_entrega»: falta completar el proceso secundario «financiera» (expediente tx-concesionaria-lc.financiera-1)."
+      }
+    ],
+    "failed": "No se puede avanzar a «en_entrega»: falta completar el proceso secundario «financiera» (expediente tx-concesionaria-lc.financiera-1).",
+    "finalEvents": 1
+  }
+]
