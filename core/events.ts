@@ -82,6 +82,13 @@ export interface TransaccionDatos {
   readonly referencia?: string;
   readonly notas?: string;
   readonly lineas: readonly LineaDatos[];
+  /**
+   * Datos adicionales que piden las reglas del negocio (descuento_pct,
+   * fianza_eur, plazos_meses…). Nunca datos personales.
+   */
+  readonly campos?: Readonly<Record<string, number | boolean | string>>;
+  /** Proceso secundario: expediente principal al que pertenece. */
+  readonly vinculadoA?: string;
 }
 
 /** Nace una transacción con sus datos. Primer evento de su historial. */

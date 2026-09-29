@@ -21,6 +21,8 @@ import {
   type OfertaRecord,
 } from "../elements/oferta.js";
 import { PARTE_SUBTYPE_LABELS } from "../elements/parte.js";
+import { crearEtiquetador } from "../presentation/etiquetas.js";
+import type { CampoProceso } from "./runtime.js";
 import {
   calcularTotales,
   formatCantidad,
@@ -101,7 +103,7 @@ function routeGet(
         ctx,
         viewer,
         `Nuevo: ${procesoLabel(ctx, slice.id)}`,
-        expedienteForm(ctx, viewer, "/expedientes", {
+        expedienteForm(ctx, viewer, slice.id, "/expedientes", {
           proceso: slice.id,
           fecha: new Date().toISOString().slice(0, 10),
         }, FILAS_NUEVO),
@@ -127,7 +129,7 @@ function routeGet(
         ctx,
         viewer,
         `Editar ${subjectLabel(ctx, id)}`,
-        expedienteForm(ctx, viewer, `/expedientes/${id}`, values, tx.datos.lineas.length + FILAS_EXTRA, tx.datos),
+        expedienteForm(ctx, viewer, tx.lifecycleId, `/expedientes/${id}`, values, tx.datos.lineas.length + FILAS_EXTRA, tx.datos),
       ),
     );
   }
@@ -162,19 +164,19 @@ function routePost(
     if (!slice) return notFound(ctx, viewer, "Ese proceso no existe.");
     const title = `Nuevo: ${procesoLabel(ctx, slice.id)}`;
     if (form.accion === "mas") {
-      return html(200, page(ctx, viewer, title, expedienteForm(ctx, viewer, "/expedientes", form, filas(form) + FILAS_EXTRA)));
+      return html(200, page(ctx, viewer, title, expedienteForm(ctx, viewer, slice.id, "/expedientes", form, filas(form) + FILAS_EXTRA)));
     }
     const previous = seenRequest(runtime, form.clientRequestId);
     if (previous) return redirect(withDev(viewer, `/expedientes/${previous}`));
 
-    const parsed = parseExpedienteForm(form, slice.id);
+    const parsed = parseExpedienteForm(form, slice.id, runtime.camposDeProceso(slice.id));
     const result = parsed.ok
       ? runtime.crearTransaccion(parsed.value, accountId)
       : parsed;
     if (!result.ok) {
       return html(
         422,
-        page(ctx, viewer, title, expedienteForm(ctx, viewer, "/expedientes", form, filas(form), undefined, result.errors)),
+        page(ctx, viewer, title, expedienteForm(ctx, viewer, slice.id, "/expedientes", form, filas(form), undefined, result.errors)),
       );
     }
     rememberRequest(runtime, form.clientRequestId, result.id);
@@ -191,16 +193,16 @@ function routePost(
       return html(409, page(ctx, viewer, subjectLabel(ctx, id), noEditable(viewer, id)));
     }
     if (form.accion === "mas") {
-      return html(200, page(ctx, viewer, title, expedienteForm(ctx, viewer, `/expedientes/${id}`, form, filas(form) + FILAS_EXTRA, tx.datos)));
+      return html(200, page(ctx, viewer, title, expedienteForm(ctx, viewer, tx.lifecycleId, `/expedientes/${id}`, form, filas(form) + FILAS_EXTRA, tx.datos)));
     }
-    const parsed = parseExpedienteForm(form, tx.lifecycleId);
+    const parsed = parseExpedienteForm(form, tx.lifecycleId, runtime.camposDeProceso(tx.lifecycleId));
     const result = parsed.ok
       ? runtime.editarTransaccion(id, parsed.value, accountId)
       : parsed;
     if (!result.ok) {
       return html(
         422,
-        page(ctx, viewer, title, expedienteForm(ctx, viewer, `/expedientes/${id}`, form, filas(form), tx.datos, result.errors)),
+        page(ctx, viewer, title, expedienteForm(ctx, viewer, tx.lifecycleId, `/expedientes/${id}`, form, filas(form), tx.datos, result.errors)),
       );
     }
     return redirect(withDev(viewer, `/expedientes/${id}`, { ok: "guardada" }));
@@ -223,6 +225,7 @@ function filas(form: Record<string, string>): number {
 export function parseExpedienteForm(
   form: Record<string, string>,
   lifecycleId: string,
+  camposProceso: readonly CampoProceso[] = [],
 ): { ok: true; value: EntradaTransaccion } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   const lineas: LineaEntrada[] = [];
@@ -252,7 +255,24 @@ export function parseExpedienteForm(
       ...(!ofertaId ? { ivaPct: iva } : {}),
     });
   }
+  const campos: Record<string, number | boolean | string> = {};
+  for (const c of camposProceso) {
+    const raw = (form[`campo_${c.campo}`] ?? "").trim();
+    if (c.tipo === "si_no") {
+      campos[c.campo] = raw === "1";
+    } else if (c.tipo === "numero") {
+      if (raw === "") continue;
+      if (!/^\d+([.,]\d+)?$/.test(raw)) {
+        errors.push(`«${humanizarCampo(c.campo)}» no es un número válido.`);
+        continue;
+      }
+      campos[c.campo] = Number(raw.replace(",", "."));
+    } else if (raw !== "") {
+      campos[c.campo] = raw;
+    }
+  }
   if (errors.length > 0) return { ok: false, errors };
+  const vinculadoA = (form.vinculadoA ?? "").trim();
   return {
     ok: true,
     value: {
@@ -262,8 +282,15 @@ export function parseExpedienteForm(
       referencia: form.referencia ?? "",
       notas: form.notas ?? "",
       lineas,
+      ...(Object.keys(campos).length > 0 ? { campos } : {}),
+      ...(vinculadoA ? { vinculadoA } : {}),
     },
   };
+}
+
+/** Nombre legible de un dato adicional sin vocabulario (mensajes del formulario). */
+function humanizarCampo(campo: string): string {
+  return crearEtiquetador({ lifecycles: [] }).campo(campo);
 }
 
 function valuesFromDatos(d: TransaccionDatos): Record<string, string> {
@@ -272,7 +299,11 @@ function valuesFromDatos(d: TransaccionDatos): Record<string, string> {
     fecha: d.fecha,
     referencia: d.referencia ?? "",
     notas: d.notas ?? "",
+    ...(d.vinculadoA ? { vinculadoA: d.vinculadoA } : {}),
   };
+  for (const [k, v] of Object.entries(d.campos ?? {})) {
+    out[`campo_${k}`] = typeof v === "boolean" ? (v ? "1" : "") : String(v).replace(".", ",");
+  }
   d.lineas.forEach((l, i) => {
     out[`l${i}_oferta`] = l.ofertaId ?? "";
     out[`l${i}_desc`] = l.descripcion;
@@ -286,6 +317,7 @@ function valuesFromDatos(d: TransaccionDatos): Record<string, string> {
 function expedienteForm(
   ctx: MaestrosContext,
   viewer: Viewer,
+  lifecycleId: string,
   action: string,
   values: Record<string, string | undefined>,
   numFilas: number,
@@ -373,6 +405,8 @@ function expedienteForm(
     (n < MAX_FILAS
       ? `<button type="submit" name="accion" value="mas" class="secondary" formnovalidate>+ Más líneas</button>`
       : "") +
+    camposHtml(ctx, lifecycleId, values) +
+    principalHtml(ctx, lifecycleId, values) +
     `<label>Notas <textarea name="notas" rows="3" maxlength="2000">${v("notas")}</textarea></label>` +
     `<button type="submit" name="accion" value="guardar">Guardar</button>` +
     `</form>`
@@ -405,6 +439,21 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     `<dt>Fecha</dt><dd>${esc(d.fecha)}</dd>` +
     (d.referencia ? `<dt>Referencia</dt><dd>${esc(d.referencia)}</dd>` : "") +
     (d.notas ? `<dt>Notas</dt><dd class="notas">${esc(d.notas)}</dd>` : "") +
+    Object.entries(d.campos ?? {})
+      .map(
+        ([k, val]) =>
+          `<dt>${esc(runtime.etiquetas.campo(k))}</dt><dd data-campo="${esc(k)}">${esc(typeof val === "boolean" ? (val ? "Sí" : "No") : String(val).replace(".", ","))}</dd>`,
+      )
+      .join("") +
+    (d.vinculadoA
+      ? `<dt>Expediente principal</dt><dd><a href="${esc(withDev(viewer, `/expedientes/${d.vinculadoA}`))}" data-principal>${esc(subjectLabel(ctx, d.vinculadoA))}</a></dd>`
+      : "") +
+    (runtime.vinculadosA(id).length > 0
+      ? `<dt>Vinculados</dt><dd data-vinculados>${runtime
+          .vinculadosA(id)
+          .map((s) => `<a href="${esc(withDev(viewer, `/expedientes/${s.id}`))}">${esc(s.label)}</a> (${esc(runtime.estadoDe(s.id)?.label ?? "")})`)
+          .join(", ")}</dd>`
+      : "") +
     `</dl>`;
 
   const lineas =
@@ -580,4 +629,46 @@ function tableroHref(
     ...(group ? { group: group.id } : {}),
     ...(view ? { view } : {}),
   });
+}
+
+/** «Datos adicionales» que piden las reglas del proceso. */
+function camposHtml(
+  ctx: MaestrosContext,
+  lifecycleId: string,
+  values: Record<string, string | undefined>,
+): string {
+  const campos = ctx.runtime.camposDeProceso(lifecycleId);
+  if (campos.length === 0) return "";
+  const inputs = campos
+    .map((c) => {
+      const name = `campo_${c.campo}`;
+      const label = esc(ctx.runtime.etiquetas.campo(c.campo));
+      if (c.tipo === "si_no") {
+        return `<label><span><input type="checkbox" name="${esc(name)}" value="1"${values[name] === "1" ? " checked" : ""} /> ${label}</span></label>`;
+      }
+      return `<label>${label} <input name="${esc(name)}" ${c.tipo === "numero" ? 'inputmode="decimal" placeholder="0"' : ""} value="${esc(values[name] ?? "")}" /></label>`;
+    })
+    .join("");
+  return `<fieldset class="grid2" data-campos><legend>Datos adicionales</legend>${inputs}</fieldset>`;
+}
+
+/** Proceso secundario: a qué expediente principal pertenece. */
+function principalHtml(
+  ctx: MaestrosContext,
+  lifecycleId: string,
+  values: Record<string, string | undefined>,
+): string {
+  const { runtime } = ctx;
+  if (!runtime.esSecundario(lifecycleId)) return "";
+  const actual = values.vinculadoA;
+  const opciones = runtime.principalesAbiertos().filter((s) => s.id !== actual);
+  const actualSub = actual ? runtime.subjects.find((s) => s.id === actual) : undefined;
+  const opts =
+    `<option value="">— Ninguno —</option>` +
+    (actualSub ? `<option value="${esc(actualSub.id)}" selected>${esc(actualSub.label)}</option>` : "") +
+    opciones.map((s) => `<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("");
+  return (
+    `<label>Expediente principal <select name="vinculadoA" data-vinculado>${opts}</select></label>` +
+    `<p class="meta">El expediente principal no podrá avanzar hasta que este se complete.</p>`
+  );
 }

@@ -34,6 +34,8 @@ export interface EntradaTransaccion {
   readonly notas?: string;
   readonly sedeId?: string;
   readonly lineas: readonly LineaEntrada[];
+  readonly campos?: Readonly<Record<string, number | boolean | string>>;
+  readonly vinculadoA?: string;
 }
 
 export interface TotalesLinea {
@@ -145,6 +147,14 @@ export function validarDatos(d: TransaccionDatos): string[] {
   if ((d.notas ?? "").length > 2000) errors.push("Las notas son demasiado largas.");
   if (d.lineas.length === 0) errors.push("Añade al menos una línea.");
   if (d.lineas.length > MAX_LINEAS) errors.push(`Como máximo ${MAX_LINEAS} líneas.`);
+  for (const [k, v] of Object.entries(d.campos ?? {})) {
+    if (!/^[a-z][a-z0-9_]{0,40}$/.test(k)) errors.push("Hay un dato adicional con un nombre no válido.");
+    else if (typeof v === "number" && (!Number.isFinite(v) || v < 0)) {
+      errors.push(`El dato adicional «${k}» no es válido.`);
+    } else if (typeof v === "string" && v.length > 200) {
+      errors.push(`El dato adicional «${k}» es demasiado largo.`);
+    }
+  }
   d.lineas.forEach((l, i) => {
     const n = i + 1;
     if (!l.descripcion.trim()) errors.push(`Línea ${n}: falta la descripción.`);

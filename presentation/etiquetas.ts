@@ -164,6 +164,8 @@ export interface Etiquetador {
   vista(view: Pick<ViewSpec, "kind" | "stateId" | "lifecycleId">, tituloSpec?: string): string;
   /** Aplica solo el vocabulario de términos del negocio a un texto libre. */
   texto(text: string): string;
+  /** Dato adicional de una regla: `fianza_eur` → «Fianza (€)». */
+  campo(field: string): string;
 }
 
 export function crearEtiquetador(input: {
@@ -238,6 +240,21 @@ export function crearEtiquetador(input: {
     return texto(VISTA_LABELS[view.kind] ?? humanizarId(view.kind));
   };
 
+  const campo = (field: string): string => {
+    const over = vocab[`campo:${field}`];
+    if (over) return over;
+    const sufijos: readonly [RegExp, string][] = [
+      [/_pct$/, "(%)"],
+      [/_eur$/, "(€)"],
+      [/_meses$/, "(meses)"],
+      [/_dias$/, "(días)"],
+    ];
+    for (const [re, unidad] of sufijos) {
+      if (re.test(field)) return texto(`${humanizarId(field.replace(re, ""))} ${unidad}`);
+    }
+    return texto(humanizarId(field));
+  };
+
   return {
     proceso,
     estado,
@@ -245,6 +262,7 @@ export function crearEtiquetador(input: {
     arquetipo: (id) => texto(arquetipo(id)),
     vista,
     texto,
+    campo,
   };
 }
 

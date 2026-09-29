@@ -81,6 +81,25 @@ export interface RuntimeSubject {
   readonly vinculadaA?: string;
 }
 
+/** Campos que calcula o rellena el sistema: nunca se piden en el formulario. */
+const CAMPOS_DEL_SISTEMA = new Set([
+  "importe",
+  "parte_id",
+  "subject_id",
+  "sentido",
+  "dias_impago",
+  "recibos_pendientes",
+  "compra_at",
+]);
+
+/** Estados de impago (dinero que la Parte debe). */
+const ESTADOS_IMPAGO = new Set(["impagada", "no_devuelta"]);
+
+export interface CampoProceso {
+  readonly campo: string;
+  readonly tipo: "numero" | "si_no" | "texto";
+}
+
 export interface ExpedienteDinero {
   readonly id: string;
   readonly label: string;
@@ -438,6 +457,82 @@ export class AppRuntime {
   }
 
   /**
+   * Datos adicionales que piden las reglas de un proceso (descuento_pct,
+   * fianza_eur…). Se detectan en las reglas: no se escriben a mano por negocio.
+   */
+  camposDeProceso(lifecycleId: string): readonly CampoProceso[] {
+    const slice = this.boot.input.lifecycles.find((l) => l.id === lifecycleId);
+    if (!slice) return [];
+    const transiciones = new Set(slice.lifecycle.transitions.map((t) => t.id));
+    const out = new Map<string, CampoProceso>();
+    for (const r of this.effectiveRuleSet().rules) {
+      if (!("transitionId" in r) || !transiciones.has(r.transitionId)) continue;
+      const preds: { field: string; value?: unknown }[] = [];
+      // Las reglas sobre hechos (saldo, impagos…) los calcula el sistema
+      if (r.kind === "condition" && !("factBinding" in r && r.factBinding)) {
+        preds.push(r.predicate as { field: string; value?: unknown });
+      }
+      if (r.kind === "evidence_requirement" && r.when) preds.push(r.when as { field: string; value?: unknown });
+      for (const p of preds) {
+        if (!p?.field || !/^[a-z][a-z0-9_]{0,40}$/.test(p.field)) continue;
+        if (CAMPOS_DEL_SISTEMA.has(p.field) || p.field.startsWith("hito_")) continue;
+        if (out.has(p.field)) continue;
+        out.set(p.field, {
+          campo: p.field,
+          tipo: typeof p.value === "boolean" ? "si_no" : typeof p.value === "number" ? "numero" : "texto",
+        });
+      }
+    }
+    return [...out.values()].sort((a, b) => a.campo.localeCompare(b.campo));
+  }
+
+  /** ¿El proceso es secundario de la composición (p. ej. financiación de una venta)? */
+  esSecundario(lifecycleId: string): boolean {
+    const comp = this.boot.input.composition;
+    const slice = this.boot.input.lifecycles.find((l) => l.id === lifecycleId);
+    return !!comp && !!slice && comp.secondaries.some((s) => s.secondaryArchetypeId === slice.archetypeId);
+  }
+
+  /** Expedientes principales abiertos a los que se puede vincular un secundario. */
+  principalesAbiertos(): readonly RuntimeSubject[] {
+    const comp = this.boot.input.composition;
+    if (!comp) return [];
+    return this.subjects.filter((s) => {
+      const slice = this.boot.input.lifecycles.find((l) => l.id === s.lifecycleId);
+      if (slice?.archetypeId !== comp.dominant) return false;
+      return !(this.estadoDe(s.id)?.kind ?? "").startsWith("terminal");
+    });
+  }
+
+  /** Secundarios vinculados a un expediente principal. */
+  vinculadosA(principalId: string): readonly RuntimeSubject[] {
+    return this.subjects.filter((s) => this.datosDe(s.id)?.datos.vinculadoA === principalId);
+  }
+
+  /** Impagos de una Parte: días desde el más antiguo y número de recibos. */
+  impagosDe(parteId: string, nowMs = Date.now()): { readonly dias: number; readonly recibos: number } {
+    let oldest: number | undefined;
+    let recibos = 0;
+    for (const sub of this.subjects) {
+      const events = this.store.getBySubject(sub.id);
+      const tx = proyectarTransaccion(events);
+      if (tx?.datos.parteId !== parteId) continue;
+      const estado = this.estadoDe(sub.id)?.id ?? "";
+      if (!ESTADOS_IMPAGO.has(estado)) continue;
+      recibos += 1;
+      const entrada = [...events]
+        .reverse()
+        .find((e) => e.kind !== "alta" && e.kind !== "datos" && "toStateId" in e && e.toStateId === estado);
+      const t = Date.parse(entrada?.occurredAt ?? tx.creadaEn);
+      if (oldest === undefined || t < oldest) oldest = t;
+    }
+    return {
+      dias: oldest === undefined ? 0 : Math.max(0, Math.floor((nowMs - oldest) / 86_400_000)),
+      recibos,
+    };
+  }
+
+  /**
    * Existencias de los productos con control de stock: resumen por producto
    * y todos los movimientos (ajustes + entregas / recepciones).
    */
@@ -699,12 +794,22 @@ export class AppRuntime {
     });
     const referencia = entrada.referencia?.trim();
     const notas = entrada.notas?.trim();
+    const permitidos = new Set(this.camposDeProceso(entrada.lifecycleId).map((c) => c.campo));
+    const campos = Object.fromEntries(
+      Object.entries(entrada.campos ?? {}).filter(([k, v]) => permitidos.has(k) && v !== ""),
+    );
+    const vinculadoA = entrada.vinculadoA?.trim();
+    if (vinculadoA && !this.principalesAbiertos().some((s) => s.id === vinculadoA) && previos?.vinculadoA !== vinculadoA) {
+      errors.push("El expediente principal elegido no existe o ya está cerrado.");
+    }
     const datos: TransaccionDatos = {
       parteId: entrada.parteId,
       fecha: entrada.fecha,
       ...(referencia ? { referencia } : {}),
       ...(notas ? { notas } : {}),
       lineas,
+      ...(Object.keys(campos).length > 0 ? { campos } : {}),
+      ...(vinculadoA ? { vinculadoA } : {}),
     };
     errors.push(...validarDatos(datos));
     return errors.length > 0 ? { ok: false, errors } : { ok: true, datos };
@@ -794,6 +899,8 @@ export class AppRuntime {
       );
       if (!isSec) continue;
       const events = this.store.getBySubject(sub.id) as TransitionEvent[];
+      // Un secundario solo bloquea al expediente principal al que está vinculado
+      if (!proyectarTransaccion(events)?.datos.vinculadoA) continue;
       const derived = deriveState(slice.lifecycle, events);
       const st = findState(slice.lifecycle, derived.currentStateId);
       if (!st) continue;
@@ -819,7 +926,7 @@ export class AppRuntime {
           (g) => g.archetypeId === b.secondaryArchetypeId,
         )?.id;
         out.push({
-          text: `Falta completar ${this.etiquetas.arquetipo(b.secondaryArchetypeId)} (${this.subjects.find((x) => x.id === b.instanceId)?.label ?? "expediente pendiente"}) para poder pasar a «${this.etiquetas.estado(null, sec.bloquea)}».`,
+          text: `${this.subjects.find((x) => x.id === this.datosDe(b.instanceId)?.datos.vinculadoA)?.label ?? "Un expediente"} necesita completar ${this.subjects.find((x) => x.id === b.instanceId)?.label ?? this.etiquetas.arquetipo(b.secondaryArchetypeId)} para poder pasar a «${this.etiquetas.estado(null, sec.bloquea)}».`,
           ...(pgId !== undefined ? { processGroupId: pgId } : {}),
           archetypeId: b.secondaryArchetypeId,
           blockedStateId: sec.bloquea,

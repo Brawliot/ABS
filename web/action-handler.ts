@@ -150,10 +150,13 @@ function processGroupForArchetype(
 function subSnapshots(
   runtime: AppRuntime,
   composition: ComposedArchetypeSpec | undefined,
+  principalId: string,
 ): SubTransactionSnapshot[] {
   if (!composition) return [];
   const out: SubTransactionSnapshot[] = [];
   for (const sub of runtime.subjects) {
+    // Solo los secundarios vinculados a este expediente principal
+    if (runtime.datosDe(sub.id)?.datos.vinculadoA !== principalId) continue;
     const slice = runtime.boot.input.lifecycles.find(
       (l) => l.id === sub.lifecycleId,
     );
@@ -271,7 +274,7 @@ async function executeUiActionLocked(
     const blocks = evaluateBlocks(
       composition,
       transition.to,
-      subSnapshots(runtime, composition),
+      subSnapshots(runtime, composition, body.subjectId),
     ).filter((b) => b.blocksTransition);
     if (blocks.length > 0) {
       const b = blocks[0]!;
@@ -433,6 +436,18 @@ async function executeUiActionLocked(
   fields.subject_id = body.subjectId;
   const tx = runtime.datosDe(body.subjectId);
   if (tx) {
+    // Datos adicionales del expediente; vacío = 0 / «no» (sin descuento, sin fianza…)
+    for (const c of runtime.camposDeProceso(slice.id)) {
+      if (fields[c.campo] !== undefined && fields[c.campo] !== "") continue;
+      const v = tx.datos.campos?.[c.campo];
+      if (v !== undefined) fields[c.campo] = v;
+      else if (c.tipo === "numero") fields[c.campo] = 0;
+      else if (c.tipo === "si_no") fields[c.campo] = false;
+    }
+    // Hechos del cliente que el negocio no tiene que teclear
+    const impagos = runtime.impagosDe(tx.datos.parteId);
+    if (fields.dias_impago === undefined) fields.dias_impago = impagos.dias;
+    if (fields.recibos_pendientes === undefined) fields.recibos_pendientes = impagos.recibos;
     fields.parte_id = tx.datos.parteId;
     fields.sentido = direccionDe(slice.exchangeDirection);
     const typed = request.fields.importe ?? enrichedForm.importe;
@@ -581,6 +596,20 @@ async function executeUiActionLocked(
     }
     if (err instanceof JudgeRejectionError) {
       let text: string;
+      // Regla que frena por un dato adicional del expediente: decir cuál
+      const rule = ruleSet.rules.find((r) => r.id === err.trace.appliedRuleId);
+      const campo =
+        rule?.kind === "condition"
+          ? runtime.camposDeProceso(slice.id).find((c) => c.campo === (rule.predicate as { field?: string }).field)
+          : undefined;
+      if (campo) {
+        const flash: FlashMessage = {
+          kind: "error",
+          text: `No se puede «${runtime.etiquetas.accion(slice.id, action.transitionId)}» con el valor actual de «${runtime.etiquetas.campo(campo.campo)}». Revísalo en «Editar datos» del expediente.`,
+        };
+        runtime.setFlash(flash);
+        return { ok: false, flash, idempotentReplay };
+      }
       try {
         const accionLabel =
           runtime.boot.spec.content[action.id]?.title ??
