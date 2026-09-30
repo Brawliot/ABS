@@ -302,8 +302,8 @@ export function decidirModulos(input: GeneratorInput): DecisionModulo[] {
     d(
       "credito",
       "Crédito a clientes",
-      paneles.has("panel_credito"),
-      "Vende a crédito o a plazos.",
+      paneles.has("panel_credito") || input.paymentMode === "diferido",
+      paneles.has("panel_credito") ? "Vende a crédito o a plazos." : "Vende a cuenta: sus clientes pagan más tarde.",
       "Cobra al momento.",
     ),
     d(

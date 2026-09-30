@@ -53,7 +53,9 @@ describe("Decisor de módulos", () => {
       const kinds = new Set(boot.spec.views.map((v) => v.kind));
       for (const m of decidirModulos(boot.input)) {
         const k = panel[m.id as keyof typeof panel];
-        if (k) expect(m.activo, `${id}/${m.id}`).toBe(kinds.has(k));
+        // Crédito también cubre «vende a cuenta» (sin panel de financiación)
+        const extra = m.id === "credito" && boot.input.paymentMode === "diferido";
+        if (k) expect(m.activo, `${id}/${m.id}`).toBe(kinds.has(k) || extra);
       }
     }
   });

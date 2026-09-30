@@ -39,7 +39,7 @@ const PISTAS: Record<ModuloId, RegExp> = {
   agenda: /agenda|citas/,
   cuotas: /cuota|suscripci/,
   fianzas: /fianza|arras|retenid/,
-  credito: /credito|plazos|con cuenta/,
+  credito: /credito|a plazos|con cuenta/,
   portal: /portal/,
 };
 

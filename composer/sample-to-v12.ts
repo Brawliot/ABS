@@ -45,40 +45,91 @@ function mapRoles(f: SampleProfile["organizacion"]["roles"]): {
   }));
 }
 
-function inferDominant(p: SampleProfile): ArchetypeId {
-  const blob = p.procesos.join(" ").toLowerCase();
-  const desc = p.descripcion.toLowerCase();
-  // Tienda / e-commerce: venta dominante aunque haya "devolucion"
-  if (/pedido online|tienda|ecommerce|e-commerce|envio/.test(blob + desc)) {
-    return "venta";
+function sinTildes(t: string): string {
+  return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/** Cobra cuotas periódicas de verdad (no «false» ni desconocido). */
+function cobraCuotas(p: SampleProfile): boolean {
+  const c = p.cobros.cuotasRecurrentes;
+  return c?.estado === "known" && Boolean(c.valor) && c.valor !== false;
+}
+
+interface PistaDominante {
+  readonly arquetipo: ArchetypeId;
+  /** Qué ha visto, en castellano: queda en las notas del mapeo. */
+  readonly pista: string;
+  readonly test: (p: SampleProfile, procesos: string, todo: string) => boolean;
+}
+
+/**
+ * Pistas para el proceso principal, en orden: la primera que encaja decide.
+ * Las palabras van con límites (\b) para que «obrador» no sea «obra» ni
+ * «compradores» sea «compras».
+ */
+const PISTAS_DOMINANTE: readonly PistaDominante[] = [
+  {
+    arquetipo: "venta",
+    pista: "vende por internet con envíos",
+    test: (_p, _pr, todo) => /pedido online|tienda online|\btienda\b|ecommerce|e-commerce|\benvios?\b/.test(todo),
+  },
+  {
+    arquetipo: "intermediacion",
+    pista: "cobra comisión por juntar a dos partes y no vende nada suyo",
+    test: (p, _pr, todo) =>
+      /\bcomision\b|intermedia/.test(todo) &&
+      !(p.naturalezaBienes.estado === "known" &&
+        Array.isArray(p.naturalezaBienes.valor) &&
+        (p.naturalezaBienes.valor as string[]).some((v) => v.startsWith("propios"))),
+  },
+  {
+    arquetipo: "suscripcion",
+    pista: "cobra cuotas periódicas",
+    test: (p, procesos) => {
+      if (!cobraCuotas(p)) return false;
+      const v = p.cobros.cuotasRecurrentes!.valor;
+      if (v === true) return true;
+      return /matricula|clase|curso|cuota|mensual|suscrip/.test(sinTildes(String(v))) && !/gestoria|expediente/.test(procesos);
+    },
+  },
+  {
+    arquetipo: "uso_temporal",
+    pista: "alquila o reserva por tiempo",
+    test: (_p, procesos, todo) =>
+      /\balquiler\b|reserva de maquina|prorroga/.test(procesos) || /reserva de mesa|restaurante|comensal/.test(todo),
+  },
+  {
+    arquetipo: "servicio_proyecto",
+    pista: "hace trabajos por fases (obra, reparación, fabricación, tratamiento…)",
+    test: (_p, procesos) =>
+      /\bobras?\b|reforma|\bfases?\b|\bhitos?\b|reparacion|diagnostico|\btaller\b|tratamiento|fabricacion|montaje|gestoria|expediente|\bmodelos?\b/.test(
+        procesos,
+      ),
+  },
+  {
+    arquetipo: "servicio_proyecto",
+    pista: "atiende con cita",
+    test: (_p, _pr, todo) => /\bcitas?\b|servicio en el momento|peluquer/.test(todo),
+  },
+  {
+    arquetipo: "suscripcion",
+    pista: "matrícula y clases con cuota",
+    test: (p, procesos) => /matricula|\bclases?\b|\bcursos?\b/.test(procesos) && cobraCuotas(p),
+  },
+  {
+    arquetipo: "servicio_proyecto",
+    pista: "matrícula y clases hasta un final (curso, carnet, examen), sin cuota",
+    test: (_p, procesos) => /matricula|\bclases?\b|\bcursos?\b|examen/.test(procesos),
+  },
+];
+
+function inferDominant(p: SampleProfile): { arquetipo: ArchetypeId; pista: string } {
+  const procesos = sinTildes(p.procesos.join(" "));
+  const todo = `${procesos} ${sinTildes(p.descripcion)}`;
+  for (const x of PISTAS_DOMINANTE) {
+    if (x.test(p, procesos, todo)) return { arquetipo: x.arquetipo, pista: x.pista };
   }
-  const cuotas = p.cobros.cuotasRecurrentes;
-  if (cuotas?.estado === "known" && cuotas.valor && cuotas.valor !== false) {
-    if (/matricula|clase|curso|cuota|mensual|suscrip/i.test(String(cuotas.valor))) {
-      // Academia / gestoría con cuota: suscripcion si no es solo "caja"
-      if (/tienda|online|pedido/.test(blob + desc)) {
-        // cuotas unknown handled elsewhere; known string in shop → still venta
-      } else if (!/gestoria|expediente/.test(blob)) {
-        return "suscripcion";
-      }
-    }
-    if (cuotas.valor === true) return "suscripcion";
-  }
-  if (/alquiler|reserva de maquina|prorroga/.test(blob)) {
-    return "uso_temporal";
-  }
-  if (/reserva de mesa|restaurante|comensal/.test(blob + desc)) {
-    return "uso_temporal";
-  }
-  if (/obra|reforma|fase|hito/.test(blob)) return "servicio_proyecto";
-  if (/reparacion|diagnostico|taller/.test(blob)) return "servicio_proyecto";
-  if (/tratamiento|presupuesto de tratamiento/.test(blob)) return "servicio_proyecto";
-  if (/gestoria|expediente|modelo/.test(blob)) return "servicio_proyecto";
-  if (/cita|servicio en el momento|peluquer/.test(blob + desc)) {
-    return "servicio_proyecto";
-  }
-  if (/matricula|clase|curso/.test(blob)) return "suscripcion";
-  return "venta";
+  return { arquetipo: "venta", pista: "ninguna pista especial: vende" };
 }
 
 function mapCobrosField(
@@ -198,14 +249,8 @@ function needsFinancieraProcess(p: SampleProfile): boolean {
 }
 
 function needsCompraProcess(p: SampleProfile): boolean {
-  const blob = [
-    ...p.procesos,
-    ...p.modulosEsperados,
-    ...p.excepcionesPermiso,
-  ]
-    .join(" ")
-    .toLowerCase();
-  return /proveedor|compra/.test(blob);
+  const blob = sinTildes([...p.procesos, ...p.excepcionesPermiso, p.descripcion].join(" "));
+  return /proveedor|\bcompras?\b|\bcompramos\b|pedido de piezas|materia prima/.test(blob);
 }
 
 function inferProcesses(
@@ -609,8 +654,8 @@ export function mapSampleToV12(p: SampleProfile): {
 } {
   const notes: string[] = [];
   const scheduleQuestions: ComposerQuestion[] = [];
-  const dominant = inferDominant(p);
-  notes.push(`dominant=${dominant}`);
+  const { arquetipo: dominant, pista } = inferDominant(p);
+  notes.push(`dominant=${dominant} (${pista})`);
   const processes = inferProcesses(p, dominant);
   notes.push(`processes=${processes.map((x) => x.archetypeId).join(",")}`);
 

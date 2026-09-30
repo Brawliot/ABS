@@ -41,38 +41,61 @@ export type Sector =
   | "alquiler"
   | "plataforma"
   | "moda"
+  | "alimentacion"
+  | "turismo"
+  | "inmobiliaria"
   | "general";
 
-/** Orden = prioridad: el primero que encaje gana. */
+/**
+ * Pistas de cada sector. Cada pista distinta que aparece suma un punto (el
+ * nombre del negocio cuenta triple); gana el sector con más puntos y, a
+ * igualdad, el que va antes en esta lista.
+ */
 const SECTOR_KEYWORDS: readonly [Sector, RegExp][] = [
-  ["salud", /clinic|dental|dentist|salud|medic|fisio|veterinar|optic|farmac/],
-  ["motor", /taller mecanic|mecanic|coche|vehicul|concesionari|neumatic|\bmoto\b/],
-  ["belleza", /peluquer|barber|estetic|belleza|manicur|\bspa\b|masaj/],
-  ["alquiler", /alquil|renting|arrend/],
-  ["construccion", /reforma|obra|construc|albanil|fontaner|electricist|pintor/],
-  ["industrial", /ferreter|bricolaj|herramient|suministro|industrial|maquinaria/],
-  ["hosteleria", /restaurante|bar\b|cafeter|cubiertos|cocina|hotel|catering|pasteler|panader/],
-  ["profesional", /gestoria|asesor|contab|abogad|despacho|consultor|notari|seguros/],
-  ["educacion", /academia|idioma|clases|alumno|escuela|formacion|colegio|autoescuela/],
-  ["moda", /ropa|moda|boutique|calzado|streetwear/],
-  ["comercio_online", /tienda online|internet|ecommerce|e-commerce|online|cosmetic/],
-  ["plataforma", /marketplace|plataforma|intermedia|comision/],
+  ["salud", /clinic|dental|dentist|salud|medic|fisio|veterinar|optic|farmac|paciente/g],
+  ["motor", /taller mecanic|mecanic|coche|vehicul|concesionari|neumatic|\bmoto\b/g],
+  ["belleza", /peluquer|barber|estetic|belleza|manicur|\bspa\b|masaj/g],
+  ["inmobiliaria", /inmobiliari|inmueble|\bpisos?\b|\bcasas?\b|vivienda|\barras\b|notaria/g],
+  ["alquiler", /alquil|renting|arrend/g],
+  ["construccion", /reforma|\bobras?\b|construc|albanil|fontaner|electricist|pintor|carpinter|ebanist|mueble/g],
+  ["industrial", /ferreter|bricolaj|herramient|suministro|industrial|maquinaria/g],
+  ["alimentacion", /panader|pasteler|\bhorno\b|obrador|carnicer|pescader|fruter|charcuter|\bpan\b|tartas?\b/g],
+  ["turismo", /viajes?\b|turism|vuelos?\b|excursion|\bbilletes?\b/g],
+  ["hosteleria", /restaurante|\bbar\b|cafeter|cubiertos|cocina|hotel|catering|comensal/g],
+  ["profesional", /gestoria|asesor|contab|abogad|despacho|consultor|notari|seguros/g],
+  ["educacion", /academia|idioma|clases|alumno|escuela|formacion|colegio|autoescuela/g],
+  ["moda", /ropa|moda|boutique|calzado|streetwear/g],
+  ["comercio_online", /tienda online|internet|ecommerce|e-commerce|online|cosmetic/g],
+  ["plataforma", /marketplace|plataforma|intermedia|comision/g],
 ];
 
 function normalizar(t: string): string {
   return t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
-function sectorDe(texto: string): Sector {
-  const t = normalizar(texto);
-  for (const [sector, re] of SECTOR_KEYWORDS) if (re.test(t)) return sector;
-  return "general";
+function pistas(texto: string, re: RegExp): number {
+  return new Set(normalizar(texto).match(re) ?? []).size;
 }
 
-/** El nombre del negocio manda; la descripción solo si el nombre no aclara el sector. */
+/** Puntos de cada sector (el nombre cuenta triple que la descripción). */
+export function puntuarSectores(nombre: string, descripcion = ""): [Sector, number][] {
+  return SECTOR_KEYWORDS.map(([sector, re]): [Sector, number] => [
+    sector,
+    3 * pistas(nombre, re) + pistas(descripcion, re),
+  ]).filter(([, n]) => n > 0);
+}
+
+/** El sector con más pistas; el nombre del negocio pesa más que la descripción. */
 export function detectarSector(nombre: string, descripcion = ""): Sector {
-  const porNombre = sectorDe(nombre);
-  return porNombre !== "general" ? porNombre : sectorDe(descripcion);
+  let mejor: Sector = "general";
+  let max = 0;
+  for (const [sector, n] of puntuarSectores(nombre, descripcion)) {
+    if (n > max) {
+      mejor = sector;
+      max = n;
+    }
+  }
+  return mejor;
 }
 
 // ─── Tipografías (fuentes del sistema) ──────────────────────────────────
@@ -169,6 +192,21 @@ const PERSONALIDADES: Readonly<Record<Sector, Personalidad>> = {
     nombre: "Red", hue: [232, 296], sat: 0.55, acento: 160, titulos: FUENTES.geometrica, cuerpo: FUENTES.humanista,
     base: 15, ratio: 1.25, radio: [10, 14, 20], densidad: "normal", tono: "cercano", tinte: 0.3, sombra: "suave",
     patrones: { listados: "tarjetas", navegacion: "superior", formularios: "una_columna", tableros: "kanban" },
+  }),
+  alimentacion: P({
+    nombre: "Obrador", hue: [22, 44], sat: 0.6, acento: 120, titulos: FUENTES.amable, cuerpo: FUENTES.humanista,
+    base: 15, ratio: 1.25, radio: [8, 12, 18], densidad: "normal", tono: "cercano", tinte: 0.65, sombra: "suave",
+    patrones: { listados: "tarjetas", navegacion: "inferior_movil", formularios: "una_columna", tableros: "lista_agrupada" },
+  }),
+  turismo: P({
+    nombre: "Destino", hue: [186, 214], sat: 0.6, acento: 28, titulos: FUENTES.geometrica, cuerpo: FUENTES.amable,
+    base: 15, ratio: 1.333, radio: [10, 16, 24], densidad: "espaciosa", tono: "cercano", tinte: 0.55, sombra: "suave",
+    patrones: { listados: "tarjetas", navegacion: "superior", formularios: "por_pasos", tableros: "kanban" },
+  }),
+  inmobiliaria: P({
+    nombre: "Escaparate inmobiliario", hue: [140, 176], sat: 0.4, acento: 25, titulos: FUENTES.clasica, cuerpo: FUENTES.sobria,
+    base: 15, ratio: 1.25, radio: [4, 8, 12], densidad: "normal", tono: "formal", tinte: 0.3, sombra: "suave",
+    patrones: { listados: "tarjetas", navegacion: "lateral", formularios: "dos_columnas", tableros: "kanban" },
   }),
   moda: P({
     nombre: "Pasarela", hue: [330, 372], sat: 0.6, acento: 180, titulos: FUENTES.geometrica, cuerpo: FUENTES.humanista,
