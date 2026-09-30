@@ -87,6 +87,8 @@ export interface GuardContext {
   readonly tenantId?: TenantId;
   /** Instantánea ISO para plazos legales. */
   readonly now: string;
+  /** Proceso actual del expediente (lifecycleId). */
+  readonly lifecycleId?: string;
 }
 
 export type GuardVerdict =
@@ -221,6 +223,8 @@ export interface JudgedAdvanceInput {
   readonly creationClassification?: ClassificationSnapshot;
   /** Temporada forzada (si no, se deriva del calendario + now). */
   readonly seasonId?: string;
+  /** Proceso actual del expediente (para filtrar reglas por lifecycleId). */
+  readonly lifecycleId?: string;
 }
 
 export interface JudgedAdvanceResult {
@@ -799,7 +803,8 @@ export function evaluatePolicyGuards(
       (r) =>
         r.kind !== "calculation" &&
         r.kind !== "visibility" &&
-        r.kind !== "force_grant",
+        r.kind !== "force_grant" &&
+        (!("lifecycleId" in r) || !r.lifecycleId || r.lifecycleId === ctx.lifecycleId),
     )
     .sort((a, b) => {
       const pa = PHASE_ORDER.indexOf(phaseOf(a));
@@ -913,6 +918,7 @@ export function attemptJudgedAdvance(
     ...(input.segment !== undefined ? { segment: input.segment } : {}),
     ...(input.facts !== undefined ? { facts: input.facts } : {}),
     ...(input.tenantId !== undefined ? { tenantId: input.tenantId } : {}),
+    ...(input.lifecycleId !== undefined ? { lifecycleId: input.lifecycleId } : {}),
   };
   const ctx = sealAgainstEventStore(ctxRaw);
   const factsMeta = input.facts

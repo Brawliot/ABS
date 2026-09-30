@@ -561,6 +561,7 @@ async function executeUiActionLocked(
       fields,
       ruleSet,
       tenantId: runtime.tenantId,
+      lifecycleId: slice.id,
       ...(bag ? { facts: bag } : {}),
       ...(force ? { force } : {}),
     });

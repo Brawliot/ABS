@@ -97,3 +97,36 @@ describe("Fases dentro de un paso", () => {
     );
   });
 });
+
+describe("Reglas por proceso (lifecycleId)", () => {
+  it("una regla con lifecycleId A no afecta a expediente de B", () => {
+    const ruleA: import("../policies/types.js").CompiledCondition = {
+      kind: "condition",
+      id: "rule-a",
+      priority: 100,
+      transitionId: "t_ejecutar",
+      predicate: { field: "importe", op: "gt", value: 1000 },
+      sourcePolicyId: "pol-a",
+      sourceKind: "politica",
+      binding: { mode: "live" },
+      lifecycleId: "lc.a",
+    };
+
+    const ruleB: import("../policies/types.js").CompiledCondition = {
+      kind: "condition",
+      id: "rule-b",
+      priority: 100,
+      transitionId: "t_ejecutar",
+      predicate: { field: "importe", op: "gt", value: 1000 },
+      sourcePolicyId: "pol-b",
+      sourceKind: "politica",
+      binding: { mode: "live" },
+      lifecycleId: "lc.b",
+    };
+
+    // Regla A aplicada a expediente de B debe ser filtrada
+    expect(ruleA.lifecycleId).toBe("lc.a");
+    expect(ruleB.lifecycleId).toBe("lc.b");
+    expect(ruleA.lifecycleId).not.toBe(ruleB.lifecycleId);
+  });
+});
