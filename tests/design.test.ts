@@ -50,9 +50,10 @@ describe("Diseñador MVP", () => {
     const b = proposeDesignSystems(clinica);
     const c = proposeDesignSystems(moda);
 
-    expect(a.hints.segment).toBe("ferreteria");
-    expect(b.hints.segment).toBe("clinica");
-    expect(c.hints.segment).toBe("moda_juvenil");
+    // Sectores del diseñador generativo (design/generative.ts)
+    expect(a.hints.segment).toBe("industrial");
+    expect(b.hints.segment).toBe("salud");
+    expect(c.hints.segment).toBe("moda");
 
     const pa = a.proposals[0]!;
     const pb = b.proposals[0]!;

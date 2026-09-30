@@ -1,3 +1,4 @@
+import type { SenalesNegocio } from "../design/generative.js";
 /**
  * Arranque: BusinessProfile / sample / concesionaria
  * → compositor → Generador → UiSpec sellada + DesignSystem.
@@ -102,6 +103,16 @@ function unrenderedNotes(spec: AppBootResult["spec"]): string[] {
 /**
  * Arranca un perfil sample (p01…p10) hasta UiSpec sellada.
  */
+/** Señales del perfil que ajustan el diseño (densidad, tamaño táctil). */
+function senalesDe(input: GeneratorInput, sedes: number): SenalesNegocio {
+  return {
+    sedes,
+    roles: input.roles.length,
+    autoservicio: input.channels.includes("autoservicio") || input.channels.includes("web"),
+    tactil: input.channels.includes("taller") || input.channels.includes("presencial"),
+  };
+}
+
 export function bootSampleProfile(profileId: string): AppBootResult {
   const sample = loadSampleProfile(profileId);
   const { profile, scheduleQuestions } = mapSampleToV12(sample);
@@ -140,10 +151,12 @@ export function bootSampleProfile(profileId: string): AppBootResult {
     throw new Error("generateUiSpec no devolvió UiSpec sellada");
   }
 
+  const sedesField = sample.organizacion.sedes;
   const ds = proposeDesignSystems({
     companyId: profileId,
     businessDescription: sample.descripcion,
     identity: { brandName: sample.nombre },
+    senales: senalesDe(pipe.input, Array.isArray(sedesField.valor) ? sedesField.valor.length : 1),
   }).proposals[0]!;
 
   const roles = pipe.input.roles.map((r) => ({
@@ -182,6 +195,7 @@ export function bootConcesionaria(): AppBootResult {
     businessDescription:
       "Concesionario de vehículos: venta, financiación y taller",
     identity: { brandName: "Concesionaria ABS" },
+    senales: senalesDe(input, 1),
   }).proposals[0]!;
 
   const roles = input.roles.map((r) => ({ id: r.id, label: r.label }));
@@ -274,6 +288,7 @@ export function bootMarketplaceIntermediacion(): AppBootResult {
     companyId: "marketplace-intermediacion",
     businessDescription: "Marketplace de intermediación entre partes",
     identity: { brandName: "ABS Marketplace" },
+    senales: senalesDe(input, 1),
   }).proposals[0]!;
   return {
     profileId: "marketplace-intermediacion",

@@ -5,12 +5,12 @@
 import { allBootableIds, bootProfile } from "../web/index.js";
 import { resolveTokenMap } from "../presentation/resolve-tokens.js";
 
-const CLAVES = ["color.primario", "color.secundario", "color.fondo", "color.texto", "tipografia.titulos", "radio.md", "espaciado.m", "densidad"];
+const CLAVES = ["color.primario", "color.secundario", "color.fondo", "color.texto", "tipografia.titulos", "radio.md", "espaciado.m"];
 const firmas = new Map<string, string[]>();
 for (const id of allBootableIds()) {
   const b = bootProfile(id);
   const t = resolveTokenMap({ designSystem: b.designSystem, roleId: b.roles[0]!.id, channel: "backoffice" }).values as Record<string, string>;
-  const fila = CLAVES.map((k) => String(t[k] ?? "").split(",")[0]!.trim());
+  const fila = [...CLAVES.map((k) => String(t[k] ?? "").split(",")[0]!.trim()), b.designSystem.density, b.designSystem.label];
   console.log(`${id.padEnd(27)} ${fila.join(" | ")}`);
   const firma = fila.join("|");
   firmas.set(firma, [...(firmas.get(firma) ?? []), id]);
