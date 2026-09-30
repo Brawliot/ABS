@@ -41,7 +41,7 @@ describe("Cobros parciales", () => {
     expect(r.ok).toBe(true);
     const cobros = rt.cobrosDelExpediente(expedienteId);
     expect(cobros).toHaveLength(1);
-    expect(cobros[0].importeCentimos).toBe(50000);
+    expect(cobros[0]!.importeCentimos).toBe(50000);
     rt.close();
   });
 
