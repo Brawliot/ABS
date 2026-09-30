@@ -6,6 +6,21 @@
 import type { AppBootResult } from "../web/types.js";
 import type { AppRuntime } from "../web/runtime.js";
 import { probarCicloCompleto } from "./pruebas/ciclos.js";
+import {
+  probarCobroHitos,
+  probarCobroSena,
+  probarCobroCredito,
+  probarCobroPlazos,
+  probarCobroFianza,
+} from "./pruebas/cobros.js";
+import {
+  probarPoliticaImporte,
+  probarPoliticaIncidencias,
+  probarPoliticaSaldo,
+  probarPoliticaDescuento,
+  probarPoliticaImpago,
+  probarPoliticaLimiteCredito,
+} from "./pruebas/politicas.js";
 
 export type EstadoPunto = "CUBIERTO" | "FALLA" | "SIN_PRUEBA" | "MANUAL";
 
@@ -49,6 +64,42 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
     });
   }
 
+  // Cobros
+  puntos.push({
+    id: "cobro.hitos",
+    nombre: "Cobro: hitos bloqueados sin pago",
+    requiereData: () => true,
+    prueba: probarCobroHitos,
+  });
+
+  puntos.push({
+    id: "cobro.senal",
+    nombre: "Cobro: seña al aceptar",
+    requiereData: () => true,
+    prueba: probarCobroSena,
+  });
+
+  puntos.push({
+    id: "cobro.a_cuenta",
+    nombre: "Cobro: a crédito",
+    requiereData: () => true,
+    prueba: probarCobroCredito,
+  });
+
+  puntos.push({
+    id: "cobro.plazos",
+    nombre: "Cobro: a plazos",
+    requiereData: () => true,
+    prueba: probarCobroPlazos,
+  });
+
+  puntos.push({
+    id: "cobro.fianza",
+    nombre: "Cobro: fianza",
+    requiereData: () => true,
+    prueba: probarCobroFianza,
+  });
+
   // Políticas
   const rulasUnique = new Map<string, (typeof boot.input.ruleSet.rules)[number]>();
   for (const r of boot.input.ruleSet.rules) {
@@ -67,6 +118,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: `Política: importe requiere aprobación`,
         origen: "politica.importe_requiere_aprobacion",
         requiereData: () => true,
+        prueba: probarPoliticaImporte,
       } as PuntoConPrueba);
     } else if (plantilla === "plazo_devolucion") {
       puntos.push({
@@ -74,6 +126,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: `Política: plazo de devolución`,
         origen: "politica.plazo_devolucion",
         requiereData: () => true,
+        prueba: probarPoliticaIncidencias,
       } as PuntoConPrueba);
     } else if (plantilla === "restriccion_saldo_antes_de") {
       puntos.push({
@@ -81,6 +134,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: "Política: restricción de saldo antes de",
         origen: "politica.restriccion_saldo_antes_de",
         requiereData: () => true,
+        prueba: probarPoliticaSaldo,
       } as PuntoConPrueba);
     } else if (plantilla === "descuento_maximo_sin_aprobacion") {
       puntos.push({
@@ -88,6 +142,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: `Política: descuento máximo`,
         origen: "politica.descuento_maximo_sin_aprobacion",
         requiereData: () => true,
+        prueba: probarPoliticaDescuento,
       } as PuntoConPrueba);
     } else if (plantilla === "bloqueo_por_impago") {
       puntos.push({
@@ -95,6 +150,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: "Política: bloqueo por impago",
         origen: "politica.bloqueo_por_impago",
         requiereData: () => true,
+        prueba: probarPoliticaImpago,
       } as PuntoConPrueba);
     } else if (plantilla === "limite_credito") {
       puntos.push({
@@ -102,6 +158,7 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         nombre: `Política: límite de crédito`,
         origen: "politica.limite_credito",
         requiereData: () => true,
+        prueba: probarPoliticaLimiteCredito,
       } as PuntoConPrueba);
     }
   }
