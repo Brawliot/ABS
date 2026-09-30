@@ -586,27 +586,28 @@ export function page(
   body: string,
 ): string {
   const nav =
-    `<nav class="top" data-maestros-nav>` +
-    `<a href="${esc(withDev(viewer, "/inicio"))}" data-nav-inicio>Inicio</a>` +
-    `<a href="${esc(withDev(viewer, "/"))}">Procesos</a>` +
-    `<a href="${esc(withDev(viewer, "/partes"))}">Clientes y proveedores</a>` +
-    `<a href="${esc(withDev(viewer, "/ofertas"))}">Catálogo</a>` +
-    `<a href="${esc(withDev(viewer, "/dinero"))}">Dinero</a>` +
-    (moduloEnApp(ctx, "stock") ? `<a href="${esc(withDev(viewer, "/stock"))}">Stock</a>` : "") +
-    (moduloEnApp(ctx, "facturas")
-      ? `<a href="${esc(withDev(viewer, "/facturas"))}">Facturas</a>` +
-        `<a href="${esc(withDev(viewer, "/empresa"))}">Datos de la empresa</a>`
-      : "") +
-    `</nav>`;
+    `<header class="site-header-maestros" data-maestros-nav>` +
+    `<div class="header-rol"><strong>${esc(viewer.roleId)}</strong></div>` +
+    `<div class="header-avisos">` +
+    `<div class="aviso aviso-leve" data-tipo="leve"><span>ℹ</span></div>` +
+    `<div class="aviso aviso-medio" data-tipo="medio"><span>⚠</span></div>` +
+    `<div class="aviso aviso-grave" data-tipo="grave"><span>🔴</span></div>` +
+    `<div class="aviso aviso-bloqueante" data-tipo="bloqueante"><span>⛔</span></div>` +
+    `</div>` +
+    `</header>`;
+  const pageTitle = title ? `${title} · ` : "";
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${esc(title)} · ${esc(ctx.boot.brandName)}</title>
+<title>${pageTitle}${esc(ctx.boot.brandName)}</title>
 <style>
   :root { --fg:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#fff; --accent:#2563eb; --err:#b91c1c; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; }
-  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; display:flex; flex-direction:column; height:100vh; }
+  main { margin:0; padding:0; flex:1; overflow:auto; }
+  .site-header-maestros { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); gap:16px; }
+  .header-rol { font-size:1rem; font-weight:700; color:var(--fg); }
+  .header-avisos { display:flex; gap:8px; }
   nav.top { display:flex; flex-wrap:wrap; gap:16px; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
   a { color: var(--accent); }
   h1 { font-size: 1.5rem; margin: 16px 0; }
@@ -648,6 +649,19 @@ export function page(
   .tarjeta-titulo { font-weight:700; font-size:1.05rem; color:var(--accent); }
   .tarjeta-que { color:var(--muted); font-size:.9rem; }
   .tarjeta-dato { font-weight:600; font-size:.9rem; }
+  .aviso { padding:8px 12px; border-radius:6px; font-size:.85rem; font-weight:600; display:flex; align-items:center; }
+  .aviso-leve { background:#e0f2fe; color:#0369a1; border:1px solid #0284c7; }
+  .aviso-medio { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
+  .aviso-grave { background:#fee2e2; color:#7f1d1d; border:1px solid #dc2626; }
+  .aviso-bloqueante { background:#f3e8ff; color:#6b21a8; border:1px solid #a855f7; }
+  .inicio-grid { display:grid; grid-template-columns: 30% 70%; gap:0; height: 100%; align-items:flex-start;  width:100%; box-shadow:0 4px 20px rgba(0,0,0,.08); border-radius:12px; overflow:hidden; }
+  .menu-izq { display:flex; flex-direction:column; gap:8px; padding:24px 16px; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); overflow-y:auto; align-items:center; justify-content: flex-start; height: 100%;}
+  .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; flex-shrink:0; width:100%; }
+  .menu-enlace:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
+  .contenido-der { display:grid; gap:16px; padding:24px; background:rgba(255,255,255,.5); backdrop-filter:blur(8px); overflow-y:auto; align-content:center; justify-content: flex-start; height: 100%; }
+  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; width:100%; max-width:400px; }
+  .enlace-contenido h2 { margin-top:0; }
+  @media (max-width: 768px) { .inicio-grid { grid-template-columns:1fr; } }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
   .factura { background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; margin:12px 0; }
   .factura-cab { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; margin-bottom:16px; }
@@ -665,7 +679,7 @@ export function page(
   }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
 </style></head>
-<body data-page="maestros">${nav}<main id="main"><h1>${esc(title)}</h1>${body}</main></body></html>`;
+<body data-page="maestros">${nav}<main id="main">${title ? `<h1>${esc(title)}</h1>` : ""}${body}</main></body></html>`;
 }
 
 export function hiddenIdentity(viewer: Viewer): string {
