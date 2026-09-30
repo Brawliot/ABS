@@ -58,7 +58,7 @@ const seccionResumen: SeccionDef<ContextoCrm> = {
       (parte.personal.email ? `<dt>Correo</dt><dd>${esc(parte.personal.email)}</dd>` : "") +
       (parte.personal.address ? `<dt>Dirección</dt><dd>${esc(parte.personal.address)}</dd>` : "") +
       (debe > 0
-        ? `<dt>Deuda total</dt><dd class="num"><strong>${esc(formatCentimos(debe))}</strong></dd>`
+        ? `<dt>Deuda total</dt><dd class="num"><strong data-te-debe>${esc(formatCentimos(debe))}</strong></dd>`
         : "") +
       `</dl>`
     );
@@ -105,7 +105,7 @@ const seccionAbiertos: SeccionDef<ContextoCrm> = {
           `<td>${esc(e.estadoLabel)}</td><td>${esc(fecha(e.fecha))}</td></tr>`,
       )
       .join("");
-    return `<table><thead><tr><th>Expediente</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table data-parte-expedientes><thead><tr><th>Expediente</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table>`;
   },
 };
 
