@@ -268,6 +268,24 @@ const portalClienteSchema = z.object({
   autoservicio: z.boolean(),
 });
 
+const fichasCampoSchema = z.object({
+  id: z.string().regex(/^[a-z0-9_]+$/),
+  nombre: z.string().min(1),
+  tipo: z.enum(["texto", "numero", "importe", "si_no", "fecha", "opcion"]),
+  opciones: z.array(z.string().min(1)).optional(),
+  obligatorio: z.boolean().optional(),
+});
+
+const fichasSchema = z.object({
+  id: z.string().regex(/^[a-z0-9_]+$/),
+  nombre: z.string().min(1),
+  plural: z.string().min(1),
+  elemento: z.enum(["recurso", "oferta"]),
+  deQuien: z.enum(["propio", "del_cliente"]).optional(),
+  campos: z.array(fichasCampoSchema).min(1),
+  enProcesos: z.array(z.string().min(1)).optional(),
+});
+
 export const businessProfileZod = z.object({
   schemaVersion: z.string().min(1),
   identity: z.object({
@@ -306,6 +324,8 @@ export const businessProfileZod = z.object({
   pipelineStateIds: fieldSchema(z.array(z.string().min(1))),
   /** Nombres propios del negocio en pantalla (ver presentation/etiquetas.ts). */
   vocabulario: z.record(z.string().min(1).max(120), z.string().min(1).max(80)).optional(),
+  /** Fichas generadas de cada negocio. */
+  fichas: z.array(fichasSchema).optional(),
 });
 
 export type BusinessProfileZod = z.infer<typeof businessProfileZod>;
