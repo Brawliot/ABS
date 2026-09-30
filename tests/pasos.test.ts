@@ -268,3 +268,49 @@ describe("Ciclos completos de negocios con pasos", () => {
     expect(boot2.input.lifecycles.length).toBeGreaterThan(0);
   });
 });
+
+describe("Las acciones propias heredan las reglas del paso base", () => {
+  it("copia permisos y condiciones sin tocar las reglas originales", async () => {
+    const { bootProfile } = await import("../web/boot-profile.js");
+    const { reglasParaPasos } = await import("../elements/pasos.js");
+    const boot = bootProfile("p04-taller-mecanico");
+    const slice = boot.input.lifecycles.find((l) => l.archetypeId === "servicio_proyecto")!;
+    const base = slice.lifecycle;
+    const cerrar = base.transitions.find((t) => t.id === "t_cerrar")!;
+    const origen = base.transitions.find((t) => t.to === cerrar.from && t.from !== cerrar.from)!;
+    const proceso = {
+      proceso: slice.id,
+      estados: [
+        { id: "listo", nombre: "Listo para recoger", equivale: cerrar.from },
+        { id: "entregado", nombre: "Entregado", equivale: cerrar.to },
+        { id: "previo", nombre: "Previo", equivale: origen.from },
+      ],
+      acciones: [
+        { id: "terminar", nombre: "Terminar", de: "previo", a: "listo" },
+        { id: "entregar_coche", nombre: "Entregar coche", de: "listo", a: "entregado" },
+      ],
+    };
+    const antes = boot.input.ruleSet;
+    const despues = reglasParaPasos(antes, base, proceso);
+    const deBase = antes.rules.filter((r) => "transitionId" in r && r.transitionId === "t_cerrar");
+    const heredadas = despues.rules.filter((r) => "transitionId" in r && r.transitionId === "entregar_coche");
+    // Todas las reglas de «cerrar» (permiso + no entregar con deuda) pasan a «Entregar coche»
+    expect(deBase.length).toBeGreaterThan(1);
+    expect(heredadas.map((r) => r.kind).sort()).toEqual(deBase.map((r) => r.kind).sort());
+    // Las originales siguen ahí y la huella cambia
+    expect(despues.rules.filter((r) => "transitionId" in r && r.transitionId === "t_cerrar")).toHaveLength(deBase.length);
+    expect(despues.contentHash).not.toBe(antes.contentHash);
+  });
+
+  it("inmobiliaria y autoescuela: sus acciones tienen botón y otros procesos conservan sus reglas", async () => {
+    const { bootProfile } = await import("../web/boot-profile.js");
+    const inmo = bootProfile("n04-inmobiliaria");
+    expect(inmo.spec.actions.map((a) => a.transitionId)).toContain("publicar");
+    const auto = bootProfile("n03-autoescuela");
+    expect(auto.spec.actions.map((a) => a.transitionId)).toContain("acordar");
+    const fin = auto.input.lifecycles.find((l) => l.archetypeId === "financiera")!;
+    for (const t of fin.lifecycle.transitions) {
+      expect(auto.spec.actions.some((a) => a.lifecycleId === fin.id && a.transitionId === t.id), t.id).toBe(true);
+    }
+  });
+});

@@ -6,6 +6,8 @@
 
 import type { Lifecycle, StateNode, Transition } from "../core/lifecycle.js";
 import { findState, setsEqual, situationKey } from "../core/lifecycle.js";
+import type { CompiledRuleSet } from "../policies/types.js";
+import { hashCanonical } from "../policies/compiler.js";
 import type {
   ProcesoCustom,
   EstadoCustom,
@@ -278,4 +280,44 @@ export function construirCiclo(
     },
     mapAcciones,
   };
+}
+
+/**
+ * Reglas para las acciones propias de un proceso. No se toca ninguna regla
+ * existente (otros procesos pueden usar los mismos pasos base); se AÑADEN
+ * copias con el id de la acción propia:
+ *  - una acción que cruza de paso base hereda TODAS las reglas de esa
+ *    transición base (permisos, cobros, evidencias…);
+ *  - una acción interna (dentro del mismo paso base) solo hereda quién puede
+ *    hacerla: los permisos de la salida de ese paso base.
+ * La huella del conjunto se recalcula.
+ */
+export function reglasParaPasos(
+  ruleSet: CompiledRuleSet,
+  base: Lifecycle,
+  proceso: ProcesoCustom,
+): CompiledRuleSet {
+  const equivale = new Map(proceso.estados.map((e) => [e.id, e.equivale]));
+  const fallo = new Set(base.states.filter((s) => s.kind === "terminal_excepcion").map((s) => s.id));
+  const nuevas: CompiledRuleSet["rules"][number][] = [];
+
+  for (const a of proceso.acciones) {
+    const de = equivale.get(a.de)!;
+    const hacia = equivale.get(a.a)!;
+    const cruza = base.transitions.find((t) => t.from === de && t.to === hacia);
+    // Interna: los permisos de la salida «normal» del paso base (no la de cancelar)
+    const origen =
+      cruza ??
+      base.transitions.find((t) => t.from === de && !fallo.has(t.to)) ??
+      base.transitions.find((t) => t.from === de);
+    if (!origen) continue;
+    for (const r of ruleSet.rules) {
+      if (!("transitionId" in r) || r.transitionId !== origen.id) continue;
+      if (!cruza && r.kind !== "guard") continue;
+      nuevas.push({ ...r, id: `${r.id}@${a.id}`, transitionId: a.id } as typeof r);
+    }
+  }
+
+  const { contentHash: _h, ...resto } = { ...ruleSet, rules: [...ruleSet.rules, ...nuevas] };
+  return Object.freeze({ ...resto, contentHash: hashCanonical(resto) });
 }

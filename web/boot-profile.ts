@@ -30,7 +30,7 @@ import type { CompiledRuleSet } from "../policies/types.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "./sample-data.js";
 import type { AppBootResult } from "./types.js";
-import { validarPasos, construirCiclo } from "../elements/pasos.js";
+import { validarPasos, construirCiclo, reglasParaPasos } from "../elements/pasos.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SAMPLE_FILES = [
@@ -167,6 +167,7 @@ export function bootSampleProfile(profileId: string): AppBootResult {
   if (sample.pasos && sample.pasos.length > 0) {
     const lifecyclesArray = [...pipe.input.lifecycles];
     const vocabularioNuevo = { ...pipe.input.vocabulario };
+    let ruleSet = pipe.input.ruleSet;
 
     for (const paso of sample.pasos) {
       const lcSlice = lifecyclesArray.find((l) => l.id === paso.proceso);
@@ -184,7 +185,7 @@ export function bootSampleProfile(profileId: string): AppBootResult {
         throw new Error(`Validación de pasos fallida: ${msgs}`);
       }
 
-      const { lifecycle: cicloNuevo, mapAcciones } = construirCiclo(
+      const { lifecycle: cicloNuevo } = construirCiclo(
         [paso],
         lcSlice.lifecycle,
       );
@@ -196,20 +197,8 @@ export function bootSampleProfile(profileId: string): AppBootResult {
         lifecycle: cicloNuevo,
       };
 
-      // Reescribir transitionIds en las reglas
-      for (const rule of pipe.input.ruleSet.rules) {
-        if ("transitionId" in rule && typeof rule.transitionId === "string") {
-          const nuevoId = mapAcciones[rule.transitionId];
-          if (nuevoId) {
-            (rule as any).transitionId = nuevoId;
-          }
-        }
-        if ("transitionIds" in rule && Array.isArray(rule.transitionIds)) {
-          (rule as any).transitionIds = (rule.transitionIds as string[]).map(
-            (tid) => mapAcciones[tid] ?? tid,
-          );
-        }
-      }
+      // Reglas para las acciones propias (copias; las originales no se tocan)
+      ruleSet = reglasParaPasos(ruleSet, lcSlice.lifecycle, paso);
 
       // Agregar al vocabulario para etiquetas
       for (const estado of paso.estados) {
@@ -224,6 +213,7 @@ export function bootSampleProfile(profileId: string): AppBootResult {
     // Reemplazar los arrays en el input
     (pipe.input as any).lifecycles = lifecyclesArray;
     (pipe.input as any).vocabulario = vocabularioNuevo;
+    (pipe.input as any).ruleSet = ruleSet;
   }
 
   const spec = generateUiSpec(pipe.input);
