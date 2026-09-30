@@ -22,7 +22,7 @@ import { openPersonal, sealPersonal } from "./identity-crypto.js";
 export type FacturaBorrador = Omit<
   Factura,
   "id" | "anio" | "numero" | "codigo" | "huellaAnterior" | "huella"
-> & { readonly tipoDocumento?: "factura" | "albaran" | "rectificativa" };
+>;
 
 interface Row {
   readonly payload: string;
