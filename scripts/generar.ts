@@ -11,6 +11,8 @@ import {
   GENERADOR_GESTION,
   GENERADOR_WEB,
 } from "../generator/checklist.js";
+import { montar } from "../generator/secciones.js";
+import { SECCIONES_WEB } from "../web/secciones-web.js";
 
 function main() {
   const args = process.argv.slice(2);
@@ -114,7 +116,16 @@ function main() {
     console.log(`  • ${channel}`);
   }
 
-  console.log(`\n\n✨ Generación completada.\n`);
+  // === WEB: ORDEN DE SECCIONES ===
+  console.log(`\n🌐 WEB\n`);
+  const resultadoWeb = montar(SECCIONES_WEB, { boot, css: "" });
+  console.log(`Secciones:\n`);
+  for (const seccion of resultadoWeb.seccionesUsadas) {
+    console.log(`  → ${seccion.id}${seccion.variante ? ` (${seccion.variante})` : ""}`);
+  }
+  console.log();
+
+  console.log(`\n✨ Generación completada.\n`);
 }
 
 main();

@@ -6,6 +6,8 @@
 import type { AppBootResult } from "./types.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
+import { montar } from "../generator/secciones.js";
+import { SECCIONES_WEB, type ContextoWeb } from "./secciones-web.js";
 
 function esc(s: string): string {
   return s
@@ -216,23 +218,24 @@ function etiquetasFormulario(boot: AppBootResult): {
 }
 
 /**
- * Renderiza GET /web: landing pública del negocio.
+ * Renderiza GET /web: landing pública del negocio usando motor de secciones.
  */
 export function renderLandingHtml(boot: AppBootResult, query?: string): string {
   const { css, brandColor } = estiloNegocio(boot);
-  const etiquetas = etiquetasFormulario(boot);
   const params = new URLSearchParams(query ?? "");
   const enviado = params.has("enviado");
 
-  // Ofertas ficticias por ahora (desde input podría ampliarse)
-  const ofertas: { nombre: string; precio: number }[] = [];
-  // TODO: conectar con input.ofertas si existen
+  // Montar secciones dinámicamente
+  const ctx: ContextoWeb = {
+    boot,
+    css,
+    ...(query !== undefined ? { query } : {}),
+    ...(enviado ? { showSuccess: true } : {}),
+  };
 
-  // Horario (si existe)
-  const horario = boot.input.lifecycles[0]?.label ?? "";
-
+  const resultado = montar(SECCIONES_WEB, ctx);
   const successMsg = enviado
-    ? `<div class="success-message">✓ Gracias por tu solicitud. Nos pondremos en contacto pronto.</div>`
+    ? `<div style="background: #d1fae5; color: #065f46; padding: 15px; border-radius: 4px; margin-bottom: 20px; text-align: center;">✓ Gracias por tu solicitud. Nos pondremos en contacto pronto.</div>`
     : "";
 
   return `<!doctype html>
@@ -245,70 +248,11 @@ export function renderLandingHtml(boot: AppBootResult, query?: string): string {
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>${esc(boot.brandName)}</h1>
-      <p>Te ayudamos con lo que necesites</p>
-    </header>
-
     ${successMsg}
 
-    ${
-      ofertas.length > 0
-        ? `
-      <section>
-        <h2>Nuestras ofertas</h2>
-        <div class="offers">
-          ${ofertas
-            .map(
-              (o) => `
-          <div class="offer-card">
-            <div class="offer-title">${esc(o.nombre)}</div>
-            <div class="offer-price">${formatCentimos(o.precio)}</div>
-          </div>
-          `,
-            )
-            .join("")}
-        </div>
-      </section>
-    `
-        : ""
-    }
+    ${resultado.html}
 
-    ${
-      horario
-        ? `
-      <section class="info-section">
-        <h3>Horario</h3>
-        <p>${esc(horario)}</p>
-      </section>
-    `
-        : ""
-    }
-
-    <form method="post" action="/web/solicitud">
-      <h2>Solicitar presupuesto o cita</h2>
-
-      <div class="form-group">
-        <label for="nombre">${esc(etiquetas.nombre)}</label>
-        <input type="text" id="nombre" name="nombre" required />
-      </div>
-
-      <div class="form-group">
-        <label for="contacto">${esc(etiquetas.contacto)}</label>
-        <input type="text" id="contacto" name="contacto" required />
-      </div>
-
-      <div class="form-group">
-        <label for="mensaje">${esc(etiquetas.mensaje)}</label>
-        <textarea id="mensaje" name="mensaje"></textarea>
-      </div>
-
-      <input type="hidden" name="trampa" value="" />
-
-      <button type="submit">${esc(etiquetas.boton)}</button>
-    </form>
-
-    <footer>
+    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--color-border); font-size: 0.9em; color: #6b7280;">
       <p>&copy; 2026 ${esc(boot.brandName)}. Todos los derechos reservados.</p>
     </footer>
   </div>
