@@ -12,6 +12,7 @@ import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
 import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
 import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
 import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
+import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -154,6 +155,8 @@ export class AppRuntime {
   readonly stockStore: SqliteStockStore;
   /** Cobros parciales (señal, hitos, pagos a cuenta). */
   readonly cobros: SqliteCobrosStore;
+  /** Devoluciones de productos (append-only). */
+  readonly devoluciones: SqliteDevolucionesStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -185,6 +188,7 @@ export class AppRuntime {
       readonly facturas: SqliteFacturaStore;
       readonly stock: SqliteStockStore;
       readonly cobros: SqliteCobrosStore;
+      readonly devoluciones: SqliteDevolucionesStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -196,6 +200,7 @@ export class AppRuntime {
     this.facturas = maestros.facturas;
     this.stockStore = maestros.stock;
     this.cobros = maestros.cobros;
+    this.devoluciones = maestros.devoluciones;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -230,6 +235,7 @@ export class AppRuntime {
     const facturas = new SqliteFacturaStore(dbPath);
     const stock = new SqliteStockStore(dbPath);
     const cobros = new SqliteCobrosStore(dbPath);
+    const devoluciones = new SqliteDevolucionesStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -237,6 +243,7 @@ export class AppRuntime {
       facturas,
       stock,
       cobros,
+      devoluciones,
     });
   }
 
@@ -247,6 +254,7 @@ export class AppRuntime {
     this.facturas.close();
     this.stockStore.close();
     this.cobros.close();
+    this.devoluciones.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -689,6 +697,63 @@ export class AppRuntime {
   /** Total cobrado en un expediente. */
   totalCobradoDe(expedienteId: string): number {
     return this.cobros.totalParcial(this.tenantId, expedienteId);
+  }
+
+  devolver(
+    expedienteId: string,
+    lineas: readonly { readonly ofertaId: string; readonly cantidadMilesimas: number }[],
+    motivo: string,
+    actorId: string,
+    plazoDevolucionDias: number = 30,
+  ): { ok: true } | { ok: false; error: string } {
+    const estado = this.estadoDe(expedienteId);
+    if (!estado) return { ok: false, error: "El expediente no existe." };
+    if (estado.kind !== "terminal_exito") {
+      return { ok: false, error: "Solo se puede devolver expedientes cerrados con éxito." };
+    }
+    const tx = this.datosDe(expedienteId);
+    if (!tx) return { ok: false, error: "El expediente no tiene datos." };
+    const events = this.store.getBySubject(expedienteId) as import("../core/events.js").DomainEvent[];
+    if (events.length === 0) return { ok: false, error: "El expediente sin eventos." };
+    const ultimoEvento = events[events.length - 1]!;
+    const ahora = new Date();
+    const entrega = new Date(ultimoEvento.occurredAt);
+    const diasTranscurridos = (ahora.getTime() - entrega.getTime()) / (1000 * 60 * 60 * 24);
+    if (diasTranscurridos > plazoDevolucionDias) {
+      return { ok: false, error: `El plazo de devolución de ${plazoDevolucionDias} días ha expirado.` };
+    }
+    const m = motivo.trim();
+    if (!m) return { ok: false, error: "Indica el motivo de la devolución." };
+    if (m.length > 500) return { ok: false, error: "El motivo es demasiado largo." };
+    if (lineas.length === 0) return { ok: false, error: "Selecciona al menos una línea para devolver." };
+    let totalDevuelto = 0;
+    for (const linea of lineas) {
+      const oferta = tx.datos.lineas.find((l) => l.descripcion === linea.ofertaId || l.precioCentimos === linea.cantidadMilesimas);
+      if (!oferta) return { ok: false, error: `Línea ${linea.ofertaId} no encontrada en el expediente.` };
+      if (linea.cantidadMilesimas > oferta.cantidadMilesimas) {
+        return { ok: false, error: `No se puede devolver más de lo vendido de ${linea.ofertaId}.` };
+      }
+      totalDevuelto += oferta.precioCentimos * linea.cantidadMilesimas / 1000;
+    }
+    this.devoluciones.registrar(this.tenantId, {
+      expediente: expedienteId,
+      lineas,
+      importeCentimos: Math.round(totalDevuelto),
+      fecha: new Date().toISOString(),
+      motivo: m,
+      actor: actorId,
+    });
+    return { ok: true };
+  }
+
+  /** Devoluciones de un expediente. */
+  devolucionesDelExpediente(expedienteId: string): readonly { readonly lineas: readonly { readonly ofertaId: string; readonly cantidadMilesimas: number }[]; readonly importeCentimos: number; readonly fecha: string; readonly motivo: string; readonly actor: string }[] {
+    return this.devoluciones.delExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Total devuelto en un expediente. */
+  totalDevueltoEn(expedienteId: string): number {
+    return this.devoluciones.totalDevuelto(this.tenantId, expedienteId);
   }
 
   /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
