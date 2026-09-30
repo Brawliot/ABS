@@ -5,8 +5,7 @@ import {
   type DefinicionFicha,
 } from "../elements/ficha.js";
 import { SqliteFichaStore } from "../adapters/sqlite-ficha-store.js";
-import { startWebServer } from "../web/server.js";
-import { bootProfile } from "../contracts/materialize.js";
+import { startWebServer, bootProfile, type WebServerHandle } from "../web/index.js";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -203,8 +202,8 @@ describe("fichas", () => {
 
       const history = store.historial("tenant1", "tipo1", "id1");
       expect(history).toHaveLength(3);
-      expect(history[0].version).toBe(1);
-      expect(history[2].version).toBe(3);
+      expect(history[0]?.version).toBe(1);
+      expect(history[2]?.version).toBe(3);
     });
 
     it("no permite UPDATE directo", () => {
@@ -223,7 +222,7 @@ describe("fichas", () => {
   });
 
   describe("web - fichas", () => {
-    let handle: { close(): Promise<void> };
+    let handle: WebServerHandle;
     let baseUrl: string;
 
     beforeEach(async () => {
@@ -293,7 +292,7 @@ describe("fichas", () => {
   });
 
   describe("no hay fugas de identificadores técnicos", () => {
-    let handle: { close(): Promise<void> };
+    let handle: WebServerHandle;
     let baseUrl: string;
 
     beforeEach(async () => {

@@ -68,6 +68,22 @@ export interface GeneratorInput {
   readonly pipelineStateIds?: readonly string[];
   /** Vocabulario del negocio para las etiquetas visibles. */
   readonly vocabulario?: Readonly<Record<string, string>>;
+  /** Fichas generadas de cada negocio. */
+  readonly fichas?: readonly {
+    readonly id: string;
+    readonly nombre: string;
+    readonly plural: string;
+    readonly elemento: "recurso" | "oferta";
+    readonly deQuien?: "propio" | "del_cliente";
+    readonly campos: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly tipo: "texto" | "numero" | "importe" | "si_no" | "fecha" | "opcion";
+      readonly opciones?: readonly string[];
+      readonly obligatorio?: boolean;
+    }[];
+    readonly enProcesos?: readonly string[];
+  }[];
 }
 
 export interface ModuleMatch {

@@ -682,7 +682,8 @@ function fichasHtml(
   // Buscar proceso para sus palabras
   const slice = boot.input.lifecycles.find((l) => l.id === lifecycleId);
   if (!slice) return "";
-  const procesos = new Set((slice.nombre || "").toLowerCase().split(/\s+/));
+  const nombreProceso = runtime.etiquetas.proceso(lifecycleId);
+  const procesos = new Set(nombreProceso.toLowerCase().split(/\s+/));
 
   // Fichas que aplican a este proceso
   const aplicables = fichas.filter((f) => {

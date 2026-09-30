@@ -33,6 +33,7 @@ import {
   type Viewer,
   fecha,
 } from "./maestros.js";
+import type { AppBootResult } from "./types.js";
 
 export interface FichasResponse {
   readonly status: number;
@@ -86,7 +87,7 @@ function routeGet(
 
   // GET /fichas/<fichaId>
   const listMatch = path.match(/^\/fichas\/([a-z0-9_-]+)$/i);
-  if (listMatch) {
+  if (listMatch && listMatch[1]) {
     const fichaId = listMatch[1];
     const def = definicionFicha(boot, fichaId);
     if (!def) {
@@ -97,8 +98,9 @@ function routeGet(
   }
 
   // GET /fichas/<fichaId>/nueva
-  if (path.match(/^\/fichas\/([a-z0-9_-]+)\/nueva$/i)) {
-    const fichaId = path.split("/")[2];
+  const newMatch = path.match(/^\/fichas\/([a-z0-9_-]+)\/nueva$/i);
+  if (newMatch && newMatch[1]) {
+    const fichaId = newMatch[1];
     const def = definicionFicha(boot, fichaId);
     if (!def) {
       return html(404, page(ctx, viewer, "No disponible", `<p class="meta">Esa ficha no existe.</p>`));
@@ -111,7 +113,7 @@ function routeGet(
 
   // GET /fichas/<fichaId>/<id>
   const detailMatch = path.match(/^\/fichas\/([a-z0-9_-]+)\/([a-z0-9_-]+)$/i);
-  if (detailMatch) {
+  if (detailMatch && detailMatch[1] && detailMatch[2]) {
     const fichaId = detailMatch[1];
     const id = detailMatch[2];
     const def = definicionFicha(boot, fichaId);
@@ -146,7 +148,7 @@ function routePost(
 
   // POST /fichas/<fichaId>
   const createMatch = path.match(/^\/fichas\/([a-z0-9_-]+)$/i);
-  if (createMatch) {
+  if (createMatch && createMatch[1]) {
     const fichaId = createMatch[1];
     const def = definicionFicha(boot, fichaId);
     if (!def) {
@@ -166,7 +168,7 @@ function routePost(
 
   // POST /fichas/<fichaId>/<id>
   const updateMatch = path.match(/^\/fichas\/([a-z0-9_-]+)\/([a-z0-9_-]+)$/i);
-  if (updateMatch) {
+  if (updateMatch && updateMatch[1] && updateMatch[2]) {
     const fichaId = updateMatch[1];
     const id = updateMatch[2];
     const def = definicionFicha(boot, fichaId);
@@ -193,7 +195,7 @@ function routePost(
 
 // ─── HTML ───────────────────────────────────────────────────────────────
 
-function definicionFicha(boot: typeof ctx.boot, fichaId: string): DefinicionFicha | undefined {
+function definicionFicha(boot: AppBootResult, fichaId: string): DefinicionFicha | undefined {
   return (boot.input.fichas as DefinicionFicha[] | undefined)?.find((f) => f.id === fichaId);
 }
 
@@ -244,7 +246,7 @@ function fichaForm(
     const required = campo.obligatorio ? " required" : "";
 
     html += `<label>
-      ${esc(campo.nombre)}${campo.obligatorio ? " <span class="err">*</span>" : ""}`;
+      ${esc(campo.nombre)}${campo.obligatorio ? ' <span class="err">*</span>' : ""}`;
 
     if (campo.tipo === "texto") {
       html += `<input type="text" name="${esc(campo.id)}" value="${esc(val)}"${required} />`;
