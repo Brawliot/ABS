@@ -22,7 +22,7 @@ import { openPersonal, sealPersonal } from "./identity-crypto.js";
 export type FacturaBorrador = Omit<
   Factura,
   "id" | "anio" | "numero" | "codigo" | "huellaAnterior" | "huella"
->;
+> & { readonly tipoDocumento?: "factura" | "albaran" | "rectificativa" };
 
 interface Row {
   readonly payload: string;
@@ -93,8 +93,10 @@ export class SqliteFacturaStore {
         )
         .get(tenantId) as { huella: string } | undefined;
       const numero = max.n + 1;
+      const tipoDocumento = borrador.tipoDocumento || "factura";
       const sinHuella: Omit<Factura, "huella"> = {
         ...borrador,
+        tipoDocumento,
         id: `fac-${randomUUID()}`,
         tenantId,
         anio,

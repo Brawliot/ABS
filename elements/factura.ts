@@ -47,6 +47,8 @@ export interface Factura {
   /** «F2026-0001» */
   readonly codigo: string;
   readonly tipo: TipoFactura;
+  /** Tipo de documento: factura, albarán, rectificativa */
+  readonly tipoDocumento: "factura" | "albaran" | "rectificativa";
   readonly expedienteId: string;
   readonly parteId: string;
   /** AAAA-MM-DD */
@@ -64,6 +66,8 @@ export interface Factura {
   /** Rectificativa: factura que corrige y motivo. */
   readonly rectificaA?: string;
   readonly motivo?: string;
+  readonly impuestosPorLinea?: readonly { readonly lineaIndex: number; readonly tipoIva: number; readonly cuota: number }[];
+  readonly impuestoTotal?: number;
   readonly huellaAnterior: string;
   readonly huella: string;
   readonly expedidaEn: string;
