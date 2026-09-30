@@ -32,7 +32,7 @@ export async function handleInicio(ctx: MaestrosContext, req: IncomingMessage): 
   const url = new URL(req.url ?? "/", "http://local");
   const who = identifyGet(ctx, req, Object.fromEntries(url.searchParams.entries()));
   if ("response" in who) return who.response;
-  return html(200, page(ctx, who.viewer, "", inicioHtml(ctx, who.viewer)));
+  return html(200, page(ctx, who.viewer, "", inicioHtml(ctx, who.viewer), "inicio"));
 }
 
 interface Tarjeta {

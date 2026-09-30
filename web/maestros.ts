@@ -579,11 +579,42 @@ function ofertaForm(
 
 // ─── Utilidades de página ───────────────────────────────────────────────
 
+/**
+ * Estilo del negocio (su sistema de diseño) aplicado encima del CSS base:
+ * - "inicio": solo colores y tipografía (la maquetación es la de la plataforma).
+ * - "gestion": además bordes, sombras y densidad.
+ */
+export function estiloNegocio(ctx: MaestrosContext, modo: "inicio" | "gestion"): string {
+  const t = ctx.boot.designSystem.tokens;
+  const c = t.colors;
+  const css = (v: string) => v.replace(/[<>{};]/g, "");
+  let out =
+    `:root { --fg:${css(c.neutrals.text)}; --muted:${css(c.neutrals.muted)}; --line:${css(c.neutrals.border)}; ` +
+    `--bg:${css(c.neutrals.background)}; --card:${css(c.neutrals.surface)}; --accent:${css(c.primary)}; ` +
+    `--accent-2:${css(c.secondary)}; --err:${css(c.semantic.danger)}; --okc:${css(c.semantic.success)}; ` +
+    `--font-body:${css(t.typography.bodyFamily)}; --font-head:${css(t.typography.headingFamily)}; }\n` +
+    `body { font-family: var(--font-body); }\n` +
+    `h1, h2, h3, .tarjeta-titulo, .tile-value, .factura-tipo { font-family: var(--font-head); }\n` +
+    `.ok { color: var(--okc); }\n`;
+  if (modo === "gestion") {
+    const r = t.radii;
+    const esp = t.spacing.scalePx;
+    const pad = esp[Math.min(1, esp.length - 1)] ?? 8;
+    out +=
+      `form, .tile, dl.ficha, .tarjeta, .factura, .dinero, .factura-cliente { border-radius:${r.md}px; box-shadow:${css(t.shadows.sm)}; }\n` +
+      `input, select, textarea, button, .btn { border-radius:${r.sm}px; }\n` +
+      `th, td { padding:${pad}px ${pad + 2}px; }\n` +
+      `form { gap:${esp[2] ?? 12}px; padding:${esp[3] ?? 16}px; }\n`;
+  }
+  return out;
+}
+
 export function page(
   ctx: MaestrosContext,
   viewer: Viewer,
   title: string,
   body: string,
+  modo: "inicio" | "gestion" = "gestion",
 ): string {
   const nav =
     `<header class="site-header-maestros" data-maestros-nav>` +
@@ -678,7 +709,8 @@ export function page(
     .factura { border:0; padding:0; margin:0; }
   }
   @media (max-width: 640px) { table { font-size:.85rem; } th, td { padding:6px 4px; } }
-</style></head>
+</style>
+<style data-estilo-negocio="${modo}">${estiloNegocio(ctx, modo)}</style></head>
 <body data-page="maestros">${nav}<main id="main">${title ? `<h1>${esc(title)}</h1>` : ""}${body}</main></body></html>`;
 }
 
