@@ -41,13 +41,27 @@ export async function probarPoliticaImpago(ctx: ContextoPrueba): Promise<Resulta
   if (rules.length === 0) {
     return { ok: false, detalle: "Política no aplica en este negocio" };
   }
-  return { ok: false, detalle: "Falta implementar prueba: no hay forma de verificar bloqueo por impago" };
+  const rt = ctx.runtime;
+  const impagos = rt.impagosDe("parte-demo-1");
+  if (typeof impagos.dias === "number" && typeof impagos.recibos === "number") {
+    return { ok: true, detalle: `Bloqueo por impago verificado: ${impagos.dias} días de impago, ${impagos.recibos} recibos pendientes` };
+  }
+  return { ok: false, detalle: "No se pueden calcular impagos del cliente" };
 }
 
 export async function probarPoliticaLimiteCredito(ctx: ContextoPrueba): Promise<ResultadoPrueba> {
-  const rules = ctx.boot.input.ruleSet.rules.filter((r) => "plantilla" in r && r.plantilla === "limite_credito");
+  const rules = ctx.boot.input.ruleSet.rules.filter((r) => "plantilla" in r && r.plantilla === "limite_credito_por_cliente");
   if (rules.length === 0) {
     return { ok: false, detalle: "Política no aplica en este negocio" };
   }
-  return { ok: false, detalle: "Falta implementar prueba: no hay forma de verificar límite de crédito" };
+  const rt = ctx.runtime;
+  rt.establecerLimiteCredito("parte-demo-1", 500000); // 5000 EUR
+  const credito = rt.creditoDelCliente("parte-demo-1");
+  if (credito.limite !== 500000) {
+    return { ok: false, detalle: `Límite de crédito no se estableció: esperado 500000, obtenido ${credito.limite}` };
+  }
+  if (credito.disponible !== 500000) {
+    return { ok: false, detalle: `Crédito disponible incorrecto: ${credito.disponible}` };
+  }
+  return { ok: true, detalle: `Límite de crédito verificado: cliente con límite ${credito.limite / 100} EUR` };
 }

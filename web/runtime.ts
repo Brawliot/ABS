@@ -14,6 +14,7 @@ import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
 import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
+import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -160,6 +161,8 @@ export class AppRuntime {
   readonly devoluciones: SqliteDevolucionesStore;
   /** Financiados (cuotas mensuales con amortización francesa). */
   readonly financiados: SqliteFinanciachsStore;
+  /** Límites de crédito por cliente. */
+  readonly creditoCliente: SqliteCreditoClienteStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -193,6 +196,7 @@ export class AppRuntime {
       readonly cobros: SqliteCobrosStore;
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
+      readonly creditoCliente: SqliteCreditoClienteStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -206,6 +210,7 @@ export class AppRuntime {
     this.cobros = maestros.cobros;
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
+    this.creditoCliente = maestros.creditoCliente;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -242,6 +247,7 @@ export class AppRuntime {
     const cobros = new SqliteCobrosStore(dbPath);
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
+    const creditoCliente = new SqliteCreditoClienteStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -251,6 +257,7 @@ export class AppRuntime {
       cobros,
       devoluciones,
       financiados,
+      creditoCliente,
     });
   }
 
@@ -263,6 +270,7 @@ export class AppRuntime {
     this.cobros.close();
     this.devoluciones.close();
     this.financiados.close();
+    this.creditoCliente.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -851,6 +859,26 @@ export class AppRuntime {
     }
 
     return { ok: true };
+  }
+
+  /** Obtiene la situación de crédito del cliente. */
+  creditoDelCliente(clienteId: string): { readonly activo: number; readonly limite: number; readonly disponible: number; readonly enBloqueo: boolean } {
+    const limite = this.creditoCliente.obtenerLimite(this.tenantId, clienteId);
+    const activo = this.expedientesDinero()
+      .filter((e) => e.parteId === clienteId && e.direccion === "entra" && e.situacion === "pendiente")
+      .reduce((sum, e) => sum + e.totalCentimos, 0);
+    const enBloqueo = this.impagosDe(clienteId).dias > 0 || this.impagosDe(clienteId).recibos > 0;
+    return {
+      activo,
+      limite,
+      disponible: Math.max(0, limite - activo),
+      enBloqueo,
+    };
+  }
+
+  /** Establece el límite de crédito para un cliente. */
+  establecerLimiteCredito(clienteId: string, limiteCentimos: number): void {
+    this.creditoCliente.establecerLimite(this.tenantId, clienteId, limiteCentimos);
   }
 
   /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
