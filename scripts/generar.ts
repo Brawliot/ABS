@@ -26,6 +26,8 @@ import {
   registerSampleFile,
 } from "../web/boot-profile.js";
 import { probarCiclos } from "../web/probar-ciclo.js";
+import { montarSeccionesCrm, type ContextoCrm } from "../web/secciones-crm.js";
+import type { Viewer } from "../web/maestros.js";
 
 const NUEVOS = join(import.meta.dirname, "../contracts/business-profile/samples/negocios-nuevos.json");
 
@@ -107,6 +109,14 @@ async function informe(id: string): Promise<number> {
           ? `  ✔ ${nombre}`
           : `  ✘ ${nombre}: se para en «${rt.etiquetas.accion(r.lifecycleId, r.paradoEn)}» — ${r.motivo ?? ""}`,
       );
+    }
+
+    console.log("CRM: secciones del cliente");
+    const viewer: Viewer = { roleId: "gerente", parteId: "parte-demo-1", devMode: false };
+    const ctxCrm: ContextoCrm = { runtime: rt, boot, parteId: "parte-demo-1", viewer };
+    const { secciones } = montarSeccionesCrm(ctxCrm);
+    for (const s of secciones) {
+      console.log(`  · ${s.titulo} (peso ${s.peso}) [cubre: ${s.cubre.join(", ")}]`);
     }
   } finally {
     rt.close();

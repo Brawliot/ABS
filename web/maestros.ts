@@ -42,6 +42,8 @@ import {
 import type { AppRuntime } from "./runtime.js";
 import type { AppBootResult } from "./types.js";
 import { moduloActivo, type ModuloId } from "../generator/rules/modules.js";
+import { montarSeccionesCrm, type ContextoCrm } from "./secciones-crm.js";
+import { renderSecciones } from "../generator/secciones.js";
 
 export interface MaestrosResponse {
   readonly status: number;
@@ -206,13 +208,16 @@ function routeGet(
     const id = path.slice("/partes/".length);
     const rec = ID_RE.test(id) ? runtime.partes.get(tenant, id) : undefined;
     if (!rec) return notFound(ctx, viewer, "Esa parte no existe.");
+    const ctxCrm: ContextoCrm = { runtime, boot: ctx.boot, parteId: rec.parteId, viewer };
+    const { secciones } = montarSeccionesCrm(ctxCrm);
+    const crm = renderSecciones(secciones);
     return html(
       200,
       page(
         ctx,
         viewer,
         parteName(rec),
-        okNotice(query.ok) + parteDetail(viewer, rec) + parteExpedientes(ctx, viewer, rec.parteId),
+        okNotice(query.ok) + parteDetail(viewer, rec) + crm,
       ),
     );
   }
