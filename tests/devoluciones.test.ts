@@ -56,7 +56,7 @@ describe("Devoluciones", () => {
       "gerente",
     );
     expect(r.ok).toBe(false);
-    expect(r.error).toContain("cerrado");
+    expect((r as any).error).toContain("cerrado");
     rt.close();
   });
 });

@@ -12,6 +12,7 @@ export interface EstadoCustom {
   readonly id: string;
   readonly nombre: string;
   readonly equivale: string;
+  readonly fases?: readonly { readonly id: string; readonly nombre: string }[];
 }
 
 export interface AccionCustom {

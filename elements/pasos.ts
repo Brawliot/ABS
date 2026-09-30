@@ -53,6 +53,28 @@ export function validarPasos(
         });
       }
       idsEstados.add(e.id);
+
+      // Verificar que las fases solo están en estados no terminales
+      if (e.fases && e.fases.length > 0) {
+        const baseState = findState(lifecycleBase, e.equivale);
+        if (baseState && baseState.kind.startsWith("terminal")) {
+          errores.push({
+            tipo: "accion_invalida",
+            mensaje: `Estado "${e.id}" es terminal pero tiene fases definidas. Las fases solo se permiten en estados no terminales.`,
+          });
+        }
+        // Verificar que no hay ids de fases repetidos
+        const idsFases = new Set<string>();
+        for (const f of e.fases) {
+          if (idsFases.has(f.id)) {
+            errores.push({
+              tipo: "id_repetido",
+              mensaje: `Fase con id duplicado: "${f.id}" en estado "${e.id}"`,
+            });
+          }
+          idsFases.add(f.id);
+        }
+      }
     }
 
     // Verificar ids repetidos en acciones
