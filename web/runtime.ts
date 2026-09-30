@@ -691,6 +691,48 @@ export class AppRuntime {
     return this.cobros.totalParcial(this.tenantId, expedienteId);
   }
 
+  /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
+  camposHitosPagados(
+    expedienteId: string,
+  ): Record<string, boolean> {
+    const tx = this.datosDe(expedienteId);
+    if (!tx) return {};
+    const totalCobrado = this.totalCobradoDe(expedienteId);
+    const totalExpediente = tx.datos.lineas.reduce(
+      (sum, l) => sum + l.precioCentimos * l.cantidadMilesimas / 1000,
+      0,
+    );
+    if (totalExpediente === 0) return {};
+    const out: Record<string, boolean> = {};
+    const ruleSet = this.effectiveRuleSet();
+    const hitosFields = new Set<string>();
+    for (const r of ruleSet.rules) {
+      if (r.kind === "condition" && "predicate" in r && r.predicate?.field?.startsWith("hito_")) {
+        hitosFields.add(r.predicate.field);
+      }
+    }
+    for (const field of hitosFields) {
+      const match = field.match(/^hito_(.+)_cobrado$/);
+      if (!match?.[1]) continue;
+      const hitoId = match[1];
+      let hitoTarget = 0;
+      const cobrosDelHito = this.cobrosDelExpediente(expedienteId).filter(
+        (c) => c.hitoId === hitoId,
+      );
+      if (cobrosDelHito.length > 0) {
+        hitoTarget = cobrosDelHito.reduce((sum, c) => sum + c.importeCentimos, 0);
+      } else {
+        const pctMatch = hitoId.match(/(\d+)/);
+        if (pctMatch?.[1]) {
+          const pct = Number(pctMatch[1]) / 100;
+          hitoTarget = Math.round(totalExpediente * pct);
+        }
+      }
+      out[field] = totalCobrado >= hitoTarget;
+    }
+    return out;
+  }
+
   /** Datos de negocio actuales del expediente (cliente, líneas…). */
   datosDe(subjectId: string): TransaccionProyectada | undefined {
     return proyectarTransaccion(this.store.getBySubject(subjectId));

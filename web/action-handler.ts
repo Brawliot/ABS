@@ -413,11 +413,13 @@ async function executeUiActionLocked(
     runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     { parte_id: body.parteId },
   );
+  const hitosFields = runtime.camposHitosPagados(body.subjectId);
   const fields: Record<string, unknown> = {
     ...priorFields,
     parte_id: body.parteId,
     ...enrichedForm,
     ...request.fields,
+    ...hitosFields,
   };
   // Coerción numérica / fechas ya en string
   for (const [k, v] of Object.entries(fields)) {
