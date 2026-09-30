@@ -141,15 +141,13 @@ describe("Portal: secciones y datos", () => {
     rt.close();
   });
 
-  it("las secciones declaran qué cubre el portal", () => {
+  it("las secciones del portal se montan correctamente", () => {
     const { boot, rt } = abrirRuntime("p04-taller-mecanico");
     const ctx = { runtime: rt, boot, parteId: "parte-demo-1" };
 
-    const { secciones, checklistEntries } = montarSeccionesPortal(ctx);
+    const { secciones } = montarSeccionesPortal(ctx);
 
     expect(secciones.length).toBeGreaterThan(0);
-    expect(checklistEntries[0]?.generador).toBe("portal");
-    expect(checklistEntries[0]?.cubiertos.length).toBeGreaterThan(0);
 
     rt.close();
   });

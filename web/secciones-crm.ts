@@ -9,7 +9,6 @@ import type { Viewer } from "./maestros.js";
 import { esc, withDev, fecha } from "./maestros.js";
 import { formatCentimos } from "../elements/oferta.js";
 import { montar, type SeccionDef } from "../generator/secciones.js";
-import { type ChecklistEntry } from "../generator/checklist.js";
 
 export interface ContextoCrm {
   readonly runtime: AppRuntime;
@@ -306,11 +305,5 @@ function extraerFichas(
 export function montarSeccionesCrm(ctx: ContextoCrm) {
   const defs = seccionesCrm(ctx);
   const secciones = montar(defs, ctx);
-  const checklistEntries: ChecklistEntry[] = [
-    {
-      generador: "crm",
-      cubiertos: secciones.map((s) => s.cubre[0]) as any[],
-    },
-  ];
-  return { secciones, checklistEntries };
+  return { secciones };
 }

@@ -5,7 +5,7 @@
  */
 
 import type { Lifecycle, StateNode, Transition } from "../core/lifecycle.js";
-import { findState, setsEqual } from "../core/lifecycle.js";
+import { findState, setsEqual, situationKey } from "../core/lifecycle.js";
 import type {
   ProcesoCustom,
   EstadoCustom,
@@ -19,7 +19,8 @@ export interface ErrorValidacion {
     | "estado_inicial_falta"
     | "estado_final_falta"
     | "no_alcanzable"
-    | "accion_invalida";
+    | "accion_invalida"
+    | "situacion_duplicada";
   readonly mensaje: string;
   readonly detalles?: string;
 }
@@ -176,6 +177,27 @@ export function validarPasos(
               .map((t) => t.to)
               .join(", ")}`,
           });
+        }
+      }
+    }
+
+    // Verificar que no hay dos estados con la misma situación (regla de capa 0)
+    const situacionesVistas = new Map<string, string>();
+    for (const estado of estados) {
+      const baseState = findState(lifecycleBase, estado.equivale);
+      if (!baseState) continue;
+
+      for (const situacion of baseState.situations) {
+        const clave = situationKey(situacion);
+        const yaVisto = situacionesVistas.get(clave);
+        if (yaVisto) {
+          errores.push({
+            tipo: "situacion_duplicada",
+            mensaje: `Estados "${yaVisto}" y "${estado.id}" equivalen al mismo paso base "${estado.equivale}" y tendrían la misma situación de compromisos`,
+            detalles: `La regla de capa 0 requiere que cada estado tenga una combinación única de compromisos cumplidos/pendientes. Usa estados diferentes del ciclo base o redefine el ciclo.`,
+          });
+        } else {
+          situacionesVistas.set(clave, estado.id);
         }
       }
     }

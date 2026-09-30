@@ -28,7 +28,7 @@ export function isHoyPath(path: string): boolean {
 export function handleHoy(ctx: HoyContext, viewer: Viewer): HoyResponse {
   const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" }); // YYYY-MM-DD
 
-  const { html: contenido, checklistEntries } = montarSeccionesHoy({
+  const { html: contenido } = montarSeccionesHoy({
     runtime: ctx.runtime,
     boot: ctx.boot,
     viewer,

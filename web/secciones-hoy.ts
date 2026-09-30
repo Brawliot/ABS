@@ -9,7 +9,6 @@ import type { Viewer } from "./maestros.js";
 import { esc, fecha } from "./maestros.js";
 import { formatCentimos } from "../elements/oferta.js";
 import { montar, type SeccionDef } from "../generator/secciones.js";
-import { type ChecklistEntry } from "../generator/checklist.js";
 
 export interface ContextoHoy {
   readonly runtime: AppRuntime;
@@ -202,7 +201,6 @@ export function montarSeccionesHoy(ctx: ContextoHoy) {
     return {
       secciones: [],
       html: `<p class="empty-day">Nada pendiente hoy. ¡A disfrutar!</p>`,
-      checklistEntries: [],
     };
   }
 
@@ -210,12 +208,5 @@ export function montarSeccionesHoy(ctx: ContextoHoy) {
     .map((s) => `<section id="${s.id}" class="seccion"><h2>${s.titulo}</h2>${s.html}</section>`)
     .join("");
 
-  const checklistEntries: ChecklistEntry[] = [
-    {
-      generador: "hoy",
-      cubiertos: secciones.flatMap((s) => s.cubre) as any[],
-    },
-  ];
-
-  return { secciones, html, checklistEntries };
+  return { secciones, html };
 }

@@ -8,7 +8,6 @@ import type { AppBootResult } from "./types.js";
 import { esc, fecha } from "./maestros.js";
 import { formatCentimos } from "../elements/oferta.js";
 import { montar, type SeccionDef } from "../generator/secciones.js";
-import type { ChecklistEntry } from "../generator/checklist.js";
 
 export interface ContextoPortal {
   readonly runtime: AppRuntime;
@@ -286,11 +285,5 @@ function extraerFacturas(ctx: ContextoPortal): any[] {
 export function montarSeccionesPortal(ctx: ContextoPortal) {
   const defs = seccionesPortal(ctx);
   const secciones = montar(defs, ctx);
-  const checklistEntries: ChecklistEntry[] = [
-    {
-      generador: "portal",
-      cubiertos: secciones.flatMap((s) => s.cubre) as any[],
-    },
-  ];
-  return { secciones, checklistEntries };
+  return { secciones };
 }

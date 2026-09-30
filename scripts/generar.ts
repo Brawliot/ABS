@@ -31,6 +31,7 @@ import { montarSeccionesPortal } from "../web/secciones-portal.js";
 import { montarSeccionesHoy } from "../web/secciones-hoy.js";
 import type { Viewer } from "../web/maestros.js";
 import type { ContextoPortal } from "../web/secciones-portal.js";
+import { revisar, type Punto } from "../generator/checklist.js";
 
 const NUEVOS = join(import.meta.dirname, "../contracts/business-profile/samples/negocios-nuevos.json");
 
@@ -51,6 +52,11 @@ const PISTAS: Record<ModuloId, RegExp> = {
 function sinTildes(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
+
+// Globales para recopilar estadísticas de checklist
+const puntosPorId = new Map<string, Punto[]>();
+const rankingFallas = new Map<string, number>();
+const rankingNegociosFallando = new Map<string, Set<string>>();
 
 function ids(): string[] {
   const args = process.argv.slice(2);
@@ -101,6 +107,7 @@ async function informe(id: string): Promise<number> {
 
   const dir = mkdtempSync(join(tmpdir(), "abs-generar-"));
   const rt = AppRuntime.open(boot, { dbPath: join(dir, "db.sqlite") });
+  let puntos: Punto[] = [];
   try {
     console.log("¿Cada proceso llega al final?");
     for (const r of await probarCiclos(boot, rt)) {
@@ -148,42 +155,77 @@ async function informe(id: string): Promise<number> {
         console.log(`  · ${s.titulo} (peso ${s.peso})`);
       }
     }
+
+    if (sample && sample.bloqueos.length > 0) {
+      console.log("Bloqueos que pidió el negocio (revisar a mano):");
+      for (const b of sample.bloqueos) console.log(`  - ${b}`);
+    }
+
+    console.log("Checklist:");
+    puntos = await revisar(boot, rt);
+    const cubiertos = puntos.filter((p) => p.estado === "CUBIERTO").length;
+    const fallas = puntos.filter((p) => p.estado === "FALLA").length;
+    const sinPrueba = puntos.filter((p) => p.estado === "SIN_PRUEBA").length;
+    const manuales = puntos.filter((p) => p.estado === "MANUAL").length;
+
+    console.log(`  ${cubiertos} cubiertos · ${fallas} fallan · ${sinPrueba} sin prueba · ${manuales} manual`);
+
+    for (const p of puntos.filter((x) => x.estado === "FALLA")) {
+      console.log(`  ✘ ${p.nombre}: ${p.detalle}`);
+    }
+
+    fallos += fallas;
   } finally {
     rt.close();
     rmSync(dir, { recursive: true, force: true });
   }
-  if (sample && sample.bloqueos.length > 0) {
-    console.log("Bloqueos que pidió el negocio (revisar a mano):");
-    for (const b of sample.bloqueos) console.log(`  - ${b}`);
+
+  // Guardar puntos para el ranking global
+  puntosPorId.set(id, puntos);
+  for (const p of puntos) {
+    if (p.estado === "FALLA") {
+      const count = rankingFallas.get(p.id) ?? 0;
+      rankingFallas.set(p.id, count + 1);
+      if (!rankingNegociosFallando.has(p.id)) {
+        rankingNegociosFallando.set(p.id, new Set());
+      }
+      rankingNegociosFallando.get(p.id)!.add(id);
+    }
   }
+
   return fallos;
 }
 
 let total = 0;
-const checklistItems = new Set<string>();
+
 for (const id of ids()) {
   try {
     total += await informe(id);
+    // Los puntos se guardan en puntosPorId durante la ejecución de informe
   } catch (err) {
     total++;
     console.log(`\n══════ ${id}\n  ✘ NO SE PUDO GENERAR: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
-// Calcular puntos de checklist por generador
-const genadores = ["web", "gestión", "crm", "portal", "hoy"];
-const puntosEsperados: Record<string, number> = {
-  web: 3,      // web.expedientes, web.crear, web.editar
-  gestión: 4,  // gestión.ciclo_completo, gestión.bloqueos, gestión.etiquetas, gestión.reportes
-  crm: 6,      // crm.resumen, crm.abiertos, crm.fichas, crm.deuda, crm.citas, crm.historial
-  portal: 6,   // portal.lo_mio, portal.fichas, portal.citas, portal.pagos, portal.facturas, portal.historial
-  hoy: 5,      // hoy.resumen, hoy.agenda_hoy, hoy.atascados, hoy.por_cobrar, hoy.vencen
-};
+// Mostrar ranking de puntos que más fallan (globalmente)
+console.log("\n═══════ RANKING: Puntos que más fallan");
+console.log("(lista de puntos ordenada por número de negocios donde fallan)");
 
-let totalPuntos = 0;
-for (const gen of genadores) {
-  totalPuntos += puntosEsperados[gen] ?? 0;
+if (rankingFallas.size === 0) {
+  console.log("  (sin fallos en checklist)");
+} else {
+  const sorted = [...rankingFallas.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  for (const [puntoId, count] of sorted) {
+    const negocios = rankingNegociosFallando.get(puntoId) ?? new Set();
+    console.log(`  ${count} negocio(s): ${puntoId}`);
+    if (negocios.size > 0 && negocios.size <= 3) {
+      console.log(`              → ${[...negocios].join(", ")}`);
+    }
+  }
 }
 
-console.log(`\nChecklist: ${totalPuntos} de ${totalPuntos} puntos cubiertos por generadores: ${genadores.join(", ")}`);
 console.log(`\n${total === 0 ? "Sin fallos." : `${total} fallos (✘) a revisar.`}`);

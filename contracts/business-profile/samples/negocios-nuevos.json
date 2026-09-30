@@ -416,11 +416,6 @@
               "equivale": "acordado"
             },
             {
-              "id": "teorico",
-              "nombre": "Teórico",
-              "equivale": "en_ejecucion"
-            },
-            {
               "id": "practicas",
               "nombre": "Prácticas",
               "equivale": "en_ejecucion"
@@ -449,15 +444,9 @@
               "a": "matriculado"
             },
             {
-              "id": "iniciar_teorico",
-              "nombre": "Iniciar teórico",
+              "id": "iniciar_practicas",
+              "nombre": "Iniciar prácticas",
               "de": "matriculado",
-              "a": "teorico"
-            },
-            {
-              "id": "avanzar_practicas",
-              "nombre": "Avanzar a prácticas",
-              "de": "teorico",
               "a": "practicas"
             },
             {
