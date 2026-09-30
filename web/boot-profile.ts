@@ -30,6 +30,7 @@ import type { CompiledRuleSet } from "../policies/types.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "./sample-data.js";
 import type { AppBootResult } from "./types.js";
+import { validarPasos, construirCiclo } from "../elements/pasos.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SAMPLE_FILES = [
@@ -161,6 +162,69 @@ export function bootSampleProfile(profileId: string): AppBootResult {
       activationAt: "2026-01-01T00:00:00.000Z",
     },
   });
+
+  // Aplicar pasos personalizados si están presentes en el sample
+  if (sample.pasos && sample.pasos.length > 0) {
+    const lifecyclesArray = [...pipe.input.lifecycles];
+    const vocabularioNuevo = { ...pipe.input.vocabulario };
+
+    for (const paso of sample.pasos) {
+      const lcSlice = lifecyclesArray.find((l) => l.id === paso.proceso);
+      if (!lcSlice) {
+        throw new Error(
+          `Proceso "${paso.proceso}" con pasos personalizados no encontrado`,
+        );
+      }
+
+      const erroresValidacion = validarPasos([paso], lcSlice.lifecycle);
+      if (erroresValidacion.length > 0) {
+        const msgs = erroresValidacion
+          .map((e) => `${e.tipo}: ${e.mensaje}`)
+          .join("; ");
+        throw new Error(`Validación de pasos fallida: ${msgs}`);
+      }
+
+      const { lifecycle: cicloNuevo, mapAcciones } = construirCiclo(
+        [paso],
+        lcSlice.lifecycle,
+      );
+
+      // Reemplazar el lifecycle
+      const sliceIdx = lifecyclesArray.findIndex((l) => l.id === paso.proceso);
+      lifecyclesArray[sliceIdx] = {
+        ...lcSlice,
+        lifecycle: cicloNuevo,
+      };
+
+      // Reescribir transitionIds en las reglas
+      for (const rule of pipe.input.ruleSet.rules) {
+        if ("transitionId" in rule && typeof rule.transitionId === "string") {
+          const nuevoId = mapAcciones[rule.transitionId];
+          if (nuevoId) {
+            (rule as any).transitionId = nuevoId;
+          }
+        }
+        if ("transitionIds" in rule && Array.isArray(rule.transitionIds)) {
+          (rule as any).transitionIds = (rule.transitionIds as string[]).map(
+            (tid) => mapAcciones[tid] ?? tid,
+          );
+        }
+      }
+
+      // Agregar al vocabulario para etiquetas
+      for (const estado of paso.estados) {
+        vocabularioNuevo[`estado:${estado.id}`] = estado.nombre;
+      }
+      for (const accion of paso.acciones) {
+        vocabularioNuevo[`accion:${paso.proceso}:${accion.id}`] =
+          accion.nombre;
+      }
+    }
+
+    // Reemplazar los arrays en el input
+    (pipe.input as any).lifecycles = lifecyclesArray;
+    (pipe.input as any).vocabulario = vocabularioNuevo;
+  }
 
   const spec = generateUiSpec(pipe.input);
   if (!isValidatedUiSpec(spec)) {

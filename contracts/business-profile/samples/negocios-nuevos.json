@@ -400,6 +400,86 @@
         "servicio sin bienes",
         "plazos",
         "recurso doble en agenda"
+      ],
+      "pasos": [
+        {
+          "proceso": "lc.servicio_proyecto",
+          "estados": [
+            {
+              "id": "propuesta",
+              "nombre": "Propuesta",
+              "equivale": "propuesta"
+            },
+            {
+              "id": "matriculado",
+              "nombre": "Matriculado",
+              "equivale": "acordado"
+            },
+            {
+              "id": "teorico",
+              "nombre": "Teórico",
+              "equivale": "en_ejecucion"
+            },
+            {
+              "id": "practicas",
+              "nombre": "Prácticas",
+              "equivale": "en_ejecucion"
+            },
+            {
+              "id": "examen",
+              "nombre": "Examen",
+              "equivale": "en_espera"
+            },
+            {
+              "id": "apto",
+              "nombre": "Apto",
+              "equivale": "cerrada"
+            },
+            {
+              "id": "baja",
+              "nombre": "Baja",
+              "equivale": "cancelada"
+            }
+          ],
+          "acciones": [
+            {
+              "id": "acordar",
+              "nombre": "Acordar",
+              "de": "propuesta",
+              "a": "matriculado"
+            },
+            {
+              "id": "iniciar_teorico",
+              "nombre": "Iniciar teórico",
+              "de": "matriculado",
+              "a": "teorico"
+            },
+            {
+              "id": "avanzar_practicas",
+              "nombre": "Avanzar a prácticas",
+              "de": "teorico",
+              "a": "practicas"
+            },
+            {
+              "id": "presentar_examen",
+              "nombre": "Presentar a examen",
+              "de": "practicas",
+              "a": "examen"
+            },
+            {
+              "id": "aprobar_examen",
+              "nombre": "Aprobar examen",
+              "de": "examen",
+              "a": "apto"
+            },
+            {
+              "id": "dar_baja",
+              "nombre": "Dar de baja",
+              "de": "matriculado",
+              "a": "baja"
+            }
+          ]
+        }
       ]
     },
     {
@@ -533,6 +613,64 @@
         "intermediacion (arquetipo poco usado)",
         "bienes del cliente sin stock",
         "dinero de terceros retenido"
+      ],
+      "pasos": [
+        {
+          "proceso": "lc.intermediacion",
+          "estados": [
+            {
+              "id": "captado",
+              "nombre": "Captado",
+              "equivale": "propuesta"
+            },
+            {
+              "id": "publicado",
+              "nombre": "Publicado",
+              "equivale": "emparejada"
+            },
+            {
+              "id": "en_transaccion",
+              "nombre": "En transacción",
+              "equivale": "en_curso"
+            },
+            {
+              "id": "vendido",
+              "nombre": "Vendido",
+              "equivale": "cerrada"
+            },
+            {
+              "id": "cancelado",
+              "nombre": "Cancelado",
+              "equivale": "cancelada"
+            }
+          ],
+          "acciones": [
+            {
+              "id": "publicar",
+              "nombre": "Publicar",
+              "de": "captado",
+              "a": "publicado"
+            },
+            {
+              "id": "iniciar_transaccion",
+              "nombre": "Iniciar transacción",
+              "de": "publicado",
+              "a": "en_transaccion"
+            },
+            {
+              "id": "vender",
+              "nombre": "Vender",
+              "de": "en_transaccion",
+              "a": "vendido"
+            },
+            {
+              "id": "cancelar_publicacion",
+              "nombre": "Cancelar publicación",
+              "de": "publicado",
+              "a": "cancelado"
+            }
+          ]
+        }
       ]
     },
     {

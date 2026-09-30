@@ -8,6 +8,25 @@ export interface SampleField {
   readonly confianza?: number;
 }
 
+export interface EstadoCustom {
+  readonly id: string;
+  readonly nombre: string;
+  readonly equivale: string;
+}
+
+export interface AccionCustom {
+  readonly id: string;
+  readonly nombre: string;
+  readonly de: string;
+  readonly a: string;
+}
+
+export interface ProcesoCustom {
+  readonly proceso: string;
+  readonly estados: readonly EstadoCustom[];
+  readonly acciones: readonly AccionCustom[];
+}
+
 export interface SampleProfile {
   readonly id: string;
   readonly nombre: string;
@@ -40,4 +59,5 @@ export interface SampleProfile {
   readonly bloqueos: string[];
   readonly necesidadesNoExpresables: string[];
   readonly queEstresa: string[];
+  readonly pasos?: readonly ProcesoCustom[];
 }
