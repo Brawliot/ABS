@@ -44,6 +44,7 @@ import type { AppBootResult } from "./types.js";
 import { moduloActivo, type ModuloId } from "../generator/rules/modules.js";
 import { montarSeccionesCrm, type ContextoCrm } from "./secciones-crm.js";
 import { renderSecciones } from "../generator/secciones.js";
+import { SqlitePortalAccess } from "../adapters/sqlite-portal-access.js";
 
 export interface MaestrosResponse {
   readonly status: number;
@@ -84,6 +85,15 @@ export function noDisponible(ctx: MaestrosContext, viewer: Viewer, nombre: strin
 
 /** clientRequestId → id creado (evita duplicados por doble envío). */
 const createdByRequest = new WeakMap<AppRuntime, Map<string, string>>();
+
+/** Portal acceso por dbPath. */
+const portalAccessStore = new Map<string, SqlitePortalAccess>();
+function getPortalAccess(dbPath: string): SqlitePortalAccess {
+  if (!portalAccessStore.has(dbPath)) {
+    portalAccessStore.set(dbPath, new SqlitePortalAccess(dbPath));
+  }
+  return portalAccessStore.get(dbPath)!;
+}
 
 export function isMaestrosPath(path: string): boolean {
   return (
@@ -211,13 +221,14 @@ function routeGet(
     const ctxCrm: ContextoCrm = { runtime, boot: ctx.boot, parteId: rec.parteId, viewer };
     const { secciones } = montarSeccionesCrm(ctxCrm);
     const crm = renderSecciones(secciones);
+    const portalAcceso = portalAccesoForm(viewer, rec.parteId);
     return html(
       200,
       page(
         ctx,
         viewer,
         parteName(rec),
-        okNotice(query.ok) + parteDetail(viewer, rec) + crm,
+        okNotice(query.ok) + parteDetail(viewer, rec) + portalAcceso + crm,
       ),
     );
   }
@@ -282,6 +293,27 @@ function routePost(
     const id = path.slice("/partes/".length);
     const rec = ID_RE.test(id) ? runtime.partes.get(tenant, id) : undefined;
     if (!rec) return notFound(ctx, viewer, "Esa parte no existe.");
+
+    // Emitir acceso al portal
+    if (form.accion === "portal-acceso") {
+      const pa = getPortalAccess(runtime.dbPath);
+      const token = pa.emitir(tenant, rec.parteId, 7);
+      const enlace = `/portal/${token}`;
+      return html(
+        200,
+        page(
+          ctx,
+          viewer,
+          parteName(rec),
+          `<div class="portal-acceso"><h3>Enlace de acceso al portal</h3>` +
+          `<p>Copia este enlace y comparte con el cliente. Válido 7 días.</p>` +
+          `<p><code>${esc(enlace)}</code></p>` +
+          `<p><button onclick="navigator.clipboard.writeText('${enlace.replace(/'/g, "\\'")}');alert('Copiado')">Copiar enlace</button></p>` +
+          `<p><a href="${esc(withDev(viewer, `/partes/${id}`))}">← Volver</a></p></div>`,
+        ),
+      );
+    }
+
     if (rec.erasedAt) {
       return html(
         409,
@@ -795,4 +827,17 @@ function forbidden(): MaestrosResponse {
 
 export function notFound(ctx: MaestrosContext, viewer: Viewer, msg: string): MaestrosResponse {
   return html(404, page(ctx, viewer, "No encontrado", `<p class="err">${esc(msg)}</p>`));
+}
+
+function portalAccesoForm(viewer: Viewer, parteId: string): string {
+  return (
+    `<section data-portal-acceso>` +
+    `<h3>Portal del cliente</h3>` +
+    `<form method="post" action="" data-portal-form>` +
+    `<input type="hidden" name="accion" value="portal-acceso" />` +
+    hiddenIdentity(viewer) +
+    `<button type="submit">Dar acceso al portal</button>` +
+    `</form>` +
+    `</section>`
+  );
 }

@@ -53,6 +53,7 @@ import {
 } from "../auth/index.js";
 import type { ParteIdentityStore } from "../policies/identity.js";
 import { handleMaestros, isMaestrosPath } from "./maestros.js";
+import { handlePortal, isPortalPath } from "./portal.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
@@ -701,6 +702,15 @@ export function startWebServer(
           async () => formToRecord(await readBody(req)),
         );
         return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isPortalPath(path)) {
+        const out = await handlePortal(
+          { runtime, boot },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType);
       }
 
       if (path === "/diagnosis") {

@@ -27,7 +27,9 @@ import {
 } from "../web/boot-profile.js";
 import { probarCiclos } from "../web/probar-ciclo.js";
 import { montarSeccionesCrm, type ContextoCrm } from "../web/secciones-crm.js";
+import { montarSeccionesPortal } from "../web/secciones-portal.js";
 import type { Viewer } from "../web/maestros.js";
+import type { ContextoPortal } from "../web/secciones-portal.js";
 
 const NUEVOS = join(import.meta.dirname, "../contracts/business-profile/samples/negocios-nuevos.json");
 
@@ -114,9 +116,20 @@ async function informe(id: string): Promise<number> {
     console.log("CRM: secciones del cliente");
     const viewer: Viewer = { roleId: "gerente", parteId: "parte-demo-1", devMode: false };
     const ctxCrm: ContextoCrm = { runtime: rt, boot, parteId: "parte-demo-1", viewer };
-    const { secciones } = montarSeccionesCrm(ctxCrm);
-    for (const s of secciones) {
+    const { secciones: secCrm } = montarSeccionesCrm(ctxCrm);
+    for (const s of secCrm) {
       console.log(`  · ${s.titulo} (peso ${s.peso}) [cubre: ${s.cubre.join(", ")}]`);
+    }
+
+    console.log("Portal: secciones del cliente");
+    const ctxPortal: ContextoPortal = { runtime: rt, boot, parteId: "parte-demo-1" };
+    const { secciones: secPortal } = montarSeccionesPortal(ctxPortal);
+    if (secPortal.length === 0) {
+      console.log("  (no aplica)");
+    } else {
+      for (const s of secPortal) {
+        console.log(`  · ${s.titulo} (peso ${s.peso})`);
+      }
     }
   } finally {
     rt.close();
