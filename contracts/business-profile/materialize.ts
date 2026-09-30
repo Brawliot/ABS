@@ -569,6 +569,7 @@ export function materializeBusinessProfileDetailed(
       ...(profile.vocabulario !== undefined
         ? { vocabulario: profile.vocabulario }
         : {}),
+      ...(profile.fichas !== undefined ? { fichas: profile.fichas } : {}),
     };
 
     return {

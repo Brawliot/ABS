@@ -185,6 +185,22 @@ export interface BusinessProfile {
    * (`pedido` → `orden de reparación`). Ver presentation/etiquetas.ts.
    */
   readonly vocabulario?: Readonly<Record<string, string>>;
+  /** Fichas generadas de cada negocio (Recurso, Oferta, Parte con campos propios). */
+  readonly fichas?: readonly {
+    readonly id: string;
+    readonly nombre: string;
+    readonly plural: string;
+    readonly elemento: "recurso" | "oferta";
+    readonly deQuien?: "propio" | "del_cliente";
+    readonly campos: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly tipo: "texto" | "numero" | "importe" | "si_no" | "fecha" | "opcion";
+      readonly opciones?: readonly string[];
+      readonly obligatorio?: boolean;
+    }[];
+    readonly enProcesos?: readonly string[];
+  }[];
 }
 
 export type UnknownPolicy = "ask" | "default_safe" | "block" | "confirm";
