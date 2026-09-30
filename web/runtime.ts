@@ -13,6 +13,7 @@ import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
 import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
 import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
+import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -157,6 +158,8 @@ export class AppRuntime {
   readonly cobros: SqliteCobrosStore;
   /** Devoluciones de productos (append-only). */
   readonly devoluciones: SqliteDevolucionesStore;
+  /** Financiados (cuotas mensuales con amortización francesa). */
+  readonly financiados: SqliteFinanciachsStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -189,6 +192,7 @@ export class AppRuntime {
       readonly stock: SqliteStockStore;
       readonly cobros: SqliteCobrosStore;
       readonly devoluciones: SqliteDevolucionesStore;
+      readonly financiados: SqliteFinanciachsStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -201,6 +205,7 @@ export class AppRuntime {
     this.stockStore = maestros.stock;
     this.cobros = maestros.cobros;
     this.devoluciones = maestros.devoluciones;
+    this.financiados = maestros.financiados;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -236,6 +241,7 @@ export class AppRuntime {
     const stock = new SqliteStockStore(dbPath);
     const cobros = new SqliteCobrosStore(dbPath);
     const devoluciones = new SqliteDevolucionesStore(dbPath);
+    const financiados = new SqliteFinanciachsStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -244,6 +250,7 @@ export class AppRuntime {
       stock,
       cobros,
       devoluciones,
+      financiados,
     });
   }
 
@@ -255,6 +262,7 @@ export class AppRuntime {
     this.stockStore.close();
     this.cobros.close();
     this.devoluciones.close();
+    this.financiados.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -754,6 +762,95 @@ export class AppRuntime {
   /** Total devuelto en un expediente. */
   totalDevueltoEn(expedienteId: string): number {
     return this.devoluciones.totalDevuelto(this.tenantId, expedienteId);
+  }
+
+  /** Crea un financiado con cuotas mensuales (amortización francesa). */
+  crearFinanciado(
+    expedienteId: string,
+    importeCentimos: number,
+    plazoMeses: number,
+    tasaInteres: number,
+    actorId: string,
+  ): { ok: true; financiadoId: string } | { ok: false; error: string } {
+    if (plazoMeses <= 0) return { ok: false, error: "El plazo debe ser mayor a 0 meses." };
+    if (importeCentimos <= 0) return { ok: false, error: "El importe debe ser mayor a 0." };
+    if (tasaInteres < 0) return { ok: false, error: "La tasa de interés no puede ser negativa." };
+
+    const financiadoId = `fin-${randomUUID()}`;
+    const now = new Date().toISOString();
+
+    const tasaMensual = tasaInteres / 100 / 12;
+    const cuotaMensualNum = (importeCentimos / 100) * (
+      (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses)) /
+      (Math.pow(1 + tasaMensual, plazoMeses) - 1)
+    );
+    const cuotaMensualCentimos = Math.round(cuotaMensualNum * 100);
+
+    this.financiados.crearFinanciado(this.tenantId, {
+      id: financiadoId,
+      expedienteOrigen: expedienteId,
+      plazoMeses,
+      tasaInteres,
+      cuotaMensualCentimos,
+      fecha: now,
+    });
+
+    for (let i = 1; i <= plazoMeses; i++) {
+      const vencimiento = new Date(now);
+      vencimiento.setMonth(vencimiento.getMonth() + i);
+      this.financiados.agregarCuota(this.tenantId, {
+        financiadoId,
+        numeroOrden: i,
+        vencimientoEn: vencimiento.toISOString(),
+        importeCentimos: cuotaMensualCentimos,
+      });
+    }
+
+    return { ok: true, financiadoId };
+  }
+
+  /** Obtiene el financiado activo de un expediente. */
+  financiadoDe(expedienteId: string): { readonly id: string; readonly plazoMeses: number; readonly tasaInteres: number; readonly cuotaMensualCentimos: number; readonly cuotas: readonly { readonly numeroOrden: number; readonly vencimientoEn: string; readonly importeCentimos: number; readonly estado: "pendiente" | "pagada" | "cancelada"; }[] } | undefined {
+    const fin = this.financiados.deExpediente(this.tenantId, expedienteId);
+    if (!fin) return undefined;
+    const cuotas = this.financiados.cuotasDelFinanciado(this.tenantId, fin.id!).map((c) => ({
+      numeroOrden: c.numeroOrden,
+      vencimientoEn: c.vencimientoEn,
+      importeCentimos: c.importeCentimos,
+      estado: c.estado,
+    }));
+    return {
+      id: fin.id!,
+      plazoMeses: fin.plazoMeses,
+      tasaInteres: fin.tasaInteres,
+      cuotaMensualCentimos: fin.cuotaMensualCentimos,
+      cuotas,
+    };
+  }
+
+  /** Paga una cuota de un financiado. */
+  pagarCuotaFinanciado(
+    expedienteId: string,
+    numeroOrden: number,
+    actorId: string,
+  ): { ok: true } | { ok: false; error: string } {
+    const fin = this.financiados.deExpediente(this.tenantId, expedienteId);
+    if (!fin) return { ok: false, error: "Este expediente no tiene un financiado." };
+
+    const cuotas = this.financiados.cuotasDelFinanciado(this.tenantId, fin.id!);
+    const cuota = cuotas.find((c) => c.numeroOrden === numeroOrden);
+    if (!cuota) return { ok: false, error: `No existe la cuota ${numeroOrden}.` };
+    if (cuota.estado !== "pendiente") return { ok: false, error: `La cuota ${numeroOrden} ya está pagada o cancelada.` };
+
+    const now = new Date().toISOString();
+    this.financiados.pagarCuota(this.tenantId, fin.id!, numeroOrden, now);
+
+    const todasPagadas = cuotas.every((c) => c.estado === "pagada" || c.numeroOrden === numeroOrden);
+    if (todasPagadas) {
+      this.financiados.actualizarEstadoFinanciado(this.tenantId, fin.id!, "pagado");
+    }
+
+    return { ok: true };
   }
 
   /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
