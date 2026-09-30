@@ -54,6 +54,7 @@ import {
 import type { ParteIdentityStore } from "../policies/identity.js";
 import { handleMaestros, isMaestrosPath } from "./maestros.js";
 import { handlePortal, isPortalPath } from "./portal.js";
+import { handleHoy, isHoyPath } from "./hoy.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
@@ -702,6 +703,23 @@ export function startWebServer(
           async () => formToRecord(await readBody(req)),
         );
         return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isHoyPath(path) && method === "GET") {
+        const who = resolveRequestIdentity(auth, req, boot, {});
+        if (!who.session || (who.dev.roleId === "cliente" && who.dev.channel === "autoservicio")) {
+          return send(res, 403, "Prohibido", "text/plain");
+        }
+        const out = handleHoy(
+          { runtime, boot },
+          {
+            roleId: who.dev.roleId,
+            parteId: who.dev.parteId,
+            ...(who.session ? { csrfToken: who.session.csrfToken } : {}),
+            devMode: !who.session,
+          },
+        );
+        return send(res, out.status, out.body, out.contentType);
       }
 
       if (isPortalPath(path)) {

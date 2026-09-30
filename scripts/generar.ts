@@ -28,6 +28,7 @@ import {
 import { probarCiclos } from "../web/probar-ciclo.js";
 import { montarSeccionesCrm, type ContextoCrm } from "../web/secciones-crm.js";
 import { montarSeccionesPortal } from "../web/secciones-portal.js";
+import { montarSeccionesHoy } from "../web/secciones-hoy.js";
 import type { Viewer } from "../web/maestros.js";
 import type { ContextoPortal } from "../web/secciones-portal.js";
 
@@ -131,6 +132,22 @@ async function informe(id: string): Promise<number> {
         console.log(`  · ${s.titulo} (peso ${s.peso})`);
       }
     }
+
+    console.log("Hoy: secciones del panel de gestión");
+    const hoyDate = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+    const { secciones: secHoy } = montarSeccionesHoy({
+      runtime: rt,
+      boot,
+      viewer,
+      hoy: hoyDate,
+    });
+    if (secHoy.length === 0) {
+      console.log("  (sin datos hoy)");
+    } else {
+      for (const s of secHoy) {
+        console.log(`  · ${s.titulo} (peso ${s.peso})`);
+      }
+    }
   } finally {
     rt.close();
     rmSync(dir, { recursive: true, force: true });
@@ -143,6 +160,7 @@ async function informe(id: string): Promise<number> {
 }
 
 let total = 0;
+const checklistItems = new Set<string>();
 for (const id of ids()) {
   try {
     total += await informe(id);
@@ -151,4 +169,21 @@ for (const id of ids()) {
     console.log(`\n══════ ${id}\n  ✘ NO SE PUDO GENERAR: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
+
+// Calcular puntos de checklist por generador
+const genadores = ["web", "gestión", "crm", "portal", "hoy"];
+const puntosEsperados: Record<string, number> = {
+  web: 3,      // web.expedientes, web.crear, web.editar
+  gestión: 4,  // gestión.ciclo_completo, gestión.bloqueos, gestión.etiquetas, gestión.reportes
+  crm: 6,      // crm.resumen, crm.abiertos, crm.fichas, crm.deuda, crm.citas, crm.historial
+  portal: 6,   // portal.lo_mio, portal.fichas, portal.citas, portal.pagos, portal.facturas, portal.historial
+  hoy: 5,      // hoy.resumen, hoy.agenda_hoy, hoy.atascados, hoy.por_cobrar, hoy.vencen
+};
+
+let totalPuntos = 0;
+for (const gen of genadores) {
+  totalPuntos += puntosEsperados[gen] ?? 0;
+}
+
+console.log(`\nChecklist: ${totalPuntos} de ${totalPuntos} puntos cubiertos por generadores: ${genadores.join(", ")}`);
 console.log(`\n${total === 0 ? "Sin fallos." : `${total} fallos (✘) a revisar.`}`);

@@ -289,7 +289,10 @@ function renderNav(
     .join("\n");
   return `
 <nav class="nav-process" aria-label="Procesos">
-  ${live && session.roleId !== "cliente" && session.channel !== "autoservicio" ? `<p><a class="btn-inicio" href="${esc(`/inicio?${new URLSearchParams({ role: session.roleId, parte: session.parteId }).toString()}`)}" data-nav-inicio>← Inicio</a></p>` : ""}
+  ${live && session.roleId !== "cliente" && session.channel !== "autoservicio" ? `<p>
+    <a class="btn-inicio" href="/hoy" data-nav-hoy>📅 Hoy</a>
+    <a class="btn-inicio" href="${esc(`/inicio?${new URLSearchParams({ role: session.roleId, parte: session.parteId }).toString()}`)}" data-nav-inicio>← Inicio</a>
+  </p>` : ""}
   <h2>Procesos</h2>
   <ul>${items || '<li class="empty">Ningún proceso visible para este rol</li>'}</ul>
   ${renderMaestrosNav(session, live, boot)}
