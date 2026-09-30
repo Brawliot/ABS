@@ -729,7 +729,7 @@ export function startWebServer(
           req,
           async () => formToRecord(await readBody(req)),
         );
-        return send(res, out.status, out.body, out.contentType);
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (path === "/diagnosis") {

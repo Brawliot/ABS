@@ -23,6 +23,7 @@ export interface PortalResponse {
   readonly status: number;
   readonly body: string;
   readonly contentType: string;
+  readonly headers?: Record<string, string>;
 }
 
 const portalAccess = new Map<string, SqlitePortalAccess>();
@@ -202,7 +203,14 @@ function page(ctx: PortalContext, parteId: string, titulo: string, contenido: st
 }
 
 function html(status: number, body: string): PortalResponse {
-  return { status, body, contentType: "text/html; charset=utf-8" };
+  return {
+    status,
+    body,
+    contentType: "text/html; charset=utf-8",
+    headers: {
+      "Referrer-Policy": "no-referrer",
+    },
+  };
 }
 
 function notFound(): PortalResponse {
