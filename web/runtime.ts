@@ -881,6 +881,30 @@ export class AppRuntime {
     this.creditoCliente.establecerLimite(this.tenantId, clienteId, limiteCentimos);
   }
 
+  /** Reserva stock para un expediente. */
+  reservarStock(
+    expedienteId: string,
+    ofertaId: string,
+    cantidadMilesimas: number,
+  ): { ok: true } | { ok: false; error: string } {
+    return this.stockStore.reservar(this.tenantId, ofertaId, expedienteId, cantidadMilesimas);
+  }
+
+  /** Obtiene reservas activas de un expediente. */
+  reservasDelExpediente(expedienteId: string): readonly { readonly ofertaId: string; readonly cantidadMilesimas: number; readonly estado: "reservada" | "confirmada" | "cancelada" }[] {
+    return this.stockStore.reservasDelExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Confirma todas las reservas de un expediente. */
+  confirmarStockDelExpediente(expedienteId: string): void {
+    this.stockStore.confirmarReservas(this.tenantId, expedienteId);
+  }
+
+  /** Cancela todas las reservas de un expediente. */
+  cancelarStockDelExpediente(expedienteId: string): void {
+    this.stockStore.cancelarReservas(this.tenantId, expedienteId);
+  }
+
   /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
   camposHitosPagados(
     expedienteId: string,

@@ -44,6 +44,21 @@ export class SqliteStockStore {
       BEGIN SELECT RAISE(ABORT, 'Los ajustes de stock no se modifican: haga otro ajuste'); END;
       CREATE TRIGGER IF NOT EXISTS stock_ajustes_no_delete BEFORE DELETE ON stock_ajustes
       BEGIN SELECT RAISE(ABORT, 'Los ajustes de stock no se borran: haga otro ajuste'); END;
+      CREATE TABLE IF NOT EXISTS stock_reservas (
+        seq INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant_id TEXT NOT NULL,
+        oferta_id TEXT NOT NULL,
+        expediente_id TEXT NOT NULL,
+        cantidad_milesimas INTEGER NOT NULL CHECK (cantidad_milesimas > 0),
+        estado TEXT NOT NULL DEFAULT 'reservada' CHECK (estado IN ('reservada', 'confirmada', 'cancelada')),
+        creada_en TEXT NOT NULL,
+        confirmada_en TEXT,
+        cancelada_en TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_reservas_expediente ON stock_reservas(tenant_id, expediente_id);
+      CREATE INDEX IF NOT EXISTS idx_reservas_estado ON stock_reservas(tenant_id, estado);
+      CREATE TRIGGER IF NOT EXISTS stock_reservas_no_delete BEFORE DELETE ON stock_reservas
+      BEGIN SELECT RAISE(ABORT, 'Las reservas no se borran: cancele con actualización'); END;
     `);
   }
 
@@ -98,6 +113,82 @@ export class SqliteStockStore {
       motivo: r.motivo,
       actorId: r.actor_id,
     }));
+  }
+
+  /** Reserva cantidad para un expediente. */
+  reservar(
+    tenantId: string,
+    ofertaId: string,
+    expedienteId: string,
+    cantidadMilesimas: number,
+  ): { ok: true } | { ok: false; error: string } {
+    const config = this.config(tenantId, ofertaId);
+    if (!config?.control) {
+      return { ok: true }; // No hay control de stock
+    }
+    const disponible = this.disponibleTotal(tenantId, ofertaId);
+    if (disponible < cantidadMilesimas) {
+      return { ok: false, error: `Stock insuficiente: necesita ${cantidadMilesimas}, disponible ${disponible}` };
+    }
+    this.db
+      .prepare(
+        `INSERT INTO stock_reservas (tenant_id, oferta_id, expediente_id, cantidad_milesimas, creada_en)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(tenantId, ofertaId, expedienteId, cantidadMilesimas, new Date().toISOString());
+    return { ok: true };
+  }
+
+  /** Calcula el total disponible (ajustes - reservas activas). */
+  private disponibleTotal(tenantId: string, ofertaId: string): number {
+    const ajustes = this.db
+      .prepare(`SELECT COALESCE(SUM(delta), 0) as total FROM stock_ajustes WHERE tenant_id = ? AND oferta_id = ?`)
+      .get(tenantId, ofertaId) as { total: number } | undefined;
+    const reservadas = this.db
+      .prepare(
+        `SELECT COALESCE(SUM(cantidad_milesimas), 0) as total FROM stock_reservas
+         WHERE tenant_id = ? AND oferta_id = ? AND estado IN ('reservada', 'confirmada')`,
+      )
+      .get(tenantId, ofertaId) as { total: number } | undefined;
+    return (ajustes?.total ?? 0) - (reservadas?.total ?? 0);
+  }
+
+  /** Obtiene reservas activas de un expediente. */
+  reservasDelExpediente(tenantId: string, expedienteId: string): readonly { readonly ofertaId: string; readonly cantidadMilesimas: number; readonly estado: "reservada" | "confirmada" | "cancelada" }[] {
+    const rows = this.db
+      .prepare(
+        `SELECT oferta_id, cantidad_milesimas, estado FROM stock_reservas
+         WHERE tenant_id = ? AND expediente_id = ? AND estado IN ('reservada', 'confirmada')
+         ORDER BY seq ASC`,
+      )
+      .all(tenantId, expedienteId) as { oferta_id: string; cantidad_milesimas: number; estado: string }[];
+    return rows.map((r) => ({
+      ofertaId: r.oferta_id,
+      cantidadMilesimas: r.cantidad_milesimas,
+      estado: r.estado as "reservada" | "confirmada" | "cancelada",
+    }));
+  }
+
+  /** Confirma todas las reservas de un expediente (se convierten en salidas). */
+  confirmarReservas(tenantId: string, expedienteId: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `UPDATE stock_reservas SET estado = 'confirmada', confirmada_en = ?
+         WHERE tenant_id = ? AND expediente_id = ? AND estado = 'reservada'`,
+      )
+      .run(now, tenantId, expedienteId);
+  }
+
+  /** Cancela todas las reservas de un expediente. */
+  cancelarReservas(tenantId: string, expedienteId: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(
+        `UPDATE stock_reservas SET estado = 'cancelada', cancelada_en = ?
+         WHERE tenant_id = ? AND expediente_id = ? AND estado IN ('reservada', 'confirmada')`,
+      )
+      .run(now, tenantId, expedienteId);
   }
 
   close(): void {
