@@ -787,12 +787,17 @@ export class AppRuntime {
     const financiadoId = `fin-${randomUUID()}`;
     const now = new Date().toISOString();
 
-    const tasaMensual = tasaInteres / 100 / 12;
-    const cuotaMensualNum = (importeCentimos / 100) * (
-      (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses)) /
-      (Math.pow(1 + tasaMensual, plazoMeses) - 1)
-    );
-    const cuotaMensualCentimos = Math.round(cuotaMensualNum * 100);
+    let cuotaMensualCentimos: number;
+    if (tasaInteres <= 0) {
+      cuotaMensualCentimos = Math.ceil(importeCentimos / plazoMeses);
+    } else {
+      const tasaMensual = tasaInteres / 100 / 12;
+      const cuotaMensualNum = (importeCentimos / 100) * (
+        (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses)) /
+        (Math.pow(1 + tasaMensual, plazoMeses) - 1)
+      );
+      cuotaMensualCentimos = Math.round(cuotaMensualNum * 100);
+    }
 
     this.financiados.crearFinanciado(this.tenantId, {
       id: financiadoId,
