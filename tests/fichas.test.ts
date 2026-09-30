@@ -240,7 +240,12 @@ describe("fichas", () => {
     });
 
     it("GET /fichas/inmueble da 200", async () => {
+      console.log("Boot fichas:", handle.boot.input.fichas?.map(f => f.id));
       const res = await fetch(`${baseUrl}/fichas/inmueble?role=gerente&parte=p1`);
+      if (res.status !== 200) {
+        const text = await res.text();
+        console.log("Response:", res.status, text.substring(0, 300));
+      }
       expect(res.status).toBe(200);
     });
 

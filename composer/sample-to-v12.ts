@@ -766,6 +766,7 @@ export function mapSampleToV12(p: SampleProfile): {
     policyTemplates: mapPolicyTemplates(p, dominant),
     portalCliente: mapPortal(p),
     pipelineStateIds: pf("not_applicable"),
+    ...(p.fichas ? { fichas: p.fichas } : {}),
   };
 
   return { profile, mappingNotes: notes, scheduleQuestions };
