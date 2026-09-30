@@ -707,7 +707,8 @@ export function startWebServer(
 
       if (isHoyPath(path) && method === "GET") {
         const who = resolveRequestIdentity(auth, req, boot, {});
-        if (!who.session || who.dev.roleId === "cliente") {
+        const hasAccess = who.session || (who.mode === "dev" && who.dev.roleId !== "cliente");
+        if (!hasAccess) {
           return send(res, 403, "Prohibido", "text/plain");
         }
         const out = handleHoy(
