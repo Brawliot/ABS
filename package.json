@@ -18,6 +18,7 @@
     "corpus:interpreter": "npx tsx tests/real/interpreter/generate-synthetic.ts",
     "web": "npx tsx web/cli.ts",
     "web:list": "npx tsx web/cli.ts --list",
+    "generar": "npx tsx scripts/generar.ts",
     "db:migrate": "npx tsx db/cli-migrate.ts up",
     "db:migrate:down": "npx tsx db/cli-migrate.ts down",
     "hosting:export": "npx tsx hosting/cli.ts export",

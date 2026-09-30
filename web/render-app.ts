@@ -207,6 +207,9 @@ function renderNav(
 <nav class="nav-process" aria-label="Procesos">
   <h2>Procesos</h2>
   <ul>${items || '<li class="empty">Ningún proceso visible para este rol</li>'}</ul>
+</nav>
+<nav class="nav-web" aria-label="Canales públicos">
+  <a href="/web" data-web-landing>👁 Ver mi web</a>
 </nav>`;
 }
 

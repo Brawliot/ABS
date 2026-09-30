@@ -66,6 +66,7 @@ import {
   getStoredWizardDraft,
   applyWizardDecisions,
 } from "./cli.js";
+import { renderLandingHtml, handleSolicitud } from "./landing.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -509,6 +510,37 @@ export function startWebServer(
       const url = req.url ?? "/";
       const path = url.split("?")[0] ?? "/";
       const method = (req.method ?? "GET").toUpperCase();
+
+      // ✅ LANDING PÚBLICA: GET /web
+      if (path === "/web" && method === "GET") {
+        try {
+          const html = renderLandingHtml(boot);
+          return send(res, 200, html, "text/html; charset=utf-8");
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ✅ LANDING: POST /web/solicitud
+      if (path === "/web/solicitud" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const result = await handleSolicitud(runtime, identities, body);
+          if (result.ok) {
+            return send(res, 303, "", "text/plain", {
+              Location: result.redirectTo,
+            });
+          } else {
+            return send(res, 400, "", "text/plain", {
+              Location: result.redirectTo,
+            });
+          }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
 
       // ✅ NUEVA RUTA: GET /api/wizard/draft
       if (path === "/api/wizard/draft" && method === "GET") {
