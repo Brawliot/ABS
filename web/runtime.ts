@@ -11,6 +11,7 @@ import { SqliteParteIdentityStore } from "../adapters/sqlite-identity-store.js";
 import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
 import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
 import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
+import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -151,6 +152,8 @@ export class AppRuntime {
   readonly facturas: SqliteFacturaStore;
   /** Productos con control de stock y ajustes manuales. */
   readonly stockStore: SqliteStockStore;
+  /** Cobros parciales (señal, hitos, pagos a cuenta). */
+  readonly cobros: SqliteCobrosStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -181,6 +184,7 @@ export class AppRuntime {
       readonly ofertas: SqliteOfertaCatalog;
       readonly facturas: SqliteFacturaStore;
       readonly stock: SqliteStockStore;
+      readonly cobros: SqliteCobrosStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -191,6 +195,7 @@ export class AppRuntime {
     this.ofertas = maestros.ofertas;
     this.facturas = maestros.facturas;
     this.stockStore = maestros.stock;
+    this.cobros = maestros.cobros;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -224,12 +229,14 @@ export class AppRuntime {
     const ofertas = new SqliteOfertaCatalog(dbPath);
     const facturas = new SqliteFacturaStore(dbPath);
     const stock = new SqliteStockStore(dbPath);
+    const cobros = new SqliteCobrosStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
       ofertas,
       facturas,
       stock,
+      cobros,
     });
   }
 
@@ -239,6 +246,7 @@ export class AppRuntime {
     this.ofertas.close();
     this.facturas.close();
     this.stockStore.close();
+    this.cobros.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -637,6 +645,50 @@ export class AppRuntime {
       if (q > disponible) out.push({ ofertaId, necesita: q, disponible });
     }
     return out;
+  }
+
+  registrarCobro(
+    expedienteId: string,
+    {
+      importeCentimos,
+      hitoId,
+      medio,
+    }: {
+      readonly importeCentimos: number;
+      readonly hitoId?: string;
+      readonly medio: string;
+    },
+    actorId: string,
+  ): { ok: true } | { ok: false; error: string } {
+    if (!Number.isSafeInteger(importeCentimos) || importeCentimos <= 0) {
+      return { ok: false, error: "El importe debe ser mayor que 0." };
+    }
+    const tx = this.datosDe(expedienteId);
+    if (!tx) return { ok: false, error: "El expediente no existe." };
+    const totalCobrado = this.cobros.totalParcial(this.tenantId, expedienteId);
+    const totalPendiente = (tx.datos.lineas.reduce((sum, l) => sum + l.precioCentimos * l.cantidadMilesimas / 1000, 0));
+    if (totalCobrado + importeCentimos > totalPendiente) {
+      return { ok: false, error: "El cobro supera el importe total del expediente." };
+    }
+    this.cobros.registrar(this.tenantId, {
+      expediente: expedienteId,
+      importeCentimos,
+      fecha: new Date().toISOString(),
+      ...(hitoId ? { hitoId } : {}),
+      medio,
+      actor: actorId,
+    });
+    return { ok: true };
+  }
+
+  /** Cobros parciales de un expediente. */
+  cobrosDelExpediente(expedienteId: string): readonly { readonly importeCentimos: number; readonly fecha: string; readonly hitoId?: string; readonly medio: string; readonly actor: string }[] {
+    return this.cobros.deExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Total cobrado en un expediente. */
+  totalCobradoDe(expedienteId: string): number {
+    return this.cobros.totalParcial(this.tenantId, expedienteId);
   }
 
   /** Datos de negocio actuales del expediente (cliente, líneas…). */
