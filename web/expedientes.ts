@@ -407,6 +407,7 @@ function expedienteForm(
       ? `<button type="submit" name="accion" value="mas" class="secondary" formnovalidate>+ Más líneas</button>`
       : "") +
     camposHtml(ctx, lifecycleId, values) +
+    fichasHtml(ctx, lifecycleId, values) +
     principalHtml(ctx, lifecycleId, values) +
     `<label>Notas <textarea name="notas" rows="3" maxlength="2000">${v("notas")}</textarea></label>` +
     `<button type="submit" name="accion" value="guardar">Guardar</button>` +
@@ -441,10 +442,17 @@ function fichaHtml(ctx: MaestrosContext, viewer: Viewer, id: string): string {
     (d.referencia ? `<dt>Referencia</dt><dd>${esc(d.referencia)}</dd>` : "") +
     (d.notas ? `<dt>Notas</dt><dd class="notas">${esc(d.notas)}</dd>` : "") +
     Object.entries(d.campos ?? {})
-      .map(
-        ([k, val]) =>
-          `<dt>${esc(runtime.etiquetas.campo(k))}</dt><dd data-campo="${esc(k)}">${esc(typeof val === "boolean" ? (val ? "Sí" : "No") : String(val).replace(".", ","))}</dd>`,
-      )
+      .map(([k, val]) => {
+        if (k.startsWith("ficha_")) {
+          const fichaId = k.slice(6);
+          const fichaVal = String(val);
+          const ficha = runtime.fichas.get(runtime.tenantId, fichaId, fichaVal);
+          if (ficha) {
+            return `<dt>${esc(runtime.etiquetas.campo(k))}</dt><dd data-ficha="${esc(k)}"><a href="${esc(withDev(viewer, `/fichas/${fichaId}/${fichaVal}`))}">${esc(String(ficha.valores.nombre || ficha.id))}</a></dd>`;
+          }
+        }
+        return `<dt>${esc(runtime.etiquetas.campo(k))}</dt><dd data-campo="${esc(k)}">${esc(typeof val === "boolean" ? (val ? "Sí" : "No") : String(val).replace(".", ","))}</dd>`;
+      })
       .join("") +
     (d.vinculadoA
       ? `<dt>Expediente principal</dt><dd><a href="${esc(withDev(viewer, `/expedientes/${d.vinculadoA}`))}" data-principal>${esc(subjectLabel(ctx, d.vinculadoA))}</a></dd>`
@@ -659,6 +667,48 @@ function camposHtml(
     })
     .join("");
   return `<fieldset class="grid2" data-campos><legend>Datos adicionales</legend>${inputs}</fieldset>`;
+}
+
+/** Fichas generadas del negocio que aplican a este proceso. */
+function fichasHtml(
+  ctx: MaestrosContext,
+  lifecycleId: string,
+  values: Record<string, string | undefined>,
+): string {
+  const { runtime, boot } = ctx;
+  const tenant = runtime.tenantId;
+  const fichas = (boot.input.fichas as Array<{ id: string; nombre: string; enProcesos?: readonly string[] }> | undefined) ?? [];
+
+  // Buscar proceso para sus palabras
+  const slice = boot.input.lifecycles.find((l) => l.id === lifecycleId);
+  if (!slice) return "";
+  const procesos = new Set((slice.nombre || "").toLowerCase().split(/\s+/));
+
+  // Fichas que aplican a este proceso
+  const aplicables = fichas.filter((f) => {
+    if (!f.enProcesos || f.enProcesos.length === 0) return false;
+    return (f.enProcesos as readonly string[]).some((p) => procesos.has(p.toLowerCase()));
+  });
+
+  if (aplicables.length === 0) return "";
+
+  const selects = aplicables
+    .map((f) => {
+      const fieldName = `ficha_${f.id}`;
+      const instancias = runtime.fichas.listar(tenant, f.id);
+      const opts =
+        `<option value="">— ${esc(f.nombre)} (sin elegir) —</option>` +
+        instancias
+          .map((inst) => {
+            const label = inst.valores.nombre || inst.valores.descripcion || inst.id;
+            return `<option value="${esc(inst.id)}"${values[fieldName] === inst.id ? " selected" : ""}>${esc(String(label))}</option>`;
+          })
+          .join("");
+      return `<label>${esc(f.nombre)} <select name="${esc(fieldName)}" data-ficha="${esc(f.id)}">${opts}</select></label>`;
+    })
+    .join("");
+
+  return `<fieldset class="grid2" data-fichas><legend>Elementos vinculados</legend>${selects}</fieldset>`;
 }
 
 /** Proceso secundario: a qué expediente principal pertenece. */
