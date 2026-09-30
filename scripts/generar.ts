@@ -208,6 +208,21 @@ for (const id of ids()) {
   }
 }
 
+// Estadísticas globales
+let totalCubiertos = 0;
+let totalFallan = 0;
+let totalSinPrueba = 0;
+let totalManuales = 0;
+
+for (const puntos of puntosPorId.values()) {
+  totalCubiertos += puntos.filter((p) => p.estado === "CUBIERTO").length;
+  totalFallan += puntos.filter((p) => p.estado === "FALLA").length;
+  totalSinPrueba += puntos.filter((p) => p.estado === "SIN_PRUEBA").length;
+  totalManuales += puntos.filter((p) => p.estado === "MANUAL").length;
+}
+
+console.log(`\n═══════ TOTAL: ${totalCubiertos} cubiertos · ${totalFallan} fallan · ${totalSinPrueba} sin prueba · ${totalManuales} manual`);
+
 // Mostrar ranking de puntos que más fallan (globalmente)
 console.log("\n═══════ RANKING: Puntos que más fallan");
 console.log("(lista de puntos ordenada por número de negocios donde fallan)");
@@ -221,9 +236,16 @@ if (rankingFallas.size === 0) {
 
   for (const [puntoId, count] of sorted) {
     const negocios = rankingNegociosFallando.get(puntoId) ?? new Set();
+    const puntosDeEste = [...puntosPorId.values()]
+      .flatMap((pts) => pts.filter((p) => p.id === puntoId && p.estado === "FALLA"))
+      .map((p) => p.detalle)[0] ?? "";
+
     console.log(`  ${count} negocio(s): ${puntoId}`);
+    if (puntosDeEste) {
+      console.log(`              → ${puntosDeEste.split("\n")[0]}`);
+    }
     if (negocios.size > 0 && negocios.size <= 3) {
-      console.log(`              → ${[...negocios].join(", ")}`);
+      console.log(`              negocios: ${[...negocios].join(", ")}`);
     }
   }
 }
