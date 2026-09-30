@@ -138,6 +138,44 @@
         "bonos prepago",
         "datos de salud",
         "cita + servicio en la misma clinica"
+      ],
+      "fichas": [
+        {
+          "id": "bono",
+          "nombre": "Bono",
+          "plural": "Bonos",
+          "elemento": "recurso",
+          "deQuien": "del_cliente",
+          "campos": [
+            {
+              "id": "sesiones_totales",
+              "nombre": "Sesiones totales",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "sesiones_usadas",
+              "nombre": "Sesiones usadas",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "fecha_compra",
+              "nombre": "Fecha de compra",
+              "tipo": "fecha",
+              "obligatorio": true
+            },
+            {
+              "id": "vigencia_meses",
+              "nombre": "Vigencia (meses)",
+              "tipo": "numero"
+            }
+          ],
+          "enProcesos": [
+            "sesiones",
+            "venta de bonos"
+          ]
+        }
       ]
     },
     {
@@ -271,6 +309,43 @@
         "dos sedes",
         "venta rapida + encargo + cuenta a credito en el mismo negocio",
         "senal"
+      ],
+      "fichas": [
+        {
+          "id": "receta",
+          "nombre": "Receta",
+          "plural": "Recetas",
+          "elemento": "recurso",
+          "deQuien": "propio",
+          "campos": [
+            {
+              "id": "ingredientes",
+              "nombre": "Ingredientes",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "tiempo_minutos",
+              "nombre": "Tiempo (minutos)",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "temperatura",
+              "nombre": "Temperatura (°C)",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "rendimiento",
+              "nombre": "Rendimiento",
+              "tipo": "texto"
+            }
+          ],
+          "enProcesos": [
+            "produccion"
+          ]
+        }
       ]
     },
     {
@@ -400,6 +475,47 @@
         "servicio sin bienes",
         "plazos",
         "recurso doble en agenda"
+      ],
+      "fichas": [
+        {
+          "id": "vehiculo_practicas",
+          "nombre": "Vehículo de prácticas",
+          "plural": "Vehículos de prácticas",
+          "elemento": "recurso",
+          "deQuien": "propio",
+          "campos": [
+            {
+              "id": "matricula",
+              "nombre": "Matrícula",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "marca",
+              "nombre": "Marca",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "modelo",
+              "nombre": "Modelo",
+              "tipo": "texto"
+            },
+            {
+              "id": "km",
+              "nombre": "Kilómetros",
+              "tipo": "numero"
+            },
+            {
+              "id": "seguro_vigencia",
+              "nombre": "Seguro hasta",
+              "tipo": "fecha"
+            }
+          ],
+          "enProcesos": [
+            "clase practica"
+          ]
+        }
       ]
     },
     {
@@ -533,6 +649,57 @@
         "intermediacion (arquetipo poco usado)",
         "bienes del cliente sin stock",
         "dinero de terceros retenido"
+      ],
+      "fichas": [
+        {
+          "id": "inmueble",
+          "nombre": "Inmueble",
+          "plural": "Inmuebles",
+          "elemento": "recurso",
+          "deQuien": "propio",
+          "campos": [
+            {
+              "id": "direccion",
+              "nombre": "Dirección",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "metros",
+              "nombre": "Metros cuadrados",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "habitaciones",
+              "nombre": "Habitaciones",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "precio_venta",
+              "nombre": "Precio (€)",
+              "tipo": "importe",
+              "obligatorio": true
+            },
+            {
+              "id": "tipo",
+              "nombre": "Tipo",
+              "tipo": "opcion",
+              "obligatorio": true,
+              "opciones": [
+                "Vivienda",
+                "Comercial",
+                "Oficina",
+                "Terreno"
+              ]
+            }
+          ],
+          "enProcesos": [
+            "visita",
+            "oferta"
+          ]
+        }
       ]
     },
     {
@@ -663,6 +830,54 @@
         "hitos 40/60",
         "compra y venta ligadas",
         "servicio sin bienes"
+      ],
+      "fichas": [
+        {
+          "id": "viaje",
+          "nombre": "Viaje",
+          "plural": "Viajes",
+          "elemento": "oferta",
+          "campos": [
+            {
+              "id": "destino",
+              "nombre": "Destino",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "dias",
+              "nombre": "Duración (días)",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "precio_base",
+              "nombre": "Precio base (€)",
+              "tipo": "importe",
+              "obligatorio": true
+            },
+            {
+              "id": "temporada",
+              "nombre": "Temporada",
+              "tipo": "opcion",
+              "obligatorio": true,
+              "opciones": [
+                "Alta",
+                "Media",
+                "Baja"
+              ]
+            },
+            {
+              "id": "visitas_incluidas",
+              "nombre": "Visitas incluidas",
+              "tipo": "texto"
+            }
+          ],
+          "enProcesos": [
+            "venta",
+            "reserva"
+          ]
+        }
       ]
     },
     {
@@ -795,6 +1010,58 @@
         "hitos 50/50",
         "taller + stock + compras",
         "aPlazos desconocido"
+      ],
+      "fichas": [
+        {
+          "id": "encargo_medida",
+          "nombre": "Encargo a medida",
+          "plural": "Encargos a medida",
+          "elemento": "recurso",
+          "deQuien": "del_cliente",
+          "campos": [
+            {
+              "id": "descripcion",
+              "nombre": "Descripción",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "material",
+              "nombre": "Material",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "ancho",
+              "nombre": "Ancho (cm)",
+              "tipo": "numero"
+            },
+            {
+              "id": "alto",
+              "nombre": "Alto (cm)",
+              "tipo": "numero"
+            },
+            {
+              "id": "profundidad",
+              "nombre": "Profundidad (cm)",
+              "tipo": "numero"
+            },
+            {
+              "id": "plazo_dias",
+              "nombre": "Plazo (días)",
+              "tipo": "numero"
+            },
+            {
+              "id": "presupuesto",
+              "nombre": "Presupuesto (€)",
+              "tipo": "importe"
+            }
+          ],
+          "enProcesos": [
+            "presupuesto",
+            "ejecucion"
+          ]
+        }
       ]
     }
   ]

@@ -40,4 +40,19 @@ export interface SampleProfile {
   readonly bloqueos: string[];
   readonly necesidadesNoExpresables: string[];
   readonly queEstresa: string[];
+  readonly fichas?: readonly {
+    readonly id: string;
+    readonly nombre: string;
+    readonly plural: string;
+    readonly elemento: "recurso" | "oferta";
+    readonly deQuien?: "propio" | "del_cliente";
+    readonly campos: readonly {
+      readonly id: string;
+      readonly nombre: string;
+      readonly tipo: "texto" | "numero" | "importe" | "si_no" | "fecha" | "opcion";
+      readonly opciones?: readonly string[];
+      readonly obligatorio?: boolean;
+    }[];
+    readonly enProcesos?: readonly string[];
+  }[];
 }

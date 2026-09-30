@@ -1,379 +1,1490 @@
 {
-    "_meta": {
-      "proposito": "10 perfiles de negocio para probar la expresividad del contrato BusinessProfile fuera de la concesionaria. NO son datos de negocios reales: son perfiles sinteticos realistas. Sirven para detectar huecos del contrato, no para medir precision de ningun componente de IA.",
-      "version_contrato_objetivo": "1.1 (borrador)",
-      "convencion": "Cada dato de negocio usa {estado: known | unknown | not_applicable, valor?, confianza?}. Los nombres de campo son aproximados: el agente debe mapearlos al esquema Zod real y reportar cada campo que no tenga equivalente.",
-      "campos_de_analisis": "modulosEsperados, modulosNoEsperados, bloqueos, necesidadesNoExpresables y queEstresa NO forman parte del contrato: son la respuesta esperada y las senales a verificar.",
-      "naturalezaBienes_valores": ["propios_por_cantidad", "propios_unitarios", "del_cliente"]
-    },
-    "perfiles": [
-      {
-        "id": "p01-peluqueria",
-        "nombre": "Peluqueria de barrio",
-        "descripcion": "Somos tres peluqueras y yo. Trabajamos con cita, aunque si hay hueco cogemos a quien entre. Vendemos tambien champus y tintes a los clientes. Cobramos al momento, tarjeta o efectivo.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "duena", "n": 1 }, { "rol": "peluquera", "n": 3 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": true },
-          "horario": { "estado": "known", "valor": "M-S 9:30-20:00, lunes cerrado" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["cita", "servicio en el momento", "venta de producto en mostrador"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "not_applicable" },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "solo reserva de cita" } },
-        "permissionFallback": { "estado": "known", "valor": "las peluqueras hacen todo lo de caja y citas; la duena el resto" },
-        "excepcionesPermiso": ["solo la duena anula cobros", "solo la duena hace pedidos a proveedor"],
-        "politicas": [
-          { "plantilla": "descuento_maximo_sin_aprobacion", "parametros": { "porcentaje": 10 } }
-        ],
-        "cumplimiento": ["facturacion simplificada (tickets)"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["agenda", "caja/cobros", "inventario", "clientes", "compras a proveedor"],
-        "modulosNoEsperados": ["credito", "portal completo", "multisede"],
-        "bloqueos": [],
-        "necesidadesNoExpresables": ["clientes sin cita que entran si hay hueco (cola/huecos libres)"],
-        "queEstresa": ["caso minimo: debe generar poco y simple", "cita mas atencion sin cita en el mismo flujo"]
-      },
-      {
-        "id": "p02-clinica-dental",
-        "nombre": "Clinica dental con dos sedes",
-        "descripcion": "Tenemos dos clinicas en la misma ciudad. Tres dentistas, dos higienistas, dos recepcionistas y yo, que soy el director medico. Hacemos presupuestos de tratamiento y mucha gente lo paga a plazos a traves de una financiera o directamente con nosotros. Guardamos historias clinicas.",
-        "organizacion": {
-          "sedes": { "estado": "known", "valor": ["Centro", "Norte"] },
-          "roles": { "estado": "known", "valor": [ { "rol": "director_medico", "n": 1 }, { "rol": "dentista", "n": 3 }, { "rol": "higienista", "n": 2 }, { "rol": "recepcion", "n": 2 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"], "confianza": 0.7 },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": true },
-          "horario": { "estado": "known", "valor": "L-V 9:00-21:00; sede Norte tambien S 9:00-14:00" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["primera visita", "presupuesto de tratamiento", "aceptacion del presupuesto", "tratamiento en varias sesiones", "cobro a plazos"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": true },
-          "aPlazos": { "estado": "known", "valor": "propios y via financiera externa" },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "known", "valor": "senal al aceptar presupuesto" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "citas, presupuestos y pagos pendientes; nunca la historia clinica completa" } },
-        "permissionFallback": { "estado": "known", "valor": "recepcion gestiona citas y cobros; dentistas presupuestos y tratamientos; el director el resto" },
-        "excepcionesPermiso": ["solo el director aprueba plazos propios de mas de 12 meses", "solo el profesional sanitario accede a la historia clinica"],
-        "politicas": [
-          { "plantilla": "descuento_maximo_sin_aprobacion", "parametros": { "porcentaje": 5 } },
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 3000, "aprueba": "director_medico" } }
-        ],
-        "cumplimiento": ["RGPD datos de salud (categoria especial)", "conservacion de historia clinica", "consentimiento informado firmado antes del tratamiento", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": ["salud"] },
-        "modulosEsperados": ["agenda por sede y profesional", "presupuestos", "tratamientos por sesiones", "credito/plazos", "clientes", "portal paciente", "inventario de material"],
-        "modulosNoEsperados": [],
-        "bloqueos": ["no se inicia tratamiento sin consentimiento firmado", "no se inicia tratamiento sin senal pagada (si el plan la exige)"],
-        "necesidadesNoExpresables": ["historia clinica como documento de acceso restringido por rol profesional", "financiera externa como tercero en el cobro"],
-        "queEstresa": ["multisede real", "datos de categoria especial en el Filtro", "bloqueos de composicion", "credito propio frente a financiado"]
-      },
-      {
-        "id": "p03-ferreteria",
-        "nombre": "Ferreteria con venta a profesionales",
-        "descripcion": "Vendemos en mostrador a particulares y a fontaneros y electricistas que tienen cuenta con nosotros y pagan a fin de mes. Tenemos miles de referencias y compramos a unos quince proveedores.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "dueno", "n": 1 }, { "rol": "dependiente", "n": 3 }, { "rol": "almacen", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": false },
-          "horario": { "estado": "known", "valor": "L-V 8:00-14:00 y 16:30-20:00, S 9:00-14:00" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["venta de mostrador", "venta a cuenta de profesional", "cierre y cobro mensual de cuentas", "pedido a proveedor", "recepcion de mercancia"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": "cuenta mensual para profesionales" },
-          "aPlazos": { "estado": "known", "valor": false },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "profesionales consultan su cuenta y albaranes" } },
-        "permissionFallback": { "estado": "known", "valor": "dependientes venden; almacen recibe mercancia; el dueno el resto" },
-        "excepcionesPermiso": ["solo el dueno abre cuentas a profesionales y fija su limite"],
-        "politicas": [
-          { "plantilla": "limite_credito_por_cliente", "parametros": { "por_defecto_eur": 1500 } },
-          { "plantilla": "bloqueo_por_impago", "parametros": { "dias": 45 } }
-        ],
-        "cumplimiento": ["facturacion", "albaranes"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["ventas", "inventario", "compras a proveedor", "credito/cuentas de cliente", "portal profesional"],
-        "modulosNoEsperados": ["agenda"],
-        "bloqueos": ["no se vende a cuenta si el profesional supera su limite o tiene impagos"],
-        "necesidadesNoExpresables": ["albaran mensual agrupado en una factura"],
-        "queEstresa": ["inventario con muchas referencias", "credito con limite y bloqueo", "carrera de stock en mostrador"]
-      },
-      {
-        "id": "p04-taller-mecanico",
-        "nombre": "Taller mecanico",
-        "descripcion": "La gente me deja el coche, lo miro y le llamo con el presupuesto. Si dice que si, pido las piezas y lo arreglo. El coche no se lo lleva hasta que paga. Algunas piezas las tengo en stock, otras las pido.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "dueno", "n": 1 }, { "rol": "mecanico", "n": 2 }, { "rol": "administracion", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad", "del_cliente"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": true },
-          "horario": { "estado": "unknown" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["recepcion del vehiculo", "diagnostico", "presupuesto", "aceptacion o rechazo", "pedido de piezas", "reparacion", "cobro", "entrega del vehiculo"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "unknown" },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "aceptar presupuesto y ver estado de la reparacion" } },
-        "permissionFallback": { "estado": "known", "valor": "mecanicos diagnostican y reparan; administracion presupuesta y cobra; el dueno el resto" },
-        "excepcionesPermiso": ["solo el dueno aprueba presupuestos de mas de 1500 euros"],
-        "politicas": [
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 1500, "aprueba": "dueno" } }
-        ],
-        "cumplimiento": ["presupuesto previo por escrito", "resguardo de deposito del vehiculo", "garantia de reparacion", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["ordenes de reparacion", "presupuestos", "inventario de piezas", "compras a proveedor", "cobros", "portal cliente", "agenda"],
-        "modulosNoEsperados": ["credito"],
-        "bloqueos": ["no se entrega el vehiculo sin pago", "no se repara sin presupuesto aceptado"],
-        "necesidadesNoExpresables": ["el coche del cliente como objeto custodiado con su propio ciclo (entra, queda en deposito, sale)", "garantia posterior a la entrega"],
-        "queEstresa": ["naturaleza mixta de bienes (debe activar Inventario solo por las piezas)", "horario desconocido: debe aplicar la politica de preguntar/confirmar", "aPlazos desconocido", "bloqueos de composicion"]
-      },
-      {
-        "id": "p05-restaurante",
-        "nombre": "Restaurante con reservas",
-        "descripcion": "Restaurante de 60 cubiertos, comidas y cenas. Tomamos reservas por telefono y por la web. Compramos producto fresco casi a diario. Tenemos turnos de sala y cocina.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "gerente", "n": 1 }, { "rol": "jefe_cocina", "n": 1 }, { "rol": "cocina", "n": 3 }, { "rol": "sala", "n": 5 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": "reservas por turno" },
-          "horario": { "estado": "known", "valor": "X-D 13:00-16:00 y 20:30-23:30" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" },
-          "turnosPersonal": { "estado": "known", "valor": true }
-        },
-        "procesos": ["reserva", "servicio en mesa", "cobro", "compra diaria de producto", "control de mermas"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "not_applicable" },
-          "fianzas": { "estado": "known", "valor": "senal para grupos de mas de 10" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "reservar y cancelar" } },
-        "permissionFallback": { "estado": "known", "valor": "sala gestiona reservas y cobros; cocina las compras de producto; el gerente el resto" },
-        "excepcionesPermiso": ["solo el gerente anula tickets", "solo el jefe de cocina hace pedidos de mas de 500 euros"],
-        "politicas": [
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 500, "aprueba": "jefe_cocina" } }
-        ],
-        "cumplimiento": ["APPCC y trazabilidad alimentaria", "alergenos", "registro horario del personal", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["reservas con aforo", "compras a proveedor", "inventario", "turnos", "cobros"],
-        "modulosNoEsperados": ["credito", "presupuestos"],
-        "bloqueos": ["no se confirma reserva de grupo sin senal"],
-        "necesidadesNoExpresables": ["aforo por turno (capacidad, no cita individual)", "mermas y caducidades", "TPV de sala (el pack concesionaria excluye TPV: aqui es imprescindible)"],
-        "queEstresa": ["reserva con capacidad frente a cita", "TPV como modulo necesario", "trazabilidad de consumibles"]
-      },
-      {
-        "id": "p06-gestoria",
-        "nombre": "Gestoria para autonomos y pymes",
-        "descripcion": "Llevamos la contabilidad e impuestos de unos 200 clientes, que nos pagan una cuota mensual. Los clientes nos mandan facturas y documentos y nosotros presentamos los modelos trimestrales. Lo peor son los plazos.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "socio", "n": 2 }, { "rol": "gestor", "n": 4 }, { "rol": "administrativo", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "not_applicable" },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": "ocasionales" },
-          "horario": { "estado": "known", "valor": "L-J 8:30-18:00, V 8:30-15:00; agosto intensivo" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" },
-          "temporadas": { "estado": "known", "valor": "picos en abril, julio, octubre y enero (trimestrales) y renta" }
-        },
-        "procesos": ["alta de cliente", "recepcion de documentacion", "preparacion de modelos", "presentacion en plazo", "cobro de cuota mensual", "trabajos extra presupuestados"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "not_applicable" },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": "cuota mensual por cliente, domiciliada" },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "subir documentos y ver estado de sus presentaciones" } },
-        "permissionFallback": { "estado": "known", "valor": "gestores preparan y presentan; administrativo cobra; socios el resto" },
-        "excepcionesPermiso": ["solo un socio da de baja a un cliente"],
-        "politicas": [
-          { "plantilla": "aviso_plazo", "parametros": { "dias_antes": 10 } }
-        ],
-        "cumplimiento": ["plazos legales de presentacion de modelos", "RGPD (datos economicos de clientes)", "prevencion de blanqueo (identificacion de clientes)"],
-        "datosSensibles": { "estado": "known", "valor": ["economicos"] },
-        "modulosEsperados": ["clientes", "expedientes por cliente y periodo", "calendario fiscal con plazos", "cuotas recurrentes", "portal cliente con documentos"],
-        "modulosNoEsperados": ["inventario", "compras a proveedor"],
-        "bloqueos": ["no se presenta el modelo sin documentacion completa (o se marca como presentado con incidencias)"],
-        "necesidadesNoExpresables": ["cuotas recurrentes (suscripcion)", "plazos externos fijos (calendario fiscal), no derivados del horario del negocio", "cientos de expedientes recurrentes por periodo"],
-        "queEstresa": ["servicio puro sin bienes (not_applicable)", "recurrencia", "cumplimiento por plazos externos"]
-      },
-      {
-        "id": "p07-tienda-online",
-        "nombre": "Tienda online de cosmetica natural",
-        "descripcion": "Vendemos solo por internet, en toda Espana. Hacemos nosotras algunos productos y otros los compramos. Enviamos con mensajeria y la gente puede devolver en 14 dias.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "fundadora", "n": 2 }, { "rol": "logistica", "n": 1 }, { "rol": "atencion_cliente", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": false },
-          "horario": { "estado": "known", "valor": "L-V 9:00-17:00 (envios hasta las 13:00)" },
-          "festivosRegion": { "estado": "known", "valor": "ES" }
-        },
-        "procesos": ["pedido online", "cobro", "preparacion y envio", "devolucion", "reembolso", "fabricacion por lotes", "compra de materia prima"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "known", "valor": false },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "unknown" },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "pedidos, seguimiento y solicitud de devolucion" } },
-        "permissionFallback": { "estado": "known", "valor": "logistica prepara y envia; atencion al cliente gestiona devoluciones; fundadoras el resto" },
-        "excepcionesPermiso": ["solo una fundadora aprueba reembolsos fuera de plazo"],
-        "politicas": [
-          { "plantilla": "plazo_devolucion", "parametros": { "dias": 14 } },
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 200, "aprueba": "fundadora", "aplica_a": "reembolsos" } }
-        ],
-        "cumplimiento": ["desistimiento de 14 dias en venta a distancia", "etiquetado y registro de cosmeticos", "trazabilidad por lote", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["pedidos", "inventario por lote", "envios", "devoluciones", "compras", "produccion por lotes", "portal cliente"],
-        "modulosNoEsperados": ["agenda", "credito"],
-        "bloqueos": ["no se envia sin cobro confirmado", "no se reembolsa sin devolucion recibida"],
-        "necesidadesNoExpresables": ["produccion propia (materia prima a producto terminado)", "lotes y caducidades", "integracion con tienda online y mensajeria (externos)"],
-        "queEstresa": ["cliente anonimo a escala", "cuotasRecurrentes desconocido (posibles suscripciones de caja mensual)", "fabricacion"]
-      },
-      {
-        "id": "p08-alquiler-maquinaria",
-        "nombre": "Alquiler de maquinaria de obra",
-        "descripcion": "Alquilamos minicargadoras, andamios y generadores por dias o semanas. El cliente deja fianza, se lleva la maquina y cuando la devuelve la revisamos. Si hay danos, se descuentan de la fianza.",
-        "organizacion": {
-          "sedes": { "estado": "known", "valor": ["Nave Getafe", "Nave Alcobendas"] },
-          "roles": { "estado": "known", "valor": [ { "rol": "gerente", "n": 1 }, { "rol": "comercial", "n": 2 }, { "rol": "tecnico_taller", "n": 2 }, { "rol": "transportista", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_unitarios", "propios_por_cantidad"] },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": "entregas y recogidas programadas" },
-          "horario": { "estado": "known", "valor": "L-V 7:30-18:00, S 8:00-13:00" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["reserva de maquina", "contrato de alquiler", "cobro de fianza", "entrega", "prorroga", "devolucion", "revision", "liquidacion de fianza", "mantenimiento"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": "constructoras habituales a 30 dias" },
-          "aPlazos": { "estado": "known", "valor": false },
-          "fianzas": { "estado": "known", "valor": true },
-          "cuotasRecurrentes": { "estado": "known", "valor": "alquileres largos facturados por semana" },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "ver alquileres activos y pedir prorroga o recogida" } },
-        "permissionFallback": { "estado": "known", "valor": "comerciales hacen contratos y cobros; tecnicos revisan y mantienen; transportista entrega y recoge; el gerente el resto" },
-        "excepcionesPermiso": ["solo el gerente retiene fianza por danos por encima de 500 euros"],
-        "politicas": [
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 500, "aprueba": "gerente", "aplica_a": "retencion de fianza" } },
-          { "plantilla": "limite_credito_por_cliente", "parametros": { "por_defecto_eur": 5000 } }
-        ],
-        "cumplimiento": ["contrato de alquiler firmado", "revisiones tecnicas periodicas de maquinaria", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["flota de unidades con disponibilidad", "contratos de alquiler", "fianzas", "entregas y recogidas", "mantenimiento", "credito", "inventario de consumibles (andamios por piezas)", "multisede"],
-        "modulosNoEsperados": ["agenda de citas personales"],
-        "bloqueos": ["no se entrega sin contrato firmado y fianza cobrada (o credito aprobado)", "no se vuelve a alquilar una unidad sin revision tras devolucion"],
-        "necesidadesNoExpresables": ["disponibilidad de unidades por fechas (reserva de recursos)", "fianza como dinero del cliente retenido y liquidado", "unidad que se traslada entre sedes"],
-        "queEstresa": ["propios_unitarios con ciclo de vida propio", "fianzas", "multisede con traspasos", "carrera por la misma unidad en las mismas fechas"]
-      },
-      {
-        "id": "p09-academia-idiomas",
-        "nombre": "Academia de idiomas con tres centros",
-        "descripcion": "Damos clases de ingles y aleman a ninos y adultos en tres centros. Los alumnos se matriculan por curso escolar y pagan cuota mensual. Hay grupos por nivel y los padres quieren saber como van sus hijos.",
-        "organizacion": {
-          "sedes": { "estado": "known", "valor": ["Chamberi", "Retiro", "Pozuelo"] },
-          "roles": { "estado": "known", "valor": [ { "rol": "directora", "n": 1 }, { "rol": "coordinador_centro", "n": 3 }, { "rol": "profesor", "n": 14 }, { "rol": "secretaria", "n": 3 } ] }
-        },
-        "naturalezaBienes": { "estado": "known", "valor": ["propios_por_cantidad"], "confianza": 0.5 },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": "clases en horario fijo por grupo" },
-          "horario": { "estado": "known", "valor": "L-V 16:00-21:30, S 10:00-14:00" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" },
-          "temporadas": { "estado": "known", "valor": "curso de septiembre a junio; intensivos en julio" }
-        },
-        "procesos": ["prueba de nivel", "matricula", "asignacion a grupo", "asistencia", "evaluacion", "cobro de cuota mensual", "baja"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "not_applicable" },
-          "fianzas": { "estado": "known", "valor": "matricula no reembolsable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": "mensual domiciliada" },
-          "pagosPorHitos": { "estado": "not_applicable" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "known", "valor": "padres ven asistencia, notas y recibos de sus hijos; alumnos adultos lo suyo" } },
-        "permissionFallback": { "estado": "known", "valor": "profesores pasan lista y evaluan; secretaria matricula y cobra; coordinadores su centro; la directora el resto" },
-        "excepcionesPermiso": ["los profesores solo ven sus grupos", "coordinadores solo su centro"],
-        "politicas": [
-          { "plantilla": "descuento_maximo_sin_aprobacion", "parametros": { "porcentaje": 15, "aplica_a": "hermanos" } },
-          { "plantilla": "bloqueo_por_impago", "parametros": { "recibos_pendientes": 2 } }
-        ],
-        "cumplimiento": ["RGPD con datos de menores (consentimiento de tutores)", "uso de imagen de menores", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": ["menores"] },
-        "modulosEsperados": ["alumnos y tutores", "grupos y horarios", "asistencia", "evaluaciones", "cuotas recurrentes", "portal familias", "multisede"],
-        "modulosNoEsperados": ["compras a proveedor como modulo principal", "credito"],
-        "bloqueos": ["no se asigna a grupo sin matricula pagada"],
-        "necesidadesNoExpresables": ["relacion tutor-menor con visibilidad delegada", "cuotas recurrentes", "curso academico como temporada que abre y cierre ciclos"],
-        "queEstresa": ["visibilidad por centro y por grupo en el Filtro", "portal con tercero (padre) viendo datos de otro (hijo)", "naturalezaBienes con confianza baja (material didactico marginal)"]
-      },
-      {
-        "id": "p10-reformas",
-        "nombre": "Empresa de reformas integrales",
-        "descripcion": "Hacemos reformas de pisos y locales. Visitamos, hacemos presupuesto y si lo aceptan firmamos contrato. Cobramos por fases: al empezar, a mitad de obra y al terminar. Subcontratamos fontaneria y electricidad. Llevamos varias obras a la vez.",
-        "organizacion": {
-          "sedes": { "estado": "not_applicable" },
-          "roles": { "estado": "known", "valor": [ { "rol": "gerente", "n": 1 }, { "rol": "jefe_obra", "n": 2 }, { "rol": "operario", "n": 6 }, { "rol": "administracion", "n": 1 } ] }
-        },
-        "naturalezaBienes": { "estado": "unknown" },
-        "calendario": {
-          "tieneCitas": { "estado": "known", "valor": "visitas tecnicas" },
-          "horario": { "estado": "known", "valor": "L-V 8:00-17:00" },
-          "festivosRegion": { "estado": "known", "valor": "ES-MD" }
-        },
-        "procesos": ["visita tecnica", "presupuesto", "contrato", "planificacion de obra", "compra de materiales", "encargo a subcontrata", "certificacion de fase", "cobro por fase", "entrega y repaso", "garantia"],
-        "cobros": {
-          "aCredito": { "estado": "known", "valor": false },
-          "aPlazos": { "estado": "not_applicable" },
-          "fianzas": { "estado": "not_applicable" },
-          "cuotasRecurrentes": { "estado": "known", "valor": false },
-          "pagosPorHitos": { "estado": "known", "valor": "30% inicio, 40% mitad, 30% fin" }
-        },
-        "portalCliente": { "autoservicio": { "estado": "unknown" } },
-        "permissionFallback": { "estado": "known", "valor": "jefes de obra planifican, compran material y certifican fases; administracion factura y cobra; el gerente el resto" },
-        "excepcionesPermiso": ["solo el gerente firma contratos y aprueba cambios de presupuesto"],
-        "politicas": [
-          { "plantilla": "importe_requiere_aprobacion", "parametros": { "importe_eur": 2000, "aprueba": "gerente", "aplica_a": "compras de material" } }
-        ],
-        "cumplimiento": ["contrato por escrito", "coordinacion de seguridad y salud con subcontratas", "gestion de residuos de obra", "facturacion"],
-        "datosSensibles": { "estado": "known", "valor": [] },
-        "modulosEsperados": ["obras/proyectos", "presupuestos y cambios", "cobros por hitos", "compras de material", "subcontratas", "planificacion de personal por obra"],
-        "modulosNoEsperados": ["agenda de citas como modulo central"],
-        "bloqueos": ["no se empieza la obra sin contrato firmado y primer pago", "no se certifica la siguiente fase sin cobrar la anterior"],
-        "necesidadesNoExpresables": ["proyecto con fases y pagos por hito", "subcontrata como proveedor de servicio con su propia documentacion", "cambios sobre presupuesto aceptado (modificados)"],
-        "queEstresa": ["naturalezaBienes desconocido (material comprado por obra, no stock): debe preguntar", "portalCliente desconocido", "pagos por hitos", "varias obras en paralelo compartiendo personal"]
-      }
+  "_meta": {
+    "proposito": "10 perfiles de negocio para probar la expresividad del contrato BusinessProfile fuera de la concesionaria. NO son datos de negocios reales: son perfiles sinteticos realistas. Sirven para detectar huecos del contrato, no para medir precision de ningun componente de IA.",
+    "version_contrato_objetivo": "1.1 (borrador)",
+    "convencion": "Cada dato de negocio usa {estado: known | unknown | not_applicable, valor?, confianza?}. Los nombres de campo son aproximados: el agente debe mapearlos al esquema Zod real y reportar cada campo que no tenga equivalente.",
+    "campos_de_analisis": "modulosEsperados, modulosNoEsperados, bloqueos, necesidadesNoExpresables y queEstresa NO forman parte del contrato: son la respuesta esperada y las senales a verificar.",
+    "naturalezaBienes_valores": [
+      "propios_por_cantidad",
+      "propios_unitarios",
+      "del_cliente"
     ]
-  }
+  },
+  "perfiles": [
+    {
+      "id": "p01-peluqueria",
+      "nombre": "Peluqueria de barrio",
+      "descripcion": "Somos tres peluqueras y yo. Trabajamos con cita, aunque si hay hueco cogemos a quien entre. Vendemos tambien champus y tintes a los clientes. Cobramos al momento, tarjeta o efectivo.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "duena",
+              "n": 1
+            },
+            {
+              "rol": "peluquera",
+              "n": 3
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": true
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "M-S 9:30-20:00, lunes cerrado"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "cita",
+        "servicio en el momento",
+        "venta de producto en mostrador"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "not_applicable"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "solo reserva de cita"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "las peluqueras hacen todo lo de caja y citas; la duena el resto"
+      },
+      "excepcionesPermiso": [
+        "solo la duena anula cobros",
+        "solo la duena hace pedidos a proveedor"
+      ],
+      "politicas": [
+        {
+          "plantilla": "descuento_maximo_sin_aprobacion",
+          "parametros": {
+            "porcentaje": 10
+          }
+        }
+      ],
+      "cumplimiento": [
+        "facturacion simplificada (tickets)"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "agenda",
+        "caja/cobros",
+        "inventario",
+        "clientes",
+        "compras a proveedor"
+      ],
+      "modulosNoEsperados": [
+        "credito",
+        "portal completo",
+        "multisede"
+      ],
+      "bloqueos": [],
+      "necesidadesNoExpresables": [
+        "clientes sin cita que entran si hay hueco (cola/huecos libres)"
+      ],
+      "queEstresa": [
+        "caso minimo: debe generar poco y simple",
+        "cita mas atencion sin cita en el mismo flujo"
+      ]
+    },
+    {
+      "id": "p02-clinica-dental",
+      "nombre": "Clinica dental con dos sedes",
+      "descripcion": "Tenemos dos clinicas en la misma ciudad. Tres dentistas, dos higienistas, dos recepcionistas y yo, que soy el director medico. Hacemos presupuestos de tratamiento y mucha gente lo paga a plazos a traves de una financiera o directamente con nosotros. Guardamos historias clinicas.",
+      "organizacion": {
+        "sedes": {
+          "estado": "known",
+          "valor": [
+            "Centro",
+            "Norte"
+          ]
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "director_medico",
+              "n": 1
+            },
+            {
+              "rol": "dentista",
+              "n": 3
+            },
+            {
+              "rol": "higienista",
+              "n": 2
+            },
+            {
+              "rol": "recepcion",
+              "n": 2
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ],
+        "confianza": 0.7
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": true
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 9:00-21:00; sede Norte tambien S 9:00-14:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "primera visita",
+        "presupuesto de tratamiento",
+        "aceptacion del presupuesto",
+        "tratamiento en varias sesiones",
+        "cobro a plazos"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": true
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": "propios y via financiera externa"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "known",
+          "valor": "senal al aceptar presupuesto"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "citas, presupuestos y pagos pendientes; nunca la historia clinica completa"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "recepcion gestiona citas y cobros; dentistas presupuestos y tratamientos; el director el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el director aprueba plazos propios de mas de 12 meses",
+        "solo el profesional sanitario accede a la historia clinica"
+      ],
+      "politicas": [
+        {
+          "plantilla": "descuento_maximo_sin_aprobacion",
+          "parametros": {
+            "porcentaje": 5
+          }
+        },
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 3000,
+            "aprueba": "director_medico"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "RGPD datos de salud (categoria especial)",
+        "conservacion de historia clinica",
+        "consentimiento informado firmado antes del tratamiento",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "salud"
+        ]
+      },
+      "modulosEsperados": [
+        "agenda por sede y profesional",
+        "presupuestos",
+        "tratamientos por sesiones",
+        "credito/plazos",
+        "clientes",
+        "portal paciente",
+        "inventario de material"
+      ],
+      "modulosNoEsperados": [],
+      "bloqueos": [
+        "no se inicia tratamiento sin consentimiento firmado",
+        "no se inicia tratamiento sin senal pagada (si el plan la exige)"
+      ],
+      "necesidadesNoExpresables": [
+        "historia clinica como documento de acceso restringido por rol profesional",
+        "financiera externa como tercero en el cobro"
+      ],
+      "queEstresa": [
+        "multisede real",
+        "datos de categoria especial en el Filtro",
+        "bloqueos de composicion",
+        "credito propio frente a financiado"
+      ]
+    },
+    {
+      "id": "p03-ferreteria",
+      "nombre": "Ferreteria con venta a profesionales",
+      "descripcion": "Vendemos en mostrador a particulares y a fontaneros y electricistas que tienen cuenta con nosotros y pagan a fin de mes. Tenemos miles de referencias y compramos a unos quince proveedores.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "dueno",
+              "n": 1
+            },
+            {
+              "rol": "dependiente",
+              "n": 3
+            },
+            {
+              "rol": "almacen",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": false
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 8:00-14:00 y 16:30-20:00, S 9:00-14:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "venta de mostrador",
+        "venta a cuenta de profesional",
+        "cierre y cobro mensual de cuentas",
+        "pedido a proveedor",
+        "recepcion de mercancia"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": "cuenta mensual para profesionales"
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "profesionales consultan su cuenta y albaranes"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "dependientes venden; almacen recibe mercancia; el dueno el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el dueno abre cuentas a profesionales y fija su limite"
+      ],
+      "politicas": [
+        {
+          "plantilla": "limite_credito_por_cliente",
+          "parametros": {
+            "por_defecto_eur": 1500
+          }
+        },
+        {
+          "plantilla": "bloqueo_por_impago",
+          "parametros": {
+            "dias": 45
+          }
+        }
+      ],
+      "cumplimiento": [
+        "facturacion",
+        "albaranes"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "ventas",
+        "inventario",
+        "compras a proveedor",
+        "credito/cuentas de cliente",
+        "portal profesional"
+      ],
+      "modulosNoEsperados": [
+        "agenda"
+      ],
+      "bloqueos": [
+        "no se vende a cuenta si el profesional supera su limite o tiene impagos"
+      ],
+      "necesidadesNoExpresables": [
+        "albaran mensual agrupado en una factura"
+      ],
+      "queEstresa": [
+        "inventario con muchas referencias",
+        "credito con limite y bloqueo",
+        "carrera de stock en mostrador"
+      ]
+    },
+    {
+      "id": "p04-taller-mecanico",
+      "nombre": "Taller mecanico",
+      "descripcion": "La gente me deja el coche, lo miro y le llamo con el presupuesto. Si dice que si, pido las piezas y lo arreglo. El coche no se lo lleva hasta que paga. Algunas piezas las tengo en stock, otras las pido.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "dueno",
+              "n": 1
+            },
+            {
+              "rol": "mecanico",
+              "n": 2
+            },
+            {
+              "rol": "administracion",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad",
+          "del_cliente"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": true
+        },
+        "horario": {
+          "estado": "unknown"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "recepcion del vehiculo",
+        "diagnostico",
+        "presupuesto",
+        "aceptacion o rechazo",
+        "pedido de piezas",
+        "reparacion",
+        "cobro",
+        "entrega del vehiculo"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "unknown"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "aceptar presupuesto y ver estado de la reparacion"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "mecanicos diagnostican y reparan; administracion presupuesta y cobra; el dueno el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el dueno aprueba presupuestos de mas de 1500 euros"
+      ],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 1500,
+            "aprueba": "dueno"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "presupuesto previo por escrito",
+        "resguardo de deposito del vehiculo",
+        "garantia de reparacion",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "ordenes de reparacion",
+        "presupuestos",
+        "inventario de piezas",
+        "compras a proveedor",
+        "cobros",
+        "portal cliente",
+        "agenda"
+      ],
+      "modulosNoEsperados": [
+        "credito"
+      ],
+      "bloqueos": [
+        "no se entrega el vehiculo sin pago",
+        "no se repara sin presupuesto aceptado"
+      ],
+      "necesidadesNoExpresables": [
+        "el coche del cliente como objeto custodiado con su propio ciclo (entra, queda en deposito, sale)",
+        "garantia posterior a la entrega"
+      ],
+      "queEstresa": [
+        "naturaleza mixta de bienes (debe activar Inventario solo por las piezas)",
+        "horario desconocido: debe aplicar la politica de preguntar/confirmar",
+        "aPlazos desconocido",
+        "bloqueos de composicion"
+      ],
+      "fichas": [
+        {
+          "id": "vehiculo_cliente",
+          "nombre": "Vehículo del cliente",
+          "plural": "Vehículos del cliente",
+          "elemento": "recurso",
+          "deQuien": "del_cliente",
+          "campos": [
+            {
+              "id": "matricula",
+              "nombre": "Matrícula",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "marca",
+              "nombre": "Marca",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "modelo",
+              "nombre": "Modelo",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "km",
+              "nombre": "Kilómetros",
+              "tipo": "numero",
+              "obligatorio": true
+            },
+            {
+              "id": "observaciones",
+              "nombre": "Observaciones",
+              "tipo": "texto"
+            }
+          ],
+          "enProcesos": [
+            "revision",
+            "reparacion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p05-restaurante",
+      "nombre": "Restaurante con reservas",
+      "descripcion": "Restaurante de 60 cubiertos, comidas y cenas. Tomamos reservas por telefono y por la web. Compramos producto fresco casi a diario. Tenemos turnos de sala y cocina.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "gerente",
+              "n": 1
+            },
+            {
+              "rol": "jefe_cocina",
+              "n": 1
+            },
+            {
+              "rol": "cocina",
+              "n": 3
+            },
+            {
+              "rol": "sala",
+              "n": 5
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "reservas por turno"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "X-D 13:00-16:00 y 20:30-23:30"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        },
+        "turnosPersonal": {
+          "estado": "known",
+          "valor": true
+        }
+      },
+      "procesos": [
+        "reserva",
+        "servicio en mesa",
+        "cobro",
+        "compra diaria de producto",
+        "control de mermas"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "not_applicable"
+        },
+        "fianzas": {
+          "estado": "known",
+          "valor": "senal para grupos de mas de 10"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "reservar y cancelar"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "sala gestiona reservas y cobros; cocina las compras de producto; el gerente el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el gerente anula tickets",
+        "solo el jefe de cocina hace pedidos de mas de 500 euros"
+      ],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 500,
+            "aprueba": "jefe_cocina"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "APPCC y trazabilidad alimentaria",
+        "alergenos",
+        "registro horario del personal",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "reservas con aforo",
+        "compras a proveedor",
+        "inventario",
+        "turnos",
+        "cobros"
+      ],
+      "modulosNoEsperados": [
+        "credito",
+        "presupuestos"
+      ],
+      "bloqueos": [
+        "no se confirma reserva de grupo sin senal"
+      ],
+      "necesidadesNoExpresables": [
+        "aforo por turno (capacidad, no cita individual)",
+        "mermas y caducidades",
+        "TPV de sala (el pack concesionaria excluye TPV: aqui es imprescindible)"
+      ],
+      "queEstresa": [
+        "reserva con capacidad frente a cita",
+        "TPV como modulo necesario",
+        "trazabilidad de consumibles"
+      ]
+    },
+    {
+      "id": "p06-gestoria",
+      "nombre": "Gestoria para autonomos y pymes",
+      "descripcion": "Llevamos la contabilidad e impuestos de unos 200 clientes, que nos pagan una cuota mensual. Los clientes nos mandan facturas y documentos y nosotros presentamos los modelos trimestrales. Lo peor son los plazos.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "socio",
+              "n": 2
+            },
+            {
+              "rol": "gestor",
+              "n": 4
+            },
+            {
+              "rol": "administrativo",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "not_applicable"
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "ocasionales"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-J 8:30-18:00, V 8:30-15:00; agosto intensivo"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        },
+        "temporadas": {
+          "estado": "known",
+          "valor": "picos en abril, julio, octubre y enero (trimestrales) y renta"
+        }
+      },
+      "procesos": [
+        "alta de cliente",
+        "recepcion de documentacion",
+        "preparacion de modelos",
+        "presentacion en plazo",
+        "cobro de cuota mensual",
+        "trabajos extra presupuestados"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "not_applicable"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": "cuota mensual por cliente, domiciliada"
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "subir documentos y ver estado de sus presentaciones"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "gestores preparan y presentan; administrativo cobra; socios el resto"
+      },
+      "excepcionesPermiso": [
+        "solo un socio da de baja a un cliente"
+      ],
+      "politicas": [
+        {
+          "plantilla": "aviso_plazo",
+          "parametros": {
+            "dias_antes": 10
+          }
+        }
+      ],
+      "cumplimiento": [
+        "plazos legales de presentacion de modelos",
+        "RGPD (datos economicos de clientes)",
+        "prevencion de blanqueo (identificacion de clientes)"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "economicos"
+        ]
+      },
+      "modulosEsperados": [
+        "clientes",
+        "expedientes por cliente y periodo",
+        "calendario fiscal con plazos",
+        "cuotas recurrentes",
+        "portal cliente con documentos"
+      ],
+      "modulosNoEsperados": [
+        "inventario",
+        "compras a proveedor"
+      ],
+      "bloqueos": [
+        "no se presenta el modelo sin documentacion completa (o se marca como presentado con incidencias)"
+      ],
+      "necesidadesNoExpresables": [
+        "cuotas recurrentes (suscripcion)",
+        "plazos externos fijos (calendario fiscal), no derivados del horario del negocio",
+        "cientos de expedientes recurrentes por periodo"
+      ],
+      "queEstresa": [
+        "servicio puro sin bienes (not_applicable)",
+        "recurrencia",
+        "cumplimiento por plazos externos"
+      ]
+    },
+    {
+      "id": "p07-tienda-online",
+      "nombre": "Tienda online de cosmetica natural",
+      "descripcion": "Vendemos solo por internet, en toda Espana. Hacemos nosotras algunos productos y otros los compramos. Enviamos con mensajeria y la gente puede devolver en 14 dias.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "fundadora",
+              "n": 2
+            },
+            {
+              "rol": "logistica",
+              "n": 1
+            },
+            {
+              "rol": "atencion_cliente",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": false
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 9:00-17:00 (envios hasta las 13:00)"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES"
+        }
+      },
+      "procesos": [
+        "pedido online",
+        "cobro",
+        "preparacion y envio",
+        "devolucion",
+        "reembolso",
+        "fabricacion por lotes",
+        "compra de materia prima"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "unknown"
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "pedidos, seguimiento y solicitud de devolucion"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "logistica prepara y envia; atencion al cliente gestiona devoluciones; fundadoras el resto"
+      },
+      "excepcionesPermiso": [
+        "solo una fundadora aprueba reembolsos fuera de plazo"
+      ],
+      "politicas": [
+        {
+          "plantilla": "plazo_devolucion",
+          "parametros": {
+            "dias": 14
+          }
+        },
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 200,
+            "aprueba": "fundadora",
+            "aplica_a": "reembolsos"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "desistimiento de 14 dias en venta a distancia",
+        "etiquetado y registro de cosmeticos",
+        "trazabilidad por lote",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "pedidos",
+        "inventario por lote",
+        "envios",
+        "devoluciones",
+        "compras",
+        "produccion por lotes",
+        "portal cliente"
+      ],
+      "modulosNoEsperados": [
+        "agenda",
+        "credito"
+      ],
+      "bloqueos": [
+        "no se envia sin cobro confirmado",
+        "no se reembolsa sin devolucion recibida"
+      ],
+      "necesidadesNoExpresables": [
+        "produccion propia (materia prima a producto terminado)",
+        "lotes y caducidades",
+        "integracion con tienda online y mensajeria (externos)"
+      ],
+      "queEstresa": [
+        "cliente anonimo a escala",
+        "cuotasRecurrentes desconocido (posibles suscripciones de caja mensual)",
+        "fabricacion"
+      ]
+    },
+    {
+      "id": "p08-alquiler-maquinaria",
+      "nombre": "Alquiler de maquinaria de obra",
+      "descripcion": "Alquilamos minicargadoras, andamios y generadores por dias o semanas. El cliente deja fianza, se lleva la maquina y cuando la devuelve la revisamos. Si hay danos, se descuentan de la fianza.",
+      "organizacion": {
+        "sedes": {
+          "estado": "known",
+          "valor": [
+            "Nave Getafe",
+            "Nave Alcobendas"
+          ]
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "gerente",
+              "n": 1
+            },
+            {
+              "rol": "comercial",
+              "n": 2
+            },
+            {
+              "rol": "tecnico_taller",
+              "n": 2
+            },
+            {
+              "rol": "transportista",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_unitarios",
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "entregas y recogidas programadas"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 7:30-18:00, S 8:00-13:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "reserva de maquina",
+        "contrato de alquiler",
+        "cobro de fianza",
+        "entrega",
+        "prorroga",
+        "devolucion",
+        "revision",
+        "liquidacion de fianza",
+        "mantenimiento"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": "constructoras habituales a 30 dias"
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "known",
+          "valor": true
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": "alquileres largos facturados por semana"
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "ver alquileres activos y pedir prorroga o recogida"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "comerciales hacen contratos y cobros; tecnicos revisan y mantienen; transportista entrega y recoge; el gerente el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el gerente retiene fianza por danos por encima de 500 euros"
+      ],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 500,
+            "aprueba": "gerente",
+            "aplica_a": "retencion de fianza"
+          }
+        },
+        {
+          "plantilla": "limite_credito_por_cliente",
+          "parametros": {
+            "por_defecto_eur": 5000
+          }
+        }
+      ],
+      "cumplimiento": [
+        "contrato de alquiler firmado",
+        "revisiones tecnicas periodicas de maquinaria",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "flota de unidades con disponibilidad",
+        "contratos de alquiler",
+        "fianzas",
+        "entregas y recogidas",
+        "mantenimiento",
+        "credito",
+        "inventario de consumibles (andamios por piezas)",
+        "multisede"
+      ],
+      "modulosNoEsperados": [
+        "agenda de citas personales"
+      ],
+      "bloqueos": [
+        "no se entrega sin contrato firmado y fianza cobrada (o credito aprobado)",
+        "no se vuelve a alquilar una unidad sin revision tras devolucion"
+      ],
+      "necesidadesNoExpresables": [
+        "disponibilidad de unidades por fechas (reserva de recursos)",
+        "fianza como dinero del cliente retenido y liquidado",
+        "unidad que se traslada entre sedes"
+      ],
+      "queEstresa": [
+        "propios_unitarios con ciclo de vida propio",
+        "fianzas",
+        "multisede con traspasos",
+        "carrera por la misma unidad en las mismas fechas"
+      ],
+      "fichas": [
+        {
+          "id": "maquina",
+          "nombre": "Máquina",
+          "plural": "Máquinas",
+          "elemento": "recurso",
+          "deQuien": "propio",
+          "campos": [
+            {
+              "id": "codigo",
+              "nombre": "Código",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "tipo",
+              "nombre": "Tipo",
+              "tipo": "texto",
+              "obligatorio": true
+            },
+            {
+              "id": "potencia",
+              "nombre": "Potencia (kW)",
+              "tipo": "numero"
+            },
+            {
+              "id": "mantenimiento_proxima",
+              "nombre": "Próximo mantenimiento",
+              "tipo": "fecha"
+            },
+            {
+              "id": "disponible",
+              "nombre": "Disponible",
+              "tipo": "si_no",
+              "obligatorio": true
+            }
+          ],
+          "enProcesos": [
+            "alquiler",
+            "entrega"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p09-academia-idiomas",
+      "nombre": "Academia de idiomas con tres centros",
+      "descripcion": "Damos clases de ingles y aleman a ninos y adultos en tres centros. Los alumnos se matriculan por curso escolar y pagan cuota mensual. Hay grupos por nivel y los padres quieren saber como van sus hijos.",
+      "organizacion": {
+        "sedes": {
+          "estado": "known",
+          "valor": [
+            "Chamberi",
+            "Retiro",
+            "Pozuelo"
+          ]
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "directora",
+              "n": 1
+            },
+            {
+              "rol": "coordinador_centro",
+              "n": 3
+            },
+            {
+              "rol": "profesor",
+              "n": 14
+            },
+            {
+              "rol": "secretaria",
+              "n": 3
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ],
+        "confianza": 0.5
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "clases en horario fijo por grupo"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 16:00-21:30, S 10:00-14:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        },
+        "temporadas": {
+          "estado": "known",
+          "valor": "curso de septiembre a junio; intensivos en julio"
+        }
+      },
+      "procesos": [
+        "prueba de nivel",
+        "matricula",
+        "asignacion a grupo",
+        "asistencia",
+        "evaluacion",
+        "cobro de cuota mensual",
+        "baja"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "not_applicable"
+        },
+        "fianzas": {
+          "estado": "known",
+          "valor": "matricula no reembolsable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": "mensual domiciliada"
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "padres ven asistencia, notas y recibos de sus hijos; alumnos adultos lo suyo"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "profesores pasan lista y evaluan; secretaria matricula y cobra; coordinadores su centro; la directora el resto"
+      },
+      "excepcionesPermiso": [
+        "los profesores solo ven sus grupos",
+        "coordinadores solo su centro"
+      ],
+      "politicas": [
+        {
+          "plantilla": "descuento_maximo_sin_aprobacion",
+          "parametros": {
+            "porcentaje": 15,
+            "aplica_a": "hermanos"
+          }
+        },
+        {
+          "plantilla": "bloqueo_por_impago",
+          "parametros": {
+            "recibos_pendientes": 2
+          }
+        }
+      ],
+      "cumplimiento": [
+        "RGPD con datos de menores (consentimiento de tutores)",
+        "uso de imagen de menores",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "menores"
+        ]
+      },
+      "modulosEsperados": [
+        "alumnos y tutores",
+        "grupos y horarios",
+        "asistencia",
+        "evaluaciones",
+        "cuotas recurrentes",
+        "portal familias",
+        "multisede"
+      ],
+      "modulosNoEsperados": [
+        "compras a proveedor como modulo principal",
+        "credito"
+      ],
+      "bloqueos": [
+        "no se asigna a grupo sin matricula pagada"
+      ],
+      "necesidadesNoExpresables": [
+        "relacion tutor-menor con visibilidad delegada",
+        "cuotas recurrentes",
+        "curso academico como temporada que abre y cierre ciclos"
+      ],
+      "queEstresa": [
+        "visibilidad por centro y por grupo en el Filtro",
+        "portal con tercero (padre) viendo datos de otro (hijo)",
+        "naturalezaBienes con confianza baja (material didactico marginal)"
+      ]
+    },
+    {
+      "id": "p10-reformas",
+      "nombre": "Empresa de reformas integrales",
+      "descripcion": "Hacemos reformas de pisos y locales. Visitamos, hacemos presupuesto y si lo aceptan firmamos contrato. Cobramos por fases: al empezar, a mitad de obra y al terminar. Subcontratamos fontaneria y electricidad. Llevamos varias obras a la vez.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "gerente",
+              "n": 1
+            },
+            {
+              "rol": "jefe_obra",
+              "n": 2
+            },
+            {
+              "rol": "operario",
+              "n": 6
+            },
+            {
+              "rol": "administracion",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "unknown"
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "visitas tecnicas"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 8:00-17:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "visita tecnica",
+        "presupuesto",
+        "contrato",
+        "planificacion de obra",
+        "compra de materiales",
+        "encargo a subcontrata",
+        "certificacion de fase",
+        "cobro por fase",
+        "entrega y repaso",
+        "garantia"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "not_applicable"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "known",
+          "valor": "30% inicio, 40% mitad, 30% fin"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "unknown"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "jefes de obra planifican, compran material y certifican fases; administracion factura y cobra; el gerente el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el gerente firma contratos y aprueba cambios de presupuesto"
+      ],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 2000,
+            "aprueba": "gerente",
+            "aplica_a": "compras de material"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "contrato por escrito",
+        "coordinacion de seguridad y salud con subcontratas",
+        "gestion de residuos de obra",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "obras/proyectos",
+        "presupuestos y cambios",
+        "cobros por hitos",
+        "compras de material",
+        "subcontratas",
+        "planificacion de personal por obra"
+      ],
+      "modulosNoEsperados": [
+        "agenda de citas como modulo central"
+      ],
+      "bloqueos": [
+        "no se empieza la obra sin contrato firmado y primer pago",
+        "no se certifica la siguiente fase sin cobrar la anterior"
+      ],
+      "necesidadesNoExpresables": [
+        "proyecto con fases y pagos por hito",
+        "subcontrata como proveedor de servicio con su propia documentacion",
+        "cambios sobre presupuesto aceptado (modificados)"
+      ],
+      "queEstresa": [
+        "naturalezaBienes desconocido (material comprado por obra, no stock): debe preguntar",
+        "portalCliente desconocido",
+        "pagos por hitos",
+        "varias obras en paralelo compartiendo personal"
+      ]
+    }
+  ]
+}

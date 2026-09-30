@@ -244,11 +244,17 @@ function renderMaestrosNav(
   const link = (path: string, label: string, hint: string, key: string) =>
     `<li><a href="${esc(`${path}?${p.toString()}`)}" data-maestros="${key}">` +
     `${esc(label)}<span class="pg-role">${esc(hint)}</span></a></li>`;
+  const fichas = (boot.input.fichas as Array<{ id: string; plural: string }> | undefined) ?? [];
+  const fichasHtml = fichas
+    .map((f) => link(`/fichas/${f.id}`, f.plural, "", f.id))
+    .join("");
+
   return (
     `<h2 data-maestros-links>Datos</h2>` +
     `<ul>` +
     link("/partes", "Clientes y proveedores", "altas, fichas y contacto", "partes") +
     link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
+    fichasHtml +
     (activo("stock") ? link("/stock", "Stock", "existencias y avisos", "stock") : "") +
     link("/dinero", "Dinero", "cobros, pagos y quién debe", "dinero") +
     (activo("facturas") ? link("/facturas", "Facturas", "expedidas, imprimir y rectificar", "facturas") : "") +

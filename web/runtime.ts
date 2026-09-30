@@ -11,6 +11,7 @@ import { SqliteParteIdentityStore } from "../adapters/sqlite-identity-store.js";
 import { SqliteOfertaCatalog } from "../adapters/sqlite-oferta-catalog.js";
 import { SqliteFacturaStore } from "../adapters/sqlite-factura-store.js";
 import { SqliteStockStore } from "../adapters/sqlite-stock-store.js";
+import { SqliteFichaStore } from "../adapters/sqlite-ficha-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -145,6 +146,8 @@ export class AppRuntime {
   readonly partes: SqliteParteIdentityStore;
   /** Catálogo de Ofertas (productos / servicios) versionado. */
   readonly ofertas: SqliteOfertaCatalog;
+  /** Fichas generadas de cada negocio (Recurso, Oferta, Parte con campos propios). */
+  readonly fichas: SqliteFichaStore;
   /** Nombres visibles (procesos, estados, pasos) según el vocabulario del negocio. */
   readonly etiquetas: Etiquetador;
   /** Facturas expedidas (inmutables) y datos fiscales del emisor. */
@@ -179,6 +182,7 @@ export class AppRuntime {
     maestros: {
       readonly partes: SqliteParteIdentityStore;
       readonly ofertas: SqliteOfertaCatalog;
+      readonly fichas: SqliteFichaStore;
       readonly facturas: SqliteFacturaStore;
       readonly stock: SqliteStockStore;
     },
@@ -189,6 +193,7 @@ export class AppRuntime {
     this.dbPath = dbPath;
     this.partes = maestros.partes;
     this.ofertas = maestros.ofertas;
+    this.fichas = maestros.fichas;
     this.facturas = maestros.facturas;
     this.stockStore = maestros.stock;
     this.etiquetas = crearEtiquetador(boot.input);
@@ -222,12 +227,14 @@ export class AppRuntime {
     const subjects = loadSubjects(boot, store);
     const partes = new SqliteParteIdentityStore(dbPath);
     const ofertas = new SqliteOfertaCatalog(dbPath);
+    const fichas = new SqliteFichaStore(dbPath);
     const facturas = new SqliteFacturaStore(dbPath);
     const stock = new SqliteStockStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
       ofertas,
+      fichas,
       facturas,
       stock,
     });
@@ -237,6 +244,7 @@ export class AppRuntime {
     this.store.close();
     this.partes.close();
     this.ofertas.close();
+    this.fichas.close();
     this.facturas.close();
     this.stockStore.close();
   }

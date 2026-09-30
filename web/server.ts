@@ -58,6 +58,7 @@ import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
+import { handleFichas, isFichasPath } from "./fichas.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -687,6 +688,15 @@ export function startWebServer(
 
       if (isExpedientesPath(path)) {
         const out = await handleExpedientes(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isFichasPath(path)) {
+        const out = await handleFichas(
           { runtime, boot, auth },
           req,
           async () => formToRecord(await readBody(req)),
