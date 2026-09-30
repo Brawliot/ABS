@@ -659,7 +659,7 @@ export function page(
   .menu-enlace { padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--accent); text-decoration:none; font-weight:600; font-size:.95rem; text-align:center; transition:all .2s; flex-shrink:0; width:100%; }
   .menu-enlace:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(37,99,235,.12); }
   .contenido-der { display:grid; gap:16px; padding:24px; background:rgba(255,255,255,.5); backdrop-filter:blur(8px); overflow-y:auto; align-content:center; justify-content: flex-start; height: 100%; }
-  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; width:100%; max-width:400px; }
+  .enlace-contenido { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; text-align:center; width:100%;  }
   .enlace-contenido h2 { margin-top:0; }
   @media (max-width: 768px) { .inicio-grid { grid-template-columns:1fr; } }
   .dinero { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin: 12px 0; }
