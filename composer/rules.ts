@@ -222,7 +222,7 @@ export const COMPOSITION_RULES: readonly CompositionRule[] = [
   {
     id: "R_HITOS",
     description: "pagosPorHitos → compromisos+bloqueos; no N financieras",
-    when: "field:cobros.pagosPorHitos:hitos",
+    when: "and:field:cobros.pagosPorHitos:hitos|dominant:servicio_proyecto",
     then: [
       {
         type: "mark_non_composable",
@@ -237,6 +237,23 @@ export const COMPOSITION_RULES: readonly CompositionRule[] = [
         parametros: { pattern: "compromisos_pagar_con_bloqueos" },
         idSuffix: "hitos-pago",
         transitionId: "t_ejecutar",
+      },
+    ],
+  },
+
+  // Los hitos se enganchan a las fases de un trabajo (acordado → en ejecución →
+  // en espera); en otros procesos quedan como hueco declarado, no como regla rota.
+  {
+    id: "R_HITOS_FUERA_DE_TRABAJO",
+    description: "pagosPorHitos en un proceso que no es trabajo/obra → no componible",
+    when: "and:field:cobros.pagosPorHitos:hitos|not:dominant:servicio_proyecto",
+    then: [
+      {
+        type: "mark_non_composable",
+        extension: "hitos_fuera_de_servicio_proyecto",
+        reason:
+          "Los pagos por hitos solo se modelan sobre las fases de un trabajo; en este proceso no hay fases a las que atarlos",
+        field: "cobros.pagosPorHitos",
       },
     ],
   },

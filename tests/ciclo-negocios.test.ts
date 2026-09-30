@@ -9,8 +9,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Lifecycle } from "../core/lifecycle.js";
 import { AppRuntime, allBootableIds, bootProfile, executeUiAction } from "../web/index.js";
+import { probarCiclos } from "../web/probar-ciclo.js";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -29,6 +29,8 @@ const PENDIENTES: Readonly<Record<string, string>> = {
   "p02-clinica-dental/lc.servicio_proyecto": "t_ejecutar",
   "p10-reformas/lc.servicio_proyecto": "t_ejecutar",
   "p10-reformas/lc.subcontrata": "t_ejecutar",
+  "n02-panaderia/lc.servicio_proyecto": "t_ejecutar",
+  "n06-carpinteria/lc.servicio_proyecto": "t_ejecutar",
   // La regla de hitos del trabajo se aplica también a las compras (reglas sin ámbito de proceso)
   "p10-reformas/lc.compras": "t_cerrar",
   // Plazo de desistimiento colocado en «aceptar» (necesita flujo de devoluciones)
@@ -36,31 +38,7 @@ const PENDIENTES: Readonly<Record<string, string>> = {
   "p07-tienda-online/lc.compras": "t_aceptar",
 };
 
-function caminoAlExito(lc: Lifecycle): string[] {
-  const init = lc.states.find((s) => s.kind === "inicial")!.id;
-  const exito = new Set(lc.states.filter((s) => s.kind === "terminal_exito").map((s) => s.id));
-  const prev = new Map<string, [string, string]>();
-  const cola = [init];
-  const vistos = new Set([init]);
-  while (cola.length > 0) {
-    const s = cola.shift()!;
-    if (exito.has(s)) {
-      const out: string[] = [];
-      for (let c = s; c !== init; c = prev.get(c)![0]) out.unshift(prev.get(c)![1]);
-      return out;
-    }
-    for (const t of lc.transitions) {
-      if (t.from === s && !vistos.has(t.to)) {
-        vistos.add(t.to);
-        prev.set(t.to, [s, t.id]);
-        cola.push(t.to);
-      }
-    }
-  }
-  return [];
-}
-
-describe("Ciclo completo en los 12 negocios", () => {
+describe("Ciclo completo en todos los negocios", () => {
   it("cada proceso llega al cierre, salvo los pendientes conocidos", async () => {
     const resultado: Record<string, string> = {};
     for (const id of allBootableIds()) {
@@ -68,48 +46,9 @@ describe("Ciclo completo en los 12 negocios", () => {
       const dir = mkdtempSync(join(tmpdir(), "abs-ciclo-"));
       dirs.push(dir);
       const rt = AppRuntime.open(boot, { dbPath: join(dir, "db.sqlite") });
-      for (const slice of boot.input.lifecycles) {
-        // Datos adicionales como los rellenaría el negocio (fianza > 0; el resto vacío = 0)
-        const campos = Object.fromEntries(
-          rt.camposDeProceso(slice.id).filter((c) => c.campo.includes("fianza")).map((c) => [c.campo, 50]),
-        );
-        const alta = rt.crearTransaccion(
-          {
-            lifecycleId: slice.id,
-            parteId: "parte-demo-1",
-            fecha: "2026-09-01",
-            lineas: [{ descripcion: "Servicio", cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }],
-            campos,
-          },
-          "prueba",
-        );
-        expect(alta.ok, `${id}/${slice.id}: ${alta.ok ? "" : alta.errors.join(" ")}`).toBe(true);
-        if (!alta.ok) continue;
-        let n = 0;
-        let parado = "";
-        for (const t of caminoAlExito(slice.lifecycle)) {
-          let ok = false;
-          for (const r of boot.roles) {
-            const out = await executeUiAction(rt, {
-              actionId: `action.${slice.id}.${t}`,
-              subjectId: alta.id,
-              clientRequestId: `${alta.id}-${n++}`,
-              roleId: r.id,
-              parteId: "parte-demo-1",
-              channel: "backoffice",
-              kind: "boton",
-            });
-            if (out.ok) {
-              ok = true;
-              break;
-            }
-          }
-          if (!ok) {
-            parado = t;
-            break;
-          }
-        }
-        resultado[`${id}/${slice.id}`] = parado || "OK";
+      for (const r of await probarCiclos(boot, rt)) {
+        expect(r.paradoEn, `${id}/${r.lifecycleId}: ${r.motivo ?? ""}`).not.toBe("alta");
+        resultado[`${id}/${r.lifecycleId}`] = r.paradoEn;
       }
       rt.close();
     }

@@ -4,6 +4,7 @@
  */
 
 import type { ArchetypeId } from "../archetypes/types.js";
+import { requireArchetype } from "../archetypes/catalog.js";
 import type { PresentationChannel } from "../presentation/types.js";
 import type { PaymentMode } from "../generator/types.js";
 import type { NaturalezaBien } from "../contracts/business-profile/types.js";
@@ -407,6 +408,12 @@ function defaultTransitionForDominant(dominant: ArchetypeId): string {
   }
 }
 
+/** El paso de anular que existe en el proceso dominante (cada ciclo lo llama distinto). */
+function pasoDeCancelar(dominant: ArchetypeId): string | undefined {
+  const ids = requireArchetype(dominant).lifecycle.transitions.map((t) => t.id);
+  return ["t_cancelar", "t_cancelar_aceptada"].find((t) => ids.includes(t)) ?? ids.find((t) => t.startsWith("t_cancelar"));
+}
+
 function pushInv(
   invs: PolicyTemplateInvocation[],
   inv: PolicyTemplateInvocation,
@@ -527,14 +534,15 @@ function mapPolicyTemplates(
   const anulaMatch = excepciones.match(
     /solo\s+(?:la\s+|el\s+)?(\w+)\s+anul/i,
   );
-  if (anulaMatch) {
+  const cancelar = pasoDeCancelar(dominant);
+  if (anulaMatch && cancelar) {
     pushInv(invs, {
       id: "inferred-permiso-excepcion",
       plantilla: "tpl.permiso_excepcion",
       parametros: {
         rol: anulaMatch[1]!.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
       },
-      transitionId: "t_cancelar",
+      transitionId: cancelar,
     });
   }
 

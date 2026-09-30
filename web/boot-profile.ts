@@ -32,23 +32,39 @@ import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "./sample-data.js";
 import type { AppBootResult } from "./types.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SAMPLES_PATH = join(
-  ROOT,
-  "contracts/business-profile/samples/business-profiles-10.json",
-);
+const SAMPLE_FILES = [
+  join(ROOT, "contracts/business-profile/samples/business-profiles-10.json"),
+  join(ROOT, "contracts/business-profile/samples/negocios-nuevos.json"),
+];
+
+/** Lee los perfiles de un JSON: `{perfiles: [...]}`, una lista o un perfil suelto. */
+export function readSampleFile(path: string): SampleProfile[] {
+  const raw = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (Array.isArray(raw)) return raw as SampleProfile[];
+  const obj = raw as { perfiles?: SampleProfile[] };
+  return obj.perfiles ?? [raw as SampleProfile];
+}
+
+/** Perfiles cargados desde archivos sueltos (`--archivo`), por id. */
+const extraSamples = new Map<string, SampleProfile>();
+
+/** Registra los perfiles de un archivo externo y devuelve sus ids. */
+export function registerSampleFile(path: string): string[] {
+  const perfiles = readSampleFile(path);
+  for (const p of perfiles) extraSamples.set(p.id, p);
+  return perfiles.map((p) => p.id);
+}
+
+function allSamples(): SampleProfile[] {
+  return [...SAMPLE_FILES.flatMap(readSampleFile), ...extraSamples.values()];
+}
 
 export function listSampleProfileIds(): readonly string[] {
-  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
-    perfiles: SampleProfile[];
-  };
-  return raw.perfiles.map((p) => p.id);
+  return [...new Set(allSamples().map((p) => p.id))];
 }
 
 export function loadSampleProfile(id: string): SampleProfile {
-  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
-    perfiles: SampleProfile[];
-  };
-  const p = raw.perfiles.find((x) => x.id === id);
+  const p = extraSamples.get(id) ?? allSamples().find((x) => x.id === id);
   if (!p) {
     throw new Error(
       `Perfil desconocido: ${id}. Disponibles: ${listSampleProfileIds().join(", ")}, concesionaria`,
