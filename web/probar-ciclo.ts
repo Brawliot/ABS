@@ -50,12 +50,13 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
     const campos = Object.fromEntries(
       rt.camposDeProceso(slice.id).filter((c) => c.campo.includes("fianza")).map((c) => [c.campo, 50]),
     );
+    const lineas = [{ descripcion: "Servicio", cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }];
     const alta = rt.crearTransaccion(
       {
         lifecycleId: slice.id,
         parteId: "parte-demo-1",
         fecha: "2026-09-01",
-        lineas: [{ descripcion: "Servicio", cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }],
+        lineas,
         campos,
       },
       "prueba",
@@ -64,10 +65,21 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
       out.push({ lifecycleId: slice.id, paradoEn: "alta", motivo: alta.errors.join(" ") });
       continue;
     }
+
+    // Detectar si el proceso tiene hitos (servicio_proyecto) y registrar pagos antes de t_ejecutar
+    const tieneHitos = slice.archetypeId === "servicio_proyecto";
+    const totalExpediente = lineas.reduce((sum, l) => sum + (l.precioCentimos * l.cantidadMilesimas / 1000), 0);
+
     let n = 0;
     let parado = "";
     let motivo = "";
     for (const t of caminoAlExito(slice.lifecycle)) {
+      // Si hay hitos y es t_ejecutar, registrar el primer 50% de pago
+      if (tieneHitos && t === "t_ejecutar") {
+        const mitad = Math.round(totalExpediente / 2);
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "h1", medio: "prueba" }, "test");
+      }
+
       let ok = false;
       motivo = "";
       for (const r of boot.roles) {
@@ -90,6 +102,12 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
       if (!ok) {
         parado = t;
         break;
+      }
+
+      // Si hay hitos, registrar el segundo 50% de pago después de t_presentar
+      if (tieneHitos && t === "t_presentar") {
+        const mitad = Math.round(totalExpediente / 2);
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "h2", medio: "prueba" }, "test");
       }
     }
     out.push(parado ? { lifecycleId: slice.id, paradoEn: parado, motivo } : { lifecycleId: slice.id, paradoEn: "OK" });

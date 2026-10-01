@@ -26,10 +26,7 @@ afterEach(() => {
 /** Pendientes conocidos: proceso → paso en el que se para (y por qué). */
 const PENDIENTES: Readonly<Record<string, string>> = {
   // Cobros por hitos (necesitan cobros parciales) — ya se calculan dinámicamente
-  "p10-reformas/lc.servicio_proyecto": "t_ejecutar",
-  "p10-reformas/lc.subcontrata": "t_ejecutar",
   "n02-panaderia/lc.servicio_proyecto": "t_ejecutar",
-  "n06-carpinteria/lc.servicio_proyecto": "t_ejecutar",
   // Plazo de desistimiento colocado en «aceptar» (necesita flujo de devoluciones)
   "p07-tienda-online/lc.venta": "t_aceptar",
   "p07-tienda-online/lc.compras": "t_aceptar",
