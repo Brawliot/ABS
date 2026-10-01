@@ -240,3 +240,5 @@ export * from "./projection.js";
 export * from "./factory.js";
 export * from "./exchange-direction.js";
 export * from "./retention-settlement.js";
+export * from "./activo-fijo.js";
+export * from "./email-marketing.js";

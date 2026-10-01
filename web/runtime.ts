@@ -22,6 +22,14 @@ import type { InterfaceCopyPack } from "../design/copy/types.js";
 import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
+import { MotorDepreciación } from "../policies/depreciacion.js";
+import { MotorMantenimiento } from "../policies/mantenimiento-activos.js";
+import { MotorContactosEmail } from "../policies/email-contactos.js";
+import { MotorCampañasEmail } from "../policies/email-campañas.js";
+import { MotorTrackingEmail } from "../policies/email-tracking.js";
+import { MotorWebhooksEmail } from "../policies/email-webhooks.js";
+import { SqliteActivosStore } from "../adapters/sqlite-activos-store.js";
+import { SqliteEmailMarketingStore } from "../adapters/sqlite-email-marketing-store.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -71,6 +79,18 @@ export class AppRuntime {
   /** Reglas adicionales de escenario (p. ej. hito de fase en reformas). */
   readonly extraRules: import("../policies/types.js").CompiledRule[] = [];
 
+  // Activos Fijos
+  readonly motorDepreciación: MotorDepreciación;
+  readonly motorMantenimiento: MotorMantenimiento;
+  readonly storeActivos: SqliteActivosStore;
+
+  // Email Marketing
+  readonly motorContactosEmail: MotorContactosEmail;
+  readonly motorCampañasEmail: MotorCampañasEmail;
+  readonly motorTrackingEmail: MotorTrackingEmail;
+  readonly motorWebhooksEmail: MotorWebhooksEmail;
+  readonly storeEmailMarketing: SqliteEmailMarketingStore;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -96,6 +116,20 @@ export class AppRuntime {
     this.llmClient = createLlmClientFromEnv();
     this.tenantId = tenantId;
     this.subjects = subjects;
+
+    // Inicializar motors de Activos Fijos
+    this.motorDepreciación = new MotorDepreciación();
+    this.motorMantenimiento = new MotorMantenimiento();
+    const activosDbPath = join(dirname(dbPath), `${tenantId}-activos.sqlite`);
+    this.storeActivos = new SqliteActivosStore(activosDbPath);
+
+    // Inicializar motors de Email Marketing
+    this.motorContactosEmail = new MotorContactosEmail();
+    this.motorCampañasEmail = new MotorCampañasEmail();
+    this.motorTrackingEmail = new MotorTrackingEmail();
+    this.motorWebhooksEmail = new MotorWebhooksEmail(this.motorTrackingEmail);
+    const emailDbPath = join(dirname(dbPath), `${tenantId}-email.sqlite`);
+    this.storeEmailMarketing = new SqliteEmailMarketingStore(emailDbPath);
   }
 
   static open(
