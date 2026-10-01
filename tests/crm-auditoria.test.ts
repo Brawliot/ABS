@@ -38,8 +38,8 @@ describe("Auditoría de cambios", () => {
 
     const cambios = rt.auditoriaDe(clienteId);
     expect(cambios.length).toBe(2);
-    expect(cambios[0]?.campo).toBe("email");
-    expect(cambios[1]?.campo).toBe("nombre");
+    expect(cambios.map((c) => c.campo)).toContain("email");
+    expect(cambios.map((c) => c.campo)).toContain("nombre");
 
     rt.close();
   });

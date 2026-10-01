@@ -3,6 +3,7 @@
  * Las tareas no se borran, solo se marcan como completadas.
  */
 
+import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
 
 export interface TareaCrm {
@@ -56,8 +57,7 @@ export class SqliteTareasCrmStore {
     if (!texto) throw new Error("La tarea no puede estar vacía.");
     if (texto.length > 500) throw new Error("La tarea es demasiado larga.");
 
-    const crypto = require("crypto");
-    const tareaId = id || `tarea-${crypto.randomUUID()}`;
+    const tareaId = id || `tarea-${randomUUID()}`;
     const prioridad = datos.prioridad ?? "media";
 
     this.db

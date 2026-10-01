@@ -3,6 +3,7 @@
  * Permite indicar quién es el contacto principal.
  */
 
+import { randomUUID } from "node:crypto";
 import Database from "better-sqlite3";
 
 export interface ContactoCliente {
@@ -56,8 +57,7 @@ export class SqliteContactosStore {
     if (!nombre) throw new Error("El nombre no puede estar vacío.");
     if (nombre.length > 200) throw new Error("El nombre es demasiado largo.");
 
-    const crypto = require("crypto");
-    const contactoId = id || `contacto-${crypto.randomUUID()}`;
+    const contactoId = id || `contacto-${randomUUID()}`;
     const esPrincipal = datos.esPrincipal ? 1 : 0;
 
     this.db
