@@ -92,6 +92,8 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
           // Si falla el parse, genera IDs genéricos
           hitoIds = ["h1", "h2"];
         }
+      } else {
+        hitoIds = ["h1", "h2"];
       }
     }
 

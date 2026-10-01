@@ -570,7 +570,7 @@ export function materializeBusinessProfileDetailed(
         ? { vocabulario: profile.vocabulario }
         : {}),
       ...(profile.policyTemplates !== undefined
-        ? { policyTemplates: profile.policyTemplates }
+        ? { policyTemplates: resolveKnownOrThrow(profile.policyTemplates, "policyTemplates", false) ?? undefined }
         : {}),
     };
 
