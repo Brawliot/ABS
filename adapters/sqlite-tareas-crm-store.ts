@@ -1,180 +1,224 @@
-/**
- * Tareas de cliente (SQLite): lista de tareas append-only con estado.
- * Las tareas no se borran, solo se marcan como completadas.
- */
-
-import { randomUUID } from "node:crypto";
-import Database from "better-sqlite3";
-
-export interface TareaCrm {
-  readonly id?: string;
-  readonly clienteId: string;
-  readonly texto: string;
-  readonly fechaVencimiento?: string;
-  readonly estado: "pendiente" | "completada";
-  readonly asignadoA?: string;
-  readonly prioridad: "baja" | "media" | "alta";
-  readonly fechaCreacion: string;
-  readonly fechaComplecion?: string;
-}
+import Database from 'better-sqlite3';
+import { randomUUID } from 'crypto';
+import type { TareaCrm } from '../elements/tarea-crm.js';
+import type { EtiquetaTarea } from '../elements/tarea-etiquetas.js';
+import type { ComentarioTarea } from '../elements/tarea-comentarios.js';
 
 export class SqliteTareasCrmStore {
   private readonly db: Database.Database;
+  private readonly crearTareaStmt: Database.Statement;
+  private readonly obtenerTareaStmt: Database.Statement;
+  private readonly listarTareasStmt: Database.Statement;
+  private readonly actualizarEstadoStmt: Database.Statement;
+  private readonly crearEtiquetaStmt: Database.Statement;
+  private readonly obtenerEtiquetasStmt: Database.Statement;
+  private readonly agregarEtiquetaStmt: Database.Statement;
+  private readonly removerEtiquetaStmt: Database.Statement;
+  private readonly agregarComentarioStmt: Database.Statement;
+  private readonly obtenerComentariosStmt: Database.Statement;
 
-  constructor(path: string | ":memory:" = ":memory:") {
+  constructor(path: string = ':memory:') {
     this.db = new Database(path);
-    if (path !== ":memory:") this.db.pragma("journal_mode = WAL");
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('synchronous = NORMAL');
+    this.inicializarTablas();
+
+    this.crearTareaStmt = this.db.prepare(
+      `INSERT INTO tareas (id, texto, estado, prioridad, asignado_a, vencimiento, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    );
+    this.obtenerTareaStmt = this.db.prepare(`SELECT * FROM tareas WHERE id = ?`);
+    this.listarTareasStmt = this.db.prepare(`SELECT * FROM tareas ORDER BY created_at DESC`);
+    this.actualizarEstadoStmt = this.db.prepare(
+      `UPDATE tareas SET estado = ?, completado_en = ? WHERE id = ?`,
+    );
+    this.crearEtiquetaStmt = this.db.prepare(
+      `INSERT INTO etiquetas_tareas (id, nombre, color, descripcion, created_at) VALUES (?, ?, ?, ?, ?)`,
+    );
+    this.obtenerEtiquetasStmt = this.db.prepare(
+      `SELECT et.* FROM etiquetas_tareas et
+       JOIN tarea_etiqueta_mapping tem ON et.id = tem.etiqueta_id
+       WHERE tem.tarea_id = ? ORDER BY tem.created_at`,
+    );
+    this.agregarEtiquetaStmt = this.db.prepare(
+      `INSERT INTO tarea_etiqueta_mapping (tarea_id, etiqueta_id, created_at) VALUES (?, ?, ?)`,
+    );
+    this.removerEtiquetaStmt = this.db.prepare(
+      `DELETE FROM tarea_etiqueta_mapping WHERE tarea_id = ? AND etiqueta_id = ?`,
+    );
+    this.agregarComentarioStmt = this.db.prepare(
+      `INSERT INTO comentarios_tareas (id, tarea_id, autor_id, texto, created_at) VALUES (?, ?, ?, ?, ?)`,
+    );
+    this.obtenerComentariosStmt = this.db.prepare(
+      `SELECT * FROM comentarios_tareas WHERE tarea_id = ? ORDER BY created_at ASC`,
+    );
+  }
+
+  private inicializarTablas(): void {
     this.db.exec(`
-      CREATE TABLE IF NOT EXISTS tareas_crm (
-        id TEXT PRIMARY KEY,
-        tenant_id TEXT NOT NULL,
-        cliente_id TEXT NOT NULL,
+      CREATE TABLE IF NOT EXISTS tareas (
+        id TEXT PRIMARY KEY NOT NULL,
         texto TEXT NOT NULL,
-        fecha_vencimiento TEXT,
         estado TEXT NOT NULL CHECK (estado IN ('pendiente', 'completada')),
-        asignado_a TEXT,
         prioridad TEXT NOT NULL CHECK (prioridad IN ('baja', 'media', 'alta')),
-        fecha_creacion TEXT NOT NULL,
-        fecha_completicion TEXT
+        asignado_a TEXT,
+        vencimiento INTEGER,
+        created_at INTEGER NOT NULL,
+        completado_en INTEGER
       );
-      CREATE INDEX IF NOT EXISTS idx_tareas_cliente ON tareas_crm(tenant_id, cliente_id);
-      CREATE INDEX IF NOT EXISTS idx_tareas_estado ON tareas_crm(tenant_id, cliente_id, estado);
+      CREATE INDEX IF NOT EXISTS idx_tareas_estado ON tareas(estado);
+      CREATE INDEX IF NOT EXISTS idx_tareas_asignado_a ON tareas(asignado_a);
+      CREATE INDEX IF NOT EXISTS idx_tareas_vencimiento ON tareas(vencimiento);
+
+      CREATE TABLE IF NOT EXISTS etiquetas_tareas (
+        id TEXT PRIMARY KEY NOT NULL,
+        nombre TEXT NOT NULL,
+        color TEXT NOT NULL,
+        descripcion TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS tarea_etiqueta_mapping (
+        tarea_id TEXT NOT NULL,
+        etiqueta_id TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        PRIMARY KEY (tarea_id, etiqueta_id),
+        FOREIGN KEY (tarea_id) REFERENCES tareas(id),
+        FOREIGN KEY (etiqueta_id) REFERENCES etiquetas_tareas(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS comentarios_tareas (
+        id TEXT PRIMARY KEY NOT NULL,
+        tarea_id TEXT NOT NULL,
+        autor_id TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER,
+        FOREIGN KEY (tarea_id) REFERENCES tareas(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_comentarios_tarea ON comentarios_tareas(tarea_id);
     `);
   }
 
-  crearTarea(
-    tenantId: string,
-    clienteId: string,
-    datos: {
-      readonly texto: string;
-      readonly fechaVencimiento?: string;
-      readonly prioridad?: "baja" | "media" | "alta";
-      readonly asignadoA?: string;
-    },
-    id?: string,
-  ): string {
-    const texto = datos.texto.trim();
-    if (!texto) throw new Error("La tarea no puede estar vacía.");
-    if (texto.length > 500) throw new Error("La tarea es demasiado larga.");
+  crearTarea(texto: string, prioridad: 'baja' | 'media' | 'alta' = 'media', asignadoA?: string, vencimiento?: Date): TareaCrm {
+    const id = randomUUID();
+    const ahora = Date.now();
+    const vencimientoMs = vencimiento ? vencimiento.getTime() : null;
 
-    const tareaId = id || `tarea-${randomUUID()}`;
-    const prioridad = datos.prioridad ?? "media";
+    this.crearTareaStmt.run(id, texto, 'pendiente', prioridad, asignadoA || null, vencimientoMs, ahora);
 
-    this.db
-      .prepare(
-        `INSERT INTO tareas_crm (id, tenant_id, cliente_id, texto, fecha_vencimiento, estado, asignado_a, prioridad, fecha_creacion)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        tareaId,
-        tenantId,
-        clienteId,
-        texto,
-        datos.fechaVencimiento ?? null,
-        "pendiente",
-        datos.asignadoA ?? null,
-        prioridad,
-        new Date().toISOString(),
-      );
-
-    return tareaId;
-  }
-
-  tareasDelCliente(
-    tenantId: string,
-    clienteId: string,
-    filtro?: "pendientes" | "todas",
-  ): readonly TareaCrm[] {
-    let query = `
-      SELECT id, cliente_id, texto, fecha_vencimiento, estado, asignado_a, prioridad, fecha_creacion, fecha_completicion
-      FROM tareas_crm
-      WHERE tenant_id = ? AND cliente_id = ?
-    `;
-    const params: (string | null)[] = [tenantId, clienteId];
-
-    if (filtro === "pendientes") {
-      query += ` AND estado = 'pendiente'`;
-    }
-
-    query += ` ORDER BY CASE WHEN prioridad = 'alta' THEN 1 WHEN prioridad = 'media' THEN 2 ELSE 3 END, fecha_vencimiento ASC, fecha_creacion DESC`;
-
-    const rows = this.db.prepare(query).all(...params) as {
-      id: string;
-      cliente_id: string;
-      texto: string;
-      fecha_vencimiento: string | null;
-      estado: "pendiente" | "completada";
-      asignado_a: string | null;
-      prioridad: "baja" | "media" | "alta";
-      fecha_creacion: string;
-      fecha_completicion: string | null;
-    }[];
-
-    return rows.map((r) => ({
-      id: r.id,
-      clienteId: r.cliente_id,
-      texto: r.texto,
-      ...(r.fecha_vencimiento ? { fechaVencimiento: r.fecha_vencimiento } : {}),
-      estado: r.estado,
-      ...(r.asignado_a ? { asignadoA: r.asignado_a } : {}),
-      prioridad: r.prioridad,
-      fechaCreacion: r.fecha_creacion,
-      ...(r.fecha_completicion ? { fechaComplecion: r.fecha_completicion } : {}),
-    }));
-  }
-
-  completarTarea(tenantId: string, tareaId: string): void {
-    const ahora = new Date().toISOString();
-    this.db
-      .prepare(
-        `UPDATE tareas_crm SET estado = 'completada', fecha_completicion = ?
-         WHERE tenant_id = ? AND id = ?`,
-      )
-      .run(ahora, tenantId, tareaId);
-  }
-
-  obtenerTarea(tenantId: string, tareaId: string): TareaCrm | undefined {
-    const row = this.db
-      .prepare(
-        `SELECT id, cliente_id, texto, fecha_vencimiento, estado, asignado_a, prioridad, fecha_creacion, fecha_completicion
-         FROM tareas_crm
-         WHERE tenant_id = ? AND id = ?`,
-      )
-      .get(tenantId, tareaId) as {
-      id: string;
-      cliente_id: string;
-      texto: string;
-      fecha_vencimiento: string | null;
-      estado: "pendiente" | "completada";
-      asignado_a: string | null;
-      prioridad: "baja" | "media" | "alta";
-      fecha_creacion: string;
-      fecha_completicion: string | null;
-    } | undefined;
-
-    if (!row) return undefined;
     return {
-      id: row.id,
-      clienteId: row.cliente_id,
-      texto: row.texto,
-      ...(row.fecha_vencimiento ? { fechaVencimiento: row.fecha_vencimiento } : {}),
-      estado: row.estado,
-      ...(row.asignado_a ? { asignadoA: row.asignado_a } : {}),
-      prioridad: row.prioridad,
-      fechaCreacion: row.fecha_creacion,
-      ...(row.fecha_completicion ? { fechaComplecion: row.fecha_completicion } : {}),
+      id,
+      texto,
+      estado: 'pendiente',
+      prioridad,
+      asignadoA: asignadoA || undefined,
+      vencimiento: vencimiento || undefined,
+      etiquetaIds: [],
+      createdAt: new Date(ahora),
+      completadoEn: undefined,
     };
   }
 
-  contarTareas(tenantId: string, clienteId: string, estado?: "pendiente" | "completada"): number {
-    let query = `SELECT COUNT(*) as count FROM tareas_crm WHERE tenant_id = ? AND cliente_id = ?`;
-    const params: (string | null)[] = [tenantId, clienteId];
-    if (estado) {
-      query += ` AND estado = ?`;
-      params.push(estado);
-    }
-    const result = this.db.prepare(query).get(...params) as { count: number };
-    return result.count;
+  obtenerTarea(id: string): TareaCrm | undefined {
+    const row = this.obtenerTareaStmt.get(id) as any;
+    if (!row) return undefined;
+
+    return {
+      id: row.id,
+      texto: row.texto,
+      estado: row.estado,
+      prioridad: row.prioridad,
+      asignadoA: row.asignado_a || undefined,
+      vencimiento: row.vencimiento ? new Date(row.vencimiento) : undefined,
+      etiquetaIds: this.obtenerEtiquetasIds(id),
+      createdAt: new Date(row.created_at),
+      completadoEn: row.completado_en ? new Date(row.completado_en) : undefined,
+    };
+  }
+
+  listarTareas(): TareaCrm[] {
+    const rows = this.listarTareasStmt.all() as any[];
+    return rows.map(row => ({
+      id: row.id,
+      texto: row.texto,
+      estado: row.estado,
+      prioridad: row.prioridad,
+      asignadoA: row.asignado_a || undefined,
+      vencimiento: row.vencimiento ? new Date(row.vencimiento) : undefined,
+      etiquetaIds: this.obtenerEtiquetasIds(row.id),
+      createdAt: new Date(row.created_at),
+      completadoEn: row.completado_en ? new Date(row.completado_en) : undefined,
+    }));
+  }
+
+  completarTarea(id: string): void {
+    this.actualizarEstadoStmt.run('completada', Date.now(), id);
+  }
+
+  crearEtiqueta(nombre: string, color: string, descripcion?: string): EtiquetaTarea {
+    const id = randomUUID();
+    const ahora = Date.now();
+    this.crearEtiquetaStmt.run(id, nombre, color, descripcion || null, ahora);
+    return {
+      id,
+      nombre,
+      color,
+      descripcion,
+      createdAt: new Date(ahora),
+    };
+  }
+
+  agregarEtiqueta(tareaId: string, etiquetaId: string): void {
+    this.agregarEtiquetaStmt.run(tareaId, etiquetaId, Date.now());
+  }
+
+  removerEtiqueta(tareaId: string, etiquetaId: string): void {
+    this.removerEtiquetaStmt.run(tareaId, etiquetaId);
+  }
+
+  obtenerEtiquetasDeTarea(tareaId: string): EtiquetaTarea[] {
+    const rows = this.obtenerEtiquetasStmt.all(tareaId) as any[];
+    return rows.map(row => ({
+      id: row.id,
+      nombre: row.nombre,
+      color: row.color,
+      descripcion: row.descripcion || undefined,
+      createdAt: new Date(row.created_at),
+    }));
+  }
+
+  private obtenerEtiquetasIds(tareaId: string): string[] {
+    const rows = this.db
+      .prepare(`SELECT etiqueta_id FROM tarea_etiqueta_mapping WHERE tarea_id = ?`)
+      .all(tareaId) as { etiqueta_id: string }[];
+    return rows.map(r => r.etiqueta_id);
+  }
+
+  agregarComentario(tareaId: string, autorId: string, texto: string): ComentarioTarea {
+    const id = randomUUID();
+    const ahora = Date.now();
+    this.agregarComentarioStmt.run(id, tareaId, autorId, texto, ahora);
+    return {
+      id,
+      tareaId,
+      autorId,
+      texto,
+      createdAt: new Date(ahora),
+      updatedAt: undefined,
+    };
+  }
+
+  obtenerComentarios(tareaId: string): ComentarioTarea[] {
+    const rows = this.obtenerComentariosStmt.all(tareaId) as any[];
+    return rows.map(row => ({
+      id: row.id,
+      tareaId: row.tarea_id,
+      autorId: row.autor_id,
+      texto: row.texto,
+      createdAt: new Date(row.created_at),
+      updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
+    }));
   }
 
   close(): void {
