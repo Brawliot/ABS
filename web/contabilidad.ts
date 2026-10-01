@@ -65,7 +65,7 @@ export async function handleContabilidad(
   const html_exportar = renderExportar(desde, hasta);
   const html_periodos = renderPeriodos(periodos);
 
-  const body = html`
+  const contabilidadHtml = html`
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -127,7 +127,7 @@ export async function handleContabilidad(
     </html>
   `;
 
-  return page(ctx, viewer, "Contabilidad", body);
+  return html(200, page(ctx, viewer, "Contabilidad", contabilidadHtml));
 }
 
 function renderAsientos(asientos: any[], desde: string | null, hasta: string | null): string {
