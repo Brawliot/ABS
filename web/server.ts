@@ -60,6 +60,7 @@ import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
+import { generarExportacion, type ExportTipo } from "./exportacion.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -1281,6 +1282,42 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
           ),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path.startsWith("/export/") && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede exportar", "text/plain");
+        }
+
+        const tipoMatch = path.match(/^\/export\/([a-z_]+)$/);
+        if (!tipoMatch) {
+          return send(res, 400, "Tipo de exportación inválido", "text/plain");
+        }
+
+        const tipo = tipoMatch[1] as ExportTipo;
+        const formato = (q.formato || "csv") as "csv" | "xlsx";
+
+        if (!["csv", "xlsx"].includes(formato)) {
+          return send(res, 400, "Formato debe ser csv o xlsx", "text/plain");
+        }
+
+        try {
+          const result = generarExportacion(tipo, formato, runtime);
+          const headers = {
+            "Content-Disposition": `attachment; filename="${result.filename}"`,
+          };
+          return send(res, 200, result.data, result.contentType, headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Error en exportación";
+          return send(res, 500, msg, "text/plain");
+        }
       }
 
       if (path !== "/" && path !== "/index.html") {
