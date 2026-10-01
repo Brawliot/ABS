@@ -57,10 +57,12 @@ import { handlePortal, isPortalPath } from "./portal.js";
 import { handleHoy, isHoyPath } from "./hoy.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
-import { handleContabilidad, isContabilidadPath } from "./contabilidad.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
+import { generarExportacion, type ExportTipo } from "./exportacion.js";
+import { verificarToken, verificarRateLimit, buscarExpedientes, obtenerExpediente, buscarClientes, buscarFacturas } from "./api-rest.js";
+import { calcularSaludNegocio } from "./salud-negocio.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -75,17 +77,6 @@ import {
   getStoredWizardDraft,
   applyWizardDecisions,
 } from "./cli.js";
-import { DashboardEndpoints } from "../communication/dashboard-endpoints.js";
-import { renderDashboardNotificacionesHtml } from "../communication/dashboard-page.js";
-import { ColaNotificaciones } from "../communication/notification-queue.js";
-import { SqliteNotificacionesEnviosStore } from "../adapters/sqlite-notificaciones-envios-store.js";
-import { AdaptadorEmail } from "../communication/adapters/email-adapter.js";
-import { AdaptadorSMS } from "../communication/adapters/sms-adapter.js";
-import { AdaptadorWhatsApp } from "../communication/adapters/whatsapp-adapter.js";
-import { AdaptadorPush } from "../communication/adapters/push-adapter.js";
-import { AdaptadorSlack } from "../communication/adapters/slack-adapter.js";
-import { AdaptadorWebhook } from "../communication/adapters/webhook-adapter.js";
-import { AdaptadorTelnyx } from "../communication/adapters/telnyx-adapter.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -655,7 +646,8 @@ export function startWebServer(
           res,
           200,
           JSON.stringify({
-            ok: true,
+            status: "ok",
+            timestamp: new Date().toISOString(),
             profileId: boot.profileId,
             sealed: true,
             contentHash: boot.spec.contentHash,
@@ -665,6 +657,23 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path === "/negocio/salud" && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede ver salud del negocio", "text/plain");
+        }
+
+        const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+        const salud = calcularSaludNegocio(runtime, hoy);
+        return send(res, 200, JSON.stringify(salud), "application/json; charset=utf-8");
       }
 
       if (path === "/imprimir.js") {
@@ -696,11 +705,6 @@ export function startWebServer(
 
       if (isDineroPath(path)) {
         const out = await handleDinero({ runtime, boot, auth }, req);
-        return send(res, out.status, out.body, out.contentType, out.headers);
-      }
-
-      if (isContabilidadPath(path)) {
-        const out = await handleContabilidad({ runtime, boot, auth }, req);
         return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
@@ -768,39 +772,6 @@ export function startWebServer(
             "text/html; charset=utf-8",
           );
         }
-      }
-
-      // 🔔 DASHBOARD DE NOTIFICACIONES
-      if (path.startsWith("/notificaciones") || path === "/dashboard/notificaciones") {
-        const notificacionesStore = new SqliteNotificacionesEnviosStore(runtime.dbPath);
-        const adaptadores = [
-          new AdaptadorEmail(),
-          new AdaptadorSMS(),
-          new AdaptadorWhatsApp(),
-          new AdaptadorPush(),
-          new AdaptadorSlack(),
-          new AdaptadorWebhook(),
-          new AdaptadorTelnyx(),
-        ];
-        const cola = new ColaNotificaciones(notificacionesStore, adaptadores);
-        const dashboard = new DashboardEndpoints(notificacionesStore, cola);
-
-        if (path === "/dashboard/notificaciones" && method === "GET") {
-          return send(
-            res,
-            200,
-            renderDashboardNotificacionesHtml(),
-            "text/html; charset=utf-8",
-          );
-        }
-
-        const querystring = new URL(url, "http://localhost").searchParams;
-        if (dashboard.manejarRuta(req, res, path, querystring)) {
-          notificacionesStore.close();
-          return;
-        }
-
-        notificacionesStore.close();
       }
 
       if (path === "/link-devolucion" && method === "POST") {
@@ -1331,6 +1302,89 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
           ),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path.startsWith("/api/v1/") && method === "GET") {
+        const token = verificarToken(req);
+        if (!token) {
+          return send(res, 401, JSON.stringify({ ok: false, error: "Token no proporcionado" }), "application/json; charset=utf-8");
+        }
+
+        if (!verificarRateLimit(token)) {
+          return send(res, 429, JSON.stringify({ ok: false, error: "Rate limit excedido (100 req/min)" }), "application/json; charset=utf-8");
+        }
+
+        const q = parseQuery(url);
+
+        if (path === "/api/v1/expedientes") {
+          const result = buscarExpedientes(runtime, { ...(q.estado ? { estado: q.estado } : {}), ...(q.cliente ? { cliente: q.cliente } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path.startsWith("/api/v1/expediente/")) {
+          const id = path.slice("/api/v1/expediente/".length);
+          const result = obtenerExpediente(runtime, id);
+          return send(res, result.ok ? 200 : 404, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/clientes") {
+          const result = buscarClientes(runtime, q.deuda ? { deuda: q.deuda } : undefined);
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/facturas") {
+          const result = buscarFacturas(runtime, { ...(q.serie ? { serie: q.serie } : {}), ...(q.desde ? { desde: q.desde } : {}), ...(q.hasta ? { hasta: q.hasta } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        return send(res, 404, JSON.stringify({ ok: false, error: "Ruta no encontrada" }), "application/json; charset=utf-8");
+      }
+
+      if (path === "/api/v1/webhook/evento" && method === "POST") {
+        const body = await readBody(req);
+        try {
+          const evento = JSON.parse(body);
+          console.log("Webhook recibido:", evento);
+          return send(res, 200, JSON.stringify({ ok: true, message: "Evento recibido" }), "application/json; charset=utf-8");
+        } catch {
+          return send(res, 400, JSON.stringify({ ok: false, error: "JSON inválido" }), "application/json; charset=utf-8");
+        }
+      }
+
+      if (path.startsWith("/export/") && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede exportar", "text/plain");
+        }
+
+        const tipoMatch = path.match(/^\/export\/([a-z_]+)$/);
+        if (!tipoMatch) {
+          return send(res, 400, "Tipo de exportación inválido", "text/plain");
+        }
+
+        const tipo = tipoMatch[1] as ExportTipo;
+        const formato = (q.formato || "csv") as "csv" | "xlsx";
+
+        if (!["csv", "xlsx"].includes(formato)) {
+          return send(res, 400, "Formato debe ser csv o xlsx", "text/plain");
+        }
+
+        try {
+          const result = generarExportacion(tipo, formato, runtime);
+          const headers = {
+            "Content-Disposition": `attachment; filename="${result.filename}"`,
+          };
+          return send(res, 200, result.data, result.contentType, headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Error en exportación";
+          return send(res, 500, msg, "text/plain");
+        }
       }
 
       if (path !== "/" && path !== "/index.html") {
