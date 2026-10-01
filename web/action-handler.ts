@@ -569,6 +569,14 @@ async function executeUiActionLocked(
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
 
+    // Gestionar reservas de stock al cambiar estado
+    const toState = slice.lifecycle.states.find((s) => s.id === judged.event.toStateId);
+    if (toState?.kind === "terminal_exito") {
+      runtime.confirmarReservasDelExpediente(body.subjectId);
+    } else if (toState?.kind === "terminal_excepcion" || toState?.kind === "terminal_abandono") {
+      runtime.cancelarReservasDelExpediente(body.subjectId);
+    }
+
     const flash: FlashMessage = {
       kind: "ok",
       text: idempotentReplay

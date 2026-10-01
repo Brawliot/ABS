@@ -312,6 +312,21 @@ export class AppRuntime {
     return movimientos.slice(-limit).reverse();
   }
 
+  /** Obtiene reservas activas de un expediente. */
+  reservasDelExpediente(expedienteId: string): readonly { readonly ofertaId: string; readonly cantidadMilesimas: number }[] {
+    return this.stockStore.reservasDelExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Confirma las reservas de un expediente (pasan de reservadas a confirmadas). */
+  confirmarReservasDelExpediente(expedienteId: string): void {
+    this.stockStore.confirmarReservas(this.tenantId, expedienteId);
+  }
+
+  /** Cancela todas las reservas de un expediente. */
+  cancelarReservasDelExpediente(expedienteId: string): void {
+    this.stockStore.cancelarReservas(this.tenantId, expedienteId);
+  }
+
   close(): void {
     this.store.close();
     this.partes.close();
@@ -950,21 +965,6 @@ export class AppRuntime {
     return this.stockStore.reservar(this.tenantId, ofertaId, expedienteId, cantidadMilesimas);
   }
 
-  /** Obtiene reservas activas de un expediente. */
-  reservasDelExpediente(expedienteId: string): readonly { readonly ofertaId: string; readonly cantidadMilesimas: number; readonly estado: "reservada" | "confirmada" | "cancelada" }[] {
-    return this.stockStore.reservasDelExpediente(this.tenantId, expedienteId);
-  }
-
-  /** Confirma todas las reservas de un expediente. */
-  confirmarStockDelExpediente(expedienteId: string): void {
-    this.stockStore.confirmarReservas(this.tenantId, expedienteId);
-  }
-
-  /** Cancela todas las reservas de un expediente. */
-  cancelarStockDelExpediente(expedienteId: string): void {
-    this.stockStore.cancelarReservas(this.tenantId, expedienteId);
-  }
-
   /** Campos de hitos pagados calculados dinámicamente basado en cobros. */
   camposHitosPagados(
     expedienteId: string,
@@ -1052,6 +1052,23 @@ export class AppRuntime {
 
     const id = `tx-${randomUUID()}`;
     const at = new Date().toISOString();
+
+    // Intentar reservar stock para líneas con productos controlados
+    const controlados = this.stockStore.controlados(this.tenantId);
+    for (const linea of resolved.datos.lineas) {
+      if (linea.ofertaId && controlados.has(linea.ofertaId)) {
+        const res = this.stockStore.reservar(
+          this.tenantId,
+          linea.ofertaId,
+          id,
+          linea.cantidadMilesimas,
+        );
+        if (!res.ok) {
+          return { ok: false, errors: [res.error] };
+        }
+      }
+    }
+
     const alta: AltaEvent = {
       id: `alta-${id}`,
       kind: "alta",
