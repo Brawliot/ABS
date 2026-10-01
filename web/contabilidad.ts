@@ -24,8 +24,8 @@ export function isContabilidadPath(path: string): boolean {
 }
 
 export async function handleContabilidad(
-  req: IncomingMessage,
   ctx: MaestrosContext,
+  req: IncomingMessage,
 ): Promise<MaestrosResponse> {
   const viewer = identifyGet(req, ctx.boot);
   if (!viewer) return { status: 403, body: "Acceso denegado" };
