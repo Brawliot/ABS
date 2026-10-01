@@ -242,3 +242,5 @@ export * from "./exchange-direction.js";
 export * from "./retention-settlement.js";
 export * from "./empleado.js";
 export * from "./vacaciones.js";
+export * from "./activo-fijo.js";
+export * from "./email-marketing.js";
