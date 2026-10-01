@@ -569,6 +569,9 @@ async function executeUiActionLocked(
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
 
+    // Generar notificaciones automáticas basadas en el evento
+    generarNotificacionesAutomaticas(runtime, body.subjectId, judged.event);
+
     const flash: FlashMessage = {
       kind: "ok",
       text: idempotentReplay
@@ -678,4 +681,26 @@ async function executeUiActionLocked(
     runtime.setFlash(flash);
     return { ok: false, flash, idempotentReplay };
   }
+}
+
+function generarNotificacionesAutomaticas(
+  runtime: AppRuntime,
+  expedienteId: string,
+  event: TransitionEvent,
+): void {
+  const slice = runtime.lifecycleForSubject(expedienteId);
+  if (!slice) return;
+
+  const tx = runtime.datosDe(expedienteId);
+  if (!tx) return;
+
+  const parteId = tx.datos.parteId;
+
+  // Notificación: paso avanzado → al cliente (parte)
+  const estadoLabel = runtime.etiquetas.estado(slice.id, event.toStateId);
+  runtime.crearNotificacion(expedienteId, "paso_avanzado", {
+    asunto: `Estado actualizado: ${estadoLabel}`,
+    cuerpo: `Tu expediente ha avanzado a "${estadoLabel}".`,
+    canales: ["app", "email"],
+  }, parteId);
 }
