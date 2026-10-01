@@ -20,6 +20,7 @@ import { SqliteContactosStore } from "../adapters/sqlite-contactos-store.js";
 import { SqliteTareasCrmStore } from "../adapters/sqlite-tareas-crm-store.js";
 import { SqliteAuditoriaStore } from "../adapters/sqlite-auditoria-crm-store.js";
 import { SqliteComprasStore } from "../adapters/sqlite-compras-store.js";
+import { SqliteLogisticaStore } from "../adapters/sqlite-logistica-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -162,6 +163,8 @@ export class AppRuntime {
   readonly stockStore: SqliteStockStore;
   /** Compras a proveedores (órdenes y recepciones). */
   readonly compras: SqliteComprasStore;
+  /** Logística: seguimiento de envíos. */
+  readonly logistica: SqliteLogisticaStore;
   /** Cobros parciales (señal, hitos, pagos a cuenta). */
   readonly cobros: SqliteCobrosStore;
   /** Devoluciones de productos (append-only). */
@@ -209,6 +212,7 @@ export class AppRuntime {
       readonly facturas: SqliteFacturaStore;
       readonly stock: SqliteStockStore;
       readonly compras: SqliteComprasStore;
+      readonly logistica: SqliteLogisticaStore;
       readonly cobros: SqliteCobrosStore;
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
@@ -228,6 +232,7 @@ export class AppRuntime {
     this.facturas = maestros.facturas;
     this.stockStore = maestros.stock;
     this.compras = maestros.compras;
+    this.logistica = maestros.logistica;
     this.cobros = maestros.cobros;
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
@@ -270,6 +275,7 @@ export class AppRuntime {
     const facturas = new SqliteFacturaStore(dbPath);
     const stock = new SqliteStockStore(dbPath);
     const compras = new SqliteComprasStore(dbPath);
+    const logistica = new SqliteLogisticaStore(dbPath);
     const cobros = new SqliteCobrosStore(dbPath);
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
@@ -285,6 +291,7 @@ export class AppRuntime {
       facturas,
       stock,
       compras,
+      logistica,
       cobros,
       devoluciones,
       financiados,
@@ -384,6 +391,35 @@ export class AppRuntime {
     return this.compras.deudaConProveedor(this.tenantId, proveedor);
   }
 
+  crearEnvio(expedienteId: string): void {
+    this.logistica.crearEnvio(this.tenantId, expedienteId, "preparado");
+  }
+
+  actualizarEnvio(
+    expedienteId: string,
+    estado: "preparado" | "enviado" | "en_transito" | "entregado" | "devuelto",
+    proveedorLogistica?: string,
+    numeroSeguimiento?: string,
+  ): void {
+    this.logistica.actualizarEnvio(this.tenantId, expedienteId, estado, proveedorLogistica, numeroSeguimiento);
+  }
+
+  marcarEntregado(expedienteId: string, firmaEntrega?: string): void {
+    this.logistica.marcarEntregado(this.tenantId, expedienteId, firmaEntrega);
+  }
+
+  obtenerEnvio(expedienteId: string) {
+    return this.logistica.obtenerUltimo(this.tenantId, expedienteId);
+  }
+
+  historialEnvio(expedienteId: string) {
+    return this.logistica.historialEnvio(this.tenantId, expedienteId);
+  }
+
+  pendientesDeEnviar() {
+    return this.logistica.pendientesDeEnviar(this.tenantId);
+  }
+
   close(): void {
     this.store.close();
     this.partes.close();
@@ -391,6 +427,7 @@ export class AppRuntime {
     this.facturas.close();
     this.stockStore.close();
     this.compras.close();
+    this.logistica.close();
     this.cobros.close();
     this.devoluciones.close();
     this.financiados.close();
