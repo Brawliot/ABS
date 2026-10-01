@@ -6,6 +6,7 @@
 export type AdapterId =
   | "sqlite_event_store"
   | "postgres_event_store"
+  | "sqlite_vault_store"
   | "playwright"
   | "llm";
 
@@ -29,6 +30,12 @@ export function adapterInventory(): readonly AdapterStatus[] {
         "PostgresEventStore async: RLS, trigger append-only, stream_version, outbox, identidad cifrada",
     },
     {
+      id: "sqlite_vault_store",
+      built: true,
+      notes:
+        "SqliteVaultStore: Gestión de documentos append-only con control de acceso por roleId, rechaza duplicados por hash",
+    },
+    {
       id: "playwright",
       built: true,
       notes:
@@ -46,6 +53,7 @@ export function adapterInventory(): readonly AdapterStatus[] {
 export { SqliteEventStore } from "./sqlite-event-store.js";
 export { PostgresEventStore } from "./postgres-event-store.js";
 export { PostgresParteIdentityStore } from "./postgres-identity-store.js";
+export { SqliteVaultStore } from "./sqlite-vault-store.js";
 export { claimUnpublished, markPublished, drainOutbox } from "./outbox.js";
 export {
   LlmClient,
