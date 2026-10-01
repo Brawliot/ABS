@@ -87,7 +87,15 @@ export class AdaptadorEmail extends AdaptadorCanal {
     asunto: string,
     html: string
   ): Promise<void> {
-    const nodemailer = await import("nodemailer");
+    // Dynamic import with fallback for missing nodemailer
+    let nodemailer: any;
+    try {
+      // @ts-expect-error optional module
+      nodemailer = await import("nodemailer");
+    } catch {
+      this.log("nodemailer not installed. Skipping SMTP send.", undefined);
+      return;
+    }
     const transporter = nodemailer.default.createTransport({
       host: this.host,
       port: this.port,

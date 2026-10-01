@@ -22,3 +22,12 @@ export interface PermisoDocumento {
   readonly nivel: NivelPermiso;
   readonly createdAt: Date;
 }
+
+export interface DocumentoOperacion {
+  readonly id: string;
+  readonly documentoId: string;
+  readonly operacion: "subir" | "descargar" | "compartir" | "eliminar";
+  readonly usuarioId: string;
+  readonly timestamp: Date;
+  readonly detalles?: string;
+}

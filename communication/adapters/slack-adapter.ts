@@ -75,9 +75,18 @@ export class AdaptadorSlack extends AdaptadorCanal {
   }
 
   private async enviarViaWebhook(payload: Record<string, any>): Promise<void> {
-    const fetch = (await import("node-fetch")).default;
+    let fetch_fn = globalThis.fetch;
+    if (!fetch_fn) {
+      try {
+        // @ts-expect-error optional module
+        fetch_fn = (await import("node-fetch")).default;
+      } catch {
+        this.log("node-fetch not installed and globalFetch unavailable. Skipping webhook.", undefined);
+        return;
+      }
+    }
 
-    const response = await fetch(this.webhookUrl, {
+    const response = await fetch_fn(this.webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

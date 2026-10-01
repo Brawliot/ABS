@@ -85,8 +85,16 @@ export class AdaptadorPush extends AdaptadorCanal {
     titulo: string,
     cuerpo: string
   ): Promise<void> {
-    const { initializeApp, cert, getApp } = await import("firebase-admin/app");
-    const { getMessaging } = await import("firebase-admin/messaging");
+    let initializeApp: any, cert: any, getApp: any, getMessaging: any;
+    try {
+      // @ts-expect-error optional modules
+      ({ initializeApp, cert, getApp } = await import("firebase-admin/app"));
+      // @ts-expect-error optional module
+      ({ getMessaging } = await import("firebase-admin/messaging"));
+    } catch {
+      this.log("firebase-admin not installed. Skipping push send.", undefined);
+      return;
+    }
 
     let app;
     try {

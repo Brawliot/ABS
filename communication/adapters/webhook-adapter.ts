@@ -44,7 +44,16 @@ export class AdaptadorWebhook extends AdaptadorCanal {
     url: string,
     notificacion: NotificacionParaEnviar
   ): Promise<void> {
-    const fetch = (await import("node-fetch")).default;
+    let fetch_fn = globalThis.fetch;
+    if (!fetch_fn) {
+      try {
+        // @ts-expect-error optional module
+        fetch_fn = (await import("node-fetch")).default;
+      } catch {
+        this.log("node-fetch not installed. Skipping send.", undefined);
+        return;
+      }
+    }
 
     const payload = {
       id: notificacion.id,
@@ -55,11 +64,10 @@ export class AdaptadorWebhook extends AdaptadorCanal {
       timestamp: notificacion.createdAt,
     };
 
-    const response = await fetch(url, {
+    const response = await fetch_fn(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      timeout: 10000,
     });
 
     if (!response.ok) {

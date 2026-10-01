@@ -88,7 +88,7 @@ export class ColaNotificaciones {
           id: registro.id,
           ruleId: "",
           evento: registro.evento_id,
-          canal: registro.canal,
+          canal: registro.canal as any,
           destinatario: registro.destinatario as any,
           plantilla: registro.plantilla,
           contacto: "",

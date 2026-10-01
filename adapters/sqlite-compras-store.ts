@@ -128,19 +128,19 @@ export class SqliteComprasStore {
       cantidad_recibida?: number;
     } | undefined;
 
-    return row
-      ? {
-          id: row.id,
-          proveedor: row.proveedor,
-          productoId: row.producto_id,
-          cantidad: row.cantidad,
-          precioUnitarioCentimos: row.precio_unitario_centimos,
-          estado: row.estado as EstadoCompra,
-          fechaPedido: row.fecha_pedido,
-          fechaRecibida: row.fecha_recibida,
-          cantidadRecibida: row.cantidad_recibida,
-        }
-      : undefined;
+    if (!row) return undefined;
+
+    return {
+      id: row.id,
+      proveedor: row.proveedor,
+      productoId: row.producto_id,
+      cantidad: row.cantidad,
+      precioUnitarioCentimos: row.precio_unitario_centimos,
+      estado: row.estado as EstadoCompra,
+      fechaPedido: row.fecha_pedido,
+      ...(row.fecha_recibida && { fechaRecibida: row.fecha_recibida }),
+      ...(row.cantidad_recibida && { cantidadRecibida: row.cantidad_recibida }),
+    } as Compra;
   }
 
   listar(tenantId: string, filtros?: { proveedor?: string; estado?: EstadoCompra }): readonly Compra[] {
@@ -180,9 +180,9 @@ export class SqliteComprasStore {
       precioUnitarioCentimos: r.precio_unitario_centimos,
       estado: r.estado as EstadoCompra,
       fechaPedido: r.fecha_pedido,
-      fechaRecibida: r.fecha_recibida,
-      cantidadRecibida: r.cantidad_recibida,
-    }));
+      ...(r.fecha_recibida && { fechaRecibida: r.fecha_recibida }),
+      ...(r.cantidad_recibida && { cantidadRecibida: r.cantidad_recibida }),
+    } as Compra));
   }
 
   deudaConProveedor(tenantId: string, proveedor: string): number {

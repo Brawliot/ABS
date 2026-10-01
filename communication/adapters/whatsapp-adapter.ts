@@ -62,7 +62,16 @@ export class AdaptadorWhatsApp extends AdaptadorCanal {
     idPlantilla: string,
     datos: Record<string, any>
   ): Promise<void> {
-    const fetch = (await import("node-fetch")).default;
+    let fetch_fn = globalThis.fetch;
+    if (!fetch_fn) {
+      try {
+        // @ts-expect-error optional module
+        fetch_fn = (await import("node-fetch")).default;
+      } catch {
+        this.log("node-fetch not installed. Skipping send.", undefined);
+        return;
+      }
+    }
 
     const url = `https://graph.instagram.com/v18.0/${this.businessPhoneId}/messages`;
 
@@ -86,7 +95,7 @@ export class AdaptadorWhatsApp extends AdaptadorCanal {
       },
     };
 
-    const response = await fetch(url, {
+    const response = await fetch_fn(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.accessToken}`,

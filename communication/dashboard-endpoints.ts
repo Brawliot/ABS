@@ -62,7 +62,7 @@ export class DashboardEndpoints {
       }
     } else if (ruta.match(/^\/notificaciones\/[^/]+\/reintentar$/)) {
       if (req.method === "POST") {
-        const id = ruta.split("/")[2];
+        const id = ruta.split("/")[2] || "";
         return this.reintentarNotificación(res, id);
       }
     }

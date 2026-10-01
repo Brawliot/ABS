@@ -63,7 +63,14 @@ export class AdaptadorSMS extends AdaptadorCanal {
   }
 
   private async enviarViaTwilio(telefono: string, mensaje: string): Promise<void> {
-    const twilio = (await import("twilio")).default;
+    let twilio: any;
+    try {
+      // @ts-expect-error optional module
+      twilio = (await import("twilio")).default;
+    } catch {
+      this.log("twilio not installed. Skipping SMS send.", undefined);
+      return;
+    }
     const client = twilio(this.accountSid, this.authToken);
 
     await client.messages.create({
