@@ -57,6 +57,7 @@ import { handlePortal, isPortalPath } from "./portal.js";
 import { handleHoy, isHoyPath } from "./hoy.js";
 import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
 import { handleDinero, isDineroPath } from "./dinero.js";
+import { handleContabilidad, isContabilidadPath } from "./contabilidad.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
@@ -684,6 +685,11 @@ export function startWebServer(
 
       if (isDineroPath(path)) {
         const out = await handleDinero({ runtime, boot, auth }, req);
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isContabilidadPath(path)) {
+        const out = await handleContabilidad({ runtime, boot, auth }, req);
         return send(res, out.status, out.body, out.contentType, out.headers);
       }
 

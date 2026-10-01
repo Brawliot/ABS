@@ -251,6 +251,7 @@ function renderMaestrosNav(
     link("/ofertas", "Catálogo", "productos, servicios y precios", "ofertas") +
     (activo("stock") ? link("/stock", "Stock", "existencias y avisos", "stock") : "") +
     link("/dinero", "Dinero", "cobros, pagos y quién debe", "dinero") +
+    link("/contabilidad", "Contabilidad", "asientos, mayor, balance y P&L", "contabilidad") +
     (activo("facturas") ? link("/facturas", "Facturas", "expedidas, imprimir y rectificar", "facturas") : "") +
     `</ul>` +
     tecnica
