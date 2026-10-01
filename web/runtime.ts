@@ -153,6 +153,13 @@ export class AppRuntime {
     return this.reservedUnits.get(unitId);
   }
 
+  /**
+   * Libera una reserva de unidad (después de error o cambio de contexto).
+   */
+  releaseUnitReservation(unitId: string): void {
+    this.reservedUnits.delete(unitId);
+  }
+
   addSubject(subject: RuntimeSubject): void {
     if (this.subjects.some((s) => s.id === subject.id)) return;
     (this.subjects as RuntimeSubject[]).push(subject);
@@ -272,6 +279,27 @@ export class AppRuntime {
 
   actionById(actionId: string) {
     return this.boot.spec.actions.find((a) => a.id === actionId);
+  }
+
+  /**
+   * Transacción atómica: almacena evento y aplica a FactProvider.
+   * Si applyEvent falla DESPUÉS de append, se registra advertencia crítica.
+   * @throws Error si algo falla (store.append o facts.applyEvent)
+   */
+  appendEventAtomic(event: TransitionEvent): void {
+    this.store.append(event);
+    try {
+      this.facts.applyEvent(this.tenantId, event);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(
+        `[CRITICAL] FactProvider.applyEvent falló DESPUÉS de store.append(${event.id}). ` +
+        `Evento persistido pero proyección desincronizada. Detalles: ${msg}`
+      );
+      throw new Error(
+        `Fallo crítico de sincronización: evento guardado pero hechos no actualizados. Contacte soporte.`
+      );
+    }
   }
 }
 

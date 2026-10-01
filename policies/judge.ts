@@ -45,6 +45,7 @@ import type { FactBag, FactRequest } from "../facts/provider.js";
 import { sealAgainstEventStore } from "../facts/provider.js";
 import type { FactParams } from "../facts/catalog.js";
 import type { TenantId } from "../tenancy/index.js";
+import { judgeLogger } from "./judge-logger.js";
 
 /** Campos de la transacción / contexto de negocio (capa 1). */
 export type TransactionFields = Readonly<Record<string, unknown>>;
@@ -944,6 +945,7 @@ export function attemptJudgedAdvance(
         calculations: {},
         ...factsMeta,
       };
+      judgeLogger.logRejected(trace, input.actor.id);
       throw new JudgeRejectionError(policy.reason, trace);
     }
 
@@ -1102,6 +1104,17 @@ export function attemptJudgedAdvance(
     calculations,
     ...factsMeta,
   };
+
+  if (deviation) {
+    judgeLogger.logForced(
+      trace,
+      input.actor.id,
+      deviation.reason,
+      deviation.skippedPhase,
+    );
+  } else {
+    judgeLogger.logAccepted(trace, input.actor.id);
+  }
 
   return { transition, event, fieldsAfter, calculations, trace };
 }

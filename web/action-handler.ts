@@ -34,6 +34,7 @@ import {
 import type { PresentationChannel } from "../presentation/types.js";
 import type { AppRuntime, FlashMessage } from "./runtime.js";
 import type { CompiledRuleSet } from "../policies/types.js";
+import { validateFormValues } from "./form-validator.js";
 
 function findLifeTransition(
   lifecycle: Lifecycle,
@@ -330,6 +331,19 @@ async function executeUiActionLocked(
     body.formValues,
   );
 
+  // Validar formulario enriquecido contra schema compilado
+  try {
+    validateFormValues(action.transitionId, enrichedForm as Record<string, string>);
+  } catch (err) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: `Error de validación: ${err instanceof Error ? err.message : String(err)}`,
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
+
+  let reservedUnitId: string | undefined;
   const unitId =
     enrichedForm.unidad_id ||
     enrichedForm.plaza_id ||
@@ -348,6 +362,8 @@ async function executeUiActionLocked(
       runtime.setFlash(flash);
       return { ok: false, flash, idempotentReplay: false };
     }
+    // Si reserva fue exitosa, rastreamos para liberar si falla después
+    reservedUnitId = unitId as string;
   }
 
   const interaction: Interaction = {
@@ -537,8 +553,7 @@ async function executeUiActionLocked(
       ...(force ? { force } : {}),
     });
 
-    runtime.store.append(judged.event);
-    runtime.facts.applyEvent(runtime.tenantId, judged.event);
+    runtime.appendEventAtomic(judged.event);
 
     const flash: FlashMessage = {
       kind: "ok",
@@ -556,6 +571,11 @@ async function executeUiActionLocked(
       newStateId: judged.event.toStateId,
     };
   } catch (err) {
+    // Liberar reserva si la transición falla
+    if (reservedUnitId) {
+      runtime.releaseUnitReservation(reservedUnitId);
+    }
+
     if (err instanceof ForceNotAllowedError) {
       const flash: FlashMessage = {
         kind: "error",

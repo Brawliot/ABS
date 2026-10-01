@@ -8,3 +8,4 @@ export * from "./comunicacion.js";
 export * from "./identity.js";
 export * from "./compiler.js";
 export * from "./judge.js";
+export * from "./judge-logger.js";
