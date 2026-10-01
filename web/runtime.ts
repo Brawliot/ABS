@@ -15,6 +15,7 @@ import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
+import { SqliteNotificacionesStore } from "../adapters/sqlite-notificaciones-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -163,6 +164,8 @@ export class AppRuntime {
   readonly financiados: SqliteFinanciachsStore;
   /** Límites de crédito por cliente. */
   readonly creditoCliente: SqliteCreditoClienteStore;
+  /** Notificaciones (append-only). */
+  readonly notificaciones: SqliteNotificacionesStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -197,6 +200,7 @@ export class AppRuntime {
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
+      readonly notificaciones: SqliteNotificacionesStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -211,6 +215,7 @@ export class AppRuntime {
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
+    this.notificaciones = maestros.notificaciones;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -248,6 +253,7 @@ export class AppRuntime {
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
+    const notificaciones = new SqliteNotificacionesStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -258,6 +264,7 @@ export class AppRuntime {
       devoluciones,
       financiados,
       creditoCliente,
+      notificaciones,
     });
   }
 
@@ -271,6 +278,7 @@ export class AppRuntime {
     this.devoluciones.close();
     this.financiados.close();
     this.creditoCliente.close();
+    this.notificaciones.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -1257,6 +1265,36 @@ export class AppRuntime {
 
   actionById(actionId: string) {
     return this.boot.spec.actions.find((a) => a.id === actionId);
+  }
+
+  crearNotificacion(
+    expedienteId: string,
+    eventType: string,
+    config: { readonly asunto: string; readonly cuerpo: string; readonly canales: readonly string[] },
+    actorId: string,
+  ): string {
+    return this.notificaciones.crear(this.tenantId, {
+      expedienteId,
+      actorId,
+      eventType,
+      ...config,
+    });
+  }
+
+  notificacionesPendientes(actorId: string) {
+    return this.notificaciones.deActor(this.tenantId, actorId, true);
+  }
+
+  marcarNotificacionComoLeida(notificationId: string): void {
+    this.notificaciones.marcarComoLeida(this.tenantId, notificationId);
+  }
+
+  conteoDeSinLeer(actorId: string): number {
+    return this.notificaciones.conteoDeSinLeer(this.tenantId, actorId);
+  }
+
+  notificacionesDeExpediente(expedienteId: string) {
+    return this.notificaciones.deExpediente(this.tenantId, expedienteId);
   }
 }
 
