@@ -199,12 +199,21 @@ function routeGet(
 
   if (path === "/partes") {
     const tipo = query.tipo;
+    const busqueda = (query.q ?? "").toLowerCase().trim();
     const all = runtime.partes.list(tenant);
-    const rows =
-      tipo && (ParteSubtypes as readonly string[]).includes(tipo)
-        ? all.filter((p) => p.subtype === tipo)
-        : all;
-    return html(200, page(ctx, viewer, "Clientes y proveedores", parteList(viewer, rows, tipo)));
+    let rows = tipo && (ParteSubtypes as readonly string[]).includes(tipo)
+      ? all.filter((p) => p.subtype === tipo)
+      : all;
+    if (busqueda) {
+      rows = rows.filter((p) => {
+        const nombre = p.personal?.displayName?.toLowerCase() ?? "";
+        const telefono = p.personal?.phone?.toLowerCase() ?? "";
+        const email = p.personal?.email?.toLowerCase() ?? "";
+        const nif = p.personal?.taxId?.toLowerCase() ?? "";
+        return nombre.includes(busqueda) || telefono.includes(busqueda) || email.includes(busqueda) || nif.includes(busqueda);
+      });
+    }
+    return html(200, page(ctx, viewer, "Clientes y proveedores", parteList(viewer, rows, tipo, busqueda)));
   }
   if (path === "/partes/nueva") {
     return html(
@@ -399,6 +408,7 @@ function parteList(
   viewer: Viewer,
   rows: readonly ParteIdentityRecord[],
   tipo: string | undefined,
+  busqueda: string = "",
 ): string {
   const filters = [
     `<a href="${esc(withDev(viewer, "/partes"))}"${!tipo ? ' aria-current="page"' : ""}>Todas</a>`,
@@ -409,7 +419,7 @@ function parteList(
   ].join(" · ");
   const body =
     rows.length === 0
-      ? `<p class="empty" data-partes-empty>Todavía no hay ninguna. Da de alta la primera.</p>`
+      ? `<p class="empty" data-partes-empty>Todavía no hay ninguna${busqueda ? " que coincida con la búsqueda" : ""}. Da de alta la primera.</p>`
       : `<table data-partes-table><thead><tr><th>Nombre</th><th>Tipo</th><th>NIF</th><th>Teléfono</th><th>Correo</th></tr></thead><tbody>` +
         rows
           .map((p) => {
@@ -426,9 +436,18 @@ function parteList(
           })
           .join("") +
         `</tbody></table>`;
+  const busquedaForm =
+    `<form method="get" action="/partes" data-busqueda-form style="margin-bottom:16px">` +
+    `<div style="display:flex; gap:8px; align-items:center">` +
+    `<input type="search" name="q" placeholder="Buscar por nombre, teléfono, email o NIF..." value="${esc(busqueda)}" />` +
+    (tipo ? `<input type="hidden" name="tipo" value="${esc(tipo)}" />` : "") +
+    `<button type="submit">Buscar</button>` +
+    `</div>` +
+    `</form>`;
   return (
     `<p class="toolbar"><a class="btn" href="${esc(withDev(viewer, "/partes/nueva", tipo ? { tipo } : {}))}" data-parte-nueva>+ Nueva parte</a></p>` +
     `<p class="filters">${filters}</p>` +
+    busquedaForm +
     body
   );
 }
