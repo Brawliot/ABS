@@ -85,9 +85,9 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
 
       // Después de aceptar (t_acordar) o en el siguiente paso crítico, registra pagos
       if (tienePagosPorHitos && !hitosPagados && (t === "t_ejecutar" || t === "t_presentar" || t === "t_cerrar")) {
-        // Registra 50% antes de intentar ejecutar (sin hitoId específico por ahora)
-        rt.registrarCobro(alta.id, { importeCentimos: mitad, medio: "transferencia" }, "prueba-hitos");
-        rt.registrarCobro(alta.id, { importeCentimos: mitad, medio: "transferencia" }, "prueba-hitos");
+        // Registra ambos hitos (50% cada uno)
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50", medio: "transferencia" }, "prueba-hitos");
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50", medio: "transferencia" }, "prueba-hitos");
         hitosPagados = true;
       }
 
