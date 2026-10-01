@@ -262,4 +262,81 @@ Duration    ~8.6s
 **Pieza más débil:** **Capa 2 + cierre Puente 2↔3** (render/navegador, validación UiSpec, LLM/corpus, ausencia de Planificador→Generador), no el núcleo de eventos.
 
 **Preferencia de esta auditoría:** muchos huecos reales documentados arriba frente a los scores 3/3 del `audit-report.json`. Lo construido es sustancial y en gran parte real; lo que falta es sobre todo **profundidad de prueba / adaptadores / piezas declaradas no construidas**, no inventarios de carpetas vacías con nombres bonitos.
-)
+
+---
+
+## 10. VEREDICTO: ¿Capa 0 está lista para MVP?
+
+**✅ SÍ. Capa 0 es MVP-ready.**
+
+| Criterio | Estado | Confianza |
+|----------|--------|-----------|
+| Gramática inmutable | IMPLEMENTADO | 🟢 Alta |
+| EventStore append-only | IMPLEMENTADO | 🟢 Alta |
+| Invariantes probados | 42/42 tests ✓ | 🟢 Alta |
+| Derivación determinista | Property tests 200 seeds | 🟢 Alta |
+| Segregación de capas | 0 violaciones | 🟢 Alta |
+| Arquetipos funcionales | 18 tests E2E | 🟡 Media (profundidad limitada) |
+| Forzado auditado | 6 tests dedicados | 🟢 Alta |
+
+**Riesgos residuales:** bajo. Capa 0 no se rompe bajo refactoring normal.
+
+---
+
+## 11. Mejoras para Fase B (Aprendizaje + Observabilidad)
+
+**Patrón:** Capa 0 OBSERVA+REGISTRA → Capa 3 DECIDE → Capa 4 APRENDE.
+
+**ACEPTADAS (post-MVP, cuando haya datos reales):**
+
+### 1. ProfileObservation Mejorado
+**Ubicación:** `core/profile.ts` (ampliar)  
+**Qué:** Métricas agregadas sin cambiar invariantes
+
+```typescript
+export interface AggregatedMetrics {
+  txClosedSuccessfully: number;
+  txFailedCount: number;
+  avgTimeToClose: number; // ms
+  txClosureRate: number;  // % éxito vs fallo
+  commitmentFulfillmentByType: Record<string, number>;
+  mostCommonClosureBlocks: string[]; // qué regla bloquea más
+}
+```
+
+**Por qué después:** Necesita 3-6 meses de datos reales para ser útil.
+
+### 2. AnomalyDetector (Pasivo)
+**Ubicación:** `core/anomaly-detector.ts` (nueva)  
+**Qué:** Detecta patrones raros sin cambiar reglas
+
+```typescript
+class AnomalyDetector {
+  isAnomaly(key: string, value: number): boolean {
+    // Si está a 3σ de la media, flag
+  }
+  getAnomalies(): Anomaly[]; // NO toma acción
+}
+```
+
+**Por qué después:** Sin baseline, solo produce falsos positivos.
+
+### 3. Decision Logging (Para Entrenar)
+**Ubicación:** `core/events.ts` (agregar)  
+**Qué:** Registra "qué se decidió y por qué" en cada check de invariantes
+
+```typescript
+export interface DecisionRecord {
+  contextId: string;
+  decision: string;
+  predicates: Record<string, boolean>;
+  result: "approved" | "rejected";
+}
+```
+
+**Por qué después:** Recopila 1 año de decisiones → entrena modelos Capa 4.
+
+---
+
+**Costo:** +200 líneas código. **Ganancia:** Observabilidad + auditoría automática.  
+**Timeline sugerido:** Q3-Q4 2026 (cuando Capa 1-2-3 estén estables).
