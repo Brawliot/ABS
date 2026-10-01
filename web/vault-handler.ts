@@ -6,7 +6,7 @@
  */
 
 import type { SqliteVaultStore } from "../adapters/sqlite-vault-store.js";
-import type { NivelPermiso, Documento } from "../elements/documento.js";
+import type { NivelPermiso, Documento, PermisoDocumento } from "../elements/documento.js";
 
 export interface UsuarioContext {
   readonly userId: string;
@@ -39,7 +39,7 @@ export class VaultHandler {
       descargar: 3,
     };
 
-    return nivelHierarquia[permiso] >= nivelHierarquia[nivelRequerido];
+    return nivelHierarquia[permiso as unknown as NivelPermiso] >= nivelHierarquia[nivelRequerido];
   }
 
   subirDocumento(
