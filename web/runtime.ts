@@ -16,6 +16,7 @@ import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.j
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
 import { SqliteNotificacionesStore } from "../adapters/sqlite-notificaciones-store.js";
+import { SqliteTriggersStore } from "../adapters/sqlite-triggers-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -166,6 +167,8 @@ export class AppRuntime {
   readonly creditoCliente: SqliteCreditoClienteStore;
   /** Notificaciones (append-only). */
   readonly notificaciones: SqliteNotificacionesStore;
+  /** Triggers de automatización. */
+  readonly triggers: SqliteTriggersStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -201,6 +204,7 @@ export class AppRuntime {
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
       readonly notificaciones: SqliteNotificacionesStore;
+      readonly triggers: SqliteTriggersStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -216,6 +220,7 @@ export class AppRuntime {
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
     this.notificaciones = maestros.notificaciones;
+    this.triggers = maestros.triggers;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -254,6 +259,7 @@ export class AppRuntime {
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
     const notificaciones = new SqliteNotificacionesStore(dbPath);
+    const triggers = new SqliteTriggersStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -265,6 +271,7 @@ export class AppRuntime {
       financiados,
       creditoCliente,
       notificaciones,
+      triggers,
     });
   }
 
@@ -279,6 +286,7 @@ export class AppRuntime {
     this.financiados.close();
     this.creditoCliente.close();
     this.notificaciones.close();
+    this.triggers.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
