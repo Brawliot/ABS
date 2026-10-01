@@ -24,12 +24,6 @@ export class PostgresEventStore implements AsyncEventStore {
   private readonly listeners = new Set<EventStoreListener>();
   private readonly streamVersions = new Map<string, { version: number; timestamp: number }>();
   private readonly streamVersionCacheTtlMs = 30_000;
-  /**
-   * Atajo en memoria SOLO para rechazar rápido duplicados de la MISMA instancia.
-   * La garantía real de unicidad la da la base de datos (UNIQUE / PK company_id,id).
-   * Nunca es la fuente de verdad: cada append escribe en la BD antes de resolver.
-   */
-  private readonly knownIds = new Set<string>();
 
   constructor(opts: PostgresEventStoreOptions) {
     validateCompanyId(opts.companyId);
@@ -103,16 +97,7 @@ export class PostgresEventStore implements AsyncEventStore {
   };
 },
   ): Promise<void> {
-    // knownIds es solo una OPTIMIZACIÓN local, no una garantía.
-    // La BD (PK UNIQUE) es la fuente de verdad.
-    
-    try {
-      await this.appendImmediate(event as AppendOnlyEvent, options ?? {});
-      this.knownIds.add(event.id);  // ← Agregar DESPUÉS de éxito
-    } catch (err) {
-      // Si falla, el error ya viene traducido de appendImmediate()
-      throw err;
-    }
+    await this.appendImmediate(event as AppendOnlyEvent, options ?? {});
   }
 
   private async appendImmediate(
