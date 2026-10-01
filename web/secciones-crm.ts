@@ -27,6 +27,7 @@ export function seccionesCrm(ctx: ContextoCrm): readonly SeccionDef<ContextoCrm>
     seccionContactos,
     seccionTareas,
     seccionNotas,
+    seccionAuditoria,
     seccionHistorial,
   ];
 }
@@ -393,6 +394,34 @@ const seccionNotas: SeccionDef<ContextoCrm> = {
     `;
 
     return listaNotas + formNota;
+  },
+};
+
+const seccionAuditoria: SeccionDef<ContextoCrm> = {
+  id: "crm-auditoria",
+  titulo: () => "Historial de cambios",
+  mostrar: (ctx) => {
+    return ctx.runtime.auditoriaDe(ctx.parteId).length > 0;
+  },
+  peso: () => 35,
+  cubre: ["crm.auditoria"],
+  render: (ctx) => {
+    const cambios = ctx.runtime.auditoriaDe(ctx.parteId);
+    if (cambios.length === 0) {
+      return `<p class="empty">Sin cambios registrados.</p>`;
+    }
+
+    const rows = cambios
+      .map(
+        (c) =>
+          `<tr><td>${esc(c.campo)}</td>` +
+          `<td>${c.valorAnterior ? esc(c.valorAnterior) : "—"}</td>` +
+          `<td>${c.valorNuevo ? esc(c.valorNuevo) : "—"}</td>` +
+          `<td>${esc(c.autor)}</td>` +
+          `<td>${esc(fecha(c.fecha))}</td></tr>`,
+      )
+      .join("");
+    return `<table><thead><tr><th>Campo</th><th>Anterior</th><th>Nuevo</th><th>Autor</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table>`;
   },
 };
 

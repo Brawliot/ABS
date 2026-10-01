@@ -18,6 +18,7 @@ import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-st
 import { SqliteNotasStore } from "../adapters/sqlite-notas-store.js";
 import { SqliteContactosStore } from "../adapters/sqlite-contactos-store.js";
 import { SqliteTareasCrmStore } from "../adapters/sqlite-tareas-crm-store.js";
+import { SqliteAuditoriaStore } from "../adapters/sqlite-auditoria-crm-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -172,6 +173,8 @@ export class AppRuntime {
   readonly contactos: SqliteContactosStore;
   /** Tareas de CRM por cliente. */
   readonly tareas: SqliteTareasCrmStore;
+  /** Auditoría de cambios en cliente. */
+  readonly auditoria: SqliteAuditoriaStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -209,6 +212,7 @@ export class AppRuntime {
       readonly notas: SqliteNotasStore;
       readonly contactos: SqliteContactosStore;
       readonly tareas: SqliteTareasCrmStore;
+      readonly auditoria: SqliteAuditoriaStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -226,6 +230,7 @@ export class AppRuntime {
     this.notas = maestros.notas;
     this.contactos = maestros.contactos;
     this.tareas = maestros.tareas;
+    this.auditoria = maestros.auditoria;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -266,6 +271,7 @@ export class AppRuntime {
     const notas = new SqliteNotasStore(dbPath);
     const contactos = new SqliteContactosStore(dbPath);
     const tareas = new SqliteTareasCrmStore(dbPath);
+    const auditoria = new SqliteAuditoriaStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -279,6 +285,7 @@ export class AppRuntime {
       notas,
       contactos,
       tareas,
+      auditoria,
     });
   }
 
@@ -295,6 +302,7 @@ export class AppRuntime {
     this.notas.close();
     this.contactos.close();
     this.tareas.close();
+    this.auditoria.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -1380,6 +1388,81 @@ export class AppRuntime {
 
   contarTareas(clienteId: string, estado?: "pendiente" | "completada"): number {
     return this.tareas.contarTareas(this.tenantId, clienteId, estado);
+  }
+
+  registrarCambioAuditoria(
+    clienteId: string,
+    campo: string,
+    valorAnterior: string | undefined,
+    valorNuevo: string | undefined,
+    autor: string,
+  ): void {
+    this.auditoria.registrarCambio(this.tenantId, clienteId, campo, valorAnterior, valorNuevo, autor);
+  }
+
+  auditoriaDe(clienteId: string): readonly { readonly campo: string; readonly valorAnterior?: string; readonly valorNuevo?: string; readonly autor: string; readonly fecha: string }[] {
+    return this.auditoria.auditoriaDe(this.tenantId, clienteId).map((r) => ({
+      campo: r.campo,
+      ...(r.valorAnterior ? { valorAnterior: r.valorAnterior } : {}),
+      ...(r.valorNuevo ? { valorNuevo: r.valorNuevo } : {}),
+      autor: r.autor,
+      fecha: r.fecha,
+    }));
+  }
+
+  generarReporte(tipo: "top-clientes" | "vencidos" | "inactivos"): string {
+    const ahora = new Date();
+    const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    let csv = "";
+    if (tipo === "top-clientes") {
+      csv = "Cliente,Deuda Total (€),Ingresos (€)\n";
+      const deudaPorCliente = new Map<string, { deuda: number; ingresos: number }>();
+      for (const exp of this.expedientesDinero()) {
+        const cliente = this.nombreParte(exp.parteId);
+        const prev = deudaPorCliente.get(exp.parteId) || { deuda: 0, ingresos: 0 };
+        if (exp.direccion === "entra") {
+          prev.ingresos += exp.totalCentimos;
+          if (exp.situacion === "pendiente") prev.deuda += exp.totalCentimos;
+        }
+        deudaPorCliente.set(exp.parteId, prev);
+      }
+      const top10 = [...deudaPorCliente.entries()]
+        .sort((a, b) => b[1].ingresos - a[1].ingresos)
+        .slice(0, 10);
+      for (const [parteId, datos] of top10) {
+        const cliente = this.nombreParte(parteId);
+        csv += `"${cliente}",${(datos.deuda / 100).toFixed(2)},${(datos.ingresos / 100).toFixed(2)}\n`;
+      }
+    } else if (tipo === "vencidos") {
+      csv = "Cliente,Deuda Vencida (€),Días\n";
+      for (const parteId of new Set(this.expedientesDinero().map((e) => e.parteId))) {
+        const impagos = this.impagosDe(parteId);
+        if (impagos.dias > 0) {
+          const deuda = this.expedientesDinero()
+            .filter((e) => e.parteId === parteId && e.situacion === "pendiente" && e.direccion === "entra")
+            .reduce((sum, e) => sum + e.totalCentimos, 0);
+          csv += `"${this.nombreParte(parteId)}",${(deuda / 100).toFixed(2)},${impagos.dias}\n`;
+        }
+      }
+    } else {
+      csv = "Cliente,Últimas Expedientes,Días Inactivos\n";
+      for (const parteId of new Set(this.expedientesDinero().map((e) => e.parteId))) {
+        const ultimaFecha = Math.max(
+          ...this.expedientesDinero()
+            .filter((e) => e.parteId === parteId)
+            .map((e) => new Date(e.fecha).getTime()),
+          0,
+        );
+        if (ultimaFecha > 0) {
+          const diasInactivos = Math.floor((ahora.getTime() - ultimaFecha) / (24 * 60 * 60 * 1000));
+          if (diasInactivos > 30) {
+            csv += `"${this.nombreParte(parteId)}",${this.expedientesDinero().filter((e) => e.parteId === parteId).length},${diasInactivos}\n`;
+          }
+        }
+      }
+    }
+    return csv;
   }
 }
 
