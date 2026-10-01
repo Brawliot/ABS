@@ -82,27 +82,24 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
 
     // Detecta si hay pagosPorHitos y extrae los IDs reales
     const tienePagosPorHitos = tieneHitosGlobal(boot);
-    console.log(`[DEBUG] Ciclo ${slice.id}: tienePagosPorHitos=${tienePagosPorHitos}`);
     const totalExp = 10000; // céntimos (100 EUR)
     const mitad = Math.round(totalExp / 2);
 
     let hitoIds: string[] = [];
     if (tienePagosPorHitos) {
-      const hitosRule = boot.input.ruleSet.rules.find(
-        (r: any) => "plantilla" in r && r.plantilla === "tpl.hitos_pago"
-      ) as any;
-      if (hitosRule?.parametros?.hitosJson) {
+      // Buscar en policyTemplates que es donde se guardan las plantillas compiladas
+      const policyTemplates = (boot.input as any).policyTemplates;
+      const hitosInv = Array.isArray(policyTemplates)
+        ? policyTemplates.find((p: any) => p.plantilla === "tpl.hitos_pago")
+        : undefined;
+      if (hitosInv?.parametros?.hitosJson) {
         try {
-          const hitos = JSON.parse(hitosRule.parametros.hitosJson);
+          const hitos = JSON.parse(hitosInv.parametros.hitosJson);
           hitoIds = hitos.map((h: any) => h.id ?? `h${hitos.indexOf(h) + 1}`);
-          console.log(`[DEBUG] Ciclo ${slice.id}: Hitos encontrados:`, hitoIds);
-        } catch (e) {
+        } catch {
           // Si falla el parse, genera IDs genéricos
           hitoIds = ["h1", "h2"];
-          console.log(`[DEBUG] Ciclo ${slice.id}: Parse error, usando IDs genéricos:`, hitoIds);
         }
-      } else {
-        console.log(`[DEBUG] Ciclo ${slice.id}: No hitosJson encontrado`);
       }
     }
 

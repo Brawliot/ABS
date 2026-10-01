@@ -113,7 +113,15 @@ function isHitos(profile: BusinessProfile): boolean {
   const c = profile.cobros?.pagosPorHitos;
   if (!c || !isKnown(c)) return false;
   const v = c.value;
-  return typeof v === "object" && v !== null && Array.isArray(v.hitos) && v.hitos.length > 0;
+  // Acepta tanto objetos con array hitos como strings con porcentajes
+  if (typeof v === "object" && v !== null && Array.isArray(v.hitos) && v.hitos.length > 0) {
+    return true;
+  }
+  // También acepta strings como "50% al aceptar, 50% al montar"
+  if (typeof v === "string" && /\d+\s*%/.test(v)) {
+    return true;
+  }
+  return false;
 }
 
 function evalAtom(atom: string, ctx: EvalCtx): boolean {
