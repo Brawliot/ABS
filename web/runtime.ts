@@ -19,6 +19,7 @@ import { SqliteNotasStore } from "../adapters/sqlite-notas-store.js";
 import { SqliteContactosStore } from "../adapters/sqlite-contactos-store.js";
 import { SqliteTareasCrmStore } from "../adapters/sqlite-tareas-crm-store.js";
 import { SqliteAuditoriaStore } from "../adapters/sqlite-auditoria-crm-store.js";
+import { SqliteComprasStore } from "../adapters/sqlite-compras-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -159,6 +160,8 @@ export class AppRuntime {
   readonly facturas: SqliteFacturaStore;
   /** Productos con control de stock y ajustes manuales. */
   readonly stockStore: SqliteStockStore;
+  /** Compras a proveedores (órdenes y recepciones). */
+  readonly compras: SqliteComprasStore;
   /** Cobros parciales (señal, hitos, pagos a cuenta). */
   readonly cobros: SqliteCobrosStore;
   /** Devoluciones de productos (append-only). */
@@ -205,6 +208,7 @@ export class AppRuntime {
       readonly ofertas: SqliteOfertaCatalog;
       readonly facturas: SqliteFacturaStore;
       readonly stock: SqliteStockStore;
+      readonly compras: SqliteComprasStore;
       readonly cobros: SqliteCobrosStore;
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
@@ -223,6 +227,7 @@ export class AppRuntime {
     this.ofertas = maestros.ofertas;
     this.facturas = maestros.facturas;
     this.stockStore = maestros.stock;
+    this.compras = maestros.compras;
     this.cobros = maestros.cobros;
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
@@ -264,6 +269,7 @@ export class AppRuntime {
     const ofertas = new SqliteOfertaCatalog(dbPath);
     const facturas = new SqliteFacturaStore(dbPath);
     const stock = new SqliteStockStore(dbPath);
+    const compras = new SqliteComprasStore(dbPath);
     const cobros = new SqliteCobrosStore(dbPath);
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
@@ -278,6 +284,7 @@ export class AppRuntime {
       ofertas,
       facturas,
       stock,
+      compras,
       cobros,
       devoluciones,
       financiados,
@@ -327,12 +334,63 @@ export class AppRuntime {
     this.stockStore.cancelarReservas(this.tenantId, expedienteId);
   }
 
+  crearCompra(
+    proveedor: string,
+    productoId: string,
+    cantidad: number,
+    precioUnitarioCentimos: number,
+    fechaPedido: string,
+  ): { ok: true; id: string } | { ok: false; error: string } {
+    if (!proveedor || !productoId || cantidad <= 0 || precioUnitarioCentimos <= 0) {
+      return { ok: false, error: "Datos de compra inválidos" };
+    }
+    const id = `compra-${randomUUID()}`;
+    this.compras.crearCompra(
+      this.tenantId,
+      id,
+      proveedor,
+      productoId,
+      cantidad,
+      precioUnitarioCentimos,
+      fechaPedido,
+    );
+    return { ok: true, id };
+  }
+
+  recibirCompra(compraId: string, cantidadRecibida: number): { ok: true } | { ok: false; error: string } {
+    if (cantidadRecibida <= 0) {
+      return { ok: false, error: "Cantidad inválida" };
+    }
+    const compra = this.compras.obtener(this.tenantId, compraId);
+    if (!compra) {
+      return { ok: false, error: "Compra no encontrada" };
+    }
+    if (cantidadRecibida > compra.cantidad) {
+      return { ok: false, error: "Cantidad recibida mayor que la pedida" };
+    }
+    this.compras.recibirCompra(this.tenantId, compraId, cantidadRecibida);
+
+    // Agregar stock
+    this.ajustarStock(compra.productoId, "entrada", cantidadRecibida * 1000, `Recepción compra ${compraId}`, "sistema");
+
+    return { ok: true };
+  }
+
+  listarCompras(filtros?: { proveedor?: string; estado?: "pendiente" | "recibida" | "cancelada" }) {
+    return this.compras.listar(this.tenantId, filtros);
+  }
+
+  deudaConProveedor(proveedor: string): number {
+    return this.compras.deudaConProveedor(this.tenantId, proveedor);
+  }
+
   close(): void {
     this.store.close();
     this.partes.close();
     this.ofertas.close();
     this.facturas.close();
     this.stockStore.close();
+    this.compras.close();
     this.cobros.close();
     this.devoluciones.close();
     this.financiados.close();
