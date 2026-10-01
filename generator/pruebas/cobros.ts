@@ -20,9 +20,24 @@ export async function probarCobroSena(ctx: ContextoPrueba): Promise<ResultadoPru
 }
 
 export async function probarCobroCredito(ctx: ContextoPrueba): Promise<ResultadoPrueba> {
+  // Crear un expediente a crédito de prueba si no existe ninguno
+  const expsExistentes = ctx.runtime.expedientesDinero().filter((e) => e.direccion === "entra" && e.situacion === "pendiente");
+  if (expsExistentes.length === 0) {
+    const txRes = ctx.runtime.crearTransaccion(
+      {
+        lifecycleId: ctx.boot.input.lifecycles[0]?.id || "lc",
+        parteId: "parte-demo-1",
+        fecha: "2026-09-01",
+        lineas: [{ descripcion: "Venta a crédito", cantidadMilesimas: 1000, precioCentimos: 50000, ivaPct: 21 }],
+      },
+      "prueba",
+    );
+    if (!txRes.ok) return { ok: false, detalle: `No se pudo crear expediente a crédito: ${txRes.errors.join("; ")}` };
+  }
+
   const exps = ctx.runtime.expedientesDinero().filter((e) => e.direccion === "entra" && e.situacion === "pendiente");
   if (exps.length === 0) {
-    return { ok: false, detalle: "Sin expedientes pendientes para verificar deuda" };
+    return { ok: false, detalle: "No se pudo generar expediente a crédito para prueba" };
   }
 
   return { ok: true, detalle: "Expedientes a crédito aparecen como deuda del cliente" };

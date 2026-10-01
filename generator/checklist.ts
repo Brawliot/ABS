@@ -50,6 +50,18 @@ export interface PuntoConPrueba {
   readonly prueba?: (ctx: ContextoPrueba) => Promise<ResultadoPrueba>;
 }
 
+/** Detecta si un negocio tiene habilitada cierta funcionalidad de cobros basándose en reglas. */
+function tieneCobroHabilitado(ruleSet: AppBootResult["input"]["ruleSet"], tipo: "hitos" | "senal" | "credito" | "plazos" | "fianza"): boolean {
+  const plantillas: Record<"hitos" | "senal" | "credito" | "plazos" | "fianza", string[]> = {
+    hitos: ["tpl.hitos_pago"],
+    senal: ["tpl.senal_pago"],
+    credito: ["tpl.credito_cliente", "limite_credito"],
+    plazos: ["tpl.financiacion"],
+    fianza: ["tpl.fianza"],
+  };
+  return ruleSet.rules.some((r: any) => plantillas[tipo].includes(r.plantilla ?? ""));
+}
+
 /** Genera la lista de puntos a revisar según el perfil. */
 export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
   const puntos: PuntoConPrueba[] = [];
@@ -64,41 +76,51 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
     });
   }
 
-  // Cobros
-  puntos.push({
-    id: "cobro.hitos",
-    nombre: "Cobro: hitos bloqueados sin pago",
-    requiereData: () => true,
-    prueba: probarCobroHitos,
-  });
+  // Cobros - solo si están habilitados
+  if (tieneCobroHabilitado(boot.input.ruleSet, "hitos")) {
+    puntos.push({
+      id: "cobro.hitos",
+      nombre: "Cobro: hitos bloqueados sin pago",
+      requiereData: () => true,
+      prueba: probarCobroHitos,
+    });
+  }
 
-  puntos.push({
-    id: "cobro.senal",
-    nombre: "Cobro: seña al aceptar",
-    requiereData: () => true,
-    prueba: probarCobroSena,
-  });
+  if (tieneCobroHabilitado(boot.input.ruleSet, "senal")) {
+    puntos.push({
+      id: "cobro.senal",
+      nombre: "Cobro: seña al aceptar",
+      requiereData: () => true,
+      prueba: probarCobroSena,
+    });
+  }
 
-  puntos.push({
-    id: "cobro.a_cuenta",
-    nombre: "Cobro: a crédito",
-    requiereData: () => true,
-    prueba: probarCobroCredito,
-  });
+  if (tieneCobroHabilitado(boot.input.ruleSet, "credito")) {
+    puntos.push({
+      id: "cobro.a_cuenta",
+      nombre: "Cobro: a crédito",
+      requiereData: () => true,
+      prueba: probarCobroCredito,
+    });
+  }
 
-  puntos.push({
-    id: "cobro.plazos",
-    nombre: "Cobro: a plazos",
-    requiereData: () => true,
-    prueba: probarCobroPlazos,
-  });
+  if (tieneCobroHabilitado(boot.input.ruleSet, "plazos")) {
+    puntos.push({
+      id: "cobro.plazos",
+      nombre: "Cobro: a plazos",
+      requiereData: () => true,
+      prueba: probarCobroPlazos,
+    });
+  }
 
-  puntos.push({
-    id: "cobro.fianza",
-    nombre: "Cobro: fianza",
-    requiereData: () => true,
-    prueba: probarCobroFianza,
-  });
+  if (tieneCobroHabilitado(boot.input.ruleSet, "fianza")) {
+    puntos.push({
+      id: "cobro.fianza",
+      nombre: "Cobro: fianza",
+      requiereData: () => true,
+      prueba: probarCobroFianza,
+    });
+  }
 
   // Políticas
   const rulasUnique = new Map<string, (typeof boot.input.ruleSet.rules)[number]>();

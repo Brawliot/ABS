@@ -623,45 +623,12 @@ async function executeUiActionLocked(
           pedido: body.subjectId,
         });
       } catch {
-        // Fallback a LLM para explicación clara
-        try {
-          const llmResult = await runtime.llmClient.completeStructured({
-            componentId: "diagnosis",
-            callKind: "diagnosis.extract_answers",
-            system: "Eres un asistente que explica en lenguaje claro y profesional por qué se rechazó una transición comercial. Sé conciso (máximo 2 líneas).",
-            userPayload: {
-              razon: err.trace.reason || "Rechazado por política",
-              transicion: action.transitionId,
-              regla: err.trace.appliedRuleId,
-            },
-            schema: z.object({ explicacion: z.string() }),
-            schemaName: "rejection_explanation",  // ← AQUÍ
-            jsonSchema: {
-              type: "object",
-              properties: {
-                explicacion: { type: "string", description: "Explicación clara" },
-              },
-              required: ["explicacion"],
-            },
-            failureMode: "ask_clarification",
-          });
-          
-          if (llmResult.kind === "ok") {
-            text = llmResult.data.explicacion;
-          } else {
-            const reason = err.trace.reason || err.message;
-            text =
-              reason && !/Error|at Object|stack/i.test(reason)
-                ? reason
-                : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-          }
-        } catch {
-          const reason = err.trace.reason || err.message;
-          text =
-            reason && !/Error|at Object|stack/i.test(reason)
-              ? reason
-              : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-        }
+        // Fallback: usar la razón del error directamente
+        const reason = err.trace.reason || err.message;
+        text =
+          reason && !/Error|at Object|stack/i.test(reason)
+            ? reason
+            : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
       }
       const flash: FlashMessage = { kind: "error", text };
       runtime.setFlash(flash);
