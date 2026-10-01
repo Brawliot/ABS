@@ -7,6 +7,7 @@ import type { Pool, PoolClient } from "pg";
 import type { AppendOnlyEvent, DomainEvent } from "../core/events.js";
 import {
   EventStoreError,
+  type AsyncEventStore,
   type EventStoreListener,
 } from "../core/event-store.js";
 
@@ -15,7 +16,7 @@ export interface PostgresEventStoreOptions {
   readonly companyId: string;
 }
 
-export class PostgresEventStore {
+export class PostgresEventStore implements AsyncEventStore {
   private readonly pool: Pool;
   readonly companyId: string;
   private readonly listeners = new Set<EventStoreListener>();

@@ -7,17 +7,18 @@ import type { AppendOnlyEvent, DomainEvent } from "../core/events.js";
 import {
   EventStoreError,
   type EventStore,
+  type AsyncEventStore,
   type EventStoreListener,
 } from "../core/event-store.js";
 
 export class SqliteEventStore implements EventStore {
   private readonly db: Database.Database;
   private readonly listeners = new Set<EventStoreListener>();
-  private nextSeq: number;
   private readonly insertStmt: Database.Statement;
   private readonly byIdStmt: Database.Statement;
   private readonly bySubjectStmt: Database.Statement;
   private readonly allStmt: Database.Statement;
+  private readonly maxSeqStmt: Database.Statement;
 
   constructor(path: string | ":memory:" = ":memory:") {
     this.db = new Database(path);
@@ -34,10 +35,6 @@ export class SqliteEventStore implements EventStore {
       );
       CREATE INDEX IF NOT EXISTS idx_events_subject ON events(subject_id);
     `);
-    const row = this.db
-      .prepare(`SELECT COALESCE(MAX(seq), 0) AS m FROM events`)
-      .get() as { m: number };
-    this.nextSeq = row.m + 1;
     this.insertStmt = this.db.prepare(
       `INSERT INTO events (id, subject_id, payload, seq) VALUES (?, ?, ?, ?)`,
     );
@@ -48,28 +45,25 @@ export class SqliteEventStore implements EventStore {
     this.allStmt = this.db.prepare(
       `SELECT payload FROM events ORDER BY seq ASC`,
     );
+    this.maxSeqStmt = this.db.prepare(
+      `SELECT COALESCE(MAX(seq), 0) AS m FROM events`,
+    );
   }
 
   append(event: DomainEvent): void {
     const frozen = deepFreeze(structuredClone(event)) as AppendOnlyEvent;
-    
+
     try {
-      // Transacción: leer MAX(seq) y escribir atómicamente
       this.db.transaction(() => {
-        const row = this.db
-          .prepare(`SELECT COALESCE(MAX(seq), 0) AS m FROM events`)
-          .get() as { m: number };
+        const row = this.maxSeqStmt.get() as { m: number };
         const seq = row.m + 1;
-        
+
         this.insertStmt.run(
           frozen.id,
           frozen.subjectId,
           JSON.stringify(frozen),
           seq,
         );
-        
-        // Actualizar el contador local solo si la insert fue exitosa
-        this.nextSeq = seq + 1;
       })();
     } catch (err) {
       const code =
@@ -83,7 +77,7 @@ export class SqliteEventStore implements EventStore {
       }
       throw err;
     }
-    
+
     for (const listener of this.listeners) listener(frozen);
   }
 

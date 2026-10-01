@@ -27,6 +27,19 @@ export interface EventStore {
   remove(id: string): never;
 }
 
+export interface AsyncEventStore {
+  append(event: DomainEvent): Promise<void>;
+  getById(id: string): Promise<AppendOnlyEvent | undefined>;
+  getBySubject(subjectId: string): Promise<readonly AppendOnlyEvent[]>;
+  all(): Promise<readonly AppendOnlyEvent[]>;
+  /** Se notifica tras cada append exitoso. Devuelve unsubscribe. */
+  subscribe(listener: EventStoreListener): () => void;
+  /** Intento explícito de mutación — siempre falla (invariante del almacén). */
+  replace(id: string, event: DomainEvent): Promise<never>;
+  /** Intento explícito de borrado — siempre falla. */
+  remove(id: string): Promise<never>;
+}
+
 export class InMemoryEventStore implements EventStore {
   private readonly events: AppendOnlyEvent[] = [];
   private readonly byId = new Map<string, AppendOnlyEvent>();
