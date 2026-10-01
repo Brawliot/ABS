@@ -812,6 +812,64 @@ export class AppRuntime {
     };
   }
 
+  /** Balance: Activo, Pasivo, Capital. */
+  obtenerBalance(fecha?: string): {
+    activo: number;
+    pasivo: number;
+    capital: number;
+    valido: boolean;
+  } {
+    const cuentas = this.cuentas.todasCuentas(this.tenantId);
+    let activo = 0;
+    let pasivo = 0;
+    let capital = 0;
+
+    for (const cuenta of cuentas) {
+      // Filtrar por tipo (primeros 4 dígitos)
+      const tipo = parseInt(cuenta.codigo) / 1000;
+      if (tipo >= 1 && tipo < 2) {
+        // 1xxx = Activo
+        activo += cuenta.saldo_centimos;
+      } else if (tipo >= 2 && tipo < 3) {
+        // 2xxx = Pasivo
+        pasivo += cuenta.saldo_centimos;
+      } else if (tipo >= 3 && tipo < 4) {
+        // 3xxx = Capital
+        capital += cuenta.saldo_centimos;
+      }
+    }
+
+    const valido = activo === pasivo + capital;
+    return { activo, pasivo, capital, valido };
+  }
+
+  /** P&L: Ingresos, Gastos, Resultado. */
+  obtenerResultado(desde?: string, hasta?: string): {
+    ingresos: number;
+    gastos: number;
+    resultado: number;
+  } {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    let ingresos = 0;
+    let gastos = 0;
+
+    for (const asiento of asientos) {
+      const codigoDeu = parseInt(asiento.cuenta_deudora);
+      const codigoAcr = parseInt(asiento.cuenta_acreedora);
+
+      // 4xxx = Ingresos (crédito)
+      if (codigoAcr >= 4000 && codigoAcr < 5000) {
+        ingresos += asiento.importe_centimos;
+      }
+      // 5xxx = Gastos (débito)
+      if (codigoDeu >= 5000 && codigoDeu < 6000) {
+        gastos += asiento.importe_centimos;
+      }
+    }
+
+    return { ingresos, gastos, resultado: ingresos - gastos };
+  }
+
   /** Total cobrado en un expediente. */
   totalCobradoDe(expedienteId: string): number {
     return this.cobros.totalParcial(this.tenantId, expedienteId);
