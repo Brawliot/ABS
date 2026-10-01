@@ -61,6 +61,7 @@ import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
 import { generarExportacion, type ExportTipo } from "./exportacion.js";
+import { verificarToken, verificarRateLimit, buscarExpedientes, obtenerExpediente, buscarClientes, buscarFacturas } from "./api-rest.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -1282,6 +1283,53 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
           ),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path.startsWith("/api/v1/") && method === "GET") {
+        const token = verificarToken(req);
+        if (!token) {
+          return send(res, 401, JSON.stringify({ ok: false, error: "Token no proporcionado" }), "application/json; charset=utf-8");
+        }
+
+        if (!verificarRateLimit(token)) {
+          return send(res, 429, JSON.stringify({ ok: false, error: "Rate limit excedido (100 req/min)" }), "application/json; charset=utf-8");
+        }
+
+        const q = parseQuery(url);
+
+        if (path === "/api/v1/expedientes") {
+          const result = buscarExpedientes(runtime, { ...(q.estado ? { estado: q.estado } : {}), ...(q.cliente ? { cliente: q.cliente } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path.startsWith("/api/v1/expediente/")) {
+          const id = path.slice("/api/v1/expediente/".length);
+          const result = obtenerExpediente(runtime, id);
+          return send(res, result.ok ? 200 : 404, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/clientes") {
+          const result = buscarClientes(runtime, q.deuda ? { deuda: q.deuda } : undefined);
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/facturas") {
+          const result = buscarFacturas(runtime, { ...(q.serie ? { serie: q.serie } : {}), ...(q.desde ? { desde: q.desde } : {}), ...(q.hasta ? { hasta: q.hasta } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        return send(res, 404, JSON.stringify({ ok: false, error: "Ruta no encontrada" }), "application/json; charset=utf-8");
+      }
+
+      if (path === "/api/v1/webhook/evento" && method === "POST") {
+        const body = await readBody(req);
+        try {
+          const evento = JSON.parse(body);
+          console.log("Webhook recibido:", evento);
+          return send(res, 200, JSON.stringify({ ok: true, message: "Evento recibido" }), "application/json; charset=utf-8");
+        } catch {
+          return send(res, 400, JSON.stringify({ ok: false, error: "JSON inválido" }), "application/json; charset=utf-8");
+        }
       }
 
       if (path.startsWith("/export/") && method === "GET") {
