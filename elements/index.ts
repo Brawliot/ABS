@@ -39,6 +39,9 @@ import {
 import { transactionClosureInvariants } from "./closure.js";
 import type { Lifecycle } from "../core/lifecycle.js";
 
+// Re-exportar tipos de beneficios
+export * from "./beneficios.js";
+
 export function createParteSpec(subtype: ParteSubtype): MetaObjectSpec {
   return elementSpec({
     id: `element-parte-${subtype}`,

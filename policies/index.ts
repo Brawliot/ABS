@@ -8,3 +8,8 @@ export * from "./comunicacion.js";
 export * from "./identity.js";
 export * from "./compiler.js";
 export * from "./judge.js";
+export * from "./vacaciones.js";
+export * from "./beneficios.js";
+export * from "./triggers.js";
+export * from "./triggers-predefinidos.js";
+export * from "./logistica.js";

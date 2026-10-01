@@ -54,3 +54,7 @@ export {
   HeuristicLlmAdapter,
   CassetteLlmAdapter,
 } from "../llm/index.js";
+export { SqliteVacacionesStore } from "./sqlite-vacaciones-store.js";
+export { SqliteTriggersStore } from "./sqlite-triggers-store.js";
+export { ProveedorDHL, ProveedorFedEx } from "./logistica-providers.js";
+export type { ProveedorLogistica } from "./logistica-providers.js";
