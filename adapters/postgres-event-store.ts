@@ -10,6 +10,8 @@ import {
   type AsyncEventStore,
   type EventStoreListener,
 } from "../core/event-store.js";
+import { deepFreeze } from "../core/deep-freeze.js";
+import { validateCompanyId } from "../core/validation.js";
 
 export interface PostgresEventStoreOptions {
   readonly pool: Pool;
@@ -30,6 +32,7 @@ export class PostgresEventStore implements AsyncEventStore {
   private readonly knownIds = new Set<string>();
 
   constructor(opts: PostgresEventStoreOptions) {
+    validateCompanyId(opts.companyId);
     this.pool = opts.pool;
     this.companyId = opts.companyId;
   }
@@ -40,6 +43,10 @@ export class PostgresEventStore implements AsyncEventStore {
       await client.query(`SELECT set_config('abs.company_id', $1, false)`, [
         this.companyId,
       ]);
+      // synchronous_commit = OFF: avoid fsync wait, faster writes but lower durability.
+      // Trade-off: in case of unplanned DB restart, last ~50ms of writes may be lost.
+      // Acceptable for event sourcing + outbox pattern (retryable effects).
+      // For stricter durability requirements, set to ON or LOCAL.
       await client.query(`SET LOCAL synchronous_commit TO OFF`);
       return await fn(client);
     } finally {
@@ -275,15 +282,5 @@ export class PostgresEventStore implements AsyncEventStore {
       "Invariante violada: los eventos son inmutables; no se pueden borrar",
     );
   }
-}
-
-function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object") {
-    Object.freeze(value);
-    for (const key of Object.keys(value as object)) {
-      deepFreeze((value as Record<string, unknown>)[key]);
-    }
-  }
-  return value;
 }
 

@@ -13,6 +13,7 @@ import {
   type PartePersonalData,
 } from "../policies/identity.js";
 import { withCompanyContext } from "../db/migrate.js";
+import { validateCompanyId } from "../core/validation.js";
 
 function loadKey(): Buffer {
   const raw = process.env.ABS_IDENTITY_KEY;
@@ -54,7 +55,9 @@ export class PostgresParteIdentityStore {
   constructor(
     private readonly pool: Pool,
     private readonly companyId: TenantId,
-  ) {}
+  ) {
+    validateCompanyId(companyId);
+  }
 
   async put(
     parteId: string,

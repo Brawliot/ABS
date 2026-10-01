@@ -7,9 +7,9 @@ import type { AppendOnlyEvent, DomainEvent } from "../core/events.js";
 import {
   EventStoreError,
   type EventStore,
-  type AsyncEventStore,
   type EventStoreListener,
 } from "../core/event-store.js";
+import { deepFreeze } from "../core/deep-freeze.js";
 
 export class SqliteEventStore implements EventStore {
   private readonly db: Database.Database;
@@ -141,14 +141,4 @@ export class SqliteEventStore implements EventStore {
   close(): void {
     this.db.close();
   }
-}
-
-function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object") {
-    Object.freeze(value);
-    for (const key of Object.keys(value as object)) {
-      deepFreeze((value as Record<string, unknown>)[key]);
-    }
-  }
-  return value;
 }

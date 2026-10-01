@@ -3,6 +3,7 @@
  */
 
 import type { AppendOnlyEvent, DomainEvent } from "./events.js";
+import { deepFreeze } from "./deep-freeze.js";
 
 export class EventStoreError extends Error {
   constructor(message: string) {
@@ -89,14 +90,4 @@ export class InMemoryEventStore implements EventStore {
       "Invariante violada: los eventos son inmutables; no se pueden borrar",
     );
   }
-}
-
-function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object") {
-    Object.freeze(value);
-    for (const key of Object.keys(value as object)) {
-      deepFreeze((value as Record<string, unknown>)[key]);
-    }
-  }
-  return value;
 }
