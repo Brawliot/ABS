@@ -72,8 +72,14 @@ export class MotorNomina {
     let total = 0;
     for (const reg of registros) {
       if (reg.horaSalida && reg.horaEntrada !== "--:--") {
-        const [entradaHora, entradaMin] = reg.horaEntrada.split(":").map(Number);
-        const [salidaHora, salidaMin] = reg.horaSalida.split(":").map(Number);
+        const entradaParts = reg.horaEntrada.split(":");
+        const salidaParts = reg.horaSalida.split(":");
+
+        const entradaHora = parseInt(entradaParts[0] ?? "0");
+        const entradaMin = parseInt(entradaParts[1] ?? "0");
+        const salidaHora = parseInt(salidaParts[0] ?? "0");
+        const salidaMin = parseInt(salidaParts[1] ?? "0");
+
         const entrada = entradaHora + entradaMin / 60;
         const salida = salidaHora + salidaMin / 60;
         const horas = Math.max(0, salida - entrada);

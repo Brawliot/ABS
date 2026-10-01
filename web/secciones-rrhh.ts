@@ -9,9 +9,12 @@ import type { Empleado, Nomina, RegistroAsistencia } from "../elements/index.js"
  * Helper: HTML escape.
  */
 function esc(str: string): string {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /**
@@ -32,8 +35,14 @@ function calcularHoras(registro: RegistroAsistencia): string {
   if (!registro.horaSalida || registro.horaEntrada === "--:--") {
     return "-";
   }
-  const [entradaH, entradaM] = registro.horaEntrada.split(":").map(Number);
-  const [salidaH, salidaM] = registro.horaSalida.split(":").map(Number);
+  const entradaParts = registro.horaEntrada.split(":");
+  const salidaParts = registro.horaSalida.split(":");
+
+  const entradaH = parseInt(entradaParts[0] ?? "0");
+  const entradaM = parseInt(entradaParts[1] ?? "0");
+  const salidaH = parseInt(salidaParts[0] ?? "0");
+  const salidaM = parseInt(salidaParts[1] ?? "0");
+
   const entrada = entradaH + entradaM / 60;
   const salida = salidaH + salidaM / 60;
   const horas = Math.max(0, salida - entrada);

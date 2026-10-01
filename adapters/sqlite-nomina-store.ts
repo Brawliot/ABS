@@ -109,7 +109,7 @@ export class SqliteNominaStore {
   }
 
   private rowToNomina(row: any): Nomina {
-    return {
+    const nomina: Nomina = {
       id: row.id,
       empleadoId: row.empleado_id,
       periodo: row.periodo,
@@ -124,9 +124,13 @@ export class SqliteNominaStore {
       bonificaciones: row.bonificaciones,
       salarioNeto: row.salario_neto,
       estado: row.estado,
-      fechaPago: row.fecha_pago ? new Date(row.fecha_pago) : undefined,
       createdAt: new Date(row.created_at),
     };
+
+    if (row.fecha_pago) {
+      return { ...nomina, fechaPago: new Date(row.fecha_pago) };
+    }
+    return nomina;
   }
 
   close(): void {

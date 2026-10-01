@@ -48,15 +48,18 @@ export class MotorAsistencia {
     fecha: Date,
     razon?: string,
   ): RegistroAsistencia {
-    return {
+    const registro: RegistroAsistencia = {
       id: generateId(),
       empleadoId,
       fecha,
       horaEntrada: "--:--",
       estado: "ausente",
-      observaciones: razon,
       createdAt: new Date(),
     };
+    if (razon !== undefined) {
+      return { ...registro, observaciones: razon };
+    }
+    return registro;
   }
 
   /**
@@ -67,15 +70,18 @@ export class MotorAsistencia {
     fecha: Date,
     razon?: string,
   ): RegistroAsistencia {
-    return {
+    const registro: RegistroAsistencia = {
       id: generateId(),
       empleadoId,
       fecha,
       horaEntrada: "--:--",
       estado: "licencia",
-      observaciones: razon,
       createdAt: new Date(),
     };
+    if (razon !== undefined) {
+      return { ...registro, observaciones: razon };
+    }
+    return registro;
   }
 
   /**

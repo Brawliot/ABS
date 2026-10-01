@@ -18,12 +18,11 @@ import { RRHHHandler } from "../web/rrhh-handler.js";
 // ===== Helpers =====
 
 function crearEmpleado(overrides: Partial<Empleado> = {}): Empleado {
-  return {
+  const base: Empleado = {
     id: `emp-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     nombre: overrides.nombre ?? "Juan Pérez",
     rut: overrides.rut ?? "12345678-9",
     email: overrides.email ?? "juan@example.com",
-    telefono: overrides.telefono,
     puesto: overrides.puesto ?? "operario",
     departamento: overrides.departamento ?? "taller",
     estadoContrato: overrides.estadoContrato ?? "activo",
@@ -32,39 +31,59 @@ function crearEmpleado(overrides: Partial<Empleado> = {}): Empleado {
     salarioBase: overrides.salarioBase ?? 1500000, // $1.5M CLP in cents
     createdAt: overrides.createdAt ?? new Date(),
   };
+
+  if (overrides.telefono !== undefined) {
+    return { ...base, telefono: overrides.telefono };
+  }
+  return base;
 }
 
 function crearContrato(overrides: Partial<Contrato> = {}): Contrato {
-  return {
+  const base: Contrato = {
     id: `con-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     empleadoId: overrides.empleadoId ?? `emp-${Date.now()}`,
     tipo: overrides.tipo ?? "indefinido",
     fechaInicio: overrides.fechaInicio ?? new Date("2025-01-01"),
-    fechaTermino: overrides.fechaTermino,
     salarioBase: overrides.salarioBase ?? 1500000,
     beneficios: overrides.beneficios ?? { afp: 0.1 },
     createdAt: overrides.createdAt ?? new Date(),
   };
+
+  if (overrides.fechaTermino !== undefined) {
+    return { ...base, fechaTermino: overrides.fechaTermino };
+  }
+  return base;
 }
 
 function crearRegistro(overrides: Partial<RegistroAsistencia> = {}): RegistroAsistencia {
-  const base: RegistroAsistencia = {
+  const base = {
     id: `reg-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     empleadoId: overrides.empleadoId ?? `emp-${Date.now()}`,
     fecha: overrides.fecha ?? new Date(),
     horaEntrada: overrides.horaEntrada ?? "09:00",
-    horaSalida: overrides.horaSalida ?? "17:30",
-    observaciones: overrides.observaciones,
-    estado: overrides.estado ?? "asistente",
+    estado: overrides.estado ?? ("asistente" as const),
     createdAt: overrides.createdAt ?? new Date(),
   };
 
-  // Allow explicitly setting horaSalida to undefined
-  if ("horaSalida" in overrides && overrides.horaSalida === undefined) {
-    return { ...base, horaSalida: undefined };
+  let result: any = base;
+
+  // Handle horaSalida
+  if ("horaSalida" in overrides) {
+    if (overrides.horaSalida === undefined) {
+      // Don't include it
+    } else {
+      result.horaSalida = overrides.horaSalida;
+    }
+  } else {
+    result.horaSalida = "17:30";
   }
 
-  return base;
+  // Handle observaciones
+  if (overrides.observaciones !== undefined) {
+    result.observaciones = overrides.observaciones;
+  }
+
+  return result as RegistroAsistencia;
 }
 
 function crearRegistros(cantidad: number): RegistroAsistencia[] {
@@ -192,11 +211,20 @@ describe("RRHH — Nómina", () => {
     const empleado = crearEmpleado();
     const contrato = crearContrato({ empleadoId: empleado.id });
 
-    const registros = [
-      crearRegistro({
-        horaEntrada: "09:00",
-        horaSalida: undefined, // No check-out
-      }),
+    const reg1 = crearRegistro({
+      horaEntrada: "09:00",
+    });
+    const reg1NoSalida: RegistroAsistencia = {
+      id: reg1.id,
+      empleadoId: reg1.empleadoId,
+      fecha: reg1.fecha,
+      horaEntrada: reg1.horaEntrada,
+      estado: reg1.estado,
+      createdAt: reg1.createdAt,
+    };
+
+    const registros: RegistroAsistencia[] = [
+      reg1NoSalida,
       crearRegistro({
         horaEntrada: "10:00",
         horaSalida: "18:00",
@@ -348,9 +376,12 @@ describe("RRHH — Almacenamiento", () => {
     const recuperadas = await store.obtenerNominasPorPeriodo("2026-10");
 
     expect(recuperadas).toHaveLength(1);
-    expect(recuperadas[0].id).toBe(nomina.id);
-    expect(recuperadas[0].empleadoId).toBe(nomina.empleadoId);
-    expect(recuperadas[0].salarioNeto).toBe(nomina.salarioNeto);
+    const recuperada = recuperadas[0];
+    if (recuperada) {
+      expect(recuperada.id).toBe(nomina.id);
+      expect(recuperada.empleadoId).toBe(nomina.empleadoId);
+      expect(recuperada.salarioNeto).toBe(nomina.salarioNeto);
+    }
 
     store.close();
   });
@@ -405,8 +436,11 @@ describe("RRHH — Almacenamiento", () => {
     const recuperados = await store.obtenerRegistrosPorEmpleado("emp-1");
 
     expect(recuperados).toHaveLength(1);
-    expect(recuperados[0].id).toBe(registro.id);
-    expect(recuperados[0].horaEntrada).toBe(registro.horaEntrada);
+    const recuperado = recuperados[0];
+    if (recuperado) {
+      expect(recuperado.id).toBe(registro.id);
+      expect(recuperado.horaEntrada).toBe(registro.horaEntrada);
+    }
 
     store.close();
   });
@@ -414,10 +448,17 @@ describe("RRHH — Almacenamiento", () => {
   it("actualiza registro de asistencia con salida", async () => {
     const store = new SqliteAsistenciaStore(":memory:");
 
-    const registroInicial = crearRegistro({
+    const temp = crearRegistro({
       empleadoId: "emp-1",
-      horaSalida: undefined,
     });
+    const registroInicial: RegistroAsistencia = {
+      id: temp.id,
+      empleadoId: temp.empleadoId,
+      fecha: temp.fecha,
+      horaEntrada: temp.horaEntrada,
+      estado: temp.estado,
+      createdAt: temp.createdAt,
+    };
 
     await store.guardarRegistro(registroInicial);
 
@@ -476,7 +517,10 @@ describe("RRHH — Handler Business Logic", () => {
     expect(entrada.horaEntrada).toBe("09:00");
 
     const salida = await handler.registrarSalidaEmpleado(empleado.id, "17:30");
-    expect(salida?.horaSalida).toBe("17:30");
+    expect(salida).toBeTruthy();
+    if (salida) {
+      expect(salida.horaSalida).toBe("17:30");
+    }
   });
 
   it("registra faltas", async () => {
@@ -508,8 +552,11 @@ describe("RRHH — Handler Business Logic", () => {
     const nominas = await handler.generarNominaDelMes("2026-10");
 
     expect(nominas.length).toBeGreaterThan(0);
-    expect(nominas[0].periodo).toBe("2026-10");
-    expect(nominas[0].salarioNeto).toBeGreaterThan(0);
+    const nomina = nominas[0];
+    if (nomina) {
+      expect(nomina.periodo).toBe("2026-10");
+      expect(nomina.salarioNeto).toBeGreaterThan(0);
+    }
   });
 
   it("obtiene reporte mensual", async () => {

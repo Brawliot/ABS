@@ -104,7 +104,7 @@ export class RRHHHandler {
 
     const actualizado = this.motorAsistencia.registrarSalida(
       registro,
-      horaSalida,
+      horaSalida as string,
     );
     await this.asistenciaStore.actualizarRegistro(actualizado);
     return actualizado;
@@ -144,7 +144,9 @@ export class RRHHHandler {
       if (!contrato) continue;
 
       // Parse period (e.g., "2026-10" -> year=2026, month=10)
-      const [yearStr, monthStr] = periodo.split("-");
+      const parts = periodo.split("-");
+      const yearStr = parts[0] ?? "2026";
+      const monthStr = parts[1] ?? "10";
       const year = parseInt(yearStr);
       const month = parseInt(monthStr);
 
@@ -233,7 +235,9 @@ export class RRHHHandler {
     readonly licencias: number;
     readonly porcentajeAsistencia: number;
   }> {
-    const [yearStr, monthStr] = periodo.split("-");
+    const parts = periodo.split("-");
+    const yearStr = parts[0] ?? "2026";
+    const monthStr = parts[1] ?? "10";
     const year = parseInt(yearStr);
     const month = parseInt(monthStr);
 
