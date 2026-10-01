@@ -18,7 +18,7 @@ export interface ContextoHoy {
 }
 
 export function seccionesHoy(ctx: ContextoHoy): readonly SeccionDef<ContextoHoy>[] {
-  return [seccionResumen, seccionAgendaHoy, seccionAtascados, seccionPorCobrar, seccionVencen];
+  return [seccionResumen, seccionTareas, seccionAgendaHoy, seccionAtascados, seccionPorCobrar, seccionVencen];
 }
 
 const seccionResumen: SeccionDef<ContextoHoy> = {
@@ -37,6 +37,43 @@ const seccionResumen: SeccionDef<ContextoHoy> = {
       timeZone: "Europe/Madrid",
     });
     return `<h2>${esc(fechaHoy)}</h2>`;
+  },
+};
+
+const seccionTareas: SeccionDef<ContextoHoy> = {
+  id: "hoy-tareas",
+  titulo: () => "Tareas",
+  mostrar: (ctx) => {
+    const tareas = ctx.runtime.tareasVencidasHoy();
+    return tareas.length > 0;
+  },
+  peso: (ctx) => {
+    const tareas = ctx.runtime.tareasVencidasHoy();
+    return tareas.length > 0 ? 180 : 0;
+  },
+  cubre: ["hoy.tareas"],
+  render: (ctx) => {
+    const tareas = ctx.runtime.tareasVencidasHoy();
+
+    if (tareas.length === 0) return `<p class="empty">Sin tareas hoy.</p>`;
+
+    const etiquetas: Record<string, string> = {
+      cobro_vencido: "Cobro vencido",
+      cliente_bloqueado: "Cliente bloqueado",
+      stock_bajo: "Stock bajo",
+      factura_sin_enviar: "Factura sin enviar",
+    };
+
+    const rows = tareas
+      .map(
+        (t) =>
+          `<tr><td>${esc(etiquetas[t.tipo] ?? t.tipo)}</td><td>${esc(t.referencia)}</td><td>${esc(t.proximaEjecucion)}</td></tr>`,
+      )
+      .join("");
+    return (
+      `<p class="counter"><strong>${tareas.length}</strong> tarea${tareas.length === 1 ? "" : "s"} pendiente${tareas.length === 1 ? "" : "s"}</p>` +
+      `<table><thead><tr><th>Tipo</th><th>Referencia</th><th>Próxima</th></tr></thead><tbody>${rows}</tbody></table>`
+    );
   },
 };
 
@@ -63,7 +100,7 @@ const seccionAgendaHoy: SeccionDef<ContextoHoy> = {
     const rows = citas
       .map(
         (e) =>
-          `<tr><td><a href="/expedientes/${e.id}">${esc(e.label)}</a></td><td>${esc(e.estadoLabel)}</td><td>${esc(e.fecha.slice(11, 16) || "—")}</td></tr>`,
+          `<tr><td><a href="/expedientes/${e.id}">${esc(e.label)}</a></td><td>${esc(e.estadoLabel)}</td><td>${esc(e.fecha.includes("T") ? e.fecha.slice(11, 16) : "—")}</td></tr>`,
       )
       .join("");
     return `<table><thead><tr><th>Expediente</th><th>Estado</th><th>Hora</th></tr></thead><tbody>${rows}</tbody></table>`;

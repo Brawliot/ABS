@@ -15,6 +15,7 @@ import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
+import { SqliteTareasStore } from "../adapters/sqlite-tareas-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -163,6 +164,8 @@ export class AppRuntime {
   readonly financiados: SqliteFinanciachsStore;
   /** Límites de crédito por cliente. */
   readonly creditoCliente: SqliteCreditoClienteStore;
+  /** Tareas recurrentes y recordatorios. */
+  readonly tareas: SqliteTareasStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -197,6 +200,7 @@ export class AppRuntime {
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
+      readonly tareas: SqliteTareasStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -211,6 +215,7 @@ export class AppRuntime {
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
+    this.tareas = maestros.tareas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -248,6 +253,7 @@ export class AppRuntime {
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
+    const tareas = new SqliteTareasStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -258,6 +264,7 @@ export class AppRuntime {
       devoluciones,
       financiados,
       creditoCliente,
+      tareas,
     });
   }
 
@@ -271,6 +278,7 @@ export class AppRuntime {
     this.devoluciones.close();
     this.financiados.close();
     this.creditoCliente.close();
+    this.tareas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -1257,6 +1265,34 @@ export class AppRuntime {
 
   actionById(actionId: string) {
     return this.boot.spec.actions.find((a) => a.id === actionId);
+  }
+
+  tareasVencidasHoy(): readonly import("../adapters/sqlite-tareas-store.js").TareaRegistro[] {
+    const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+    return this.tareas.vencidasHoy(this.tenantId, hoy);
+  }
+
+  completarTarea(seq: number): void {
+    const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+    this.tareas.completar(this.tenantId, seq, hoy);
+  }
+
+  crearTareasAutomaticas(hoy: string): void {
+    const expedientes = this.expedientesDinero();
+
+    for (const exp of expedientes) {
+      if (exp.situacion === "pendiente" && (hoy.localeCompare(exp.fecha) >= 30)) {
+        const existente = this.tareas.deReferencia(this.tenantId, exp.id).find((t) => t.tipo === "cobro_vencido" && t.estado === "pendiente");
+        if (!existente) {
+          this.tareas.registrar(this.tenantId, {
+            tipo: "cobro_vencido",
+            referencia: exp.id,
+            periodicidad: "diaria",
+            proximaEjecucion: hoy,
+          });
+        }
+      }
+    }
   }
 }
 
