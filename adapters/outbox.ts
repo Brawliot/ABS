@@ -67,20 +67,70 @@ export async function markPublished(
   }
 }
 
+export interface DrainOutboxOptions {
+  readonly maxRetries?: number;
+  readonly onError?: (row: OutboxRow, error: Error) => Promise<void>;
+}
+
+export interface DrainOutboxResult {
+  readonly succeeded: number;
+  readonly failed: number;
+  readonly failedRows?: readonly OutboxRow[];
+}
+
 /**
- * Publicador: si el handler falla, no marca published → reintento al reiniciar.
+ * Publicador con retry y observabilidad.
+ * Si handler falla, reintenta con exponential backoff.
+ * Si maxRetries agotados: callback onError (para logging/alerting).
  */
 export async function drainOutbox(
   pool: Pool,
   companyId: string,
   handler: (row: OutboxRow) => Promise<void>,
-): Promise<number> {
+  options?: DrainOutboxOptions,
+): Promise<DrainOutboxResult> {
+  const maxRetries = options?.maxRetries ?? 3;
+  const onError = options?.onError;
   const rows = await claimUnpublished(pool, companyId);
-  let n = 0;
+
+  let succeeded = 0;
+  let failed = 0;
+  const failedRows: OutboxRow[] = [];
+
   for (const row of rows) {
-    await handler(row);
-    await markPublished(pool, companyId, row.id);
-    n += 1;
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await handler(row);
+        await markPublished(pool, companyId, row.id);
+        succeeded += 1;
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        if (attempt < maxRetries) {
+          // Exponential backoff: 1s, 2s, 4s, 8s
+          const delayMs = Math.pow(2, attempt) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+
+    if (lastError !== null) {
+      failed += 1;
+      failedRows.push(row);
+      if (onError) {
+        try {
+          await onError(row, lastError);
+        } catch (logErr) {
+          // Logging failed, don't throw
+          console.error(`Error calling onError callback for outbox ${row.id}:`, logErr);
+        }
+      }
+    }
   }
-  return n;
+
+  return { succeeded, failed, failedRows: failedRows.length > 0 ? failedRows : undefined };
 }

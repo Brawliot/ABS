@@ -97,21 +97,39 @@ export class SqliteEventStore implements EventStore {
   getById(id: string): AppendOnlyEvent | undefined {
     const row = this.byIdStmt.get(id) as { payload: string } | undefined;
     if (!row) return undefined;
-    return deepFreeze(JSON.parse(row.payload)) as AppendOnlyEvent;
+    try {
+      return deepFreeze(JSON.parse(row.payload)) as AppendOnlyEvent;
+    } catch (err) {
+      throw new EventStoreError(
+        `Payload corrupto para evento ${id}: ${(err as Error).message}`,
+      );
+    }
   }
 
   getBySubject(subjectId: string): readonly AppendOnlyEvent[] {
     const rows = this.bySubjectStmt.all(subjectId) as { payload: string }[];
-    return rows.map(
-      (r) => deepFreeze(JSON.parse(r.payload)) as AppendOnlyEvent,
-    );
+    return rows.map((r) => {
+      try {
+        return deepFreeze(JSON.parse(r.payload)) as AppendOnlyEvent;
+      } catch (err) {
+        throw new EventStoreError(
+          `Payload corrupto para subject ${subjectId}: ${(err as Error).message}`,
+        );
+      }
+    });
   }
 
   all(): readonly AppendOnlyEvent[] {
     const rows = this.allStmt.all() as { payload: string }[];
-    return rows.map(
-      (r) => deepFreeze(JSON.parse(r.payload)) as AppendOnlyEvent,
-    );
+    return rows.map((r) => {
+      try {
+        return deepFreeze(JSON.parse(r.payload)) as AppendOnlyEvent;
+      } catch (err) {
+        throw new EventStoreError(
+          `Payload corrupto en stream global: ${(err as Error).message}`,
+        );
+      }
+    });
   }
 
   replace(_id: string, _event: DomainEvent): never {

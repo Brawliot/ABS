@@ -19,7 +19,8 @@ export class PostgresEventStore {
   private readonly pool: Pool;
   readonly companyId: string;
   private readonly listeners = new Set<EventStoreListener>();
-  private readonly streamVersions = new Map<string, number>();
+  private readonly streamVersions = new Map<string, { version: number; timestamp: number }>();
+  private readonly streamVersionCacheTtlMs = 30_000;
   /**
    * Atajo en memoria SOLO para rechazar rápido duplicados de la MISMA instancia.
    * La garantía real de unicidad la da la base de datos (UNIQUE / PK company_id,id).
@@ -53,10 +54,11 @@ export class PostgresEventStore {
     client: PoolClient,
     subjectId: string,
   ): Promise<number> {
+    const now = Date.now();
     const cached = this.streamVersions.get(subjectId);
-    if (cached !== undefined) {
-      const next = cached + 1;
-      this.streamVersions.set(subjectId, next);
+    if (cached !== undefined && (now - cached.timestamp) < this.streamVersionCacheTtlMs) {
+      const next = cached.version + 1;
+      this.streamVersions.set(subjectId, { version: next, timestamp: now });
       return next;
     }
     const verRes = await client.query<{ m: string }>(
@@ -67,7 +69,7 @@ export class PostgresEventStore {
     );
     const current = Number(verRes.rows[0]?.m ?? 0);
     const next = current + 1;
-    this.streamVersions.set(subjectId, next);
+    this.streamVersions.set(subjectId, { version: next, timestamp: now });
     return next;
   }
 
@@ -120,22 +122,25 @@ export class PostgresEventStore {
     await this.withClient(async (client) => {
       await client.query("BEGIN");
       try {
-        const next = await this.nextVersion(client, event.subjectId);  // ← AQUÍ
-        
+        const next = await this.nextVersion(client, event.subjectId);
+
         await client.query(
           `INSERT INTO abs_events.events
              (id, company_id, subject_id, stream_version, payload)
            VALUES ($1, $2, $3, $4, $5)`,
           [event.id, this.companyId, event.subjectId, next, payload],
         );
-        
+
         await client.query("COMMIT");
       } catch (err) {
         await client.query("ROLLBACK");
-        
-        // ← AQUÍ: TRADUCIR ERROR UNIQUE
+
         const pgErr = err as any;
         if (pgErr?.code === "23505") {  // PostgreSQL unique_violation
+          if (pgErr?.constraint?.includes("stream_version")) {
+            // stream_version conflict: invalidate cache for this subject
+            this.streamVersions.delete(event.subjectId);
+          }
           throw new EventStoreError(
             `No se puede añadir: ya existe un evento con id ${event.id}`,
           );
@@ -154,7 +159,13 @@ export class PostgresEventStore {
       );
       const row = res.rows[0]?.payload;
       if (row === undefined) return undefined;
-      return deepFreeze(JSON.parse(row) as AppendOnlyEvent);
+      try {
+        return deepFreeze(JSON.parse(row) as AppendOnlyEvent);
+      } catch (err) {
+        throw new EventStoreError(
+          `Payload corrupto para evento ${id}: ${(err as Error).message}`,
+        );
+      }
     });
   }
 
@@ -168,7 +179,15 @@ export class PostgresEventStore {
          ORDER BY stream_version ASC`,
         [this.companyId, subjectId],
       );
-      return res.rows.map((r) => JSON.parse(r.payload) as AppendOnlyEvent);
+      return res.rows.map((r) => {
+        try {
+          return JSON.parse(r.payload) as AppendOnlyEvent;
+        } catch (err) {
+          throw new EventStoreError(
+            `Payload corrupto para subject ${subjectId}: ${(err as Error).message}`,
+          );
+        }
+      });
     });
   }
 
@@ -180,7 +199,15 @@ export class PostgresEventStore {
          ORDER BY seq ASC`,
         [this.companyId],
       );
-      return res.rows.map((r) => JSON.parse(r.payload) as AppendOnlyEvent);
+      return res.rows.map((r) => {
+        try {
+          return JSON.parse(r.payload) as AppendOnlyEvent;
+        } catch (err) {
+          throw new EventStoreError(
+            `Payload corrupto en stream global: ${(err as Error).message}`,
+          );
+        }
+      });
     });
   }
 
