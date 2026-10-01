@@ -36,7 +36,7 @@ describe("Asientos contables", () => {
       "Venta de servicios",
       "expediente-001"
     );
-    expect(asiento1.ok).toBe(true);
+    if (!asiento1.ok) throw new Error(`Registrar asiento falló: ${asiento1.error}`);
     expect(asiento1.numeroAsiento).toBeTruthy();
 
     // Asiento 2: cobro por banco → débito Banco / crédito Caja

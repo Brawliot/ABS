@@ -759,6 +759,59 @@ export class AppRuntime {
     return { ok: true, numeroAsiento };
   }
 
+  /** Mayor contable de una cuenta. */
+  obtenerMayor(cuenta: string, desde?: string, hasta?: string): Array<{
+    readonly fecha: string;
+    readonly numero_asiento: string;
+    readonly concepto: string;
+    readonly referencia: string;
+    readonly debe: number;
+    readonly haber: number;
+  }> {
+    const asientos = this.asientos.porCuenta(this.tenantId, cuenta, desde, hasta);
+    return asientos.map((a) => ({
+      fecha: a.fecha,
+      numero_asiento: a.numero_asiento,
+      concepto: a.concepto,
+      referencia: a.referencia,
+      debe: a.cuenta_deudora === cuenta ? a.importe_centimos : 0,
+      haber: a.cuenta_acreedora === cuenta ? a.importe_centimos : 0,
+    }));
+  }
+
+  /** Verificar que débitos = créditos (cuadre). */
+  verificarCuadre(): { balanceado: boolean; totalDebitos: number; totalCreditos: number; cuentasDesbalanceadas: string[] } {
+    const asientos = this.asientos.todos(this.tenantId);
+    let totalDebitos = 0;
+    let totalCreditos = 0;
+    const saldosPorCuenta = new Map<string, number>();
+
+    for (const a of asientos) {
+      totalDebitos += a.importe_centimos;
+      totalCreditos += a.importe_centimos;
+      // Acumular débitos y créditos por cuenta
+      saldosPorCuenta.set(
+        a.cuenta_deudora,
+        (saldosPorCuenta.get(a.cuenta_deudora) ?? 0) + a.importe_centimos
+      );
+      saldosPorCuenta.set(
+        a.cuenta_acreedora,
+        (saldosPorCuenta.get(a.cuenta_acreedora) ?? 0) - a.importe_centimos
+      );
+    }
+
+    const cuentasDesbalanceadas = Array.from(saldosPorCuenta.entries())
+      .filter(([_, saldo]) => saldo !== (this.cuentas.obtener(_, this.tenantId)?.saldo_centimos ?? 0))
+      .map(([cuenta]) => cuenta);
+
+    return {
+      balanceado: totalDebitos === totalCreditos,
+      totalDebitos,
+      totalCreditos,
+      cuentasDesbalanceadas,
+    };
+  }
+
   /** Total cobrado en un expediente. */
   totalCobradoDe(expedienteId: string): number {
     return this.cobros.totalParcial(this.tenantId, expedienteId);
