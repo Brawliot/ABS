@@ -870,6 +870,54 @@ export class AppRuntime {
     return { ingresos, gastos, resultado: ingresos - gastos };
   }
 
+  /** Exportar asientos contables a CSV (formato Sage/Contaplus). */
+  exportarAsientosCSV(desde?: string, hasta?: string): string {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    const lineas: string[] = [
+      "fecha,asiento,cuenta_deudora,cuenta_acreedora,debe,haber,concepto,referencia",
+    ];
+
+    for (const asiento of asientos) {
+      const fecha = asiento.fecha;
+      const numeroAsiento = asiento.numero_asiento;
+      const cuentaDeu = asiento.cuenta_deudora;
+      const cuentaAcr = asiento.cuenta_acreedora;
+      const importe = asiento.importe_centimos / 100;
+      const concepto = asiento.concepto.replace(/"/g, '""'); // Escapar comillas
+      const referencia = asiento.referencia.replace(/"/g, '""');
+
+      lineas.push(
+        `${fecha},${numeroAsiento},${cuentaDeu},${cuentaAcr},${importe},${importe},"${concepto}","${referencia}"`
+      );
+    }
+
+    return lineas.join("\n");
+  }
+
+  /** Exportar asientos a JSON. */
+  exportarAsientosJSON(desde?: string, hasta?: string): string {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    const resultado = {
+      tenant: this.tenantId,
+      exportedAt: new Date().toISOString(),
+      periodo: {
+        desde: desde || null,
+        hasta: hasta || null,
+      },
+      asientos: asientos.map((a) => ({
+        fecha: a.fecha,
+        numero_asiento: a.numero_asiento,
+        cuenta_deudora: a.cuenta_deudora,
+        cuenta_acreedora: a.cuenta_acreedora,
+        importe_eur: a.importe_centimos / 100,
+        concepto: a.concepto,
+        referencia: a.referencia,
+      })),
+    };
+
+    return JSON.stringify(resultado, null, 2);
+  }
+
   /** Total cobrado en un expediente. */
   totalCobradoDe(expedienteId: string): number {
     return this.cobros.totalParcial(this.tenantId, expedienteId);
