@@ -8,6 +8,7 @@ import type { CompiledRuleSet, RoleDef } from "../policies/types.js";
 import type { PresentationChannel } from "../presentation/types.js";
 import type { RecursoSubtype } from "../elements/subtypes.js";
 import type { ComposedArchetypeSpec } from "../archetypes/types.js";
+import type { PolicyTemplateInvocation } from "../contracts/policy-templates/types.js";
 
 export type PaymentMode = "inmediato" | "financiado" | "diferido" | "mixto";
 
@@ -68,6 +69,8 @@ export interface GeneratorInput {
   readonly pipelineStateIds?: readonly string[];
   /** Vocabulario del negocio para las etiquetas visibles. */
   readonly vocabulario?: Readonly<Record<string, string>>;
+  /** Plantillas de políticas generadas por compositor. */
+  readonly policyTemplates?: readonly PolicyTemplateInvocation[];
 }
 
 export interface ModuleMatch {

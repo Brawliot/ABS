@@ -563,8 +563,11 @@ export function composeBusinessProfile(
   let milestones: HitoPagoSpec[] | undefined;
   if (isHitos(profile) && profile.cobros && isKnown(profile.cobros.pagosPorHitos)) {
     const hitosDecl = profile.cobros.pagosPorHitos.value;
+    let specs: HitoPagoSpec[] = [];
+
     if (typeof hitosDecl === "object" && hitosDecl !== null && "hitos" in hitosDecl) {
-      const specs: HitoPagoSpec[] = hitosDecl.hitos.map((h) => ({
+      // Formato: { hitos: [...] }
+      specs = hitosDecl.hitos.map((h) => ({
         id: h.id,
         fase: h.fase,
         bornInDominantState: h.bornInDominantState,
@@ -572,6 +575,33 @@ export function composeBusinessProfile(
         ...(h.pct !== undefined ? { pct: h.pct } : {}),
         ...(h.importeEur !== undefined ? { importeEur: h.importeEur } : {}),
       }));
+    } else if (typeof hitosDecl === "string") {
+      // Formato: "50% al aceptar, 50% al montar" → parsear porcentajes
+      const pcts = hitosDecl.match(/(\d+)\s*%/g);
+      if (pcts && pcts.length > 0) {
+        const percentages = pcts.map((p) => parseInt(p));
+        // Buscar archetype dominante para estados clave
+        const dominantArch = processes.find((pr) => pr.archetypeId === ctx.dominant);
+        const dominantLc = dominantArch ? requireArchetype(dominantArch.archetypeId).lifecycle : null;
+        // Estados típicos: inicial → ejecutando → cerrado/exito
+        const states = dominantLc ? dominantLc.states : [];
+        const inicialState = states.find((s) => s.kind === "inicial")?.id || "inicial";
+        const ejecState = states.find((s) => s.kind === "intermedio" && s.label?.includes("ejecución"))?.id ||
+                           states.find((s) => s.kind === "intermedio")?.id || "ejecutando";
+        const exitoState = states.find((s) => s.kind === "terminal_exito")?.id || "cerrado";
+
+        // Generar hitos con bloqueadas en estados clave
+        specs = percentages.map((pct, i) => ({
+          id: `h${i + 1}`,
+          fase: i === 0 ? "inicial" : "intermedia",
+          bornInDominantState: inicialState,
+          bloquea: i === 0 ? ejecState : exitoState,
+          pct,
+        }));
+      }
+    }
+
+    if (specs.length > 0) {
       try {
         validateHitosList(specs);
         const commitments = hitosToCommitments(specs);

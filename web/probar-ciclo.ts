@@ -44,17 +44,9 @@ export interface ResultadoCiclo {
 
 /** Detecta si hay reglas de pagosPorHitos. */
 function tieneHitosGlobal(boot: AppBootResult): boolean {
-  // Buscar en las plantillas compiladas dentro del RuleSet
-  const result = boot.input.ruleSet.rules.some((r: any) => "plantilla" in r && r.plantilla === "tpl.hitos_pago");
-  // Buscar también en policyTemplates (invocaciones sin compilar)
-  const policyTemplatesWithHitos = (boot.input as any).policyTemplates?.some((p: any) => p.plantilla === "tpl.hitos_pago");
-
-  const plantillas = boot.input.ruleSet.rules.filter((r: any) => "plantilla" in r).map((r: any) => r.plantilla);
-  const policyTemplates = (boot.input as any).policyTemplates?.map((p: any) => p.plantilla) ?? [];
-  console.log(`[DEBUG] Reglas compiladas con plantilla: ${plantillas.join(", ")} ; Policy templates: ${policyTemplates.join(", ")}`);
-  console.log(`[DEBUG] Tiene tpl.hitos_pago en reglas: ${result}, en policyTemplates: ${policyTemplatesWithHitos}`);
-
-  return result || !!policyTemplatesWithHitos;
+  // Las plantillas de hitos se guardan en boot.input.policyTemplates
+  const policyTemplates = (boot.input as any).policyTemplates;
+  return Array.isArray(policyTemplates) && policyTemplates.some((p: any) => p.plantilla === "tpl.hitos_pago");
 }
 
 /** Prueba el ciclo completo de todos los procesos del negocio. */
