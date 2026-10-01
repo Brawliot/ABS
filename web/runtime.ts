@@ -21,6 +21,8 @@ import { SqliteTareasCrmStore } from "../adapters/sqlite-tareas-crm-store.js";
 import { SqliteAuditoriaStore } from "../adapters/sqlite-auditoria-crm-store.js";
 import { SqliteComprasStore } from "../adapters/sqlite-compras-store.js";
 import { SqliteLogisticaStore } from "../adapters/sqlite-logistica-store.js";
+import { SqliteAsientosStore } from "../adapters/sqlite-asientos-store.js";
+import { SqliteCuentasStore } from "../adapters/sqlite-cuentas-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -181,6 +183,10 @@ export class AppRuntime {
   readonly tareas: SqliteTareasCrmStore;
   /** Auditoría de cambios en cliente. */
   readonly auditoria: SqliteAuditoriaStore;
+  /** Asientos contables (doble entrada). */
+  readonly asientos: SqliteAsientosStore;
+  /** Plan de cuentas. */
+  readonly cuentas: SqliteCuentasStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -221,6 +227,8 @@ export class AppRuntime {
       readonly contactos: SqliteContactosStore;
       readonly tareas: SqliteTareasCrmStore;
       readonly auditoria: SqliteAuditoriaStore;
+      readonly asientos: SqliteAsientosStore;
+      readonly cuentas: SqliteCuentasStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -241,6 +249,8 @@ export class AppRuntime {
     this.contactos = maestros.contactos;
     this.tareas = maestros.tareas;
     this.auditoria = maestros.auditoria;
+    this.asientos = maestros.asientos;
+    this.cuentas = maestros.cuentas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -284,6 +294,9 @@ export class AppRuntime {
     const contactos = new SqliteContactosStore(dbPath);
     const tareas = new SqliteTareasCrmStore(dbPath);
     const auditoria = new SqliteAuditoriaStore(dbPath);
+    const asientos = new SqliteAsientosStore(dbPath);
+    const cuentas = new SqliteCuentasStore(dbPath);
+    cuentas.crearPlanCuentas(tenantId);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -300,6 +313,8 @@ export class AppRuntime {
       contactos,
       tareas,
       auditoria,
+      asientos,
+      cuentas,
     });
   }
 
@@ -436,6 +451,8 @@ export class AppRuntime {
     this.contactos.close();
     this.tareas.close();
     this.auditoria.close();
+    this.asientos.close();
+    this.cuentas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -873,6 +890,197 @@ export class AppRuntime {
   /** Cobros parciales de un expediente. */
   cobrosDelExpediente(expedienteId: string): readonly { readonly importeCentimos: number; readonly fecha: string; readonly hitoId?: string; readonly medio: string; readonly actor: string }[] {
     return this.cobros.deExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Registra un asiento contable (doble entrada). */
+  registrarAsiento(
+    fecha: string,
+    cuentaDeudora: string,
+    cuentaAcreedora: string,
+    importeCentimos: number,
+    concepto: string,
+    referencia: string,
+  ): { ok: true; numeroAsiento: string } | { ok: false; error: string } {
+    if (!Number.isSafeInteger(importeCentimos) || importeCentimos <= 0) {
+      return { ok: false, error: "El importe debe ser mayor que 0." };
+    }
+    if (!this.cuentas.obtener(cuentaDeudora, this.tenantId)) {
+      return { ok: false, error: `Cuenta deudora no existe: ${cuentaDeudora}` };
+    }
+    if (!this.cuentas.obtener(cuentaAcreedora, this.tenantId)) {
+      return { ok: false, error: `Cuenta acreedora no existe: ${cuentaAcreedora}` };
+    }
+    const numeroAsiento = this.asientos.registrar(this.tenantId, {
+      fecha,
+      cuenta_deudora: cuentaDeudora,
+      cuenta_acreedora: cuentaAcreedora,
+      importe_centimos: importeCentimos,
+      concepto,
+      referencia,
+    });
+    // Actualizar saldos
+    this.cuentas.actualizarSaldo(cuentaDeudora, this.tenantId, importeCentimos);
+    this.cuentas.actualizarSaldo(cuentaAcreedora, this.tenantId, -importeCentimos);
+    return { ok: true, numeroAsiento };
+  }
+
+  /** Mayor contable de una cuenta. */
+  obtenerMayor(cuenta: string, desde?: string, hasta?: string): Array<{
+    readonly fecha: string;
+    readonly numero_asiento: string;
+    readonly concepto: string;
+    readonly referencia: string;
+    readonly debe: number;
+    readonly haber: number;
+  }> {
+    const asientos = this.asientos.porCuenta(this.tenantId, cuenta, desde, hasta);
+    return asientos.map((a) => ({
+      fecha: a.fecha,
+      numero_asiento: a.numero_asiento,
+      concepto: a.concepto,
+      referencia: a.referencia,
+      debe: a.cuenta_deudora === cuenta ? a.importe_centimos : 0,
+      haber: a.cuenta_acreedora === cuenta ? a.importe_centimos : 0,
+    }));
+  }
+
+  /** Verificar que débitos = créditos (cuadre). */
+  verificarCuadre(): { balanceado: boolean; totalDebitos: number; totalCreditos: number; cuentasDesbalanceadas: string[] } {
+    const asientos = this.asientos.todos(this.tenantId);
+    let totalDebitos = 0;
+    let totalCreditos = 0;
+    const saldosPorCuenta = new Map<string, number>();
+
+    for (const a of asientos) {
+      totalDebitos += a.importe_centimos;
+      totalCreditos += a.importe_centimos;
+      // Acumular débitos y créditos por cuenta
+      saldosPorCuenta.set(
+        a.cuenta_deudora,
+        (saldosPorCuenta.get(a.cuenta_deudora) ?? 0) + a.importe_centimos
+      );
+      saldosPorCuenta.set(
+        a.cuenta_acreedora,
+        (saldosPorCuenta.get(a.cuenta_acreedora) ?? 0) - a.importe_centimos
+      );
+    }
+
+    const cuentasDesbalanceadas = Array.from(saldosPorCuenta.entries())
+      .filter(([_, saldo]) => saldo !== (this.cuentas.obtener(_, this.tenantId)?.saldo_centimos ?? 0))
+      .map(([cuenta]) => cuenta);
+
+    return {
+      balanceado: totalDebitos === totalCreditos,
+      totalDebitos,
+      totalCreditos,
+      cuentasDesbalanceadas,
+    };
+  }
+
+  /** Balance: Activo, Pasivo, Capital. */
+  obtenerBalance(fecha?: string): {
+    activo: number;
+    pasivo: number;
+    capital: number;
+    valido: boolean;
+  } {
+    const cuentas = this.cuentas.todasCuentas(this.tenantId);
+    let activo = 0;
+    let pasivo = 0;
+    let capital = 0;
+
+    for (const cuenta of cuentas) {
+      // Filtrar por tipo (primeros 4 dígitos)
+      const tipo = parseInt(cuenta.codigo) / 1000;
+      if (tipo >= 1 && tipo < 2) {
+        // 1xxx = Activo
+        activo += cuenta.saldo_centimos;
+      } else if (tipo >= 2 && tipo < 3) {
+        // 2xxx = Pasivo
+        pasivo += cuenta.saldo_centimos;
+      } else if (tipo >= 3 && tipo < 4) {
+        // 3xxx = Capital
+        capital += cuenta.saldo_centimos;
+      }
+    }
+
+    const valido = activo === pasivo + capital;
+    return { activo, pasivo, capital, valido };
+  }
+
+  /** P&L: Ingresos, Gastos, Resultado. */
+  obtenerResultado(desde?: string, hasta?: string): {
+    ingresos: number;
+    gastos: number;
+    resultado: number;
+  } {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    let ingresos = 0;
+    let gastos = 0;
+
+    for (const asiento of asientos) {
+      const codigoDeu = parseInt(asiento.cuenta_deudora);
+      const codigoAcr = parseInt(asiento.cuenta_acreedora);
+
+      // 4xxx = Ingresos (crédito)
+      if (codigoAcr >= 4000 && codigoAcr < 5000) {
+        ingresos += asiento.importe_centimos;
+      }
+      // 5xxx = Gastos (débito)
+      if (codigoDeu >= 5000 && codigoDeu < 6000) {
+        gastos += asiento.importe_centimos;
+      }
+    }
+
+    return { ingresos, gastos, resultado: ingresos - gastos };
+  }
+
+  /** Exportar asientos contables a CSV (formato Sage/Contaplus). */
+  exportarAsientosCSV(desde?: string, hasta?: string): string {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    const lineas: string[] = [
+      "fecha,asiento,cuenta_deudora,cuenta_acreedora,debe,haber,concepto,referencia",
+    ];
+
+    for (const asiento of asientos) {
+      const fecha = asiento.fecha;
+      const numeroAsiento = asiento.numero_asiento;
+      const cuentaDeu = asiento.cuenta_deudora;
+      const cuentaAcr = asiento.cuenta_acreedora;
+      const importe = asiento.importe_centimos / 100;
+      const concepto = asiento.concepto.replace(/"/g, '""'); // Escapar comillas
+      const referencia = asiento.referencia.replace(/"/g, '""');
+
+      lineas.push(
+        `${fecha},${numeroAsiento},${cuentaDeu},${cuentaAcr},${importe},${importe},"${concepto}","${referencia}"`
+      );
+    }
+
+    return lineas.join("\n");
+  }
+
+  /** Exportar asientos a JSON. */
+  exportarAsientosJSON(desde?: string, hasta?: string): string {
+    const asientos = this.asientos.todos(this.tenantId, desde, hasta);
+    const resultado = {
+      tenant: this.tenantId,
+      exportedAt: new Date().toISOString(),
+      periodo: {
+        desde: desde || null,
+        hasta: hasta || null,
+      },
+      asientos: asientos.map((a) => ({
+        fecha: a.fecha,
+        numero_asiento: a.numero_asiento,
+        cuenta_deudora: a.cuenta_deudora,
+        cuenta_acreedora: a.cuenta_acreedora,
+        importe_eur: a.importe_centimos / 100,
+        concepto: a.concepto,
+        referencia: a.referencia,
+      })),
+    };
+
+    return JSON.stringify(resultado, null, 2);
   }
 
   /** Total cobrado en un expediente. */
