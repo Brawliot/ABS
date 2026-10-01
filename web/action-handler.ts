@@ -35,6 +35,7 @@ import type { PresentationChannel } from "../presentation/types.js";
 import type { AppRuntime, FlashMessage } from "./runtime.js";
 import type { CompiledRuleSet } from "../policies/types.js";
 import { validateFormValues } from "./form-validator.js";
+import { resolveJudgeErrorWithFallback } from "./judge-error-handler.js";
 
 function findLifeTransition(
   lifecycle: Lifecycle,
@@ -583,57 +584,15 @@ async function executeUiActionLocked(
       return { ok: false, flash, idempotentReplay };
     }
     if (err instanceof JudgeRejectionError) {
-      let text: string;
-      try {
-        const accionLabel =
-          runtime.boot.spec.content[action.id]?.title ??
-          action.transitionId.replace(/^t_/, "").replace(/_/g, " ");
-        text = resolveJudgeError(runtime.copyPack, err.trace, {
-          accion: action.transitionId,
-          accion_label: accionLabel,
-          pedido: body.subjectId,
-        });
-      } catch {
-        // Fallback a LLM para explicación clara
-        try {
-          const llmResult = await runtime.llmClient.completeStructured({
-            componentId: "diagnosis",
-            callKind: "diagnosis.extract_answers",
-            system: "Eres un asistente que explica en lenguaje claro y profesional por qué se rechazó una transición comercial. Sé conciso (máximo 2 líneas).",
-            userPayload: {
-              razon: err.trace.reason || "Rechazado por política",
-              transicion: action.transitionId,
-              regla: err.trace.appliedRuleId,
-            },
-            schema: z.object({ explicacion: z.string() }),
-            schemaName: "rejection_explanation",  // ← AQUÍ
-            jsonSchema: {
-              type: "object",
-              properties: {
-                explicacion: { type: "string", description: "Explicación clara" },
-              },
-              required: ["explicacion"],
-            },
-            failureMode: "ask_clarification",
-          });
-          
-          if (llmResult.kind === "ok") {
-            text = llmResult.data.explicacion;
-          } else {
-            const reason = err.trace.reason || err.message;
-            text =
-              reason && !/Error|at Object|stack/i.test(reason)
-                ? reason
-                : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-          }
-        } catch {
-          const reason = err.trace.reason || err.message;
-          text =
-            reason && !/Error|at Object|stack/i.test(reason)
-              ? reason
-              : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-        }
-      }
+      const text = await resolveJudgeErrorWithFallback({
+        error: err,
+        actionId: action.id,
+        transitionId: action.transitionId,
+        subjectId: body.subjectId,
+        copyPack: runtime.copyPack,
+        llmClient: runtime.llmClient,
+        contentSpec: runtime.boot.spec.content,
+      });
       const flash: FlashMessage = { kind: "error", text };
       runtime.setFlash(flash);
       return { ok: false, flash, idempotentReplay };
