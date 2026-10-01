@@ -60,6 +60,7 @@ import { handleDinero, isDineroPath } from "./dinero.js";
 import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
 import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
+import { handleReportes, isReportesPath } from "./reportes.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -702,6 +703,11 @@ export function startWebServer(
           req,
           async () => formToRecord(await readBody(req)),
         );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isReportesPath(path) && method === "GET") {
+        const out = await handleReportes({ runtime, boot, auth }, req);
         return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
