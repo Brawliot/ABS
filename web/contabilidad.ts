@@ -27,16 +27,15 @@ export async function handleContabilidad(
   ctx: MaestrosContext,
   req: IncomingMessage,
 ): Promise<MaestrosResponse> {
-  const viewer = identifyGet(req, ctx.boot);
-  if (!viewer) return { status: 403, body: "Acceso denegado" };
+  const url = new URL(req.url ?? "/", "http://local");
+  const query = Object.fromEntries(url.searchParams.entries());
+  const who = identifyGet(ctx, req, query);
+  if ("response" in who) return who.response;
+  const viewer = who.viewer;
 
-  const url = new URL(req.url!, `http://${req.headers.host}`);
-  const desdeParam = url.searchParams.get("desde") || null;
-  const hastaParam = url.searchParams.get("hasta") || null;
-  const cuentaParam = url.searchParams.get("cuenta") || null;
-
-  const desde = desdeParam ? new Date(desdeParam).toISOString().split("T")[0] : null;
-  const hasta = hastaParam ? new Date(hastaParam).toISOString().split("T")[0] : null;
+  const desde = query.desde || null;
+  const hasta = query.hasta || null;
+  const cuentaParam = query.cuenta || null;
 
   // Asientos contables
   const asientos = ctx.runtime.asientos?.todos(ctx.boot.tenantId, desde, hasta) ?? [];
@@ -128,7 +127,7 @@ export async function handleContabilidad(
     </html>
   `;
 
-  return page(body);
+  return page(ctx, viewer, "Contabilidad", body);
 }
 
 function renderAsientos(asientos: any[], desde: string | null, hasta: string | null): string {
@@ -340,23 +339,8 @@ function renderExportar(desde: string | null, hasta: string | null): string {
           <div></div>
         </div>
       </form>
-      <button class="export-btn" onclick="descargarCSV()">📥 Descargar CSV</button>
-      <button class="export-btn" onclick="descargarJSON()">📥 Descargar JSON</button>
-
-      <script>
-        function descargarCSV() {
-          const desde = new URLSearchParams(window.location.search).get('desde');
-          const hasta = new URLSearchParams(window.location.search).get('hasta');
-          const url = \`/api/contabilidad/csv?\${new URLSearchParams({ desde, hasta }).toString()}\`;
-          window.location = url;
-        }
-        function descargarJSON() {
-          const desde = new URLSearchParams(window.location.search).get('desde');
-          const hasta = new URLSearchParams(window.location.search).get('hasta');
-          const url = \`/api/contabilidad/json?\${new URLSearchParams({ desde, hasta }).toString()}\`;
-          window.location = url;
-        }
-      </script>
+      <button class="export-btn" onclick="alert('Función no implementada')">📥 Descargar CSV</button>
+      <button class="export-btn" onclick="alert('Función no implementada')">📥 Descargar JSON</button>
     </div>
   `;
 }
