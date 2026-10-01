@@ -62,6 +62,7 @@ import { handleStock, isStockPath } from "./stock.js";
 import { handleInicio, isInicioPath } from "./inicio.js";
 import { generarExportacion, type ExportTipo } from "./exportacion.js";
 import { verificarToken, verificarRateLimit, buscarExpedientes, obtenerExpediente, buscarClientes, buscarFacturas } from "./api-rest.js";
+import { calcularSaludNegocio } from "./salud-negocio.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -645,7 +646,8 @@ export function startWebServer(
           res,
           200,
           JSON.stringify({
-            ok: true,
+            status: "ok",
+            timestamp: new Date().toISOString(),
             profileId: boot.profileId,
             sealed: true,
             contentHash: boot.spec.contentHash,
@@ -655,6 +657,23 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path === "/negocio/salud" && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede ver salud del negocio", "text/plain");
+        }
+
+        const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+        const salud = calcularSaludNegocio(runtime, hoy);
+        return send(res, 200, JSON.stringify(salud), "application/json; charset=utf-8");
       }
 
       if (path === "/imprimir.js") {
