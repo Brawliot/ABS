@@ -233,7 +233,7 @@ export function renderLandingHtml(boot: AppBootResult, query?: string): string {
     ...(enviado ? { showSuccess: true } : {}),
   };
 
-  const resultado = montar(SECCIONES_WEB, ctx);
+  const resultado = (montar(SECCIONES_WEB, ctx) as any) ?? {};
   const successMsg = enviado
     ? `<div style="background: #d1fae5; color: #065f46; padding: 15px; border-radius: 4px; margin-bottom: 20px; text-align: center;">✓ Gracias por tu solicitud. Nos pondremos en contacto pronto.</div>`
     : "";
@@ -250,7 +250,7 @@ export function renderLandingHtml(boot: AppBootResult, query?: string): string {
   <div class="container">
     ${successMsg}
 
-    ${resultado.html}
+    ${(resultado.html ?? resultado) as any}
 
     <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--color-border); font-size: 0.9em; color: #6b7280;">
       <p>&copy; 2026 ${esc(boot.brandName)}. Todos los derechos reservados.</p>

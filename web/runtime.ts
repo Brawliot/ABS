@@ -329,8 +329,8 @@ export class AppRuntime {
         p.ofertaId,
         {
           disponible: p.disponible,
-          reservado: p.pendientes,
-          total: p.disponible + p.pendientes,
+          reservado: (p as any).pendientes ?? 0,
+          total: p.disponible + ((p as any).pendientes ?? 0),
         },
       ]),
     );

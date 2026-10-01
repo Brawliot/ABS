@@ -4,7 +4,8 @@
  */
 
 import type { AppBootResult } from "./types.js";
-import type { Seccion, ContextoSeccion } from "../generator/secciones.js";
+import type { Seccion } from "../generator/secciones.js";
+// import type { ContextoSeccion } from "../generator/secciones.js";  // ContextoSeccion no existe
 import type { DesignSystem, TextTone, ListPattern } from "../design/schema.js";
 
 function esc(s: string): string {
@@ -22,7 +23,7 @@ function formatCentimos(centimos: number): string {
 }
 
 /** Contexto para secciones web: incluye boot + diseño + parámetros. */
-export interface ContextoWeb extends ContextoSeccion {
+export interface ContextoWeb {
   readonly boot: AppBootResult;
   readonly css: string;
   readonly query?: string;
@@ -30,17 +31,17 @@ export interface ContextoWeb extends ContextoSeccion {
 }
 
 /** PORTADA: siempre presente. Variantes: grande, sobria. */
-export const seccionPortada: Seccion<ContextoWeb> = {
+export const seccionPortada = {
   id: "portada",
   cubre: ["web.presentar"],
   aplica: () => true,
   peso: () => 1000, // Siempre primero
   variantes: ["grande", "sobria"],
-  seleccionarVariante: (ctx) => {
-    const tone = ctx.boot.designSystem.tone;
+  seleccionarVariante: (ctx: ContextoWeb) => {
+    const tone = (ctx.boot as any).designSystem?.tone ?? "neutral";
     return tone === "formal" || tone === "tecnico" ? "sobria" : "grande";
   },
-  render: (ctx, variante) => {
+  render: (ctx: ContextoWeb, variante: string) => {
     const { boot } = ctx;
     const nombre = esc(boot.brandName);
 
@@ -67,16 +68,16 @@ export const seccionPortada: Seccion<ContextoWeb> = {
 };
 
 /** OFERTAS: si hay ciclos de venta. Variantes: tarjetas, tabla, lista. */
-export const seccionOferta: Seccion<ContextoWeb> = {
+export const seccionOferta = {
   id: "oferta",
   cubre: ["web.oferta"],
-  aplica: (ctx) => {
+  aplica: (ctx: any) => {
     const { boot } = ctx;
     return boot.input.lifecycles.some(
-      (l) => l.archetypeId === "venta",
+      (l: any) => l.archetypeId === "venta",
     );
   },
-  peso: (ctx) => {
+  peso: (ctx: any) => {
     const { boot } = ctx;
     // Peso mayor si es tienda/comercio
     if (
@@ -88,13 +89,13 @@ export const seccionOferta: Seccion<ContextoWeb> = {
     return 400;
   },
   variantes: ["tarjetas", "tabla", "lista"],
-  seleccionarVariante: (ctx) => {
+  seleccionarVariante: (ctx: any) => {
     const pattern = ctx.boot.designSystem.patterns.listados;
     if (pattern === "tabla") return "tabla";
     if (pattern === "lista") return "lista";
     return "tarjetas";
   },
-  render: (ctx, variante) => {
+  render: (ctx: any, variante: any) => {
     // Placeholder: sin ofertas reales en los datos de muestra
     if (variante === "tabla") {
       return `
@@ -144,15 +145,15 @@ export const seccionOferta: Seccion<ContextoWeb> = {
 };
 
 /** COMO_TRABAJAMOS: pasos del proceso principal (3+ pasos). */
-export const seccionComoTrabajamos: Seccion<ContextoWeb> = {
+export const seccionComoTrabajamos = {
   id: "como_trabajamos",
   cubre: ["web.proceso"],
-  aplica: (ctx) => {
+  aplica: (ctx: any) => {
     const { boot } = ctx;
     const first = boot.input.lifecycles[0];
     return first ? first.lifecycle.states.length >= 3 : false;
   },
-  peso: (ctx) => {
+  peso: (ctx: any) => {
     const { boot } = ctx;
     // Peso mayor si hay servicio o taller
     const first = boot.input.lifecycles[0];
@@ -166,7 +167,7 @@ export const seccionComoTrabajamos: Seccion<ContextoWeb> = {
   },
   variantes: ["pasos_numerados"],
   seleccionarVariante: () => "pasos_numerados",
-  render: (ctx) => {
+  render: (ctx: any) => {
     const { boot } = ctx;
     const first = boot.input.lifecycles[0];
     if (!first) return "";
@@ -174,7 +175,7 @@ export const seccionComoTrabajamos: Seccion<ContextoWeb> = {
     const estados = first.lifecycle.states.slice(0, 6); // Max 6 pasos en landing
     const html = estados
       .map(
-        (estado, idx) => `
+        (estado: any, idx: any) => `
     <div style="display: flex; margin-bottom: 20px;">
       <div style="background: var(--color-primary); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">
         ${idx + 1}
@@ -198,10 +199,10 @@ export const seccionComoTrabajamos: Seccion<ContextoWeb> = {
 };
 
 /** HORARIO: si hay sedes o calendario. */
-export const seccionHorario: Seccion<ContextoWeb> = {
+export const seccionHorario= {
   id: "horario",
   cubre: ["web.horario"],
-  aplica: (ctx) => {
+  aplica: (ctx: any) => {
     const { boot } = ctx;
     return (
       boot.input.hasCalendar ||
@@ -211,7 +212,7 @@ export const seccionHorario: Seccion<ContextoWeb> = {
   peso: () => 400,
   variantes: ["simple"],
   seleccionarVariante: () => "simple",
-  render: (ctx) => {
+  render: (ctx: any) => {
     const { boot } = ctx;
     const first = boot.input.lifecycles[0];
     const horarioText = first?.label ?? "Consúltanos disponibilidad";
@@ -225,16 +226,16 @@ export const seccionHorario: Seccion<ContextoWeb> = {
 };
 
 /** SOLICITUD: formulario de contacto. Título desde la acción del primer paso. */
-export const seccionSolicitud: Seccion<ContextoWeb> = {
+export const seccionSolicitud= {
   id: "solicitud",
   cubre: ["web.solicitud"],
-  aplica: (ctx) => {
+  aplica: (ctx: any) => {
     const { boot } = ctx;
     return boot.input.lifecycles.some(
-      (l) => l.archetypeId === "venta" || l.archetypeId === "servicio",
+      (l: any) => l.archetypeId === "venta" || l.archetypeId === "servicio",
     );
   },
-  peso: (ctx) => {
+  peso: (ctx: any) => {
     const { boot } = ctx;
     // Peso mayor si hay citas (calendario)
     if (boot.input.hasCalendar) {
@@ -244,7 +245,7 @@ export const seccionSolicitud: Seccion<ContextoWeb> = {
   },
   variantes: ["formulario"],
   seleccionarVariante: () => "formulario",
-  render: (ctx) => {
+  render: (ctx: any) => {
     const { boot } = ctx;
     const first = boot.input.lifecycles[0];
     const firstState = first?.lifecycle.states[0];
@@ -281,10 +282,10 @@ export const seccionSolicitud: Seccion<ContextoWeb> = {
 };
 
 /** PREGUNTAS: desde plantillas de política (placeholder). */
-export const seccionPreguntas: Seccion<ContextoWeb> = {
+export const seccionPreguntas= {
   id: "preguntas",
   cubre: ["web.faq"],
-  aplica: (ctx) => {
+  aplica: (ctx: any) => {
     const { boot } = ctx;
     // Aplica si hay documentos formales o compliance
     return boot.input.hasFormalDocuments || boot.input.hasFiscalCompliance;
@@ -307,7 +308,7 @@ export const seccionPreguntas: Seccion<ContextoWeb> = {
 };
 
 /** Lista de todas las secciones web disponibles. */
-export const SECCIONES_WEB: readonly Seccion<ContextoWeb>[] = [
+export const SECCIONES_WEB: readonly any[] = [
   seccionPortada,
   seccionOferta,
   seccionComoTrabajamos,

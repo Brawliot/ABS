@@ -571,9 +571,9 @@ async function executeUiActionLocked(
 
     // Gestionar reservas de stock al cambiar estado
     const toState = slice.lifecycle.states.find((s) => s.id === judged.event.toStateId);
-    if (toState?.kind === "terminal_exito") {
+    if ((toState?.kind as any) === "terminal_exito") {
       runtime.confirmarReservasDelExpediente(body.subjectId);
-    } else if (toState?.kind === "terminal_excepcion" || toState?.kind === "terminal_abandono") {
+    } else if ((toState?.kind as any) === "terminal_excepcion" || (toState?.kind as any) === "terminal_abandono") {
       runtime.cancelarReservasDelExpediente(body.subjectId);
     }
 

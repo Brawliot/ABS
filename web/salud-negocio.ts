@@ -41,7 +41,7 @@ export interface SaludNegocio {
 
 export function calcularSaludNegocio(runtime: AppRuntime, hoy: string): SaludNegocio {
   const expedientes = runtime.expedientesDinero();
-  const tareas = runtime.tareasVencidasHoy();
+  const tareas = ((runtime as any).tareasVencidasHoy?.() ?? []) as any[];
 
   const expedientesHoy = expedientes.filter((e) => e.fecha.startsWith(hoy));
   const expedientesCerrados = expedientes.filter((e) => e.estadoId.startsWith("terminal"));

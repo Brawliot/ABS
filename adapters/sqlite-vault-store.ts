@@ -243,12 +243,13 @@ export class SqliteVaultStore {
       }>;
 
     return ops.map((op) => ({
-      tipo: op.tipo as "renombrar" | "subir" | "cambiar_permisos",
+      id: `op_${op.documentoId}_${op.timestamp}`,
       documentoId: op.documentoId,
-      propietarioId: op.propietarioId,
+      operacion: op.tipo as "subir" | "descargar" | "compartir" | "eliminar",
+      usuarioId: op.propietarioId,
       timestamp: new Date(op.timestamp),
-      detalles: JSON.parse(op.detalles),
-    }));
+      detalles: JSON.parse(op.detalles) as string | undefined,
+    } as DocumentoOperacion));
   }
 
   private registrarOperacion(

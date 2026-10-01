@@ -166,7 +166,7 @@ describe("Vault - Control de acceso por roleId", () => {
       documentoId,
     );
     expect(operacionesAntes.length).toBe(1);
-    expect(operacionesAntes[0]?.tipo).toBe("subir");
+    expect(operacionesAntes[0]?.operacion).toBe("subir");
 
     // Staff renombra el documento (simulating the operation)
     const nuevoNombre = "documento-renombrado.pdf";

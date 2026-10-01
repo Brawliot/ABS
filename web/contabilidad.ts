@@ -38,34 +38,37 @@ export async function handleContabilidad(
   const cuentaParam = query.cuenta || null;
 
   // Asientos contables
-  const asientos = ctx.runtime.asientos?.todos(ctx.boot.tenantId, desde, hasta) ?? [];
+  const tenantId = (ctx.boot as any).tenantId ?? "default";
+  const desdeStr = desde ?? undefined;
+  const hastaStr = hasta ?? undefined;
+  const asientos = (ctx.runtime.asientos?.todos as any)?.(tenantId, desdeStr, hastaStr) ?? [];
 
   // Cuadre
-  const cuadre = ctx.runtime.verificarCuadre?.() ?? { cuadrado: false, debitos: 0, creditos: 0 };
+  const cuadre = (ctx.runtime.verificarCuadre?.() as any) ?? { cuadrado: false, debitos: 0, creditos: 0 };
 
   // Balance (Estado de situación)
-  const balance = ctx.runtime.obtenerBalance?.() ?? { activo: 0, pasivo: 0, capital: 0 };
+  const balance = (ctx.runtime.obtenerBalance?.() as any) ?? { activo: 0, pasivo: 0, capital: 0 };
 
   // P&L (Estado de resultados)
-  const pyL = ctx.runtime.obtenerResultado?.(desde, hasta) ?? { ingresos: 0, gastos: 0 };
+  const pyL = (ctx.runtime.obtenerResultado?.(desdeStr, hastaStr) as any) ?? { ingresos: 0, gastos: 0 };
 
   // Mayor contable (por cuenta seleccionada)
-  const cuentas = new Set<string>(asientos.flatMap((a) => [a.cuentaDeudora, a.cuentaAcreedora]));
+  const cuentas = new Set<string>(asientos.flatMap((a: any) => [a.cuenta_deudora ?? a.cuentaDeudora, a.cuenta_acreedora ?? a.cuentaAcreedora]));
   const cuentaSeleccionada = cuentaParam || (cuentas.size > 0 ? [...cuentas][0] : null);
-  const mayor = cuentaSeleccionada ? (ctx.runtime.obtenerMayor?.(cuentaSeleccionada, desde, hasta) ?? []) : [];
+  const mayor = cuentaSeleccionada ? ((ctx.runtime.obtenerMayor?.(cuentaSeleccionada, desdeStr, hastaStr) as any) ?? []) : [];
 
   // Períodos cerrados
-  const periodos = ctx.runtime.periodos?.obtenerPeriodos?.() ?? [];
+  const periodos = ((ctx.runtime as any).periodos?.obtenerPeriodos?.() as any) ?? [];
 
   const html_asientos = renderAsientos(asientos, desde, hasta);
-  const html_mayor = renderMayor(mayor, cuentaSeleccionada, [...cuentas]);
+  const html_mayor = renderMayor(mayor, cuentaSeleccionada ?? null, [...cuentas]);
   const html_cuadre = renderCuadre(cuadre);
   const html_balance = renderBalance(balance);
   const html_pyL = renderPyL(pyL);
   const html_exportar = renderExportar(desde, hasta);
   const html_periodos = renderPeriodos(periodos);
 
-  const contabilidadHtml = html`
+  const contabilidadHtml = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -106,9 +109,9 @@ export async function handleContabilidad(
     <body>
       <div class="header">
         <div class="nav">
-          <a href="${withDev(viewer, "/")}">${text("ABS")}</a>
-          <a href="${withDev(viewer, "/contabilidad")}">${text("Contabilidad")}</a>
-          <a href="${withDev(viewer, "/dinero")}">${text("Dinero")}</a>
+          <a href="${(withDev as any)(viewer, "/")}">${(text as any)("ABS")}</a>
+          <a href="${(withDev as any)(viewer, "/contabilidad")}">${(text as any)("Contabilidad")}</a>
+          <a href="${(withDev as any)(viewer, "/dinero")}">${(text as any)("Dinero")}</a>
         </div>
       </div>
 
@@ -127,11 +130,44 @@ export async function handleContabilidad(
     </html>
   `;
 
-  return html(200, page(ctx, viewer, "Contabilidad", contabilidadHtml));
+  return (html as any)(200, (page as any)(ctx, viewer, "Contabilidad", contabilidadHtml));
 }
 
 function renderAsientos(asientos: any[], desde: string | null, hasta: string | null): string {
-  return html`
+  const filas = asientos.map((a: any) => `
+    <tr>
+      <td>${esc(fecha(a.fecha))}</td>
+      <td>${esc(String(a.numeroAsiento))}</td>
+      <td>${esc(a.cuenta_deudora ?? a.cuentaDeudora ?? "")}</td>
+      <td>${esc(a.cuenta_acreedora ?? a.cuentaAcreedora ?? "")}</td>
+      <td class="texto-derecha">${formatCentimos(a.debe_centimos ?? a.debeCentimos ?? 0)}</td>
+      <td class="texto-derecha">${formatCentimos(a.haber_centimos ?? a.haberCentimos ?? 0)}</td>
+      <td>${esc(a.concepto ?? "")}</td>
+    </tr>
+  `).join("");
+
+  const tabla = asientos.length === 0
+    ? `<p class="empty">Sin asientos registrados en este período.</p>`
+    : `
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Asiento</th>
+            <th>Cuenta Deudora</th>
+            <th>Cuenta Acreedora</th>
+            <th class="texto-derecha">Debe</th>
+            <th class="texto-derecha">Haber</th>
+            <th>Concepto</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas}
+        </tbody>
+      </table>
+    `;
+
+  return `
     <div class="section">
       <h2>Asientos Contables</h2>
       <form method="get" style="margin-bottom: 15px;">
@@ -141,87 +177,62 @@ function renderAsientos(asientos: any[], desde: string | null, hasta: string | n
           <div><button type="submit">Filtrar</button></div>
         </div>
       </form>
-
-      ${asientos.length === 0
-        ? html`<p class="empty">Sin asientos registrados en este período.</p>`
-        : html`
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Asiento</th>
-                  <th>Cuenta Deudora</th>
-                  <th>Cuenta Acreedora</th>
-                  <th class="texto-derecha">Debe</th>
-                  <th class="texto-derecha">Haber</th>
-                  <th>Concepto</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${asientos.map((a) => html`
-                  <tr>
-                    <td>${esc(fecha(a.fecha))}</td>
-                    <td>${esc(String(a.numeroAsiento))}</td>
-                    <td>${esc(a.cuentaDeudora)}</td>
-                    <td>${esc(a.cuentaAcreedora)}</td>
-                    <td class="texto-derecha">${formatCentimos(a.debeCentimos)}</td>
-                    <td class="texto-derecha">${formatCentimos(a.haberCentimos)}</td>
-                    <td>${esc(a.concepto)}</td>
-                  </tr>
-                `)}
-              </tbody>
-            </table>
-          `}
+      ${tabla}
     </div>
   `;
 }
 
 function renderMayor(mayor: any[], cuentaSeleccionada: string | null, cuentas: string[]): string {
-  return html`
+  const options = cuentas.map((c) => `
+    <option value="${esc(c)}" ${c === cuentaSeleccionada ? "selected" : ""}>${esc(c)}</option>
+  `).join("");
+
+  const filas = mayor.map((m: any) => `
+    <tr>
+      <td>${esc(fecha(m.fecha ?? ""))}</td>
+      <td>${esc(String(m.numero_asiento ?? m.numeroAsiento ?? ""))}</td>
+      <td>${esc(m.concepto ?? "")}</td>
+      <td class="texto-derecha">${formatCentimos(m.debe_centimos ?? m.debeCentimos ?? 0)}</td>
+      <td class="texto-derecha">${formatCentimos(m.haber_centimos ?? m.haberCentimos ?? 0)}</td>
+      <td class="texto-derecha"><strong>${formatCentimos(m.saldo_centimos ?? m.saldoCentimos ?? 0)}</strong></td>
+    </tr>
+  `).join("");
+
+  const tabla = !cuentaSeleccionada || mayor.length === 0
+    ? `<p class="empty">Seleccione una cuenta para ver su mayor.</p>`
+    : `
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Asiento</th>
+            <th>Concepto</th>
+            <th class="texto-derecha">Debe</th>
+            <th class="texto-derecha">Haber</th>
+            <th class="texto-derecha">Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas}
+        </tbody>
+      </table>
+    `;
+
+  return `
     <div class="section">
       <h2>Mayor Contable</h2>
       <form method="get" style="margin-bottom: 15px;">
         <div class="form-row">
           <label>Cuenta
             <select name="cuenta">
-              ${cuentas.map((c) => html`
-                <option value="${esc(c)}" ${c === cuentaSeleccionada ? "selected" : ""}>${esc(c)}</option>
-              `)}
+              ${options}
             </select>
           </label>
           <div></div>
           <div><button type="submit">Cargar</button></div>
         </div>
       </form>
-
-      ${!cuentaSeleccionada || mayor.length === 0
-        ? html`<p class="empty">Seleccione una cuenta para ver su mayor.</p>`
-        : html`
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Asiento</th>
-                  <th>Concepto</th>
-                  <th class="texto-derecha">Debe</th>
-                  <th class="texto-derecha">Haber</th>
-                  <th class="texto-derecha">Saldo</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${mayor.map((m) => html`
-                  <tr>
-                    <td>${esc(fecha(m.fecha))}</td>
-                    <td>${esc(String(m.numeroAsiento))}</td>
-                    <td>${esc(m.concepto)}</td>
-                    <td class="texto-derecha">${formatCentimos(m.debeCentimos)}</td>
-                    <td class="texto-derecha">${formatCentimos(m.haberCentimos)}</td>
-                    <td class="texto-derecha"><strong>${formatCentimos(m.saldoCentimos)}</strong></td>
-                  </tr>
-                `)}
-              </tbody>
-            </table>
-          `}
+      ${tabla}
     </div>
   `;
 }
@@ -229,9 +240,12 @@ function renderMayor(mayor: any[], cuentaSeleccionada: string | null, cuentas: s
 function renderCuadre(cuadre: any): string {
   const estado = cuadre.cuadrado ? "CUADRADO ✓" : "DESBALANCEADO ✗";
   const clase = cuadre.cuadrado ? "cuadrado" : "desbalanceado";
-  const diferencia = Math.abs(cuadre.debitos - cuadre.creditos);
+  const diferencia = Math.abs((cuadre.debitos ?? 0) - (cuadre.creditos ?? 0));
+  const alertaHtml = !cuadre.cuadrado
+    ? `<p style="color: red; font-weight: bold;">⚠️ Diferencia: ${formatCentimos(diferencia)}</p>`
+    : "";
 
-  return html`
+  return `
     <div class="section">
       <h2>Cuadre Contable</h2>
       <div class="info-box">
@@ -241,26 +255,25 @@ function renderCuadre(cuadre: any): string {
         </div>
         <div class="info-item">
           <strong>Total Débitos</strong>
-          ${formatCentimos(cuadre.debitos)}
+          ${formatCentimos(cuadre.debitos ?? 0)}
         </div>
         <div class="info-item">
           <strong>Total Créditos</strong>
-          ${formatCentimos(cuadre.creditos)}
+          ${formatCentimos(cuadre.creditos ?? 0)}
         </div>
       </div>
-      ${!cuadre.cuadrado
-        ? html`
-            <p style="color: red; font-weight: bold;">
-              ⚠️ Diferencia: ${formatCentimos(diferencia)}
-            </p>
-          `
-        : html``}
+      ${alertaHtml}
     </div>
   `;
 }
 
 function renderBalance(balance: any): string {
-  return html`
+  const activo = balance.activo ?? 0;
+  const pasivo = balance.pasivo ?? 0;
+  const capital = balance.capital ?? 0;
+  const estado = activo === pasivo + capital ? "✓ CUADRA" : "✗ NO CUADRA";
+
+  return `
     <div class="section">
       <h2>Balance (Estado de Situación)</h2>
       <table>
@@ -273,21 +286,19 @@ function renderBalance(balance: any): string {
         <tbody>
           <tr>
             <td><strong>ACTIVO</strong> (Cuentas 1xxx)</td>
-            <td class="texto-derecha"><strong>${formatCentimos(balance.activo)}</strong></td>
+            <td class="texto-derecha"><strong>${formatCentimos(activo)}</strong></td>
           </tr>
           <tr>
             <td><strong>PASIVO</strong> (Cuentas 2xxx)</td>
-            <td class="texto-derecha"><strong>${formatCentimos(balance.pasivo)}</strong></td>
+            <td class="texto-derecha"><strong>${formatCentimos(pasivo)}</strong></td>
           </tr>
           <tr>
             <td><strong>CAPITAL</strong> (Cuentas 3xxx)</td>
-            <td class="texto-derecha"><strong>${formatCentimos(balance.capital)}</strong></td>
+            <td class="texto-derecha"><strong>${formatCentimos(capital)}</strong></td>
           </tr>
           <tr style="border-top: 2px solid #0066cc;">
             <td><strong>VERIFICACIÓN: Activo = Pasivo + Capital</strong></td>
-            <td class="texto-derecha">
-              ${balance.activo === balance.pasivo + balance.capital ? "✓ CUADRA" : "✗ NO CUADRA"}
-            </td>
+            <td class="texto-derecha">${estado}</td>
           </tr>
         </tbody>
       </table>
@@ -296,10 +307,12 @@ function renderBalance(balance: any): string {
 }
 
 function renderPyL(pyL: any): string {
-  const resultado = pyL.ingresos - pyL.gastos;
+  const ingresos = pyL.ingresos ?? 0;
+  const gastos = pyL.gastos ?? 0;
+  const resultado = ingresos - gastos;
   const clase = resultado >= 0 ? "cuadrado" : "desbalanceado";
 
-  return html`
+  return `
     <div class="section">
       <h2>P&L (Estado de Resultados)</h2>
       <table>
@@ -312,11 +325,11 @@ function renderPyL(pyL: any): string {
         <tbody>
           <tr>
             <td><strong>INGRESOS</strong> (Cuentas 4xxx)</td>
-            <td class="texto-derecha"><strong>${formatCentimos(pyL.ingresos)}</strong></td>
+            <td class="texto-derecha"><strong>${formatCentimos(ingresos)}</strong></td>
           </tr>
           <tr>
             <td><strong>GASTOS</strong> (Cuentas 5xxx)</td>
-            <td class="texto-derecha"><strong>${formatCentimos(pyL.gastos)}</strong></td>
+            <td class="texto-derecha"><strong>${formatCentimos(gastos)}</strong></td>
           </tr>
           <tr style="border-top: 2px solid #0066cc;">
             <td><strong>RESULTADO NETO</strong></td>
@@ -328,14 +341,14 @@ function renderPyL(pyL: any): string {
   `;
 }
 
-function renderExportar(desde: string | null, hasta: string | null): string {
-  return html`
+function renderExportar(desde: string | null | undefined, hasta: string | null | undefined): string {
+  return `
     <div class="section">
       <h2>Exportación</h2>
       <form method="get" style="margin-bottom: 15px;">
         <div class="form-row">
-          <label>Desde <input type="date" name="desde" value="${desde || ""}" /></label>
-          <label>Hasta <input type="date" name="hasta" value="${hasta || ""}" /></label>
+          <label>Desde <input type="date" name="desde" value="${desde ?? ""}" /></label>
+          <label>Hasta <input type="date" name="hasta" value="${hasta ?? ""}" /></label>
           <div></div>
         </div>
       </form>
@@ -346,7 +359,32 @@ function renderExportar(desde: string | null, hasta: string | null): string {
 }
 
 function renderPeriodos(periodos: any[]): string {
-  return html`
+  const filas = periodos.map((p: any) => `
+    <tr>
+      <td>${esc(fecha(p.fecha ?? ""))}</td>
+      <td><strong>${esc(p.estado ?? "")}</strong></td>
+      <td>${p.asiento_cierre || p.asientoCierre ? esc(String(p.asiento_cierre ?? p.asientoCierre ?? "")) : "—"}</td>
+    </tr>
+  `).join("");
+
+  const tabla = periodos.length === 0
+    ? `<p class="empty">Sin períodos cerrados.</p>`
+    : `
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Asiento de Cierre</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas}
+        </tbody>
+      </table>
+    `;
+
+  return `
     <div class="section">
       <h2>Cierre de Período</h2>
       <form method="post" action="/contabilidad/cerrar" style="margin-bottom: 15px;">
@@ -356,29 +394,7 @@ function renderPeriodos(periodos: any[]): string {
           <div><button type="submit" class="close-btn">Cerrar Período</button></div>
         </div>
       </form>
-
-      ${periodos.length === 0
-        ? html`<p class="empty">Sin períodos cerrados.</p>`
-        : html`
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                  <th>Asiento de Cierre</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${periodos.map((p) => html`
-                  <tr>
-                    <td>${esc(fecha(p.fecha))}</td>
-                    <td><strong>${esc(p.estado)}</strong></td>
-                    <td>${p.asientoCierre ? esc(String(p.asientoCierre)) : "—"}</td>
-                  </tr>
-                `)}
-              </tbody>
-            </table>
-          `}
+      ${tabla}
     </div>
   `;
 }
