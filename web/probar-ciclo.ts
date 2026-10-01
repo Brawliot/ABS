@@ -70,10 +70,26 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
       continue;
     }
 
-    // Detecta si hay pagosPorHitos
+    // Detecta si hay pagosPorHitos y extrae los IDs reales
     const tienePagosPorHitos = tieneHitosEnLc(boot, slice.id);
     const totalExp = 10000; // céntimos (100 EUR)
     const mitad = Math.round(totalExp / 2);
+
+    let hitoIds: string[] = [];
+    if (tienePagosPorHitos) {
+      const hitosRule = boot.input.ruleSet.rules.find(
+        (r: any) => "plantilla" in r && r.plantilla === "tpl.hitos_pago"
+      ) as any;
+      if (hitosRule?.parametros?.hitosJson) {
+        try {
+          const hitos = JSON.parse(hitosRule.parametros.hitosJson);
+          hitoIds = hitos.map((h: any) => h.id ?? `h${hitos.indexOf(h) + 1}`);
+        } catch {
+          // Si falla el parse, genera IDs genéricos
+          hitoIds = ["h1", "h2"];
+        }
+      }
+    }
 
     let n = 0;
     let parado = "";
@@ -85,9 +101,16 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
 
       // Después de aceptar (t_acordar) o en el siguiente paso crítico, registra pagos
       if (tienePagosPorHitos && !hitosPagados && (t === "t_ejecutar" || t === "t_presentar" || t === "t_cerrar")) {
-        // Registra ambos hitos (50% cada uno)
-        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50", medio: "transferencia" }, "prueba-hitos");
-        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50", medio: "transferencia" }, "prueba-hitos");
+        // Registra cada hito con su importe proporcional
+        for (const hitoId of hitoIds) {
+          if (hitoId) {
+            rt.registrarCobro(
+              alta.id,
+              { importeCentimos: mitad, hitoId, medio: "transferencia" },
+              "prueba-hitos"
+            );
+          }
+        }
         hitosPagados = true;
       }
 

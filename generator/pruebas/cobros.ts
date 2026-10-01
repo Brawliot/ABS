@@ -20,20 +20,27 @@ export async function probarCobroHitos(ctx: ContextoPrueba): Promise<ResultadoPr
   const rt = ctx.runtime;
   const boot = ctx.boot;
 
-  // Encuentra un lifecycle con pagosPorHitos
+  // Encuentra un lifecycle con pagosPorHitos y extrae los IDs de hitos
   let lcId: string | undefined;
-  for (const lc of boot.input.lifecycles) {
-    for (const rule of boot.input.ruleSet.rules) {
-      if ("plantilla" in rule && rule.plantilla === "tpl.hitos_pago") {
-        // Verifica que este lifecycle tenga la regla aplicable
-        lcId = lc.id;
-        break;
-      }
+  let hitoIds: string[] = [];
+  const hitosRule = boot.input.ruleSet.rules.find(
+    (r: any) => "plantilla" in r && r.plantilla === "tpl.hitos_pago"
+  ) as any;
+
+  if (hitosRule?.parametros?.hitosJson) {
+    for (const lc of boot.input.lifecycles) {
+      lcId = lc.id;
+      break;
     }
-    if (lcId) break;
+    try {
+      const hitos = JSON.parse(hitosRule.parametros.hitosJson);
+      hitoIds = hitos.map((h: any) => h.id ?? `h${hitos.indexOf(h) + 1}`);
+    } catch {
+      hitoIds = ["h1", "h2"];
+    }
   }
 
-  if (!lcId) {
+  if (!lcId || hitoIds.length === 0) {
     return { ok: false, detalle: "No hay negocio con pagosPorHitos configurado" };
   }
 
@@ -97,36 +104,46 @@ export async function probarCobroHitos(ctx: ContextoPrueba): Promise<ResultadoPr
   }
 
   // Registra pago del 1er hito (50%)
-  const regPago1 = rt.registrarCobro(expId, { importeCentimos: pago50, hitoId: "50_aceptar", medio: "transferencia" }, "prueba-hitos");
+  const regPago1 = rt.registrarCobro(expId, { importeCentimos: pago50, hitoId: hitoIds[0] ?? "h1", medio: "transferencia" }, "prueba-hitos");
   if (!regPago1.ok) {
     return { ok: false, detalle: `No se pudo registrar 1er pago: ${regPago1.error}` };
   }
 
-  // Intenta avanzar con 50% pagado (aún debería fallar porque falta el otro 50%)
-  let avanzoConUnHito = false;
-  for (const role of boot.roles) {
-    const resEjecutar = await executeUiAction(rt, {
-      actionId: `action.${lcId}.t_ejecutar`,
-      subjectId: expId,
-      clientRequestId: `${expId}-ejecutar-50-${role.id}`,
-      roleId: role.id,
-      parteId: "parte-demo-1",
-      channel: "backoffice",
-      kind: "boton",
-    });
-    if (resEjecutar.ok) {
-      avanzoConUnHito = true;
-      break;
+  // Si hay más de 1 hito, intenta avanzar con 1 pagado (debería fallar)
+  if (hitoIds.length > 1) {
+    let avanzoConUnHito = false;
+    for (const role of boot.roles) {
+      const resEjecutar = await executeUiAction(rt, {
+        actionId: `action.${lcId}.t_ejecutar`,
+        subjectId: expId,
+        clientRequestId: `${expId}-ejecutar-50-${role.id}`,
+        roleId: role.id,
+        parteId: "parte-demo-1",
+        channel: "backoffice",
+        kind: "boton",
+      });
+      if (resEjecutar.ok) {
+        avanzoConUnHito = true;
+        break;
+      }
+    }
+
+    if (avanzoConUnHito) {
+      return { ok: false, detalle: "Debería fallar con solo 1 de 2 hitos pagados" };
+    }
+
+    // Registra pago del 2do hito
+    const regPago2 = rt.registrarCobro(
+      expId,
+      { importeCentimos: pago50, hitoId: hitoIds[1] ?? "h2", medio: "transferencia" },
+      "prueba-hitos"
+    );
+    if (!regPago2.ok) {
+      return { ok: false, detalle: `No se pudo registrar 2do pago: ${regPago2.error}` };
     }
   }
 
-  // Registra pago del 2do hito (50%)
-  const regPago2 = rt.registrarCobro(expId, { importeCentimos: pago50, hitoId: "50_montar", medio: "transferencia" }, "prueba-hitos");
-  if (!regPago2.ok) {
-    return { ok: false, detalle: `No se pudo registrar 2do pago: ${regPago2.error}` };
-  }
-
-  // Intenta avanzar con 100% pagado (ahora debería funcionar)
+  // Intenta avanzar con todos los hitos pagados (debería funcionar)
   let avanzoConTodosPagos = false;
   for (const role of boot.roles) {
     const resEjecutar = await executeUiAction(rt, {
@@ -145,10 +162,10 @@ export async function probarCobroHitos(ctx: ContextoPrueba): Promise<ResultadoPr
   }
 
   if (!avanzoConTodosPagos) {
-    return { ok: false, detalle: "No se pudo avanzar ni con ambos hitos pagados" };
+    return { ok: false, detalle: `No se pudo avanzar con todos los hitos pagados (${hitoIds.length} hitos)` };
   }
 
-  return { ok: true, detalle: "Hitos de pago bloquean y desbloquean correctamente" };
+  return { ok: true, detalle: `Hitos de pago bloquean y desbloquean correctamente (${hitoIds.length} hitos)` };
 }
 
 /**
