@@ -6,7 +6,7 @@
 import type { AppRuntime } from "./runtime.js";
 import type { AppBootResult } from "./types.js";
 import type { Viewer } from "./maestros.js";
-import { esc, withDev, fecha } from "./maestros.js";
+import { esc, withDev, fecha, hiddenIdentity } from "./maestros.js";
 import { formatCentimos } from "../elements/oferta.js";
 import { montar, type SeccionDef } from "../generator/secciones.js";
 
@@ -24,6 +24,7 @@ export function seccionesCrm(ctx: ContextoCrm): readonly SeccionDef<ContextoCrm>
     seccionSusFichas,
     seccionDeuda,
     seccionCitas,
+    seccionNotas,
     seccionHistorial,
   ];
 }
@@ -238,6 +239,45 @@ const seccionCitas: SeccionDef<ContextoCrm> = {
       )
       .join("");
     return `<table><thead><tr><th>Expediente</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table>`;
+  },
+};
+
+const seccionNotas: SeccionDef<ContextoCrm> = {
+  id: "crm-notas",
+  titulo: () => "Notas",
+  mostrar: (ctx) => {
+    return ctx.runtime.contarNotasDelCliente(ctx.parteId) > 0;
+  },
+  peso: () => 60,
+  cubre: ["crm.notas"],
+  render: (ctx) => {
+    const notas = ctx.runtime.notasDelCliente(ctx.parteId);
+    if (notas.length === 0) {
+      return `<p class="empty">Sin notas registradas.</p>`;
+    }
+
+    const listaNotas = notas
+      .map(
+        (n) =>
+          `<div class="nota" data-tipo="${n.esInterna ? "interna" : "publica"}">` +
+          `<div class="nota-encabezado"><strong>${esc(n.autor)}</strong> ${esc(fecha(n.fecha))}` +
+          (n.esInterna ? ` <span class="badge-interna">[Interna]</span>` : "") +
+          `</div>` +
+          `<div class="nota-texto">${esc(n.texto).replace(/\n/g, "<br>")}</div>` +
+          `</div>`,
+      )
+      .join("");
+
+    const formNota = `
+      <form method="post" action="/clientes/${esc(ctx.parteId)}/notas" data-nota-form style="margin-top: 16px;">
+      ${hiddenIdentity(ctx.viewer)}
+      <label>Añadir nota <textarea name="texto" required maxlength="5000" placeholder="Escribe la nota..." style="min-height:80px;"></textarea></label>
+      <label><input type="checkbox" name="esInterna" value="1" /> Solo para el equipo (no visible para el cliente)</label>
+      <button type="submit">Guardar nota</button>
+      </form>
+    `;
+
+    return listaNotas + formNota;
   },
 };
 

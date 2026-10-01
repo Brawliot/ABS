@@ -15,6 +15,7 @@ import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
+import { SqliteNotasStore } from "../adapters/sqlite-notas-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -163,6 +164,8 @@ export class AppRuntime {
   readonly financiados: SqliteFinanciachsStore;
   /** Límites de crédito por cliente. */
   readonly creditoCliente: SqliteCreditoClienteStore;
+  /** Notas de cliente (append-only). */
+  readonly notas: SqliteNotasStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -197,6 +200,7 @@ export class AppRuntime {
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
+      readonly notas: SqliteNotasStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -211,6 +215,7 @@ export class AppRuntime {
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
+    this.notas = maestros.notas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -248,6 +253,7 @@ export class AppRuntime {
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
+    const notas = new SqliteNotasStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -258,6 +264,7 @@ export class AppRuntime {
       devoluciones,
       financiados,
       creditoCliente,
+      notas,
     });
   }
 
@@ -271,6 +278,7 @@ export class AppRuntime {
     this.devoluciones.close();
     this.financiados.close();
     this.creditoCliente.close();
+    this.notas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -1257,6 +1265,36 @@ export class AppRuntime {
 
   actionById(actionId: string) {
     return this.boot.spec.actions.find((a) => a.id === actionId);
+  }
+
+  agregarNotaEnCliente(
+    clienteId: string,
+    texto: string,
+    autorRoleId: string,
+    esInterna: boolean,
+  ): { ok: true } | { ok: false; error: string } {
+    if (autorRoleId === "cliente") {
+      return { ok: false, error: "Los clientes no pueden registrar notas." };
+    }
+    try {
+      this.notas.registrarNota(this.tenantId, clienteId, texto, autorRoleId, esInterna);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+
+  notasDelCliente(clienteId: string): readonly { readonly texto: string; readonly autor: string; readonly fecha: string; readonly esInterna: boolean }[] {
+    return this.notas.notasDelCliente(this.tenantId, clienteId).map((n) => ({
+      texto: n.texto,
+      autor: n.autor,
+      fecha: n.fecha,
+      esInterna: n.esInterna,
+    }));
+  }
+
+  contarNotasDelCliente(clienteId: string): number {
+    return this.notas.contarNotasDelCliente(this.tenantId, clienteId);
   }
 }
 
