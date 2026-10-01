@@ -42,6 +42,11 @@ export interface ResultadoCiclo {
   readonly motivo?: string;
 }
 
+/** Detecta si hay reglas de pagosPorHitos para este lifecycle. */
+function tieneHitosEnLc(boot: AppBootResult, lcId: string): boolean {
+  return boot.input.ruleSet.rules.some((r: any) => "plantilla" in r && r.plantilla === "tpl.hitos_pago");
+}
+
 /** Prueba el ciclo completo de todos los procesos del negocio. */
 export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise<ResultadoCiclo[]> {
   const out: ResultadoCiclo[] = [];
@@ -64,12 +69,28 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
       out.push({ lifecycleId: slice.id, paradoEn: "alta", motivo: alta.errors.join(" ") });
       continue;
     }
+
+    // Detecta si hay pagosPorHitos
+    const tienePagosPorHitos = tieneHitosEnLc(boot, slice.id);
+    const totalExp = 10000; // céntimos (100 EUR)
+    const mitad = Math.round(totalExp / 2);
+
     let n = 0;
     let parado = "";
     let motivo = "";
+    let hitosPagados = false;
     for (const t of caminoAlExito(slice.lifecycle)) {
       let ok = false;
       motivo = "";
+
+      // Después de aceptar (t_acordar) o en el siguiente paso crítico, registra pagos
+      if (tienePagosPorHitos && !hitosPagados && (t === "t_ejecutar" || t === "t_presentar" || t === "t_cerrar")) {
+        // Registra 50% antes de intentar ejecutar
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50_aceptar", medio: "transferencia" }, "prueba-hitos");
+        rt.registrarCobro(alta.id, { importeCentimos: mitad, hitoId: "50_montar", medio: "transferencia" }, "prueba-hitos");
+        hitosPagados = true;
+      }
+
       for (const r of boot.roles) {
         const res = await executeUiAction(rt, {
           actionId: `action.${slice.id}.${t}`,
