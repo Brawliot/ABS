@@ -38,15 +38,15 @@ describe("Reportes por Segmento", () => {
         const event: TransitionEvent = {
           id: `evt-c1-${i}`,
           kind: "transicion",
-          subjectId: runtime.subjects[0].id,
+          subjectId: runtime.subjects[0]?.id || 'tx-test-default',
           occurredAt: hoy.toISOString(),
           actorId: "user-test",
-          actorKind: "usuario",
+          actorKind: "humano",
           transitionId: "t_vender",
           fromStateId: "inicial",
           toStateId: "vendido",
           evidence: {
-            kind: "manual",
+            kind: "aceptacion",
             reference: "test",
             recordedAt: new Date().toISOString(),
           },
@@ -63,15 +63,15 @@ describe("Reportes por Segmento", () => {
         const event: TransitionEvent = {
           id: `evt-c2-${i}`,
           kind: "transicion",
-          subjectId: runtime.subjects[1].id,
+          subjectId: runtime.subjects[1]?.id || 'tx-test-default',
           occurredAt: hoy.toISOString(),
           actorId: "user-test",
-          actorKind: "usuario",
+          actorKind: "humano",
           transitionId: "t_vender",
           fromStateId: "inicial",
           toStateId: "vendido",
           evidence: {
-            kind: "manual",
+            kind: "aceptacion",
             reference: "test",
             recordedAt: new Date().toISOString(),
           },
@@ -87,15 +87,15 @@ describe("Reportes por Segmento", () => {
       const event: TransitionEvent = {
         id: `evt-c3-0`,
         kind: "transicion",
-        subjectId: runtime.subjects[2].id,
+        subjectId: runtime.subjects[2]?.id || 'tx-test-default',
         occurredAt: hoy.toISOString(),
         actorId: "user-test",
-        actorKind: "usuario",
+        actorKind: "humano",
         transitionId: "t_vender",
         fromStateId: "inicial",
         toStateId: "vendido",
         evidence: {
-          kind: "manual",
+          kind: "aceptacion",
           reference: "test",
           recordedAt: new Date().toISOString(),
         },
@@ -118,9 +118,11 @@ describe("Reportes por Segmento", () => {
 
     // Verificar que están ordenados por volumen
     for (let i = 0; i < reporte.topClientes.length - 1; i++) {
-      expect(reporte.topClientes[i].totalVendido).toBeGreaterThanOrEqual(
-        reporte.topClientes[i + 1].totalVendido
-      );
+      const actual = reporte.topClientes[i];
+      const siguiente = reporte.topClientes[i + 1];
+      if (actual && siguiente) {
+        expect(actual.totalVendido).toBeGreaterThanOrEqual(siguiente.totalVendido);
+      }
     }
 
     runtime.close();
@@ -149,15 +151,15 @@ describe("Reportes por Segmento", () => {
         const event: TransitionEvent = {
           id: `evt-prod-${i}`,
           kind: "transicion",
-          subjectId: runtime.subjects[0].id,
+          subjectId: runtime.subjects[0]?.id || 'tx-test-default',
           occurredAt: hoy.toISOString(),
           actorId: "user-test",
-          actorKind: "usuario",
+          actorKind: "humano",
           transitionId: "t_vender",
           fromStateId: "inicial",
           toStateId: "vendido",
           evidence: {
-            kind: "manual",
+            kind: "aceptacion",
             reference: "test",
             recordedAt: new Date().toISOString(),
           },

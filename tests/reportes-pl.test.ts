@@ -39,12 +39,12 @@ describe("Reportes P&L", () => {
           5 + i
         ).toISOString(),
         actorId: "user-test",
-        actorKind: "usuario",
+        actorKind: "humano",
         transitionId: "t_vender",
         fromStateId: "inicial",
         toStateId: "vendido",
         evidence: {
-          kind: "manual",
+          kind: "aceptacion",
           reference: "test",
           recordedAt: new Date().toISOString(),
         },
@@ -96,19 +96,19 @@ describe("Reportes P&L", () => {
 
     // Agregar eventos para cliente específico
     if (runtime.subjects.length > 0) {
-      const clienteId = runtime.subjects[0].parteId;
+      const clienteId = runtime.subjects[0]?.parteId || "parte-test";
       const event: TransitionEvent = {
         id: `evt-cliente-${clienteId}`,
         kind: "transicion",
-        subjectId: runtime.subjects[0].id,
+        subjectId: runtime.subjects[0]?.id || "tx-test-default",
         occurredAt: hoy.toISOString(),
         actorId: "user-test",
-        actorKind: "usuario",
+        actorKind: "humano",
         transitionId: "t_vender",
         fromStateId: "inicial",
         toStateId: "vendido",
         evidence: {
-          kind: "manual",
+          kind: "aceptacion",
           reference: "test",
           recordedAt: new Date().toISOString(),
         },
@@ -164,12 +164,12 @@ describe("Reportes P&L", () => {
           subjectId,
           occurredAt: fecha.toISOString(),
           actorId: "user-test",
-          actorKind: "usuario",
+          actorKind: "humano",
           transitionId: "t_vender",
           fromStateId: "inicial",
           toStateId: "vendido",
           evidence: {
-            kind: "manual",
+            kind: "aceptacion",
             reference: "test",
             recordedAt: new Date().toISOString(),
           },

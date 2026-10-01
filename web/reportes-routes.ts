@@ -97,25 +97,28 @@ export function manejarRutasReportes(
           tipo === "resumen" ? datos : { [tipo]: datos }
         );
         const filename = nombreArchivoReporte(tipo, "csv");
-        return send(res, 200, csv, "text/csv; charset=utf-8", {
+        send(res, 200, csv, "text/csv; charset=utf-8", {
           "Content-Disposition": `attachment; filename="${filename}"`,
         });
+        return true;
       } else {
-        return send(
+        send(
           res,
           200,
           JSON.stringify(datos, null, 2),
           "application/json; charset=utf-8"
         );
+        return true;
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      return send(
+      send(
         res,
         500,
         JSON.stringify({ error: msg }),
         "application/json; charset=utf-8"
       );
+      return true;
     }
   }
 
@@ -135,25 +138,28 @@ export function manejarRutasReportes(
       if (formato === "csv") {
         const csv = exportarCSV("pl", datos);
         const filename = nombreArchivoReporte("pl", "csv");
-        return send(res, 200, csv, "text/csv; charset=utf-8", {
+        send(res, 200, csv, "text/csv; charset=utf-8", {
           "Content-Disposition": `attachment; filename="${filename}"`,
         });
+        return true;
       } else {
-        return send(
+        send(
           res,
           200,
           JSON.stringify(datos, null, 2),
           "application/json; charset=utf-8"
         );
+        return true;
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      return send(
+      send(
         res,
         500,
         JSON.stringify({ error: msg }),
         "application/json; charset=utf-8"
       );
+      return true;
     }
   }
 
@@ -182,36 +188,40 @@ export function manejarRutasReportes(
           datos = generarReporteSegmentoPorCiclo(runtime, { desde, hasta });
           break;
         default:
-          return send(
+          send(
             res,
             400,
             JSON.stringify({ error: "Tipo de segmento no válido" }),
             "application/json; charset=utf-8"
           );
+          return true;
       }
 
       if (formato === "csv") {
         const csv = exportarCSV("pl", datos); // Reutiliza formato CSV genérico
         const filename = nombreArchivoReporte(`segmento-${tipoSegmento}`, "csv");
-        return send(res, 200, csv, "text/csv; charset=utf-8", {
+        send(res, 200, csv, "text/csv; charset=utf-8", {
           "Content-Disposition": `attachment; filename="${filename}"`,
         });
+        return true;
       } else {
-        return send(
+        send(
           res,
           200,
           JSON.stringify(datos, null, 2),
           "application/json; charset=utf-8"
         );
+        return true;
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      return send(
+      send(
         res,
         500,
         JSON.stringify({ error: msg }),
         "application/json; charset=utf-8"
       );
+      return true;
     }
   }
 
@@ -256,41 +266,46 @@ export function manejarRutasReportes(
           tipo === "resumen" ? datos : { [tipo]: datos }
         );
         const filename = nombreArchivoReporte(tipo, "csv");
-        return send(res, 200, csv, "text/csv; charset=utf-8", {
+        send(res, 200, csv, "text/csv; charset=utf-8", {
           "Content-Disposition": `attachment; filename="${filename}"`,
         });
+        return true;
       } else if (formato === "excel") {
         // TODO: Implementar exportación a Excel (usar librería como 'xlsx')
-        return send(
+        send(
           res,
           501,
           JSON.stringify({ error: "Excel export not yet implemented" }),
           "application/json; charset=utf-8"
         );
+        return true;
       } else if (formato === "pdf") {
         // TODO: Implementar exportación a PDF (usar librería como 'pdfkit')
-        return send(
+        send(
           res,
           501,
           JSON.stringify({ error: "PDF export not yet implemented" }),
           "application/json; charset=utf-8"
         );
+        return true;
       }
 
-      return send(
+      send(
         res,
         400,
         JSON.stringify({ error: "Formato no válido" }),
         "application/json; charset=utf-8"
       );
+      return true;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      return send(
+      send(
         res,
         500,
         JSON.stringify({ error: msg }),
         "application/json; charset=utf-8"
       );
+      return true;
     }
   }
 

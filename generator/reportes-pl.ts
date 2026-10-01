@@ -56,7 +56,7 @@ function extraerDatos(event: TransitionEvent): {
   monto: number;
   costo: number;
   gasto: number;
-  producto?: string;
+  producto?: string | undefined;
 } {
   if (!event.data || typeof event.data !== "object") {
     return { monto: 0, costo: 0, gasto: 0 };

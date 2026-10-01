@@ -45,12 +45,12 @@ describe("Reportes Básicos", () => {
           1 + i
         ).toISOString(),
         actorId: "user-test",
-        actorKind: "usuario",
+        actorKind: "humano",
         transitionId: "t_crear",
         fromStateId: "inicial",
         toStateId: "creado",
         evidence: {
-          kind: "manual",
+          kind: "aceptacion",
           reference: "test",
           recordedAt: new Date().toISOString(),
         },
@@ -106,12 +106,12 @@ describe("Reportes Básicos", () => {
           5 + i
         ).toISOString(),
         actorId: "user-test",
-        actorKind: "usuario",
+        actorKind: "humano",
         transitionId: "t_cobrar",
         fromStateId: "creado",
         toStateId: "cobrado",
         evidence: {
-          kind: "manual",
+          kind: "aceptacion",
           reference: "test",
           recordedAt: new Date().toISOString(),
         },

@@ -61,7 +61,7 @@ export interface ReporteSegmentoPorCiclo {
 function extraerDatos(event: TransitionEvent): {
   monto: number;
   costo: number;
-  producto?: string;
+  producto?: string | undefined;
 } {
   if (!event.data || typeof event.data !== "object") {
     return { monto: 0, costo: 0 };
@@ -107,29 +107,34 @@ export function generarReporteSegmentoPorCliente(
     }
 
     const events = runtime.store.getBySubject(subject.id) as TransitionEvent[];
-    const primeraFecha = events.length > 0 ? new Date(events[0].occurredAt) : null;
+    const primeraFecha = events.length > 0 ? new Date(events[0]?.occurredAt ?? new Date()) : null;
 
     for (const evt of events) {
       const fecha = new Date(evt.occurredAt);
       if (fecha >= desde && fecha <= hasta) {
         const { monto, costo } = extraerDatos(evt);
         if (monto > 0) {
-          const data = clientesMap.get(cliente)!;
-          data.totalVendido += monto;
-          data.numeroCompras++;
-          data.totalCosto += costo;
+          const data = clientesMap.get(cliente);
+          if (data) {
+            data.totalVendido += monto;
+            data.numeroCompras++;
+            data.totalCosto += costo;
+          }
         }
       }
     }
 
     // Calcular tiempo promedio
     if (events.length > 0 && primeraFecha) {
-      const ultimaFecha = new Date(events[events.length - 1].occurredAt);
+      const ultimaFecha = new Date(events[events.length - 1]?.occurredAt ?? new Date());
       const dias = Math.floor(
         (ultimaFecha.getTime() - primeraFecha.getTime()) / (1000 * 60 * 60 * 24)
       );
       if (dias >= 0) {
-        clientesMap.get(cliente)!.tiempos.push(dias);
+        const data = clientesMap.get(cliente);
+        if (data) {
+          data.tiempos.push(dias);
+        }
       }
     }
   }
@@ -268,29 +273,31 @@ export function generarReporteSegmentoPorCiclo(
     const events = runtime.store.getBySubject(subject.id) as TransitionEvent[];
     if (events.length === 0) continue;
 
-    const primeraFecha = new Date(events[0].occurredAt);
+    const primeraFecha = new Date(events[0]?.occurredAt ?? new Date());
     if (primeraFecha >= desde && primeraFecha <= hasta) {
-      const data = ciclosMap.get(tipo)!;
-      data.totalExpedientes++;
+      const data = ciclosMap.get(tipo);
+      if (data) {
+        data.totalExpedientes++;
 
-      for (const evt of events) {
-        const { monto, costo } = extraerDatos(evt);
-        data.totalVendido += monto;
-        data.totalCosto += costo;
-      }
+        for (const evt of events) {
+          const { monto, costo } = extraerDatos(evt);
+          data.totalVendido += monto;
+          data.totalCosto += costo;
+        }
 
-      // Calcular tiempo
-      const ultimaFecha = new Date(events[events.length - 1].occurredAt);
-      const dias = Math.floor(
-        (ultimaFecha.getTime() - primeraFecha.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      data.tiempos.push(dias);
+        // Calcular tiempo
+        const ultimaFecha = new Date(events[events.length - 1]?.occurredAt ?? new Date());
+        const dias = Math.floor(
+          (ultimaFecha.getTime() - primeraFecha.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        data.tiempos.push(dias);
 
-      // Verificar si está completo
-      const derived = deriveState(lifecycle.lifecycle, events);
-      const state = findState(lifecycle.lifecycle, derived.currentStateId);
-      if (state && state.final) {
-        data.completados++;
+        // Verificar si está completo
+        const derived = deriveState(lifecycle.lifecycle, events);
+        const state = findState(lifecycle.lifecycle, derived.currentStateId);
+        if (state && state.kind === "terminal_exito") {
+          data.completados++;
+        }
       }
     }
   }

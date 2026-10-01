@@ -157,11 +157,11 @@ describe("Exportación de Reportes", () => {
 
     const activos = repo.obtenerActivos();
     expect(activos).toHaveLength(1);
-    expect(activos[0].id).toBe("prog-ventas-semanal");
+    expect(activos[0]?.id).toBe("prog-ventas-semanal");
 
     const semanales = repo.proximosAEnviar("semanal");
     expect(semanales).toHaveLength(1);
-    expect(semanales[0].id).toBe("prog-ventas-semanal");
+    expect(semanales[0]?.id).toBe("prog-ventas-semanal");
 
     repo.actualizar("prog-ventas-semanal", { destinatario: "nuevo@empresa.com" });
     expect(repo.obtener("prog-ventas-semanal")?.destinatario).toBe(

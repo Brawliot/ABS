@@ -213,9 +213,9 @@ export function generarReporteImpagos(
 
     const derived = deriveState(lifecycle.lifecycle, events);
 
-    // Si el estado es "vencido" o similar, contar como impago
+    // Si el estado es final pero no es terminal_exito, contar como impago
     const state = findState(lifecycle.lifecycle, derived.currentStateId);
-    if (state && state.kind === "vencido") {
+    if (state && (state.kind === "terminal_excepcion" || state.kind === "en_espera")) {
       const cliente = obtenerClienteDelExpediente(runtime, subject.id);
       const ultimoEvento = events[events.length - 1];
       const diasAtraso = ultimoEvento
@@ -229,7 +229,7 @@ export function generarReporteImpagos(
         deuda += extraerMonto(evt);
       }
 
-      if (deuda > 0) {
+      if (deuda > 0 && ultimoEvento) {
         importeTotal += deuda;
         clientesConDeuda.set(cliente, { importe: deuda, diasAtraso });
       }
@@ -287,21 +287,23 @@ export function generarReporteCiclos(
     const events = runtime.store.getBySubject(subject.id) as TransitionEvent[];
     if (events.length === 0) continue;
 
-    const primeraFecha = new Date(events[0].occurredAt);
+    const primeraFecha = new Date(events[0]?.occurredAt ?? new Date());
     if (primeraFecha >= desde && primeraFecha <= hasta) {
       porTipo[tipo].total++;
 
       const ultimoEvento = events[events.length - 1];
-      const diasTranscurridos = Math.floor(
-        (new Date(ultimoEvento.occurredAt).getTime() - primeraFecha.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      porTipo[tipo].tiempos.push(diasTranscurridos);
+      if (ultimoEvento) {
+        const diasTranscurridos = Math.floor(
+          (new Date(ultimoEvento.occurredAt).getTime() - primeraFecha.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+        porTipo[tipo].tiempos.push(diasTranscurridos);
+      }
 
-      // Verificar si está cerrado (estado final)
+      // Verificar si está cerrado (estado terminal)
       const derived = deriveState(lifecycle.lifecycle, events);
       const state = findState(lifecycle.lifecycle, derived.currentStateId);
-      if (state && state.final) {
+      if (state && state.kind === "terminal_exito") {
         porTipo[tipo].completados++;
       }
     }
