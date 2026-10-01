@@ -26,6 +26,7 @@ import {
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { AppRuntime } from "./runtime.js";
 import type { AppBootResult, DevSession } from "./types.js";
+import { manejarRutasReportes } from "./reportes-routes.js";
 import {
   acceptInvite,
   completePasswordReset,
@@ -645,6 +646,11 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      // Rutas de reportes BI
+      if (manejarRutasReportes(path, url, runtime, res)) {
+        return;
       }
 
       if (path === "/diagnosis") {
