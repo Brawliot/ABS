@@ -18,15 +18,15 @@ export interface ParámetrosFiltro {
 }
 
 export interface VistaNotificación {
-  id: string;
-  evento: string;
-  canal: string;
-  destinatario: string;
-  plantilla: string;
-  estado: "pendiente" | "enviado" | "fallido";
-  intentos: number;
-  error?: string;
-  timestamp: string;
+  readonly id: string;
+  readonly evento: string;
+  readonly canal: string;
+  readonly destinatario: string;
+  readonly plantilla: string;
+  readonly estado: "pendiente" | "enviado" | "fallido";
+  readonly intentos: number;
+  readonly error?: string;
+  readonly timestamp: string;
 }
 
 export interface EstadísticasNotificaciones {
@@ -75,7 +75,7 @@ export class DashboardEndpoints {
   ): boolean {
     try {
       const estado = querystring.get("estado") as any;
-      const canal = querystring.get("canal");
+      const canal = querystring.get("canal") || undefined;
       const limite = parseInt(querystring.get("limite") || "50", 10);
 
       let notificaciones = this.store.obtenerTodos(limite);
@@ -83,21 +83,26 @@ export class DashboardEndpoints {
       if (estado) {
         notificaciones = notificaciones.filter((n) => n.estado === estado);
       }
-      if (canal) {
+      if (canal !== undefined) {
         notificaciones = notificaciones.filter((n) => n.canal === canal);
       }
 
-      const vistas: VistaNotificación[] = notificaciones.map((n) => ({
-        id: n.id,
-        evento: n.evento_id,
-        canal: n.canal,
-        destinatario: n.destinatario,
-        plantilla: n.plantilla,
-        estado: n.estado,
-        intentos: n.intentos,
-        error: n.error,
-        timestamp: n.timestamp,
-      }));
+      const vistas: VistaNotificación[] = notificaciones.map((n) => {
+        const obj: any = {
+          id: n.id,
+          evento: n.evento_id,
+          canal: n.canal,
+          destinatario: n.destinatario,
+          plantilla: n.plantilla,
+          estado: n.estado,
+          intentos: n.intentos,
+          timestamp: n.timestamp,
+        };
+        if (n.error) {
+          obj.error = n.error;
+        }
+        return obj as VistaNotificación;
+      });
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ notificaciones: vistas }));

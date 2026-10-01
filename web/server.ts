@@ -75,6 +75,17 @@ import {
   getStoredWizardDraft,
   applyWizardDecisions,
 } from "./cli.js";
+import { DashboardEndpoints } from "../communication/dashboard-endpoints.js";
+import { renderDashboardNotificacionesHtml } from "../communication/dashboard-page.js";
+import { ColaNotificaciones } from "../communication/notification-queue.js";
+import { SqliteNotificacionesEnviosStore } from "../adapters/sqlite-notificaciones-envios-store.js";
+import { AdaptadorEmail } from "../communication/adapters/email-adapter.js";
+import { AdaptadorSMS } from "../communication/adapters/sms-adapter.js";
+import { AdaptadorWhatsApp } from "../communication/adapters/whatsapp-adapter.js";
+import { AdaptadorPush } from "../communication/adapters/push-adapter.js";
+import { AdaptadorSlack } from "../communication/adapters/slack-adapter.js";
+import { AdaptadorWebhook } from "../communication/adapters/webhook-adapter.js";
+import { AdaptadorTelnyx } from "../communication/adapters/telnyx-adapter.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -757,6 +768,39 @@ export function startWebServer(
             "text/html; charset=utf-8",
           );
         }
+      }
+
+      // 🔔 DASHBOARD DE NOTIFICACIONES
+      if (path.startsWith("/notificaciones") || path === "/dashboard/notificaciones") {
+        const notificacionesStore = new SqliteNotificacionesEnviosStore(runtime.dbPath);
+        const adaptadores = [
+          new AdaptadorEmail(),
+          new AdaptadorSMS(),
+          new AdaptadorWhatsApp(),
+          new AdaptadorPush(),
+          new AdaptadorSlack(),
+          new AdaptadorWebhook(),
+          new AdaptadorTelnyx(),
+        ];
+        const cola = new ColaNotificaciones(notificacionesStore, adaptadores);
+        const dashboard = new DashboardEndpoints(notificacionesStore, cola);
+
+        if (path === "/dashboard/notificaciones" && method === "GET") {
+          return send(
+            res,
+            200,
+            renderDashboardNotificacionesHtml(),
+            "text/html; charset=utf-8",
+          );
+        }
+
+        const querystring = new URL(url, "http://localhost").searchParams;
+        if (dashboard.manejarRuta(req, res, path, querystring)) {
+          notificacionesStore.close();
+          return;
+        }
+
+        notificacionesStore.close();
       }
 
       if (path === "/link-devolucion" && method === "POST") {

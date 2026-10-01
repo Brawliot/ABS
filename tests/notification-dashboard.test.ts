@@ -10,7 +10,7 @@ import { ColaNotificaciones } from "../communication/notification-queue.js";
 import { SqliteNotificacionesEnviosStore } from "../adapters/sqlite-notificaciones-envios-store.js";
 import { DashboardEndpoints } from "../communication/dashboard-endpoints.js";
 import { renderDashboardNotificacionesHtml } from "../communication/dashboard-page.js";
-import type { AdaptadorCanal, ResultadoEnvio } from "../communication/adapters/base-adapter.js";
+import { AdaptadorCanal, type ResultadoEnvio } from "../communication/adapters/base-adapter.js";
 import type { NotificacionParaEnviar } from "../communication/types.js";
 
 const dirs: string[] = [];
@@ -24,8 +24,8 @@ afterEach(() => {
   }
 });
 
-class AdaptadorMock implements AdaptadorCanal {
-  canal = "mock";
+class AdaptadorMock extends AdaptadorCanal {
+  canal = "email";
 
   validar(): ResultadoEnvio {
     return { ok: true, detalle: "Mock OK" };
@@ -51,7 +51,7 @@ describe("Dashboard de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
@@ -96,7 +96,7 @@ describe("Dashboard de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",

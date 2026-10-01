@@ -41,7 +41,7 @@ export class SqliteNotificationRulesStore {
       ORDER BY created_at ASC
     `);
     return stmt.all(negocioId).map((row: any) => {
-      const rule: NotificationRule = {
+      const obj: any = {
         id: row.id,
         evento: row.evento,
         canales: JSON.parse(row.canales),
@@ -49,9 +49,9 @@ export class SqliteNotificationRulesStore {
         plantilla: row.plantilla,
       };
       if (row.condicion) {
-        rule.condicion = row.condicion;
+        obj.condicion = row.condicion;
       }
-      return rule;
+      return obj as NotificationRule;
     });
   }
 
@@ -77,7 +77,7 @@ export class SqliteNotificationRulesStore {
       new Date().toISOString()
     );
 
-    const rule: NotificationRule = {
+    const obj: any = {
       id,
       evento: spec.evento,
       canales: spec.canales,
@@ -85,9 +85,9 @@ export class SqliteNotificationRulesStore {
       plantilla: spec.plantilla,
     };
     if (spec.condicion) {
-      rule.condicion = spec.condicion;
+      obj.condicion = spec.condicion;
     }
-    return rule;
+    return obj as NotificationRule;
   }
 
   desactivarRegla(ruleId: string): void {

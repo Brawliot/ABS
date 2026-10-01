@@ -10,7 +10,7 @@ import type { SqliteNotificacionesEnviosStore } from "../adapters/sqlite-notific
 export class ColaNotificaciones {
   private adaptadores: Map<string, AdaptadorCanal>;
   private procesando: boolean = false;
-  private intervaloId?: NodeJS.Timeout;
+  private intervaloId: NodeJS.Timeout | undefined;
   private maxReintentos: number = 3;
 
   constructor(
@@ -97,7 +97,7 @@ export class ColaNotificaciones {
         };
 
         try {
-          const resultado = await adaptador.enviar(notif);
+          const resultado = await (adaptador as any).enviar(notif);
 
           if (resultado.ok) {
             this.store.registrarEnviado(registro.id);

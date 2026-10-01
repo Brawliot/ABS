@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ColaNotificaciones } from "../communication/notification-queue.js";
 import { SqliteNotificacionesEnviosStore } from "../adapters/sqlite-notificaciones-envios-store.js";
-import type { AdaptadorCanal, ResultadoEnvio } from "../communication/adapters/base-adapter.js";
+import { AdaptadorCanal, type ResultadoEnvio } from "../communication/adapters/base-adapter.js";
 import type { NotificacionParaEnviar } from "../communication/types.js";
 
 const dirs: string[] = [];
@@ -22,12 +22,13 @@ afterEach(() => {
   }
 });
 
-class AdaptadorMock implements AdaptadorCanal {
-  canal = "mock";
+class AdaptadorMock extends AdaptadorCanal {
+  canal = "email";
   private intentosRequeridos = 0;
   private intentoActual = 0;
 
   constructor(fallarEnIntentos: number = 0) {
+    super();
     this.intentosRequeridos = fallarEnIntentos;
   }
 
@@ -60,7 +61,7 @@ describe("Cola de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
@@ -90,7 +91,7 @@ describe("Cola de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
@@ -120,7 +121,7 @@ describe("Cola de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
@@ -155,7 +156,7 @@ describe("Cola de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
@@ -187,7 +188,7 @@ describe("Cola de Notificaciones", () => {
       id: "notif_1",
       ruleId: "rule_1",
       evento: "expediente_cerrado_1",
-      canal: "mock",
+      canal: "email" as any,
       destinatario: "cliente" as const,
       plantilla: "venta-confirmada",
       contacto: "cliente@example.com",
