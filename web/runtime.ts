@@ -15,6 +15,8 @@ import { SqliteCobrosStore } from "../adapters/sqlite-cobros-store.js";
 import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.js";
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
+import { SqliteAsientosStore } from "../adapters/sqlite-asientos-store.js";
+import { SqliteCuentasStore } from "../adapters/sqlite-cuentas-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -163,6 +165,10 @@ export class AppRuntime {
   readonly financiados: SqliteFinanciachsStore;
   /** Límites de crédito por cliente. */
   readonly creditoCliente: SqliteCreditoClienteStore;
+  /** Asientos contables (doble entrada). */
+  readonly asientos: SqliteAsientosStore;
+  /** Plan de cuentas. */
+  readonly cuentas: SqliteCuentasStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -197,6 +203,8 @@ export class AppRuntime {
       readonly devoluciones: SqliteDevolucionesStore;
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
+      readonly asientos: SqliteAsientosStore;
+      readonly cuentas: SqliteCuentasStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -211,6 +219,8 @@ export class AppRuntime {
     this.devoluciones = maestros.devoluciones;
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
+    this.asientos = maestros.asientos;
+    this.cuentas = maestros.cuentas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -248,6 +258,9 @@ export class AppRuntime {
     const devoluciones = new SqliteDevolucionesStore(dbPath);
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
+    const asientos = new SqliteAsientosStore(dbPath);
+    const cuentas = new SqliteCuentasStore(dbPath);
+    cuentas.crearPlanCuentas(tenantId);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -258,6 +271,8 @@ export class AppRuntime {
       devoluciones,
       financiados,
       creditoCliente,
+      asientos,
+      cuentas,
     });
   }
 
@@ -271,6 +286,8 @@ export class AppRuntime {
     this.devoluciones.close();
     this.financiados.close();
     this.creditoCliente.close();
+    this.asientos.close();
+    this.cuentas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -708,6 +725,38 @@ export class AppRuntime {
   /** Cobros parciales de un expediente. */
   cobrosDelExpediente(expedienteId: string): readonly { readonly importeCentimos: number; readonly fecha: string; readonly hitoId?: string; readonly medio: string; readonly actor: string }[] {
     return this.cobros.deExpediente(this.tenantId, expedienteId);
+  }
+
+  /** Registra un asiento contable (doble entrada). */
+  registrarAsiento(
+    fecha: string,
+    cuentaDeudora: string,
+    cuentaAcreedora: string,
+    importeCentimos: number,
+    concepto: string,
+    referencia: string,
+  ): { ok: true; numeroAsiento: string } | { ok: false; error: string } {
+    if (!Number.isSafeInteger(importeCentimos) || importeCentimos <= 0) {
+      return { ok: false, error: "El importe debe ser mayor que 0." };
+    }
+    if (!this.cuentas.obtener(cuentaDeudora, this.tenantId)) {
+      return { ok: false, error: `Cuenta deudora no existe: ${cuentaDeudora}` };
+    }
+    if (!this.cuentas.obtener(cuentaAcreedora, this.tenantId)) {
+      return { ok: false, error: `Cuenta acreedora no existe: ${cuentaAcreedora}` };
+    }
+    const numeroAsiento = this.asientos.registrar(this.tenantId, {
+      fecha,
+      cuenta_deudora: cuentaDeudora,
+      cuenta_acreedora: cuentaAcreedora,
+      importe_centimos: importeCentimos,
+      concepto,
+      referencia,
+    });
+    // Actualizar saldos
+    this.cuentas.actualizarSaldo(cuentaDeudora, this.tenantId, importeCentimos);
+    this.cuentas.actualizarSaldo(cuentaAcreedora, this.tenantId, -importeCentimos);
+    return { ok: true, numeroAsiento };
   }
 
   /** Total cobrado en un expediente. */
