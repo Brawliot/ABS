@@ -75,7 +75,7 @@ export interface DrainOutboxOptions {
 export interface DrainOutboxResult {
   readonly succeeded: number;
   readonly failed: number;
-  readonly failedRows?: readonly OutboxRow[];
+  readonly failedRows?: readonly OutboxRow[] | undefined;
 }
 
 /**
