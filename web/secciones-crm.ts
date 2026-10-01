@@ -24,6 +24,8 @@ export function seccionesCrm(ctx: ContextoCrm): readonly SeccionDef<ContextoCrm>
     seccionSusFichas,
     seccionDeuda,
     seccionCitas,
+    seccionContactos,
+    seccionTareas,
     seccionNotas,
     seccionHistorial,
   ];
@@ -239,6 +241,119 @@ const seccionCitas: SeccionDef<ContextoCrm> = {
       )
       .join("");
     return `<table><thead><tr><th>Expediente</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table>`;
+  },
+};
+
+const seccionContactos: SeccionDef<ContextoCrm> = {
+  id: "crm-contactos",
+  titulo: () => "Contactos",
+  mostrar: (ctx) => {
+    return ctx.runtime.contactosDelCliente(ctx.parteId).length > 0;
+  },
+  peso: () => 55,
+  cubre: ["crm.contactos"],
+  render: (ctx) => {
+    const contactos = ctx.runtime.contactosDelCliente(ctx.parteId);
+    if (contactos.length === 0) {
+      return `<p class="empty">Sin contactos registrados.</p>`;
+    }
+
+    const listaContactos = contactos
+      .map(
+        (c) =>
+          `<div class="contacto" data-principal="${c.esPrincipal}">` +
+          `<strong>${esc(c.nombre)}</strong>` +
+          (c.esPrincipal ? ` <span class="badge-principal">[Principal]</span>` : "") +
+          (c.cargo ? `<div class="cargo">${esc(c.cargo)}</div>` : "") +
+          (c.telefono ? `<div class="dato"><strong>Tel:</strong> ${esc(c.telefono)}</div>` : "") +
+          (c.email ? `<div class="dato"><strong>Email:</strong> ${esc(c.email)}</div>` : "") +
+          `</div>`,
+      )
+      .join("");
+
+    const formContacto = `
+      <form method="post" action="/clientes/${esc(ctx.parteId)}/contactos" data-contacto-form style="margin-top: 16px;">
+      ${hiddenIdentity(ctx.viewer)}
+      <label>Nombre * <input name="nombre" required maxlength="200" placeholder="Nombre completo" /></label>
+      <label>Cargo <input name="cargo" maxlength="100" placeholder="Director, técnico..." /></label>
+      <label>Teléfono <input name="telefono" type="tel" placeholder="+34..." /></label>
+      <label>Email <input name="email" type="email" /></label>
+      <label><input type="checkbox" name="esPrincipal" value="1" /> Establecer como contacto principal</label>
+      <button type="submit">Añadir contacto</button>
+      </form>
+    `;
+
+    return listaContactos + formContacto;
+  },
+};
+
+const seccionTareas: SeccionDef<ContextoCrm> = {
+  id: "crm-tareas",
+  titulo: () => "Tareas",
+  mostrar: (ctx) => {
+    return ctx.runtime.contarTareas(ctx.parteId) > 0;
+  },
+  peso: () => 50,
+  cubre: ["crm.tareas"],
+  render: (ctx) => {
+    const tareas = ctx.runtime.tareasDelCliente(ctx.parteId, "todas");
+    const pendientes = tareas.filter((t) => t.estado === "pendiente");
+
+    if (tareas.length === 0) {
+      return `<p class="empty">Sin tareas registradas.</p>`;
+    }
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    const clasificarFecha = (fecha?: string) => {
+      if (!fecha) return "sin-fecha";
+      if (fecha < hoy) return "vencida";
+      const diff = Math.ceil((new Date(fecha).getTime() - new Date(hoy).getTime()) / 86400000);
+      if (diff === 0) return "hoy";
+      if (diff <= 7) return "semana";
+      return "futuro";
+    };
+
+    const colores: Record<string, string> = {
+      vencida: "color:red",
+      hoy: "color:orange",
+      semana: "color:#666",
+      futuro: "color:#999",
+    };
+
+    const listaTareas = tareas
+      .map(
+        (t) => {
+          const cat = clasificarFecha(t.fechaVencimiento);
+          const estilo = colores[cat] ?? "";
+          return (
+            `<div class="tarea" data-estado="${t.estado}" style="${estilo}">` +
+            `<input type="checkbox" ${t.estado === "completada" ? "checked" : ""} />` +
+            `<span class="tarea-texto">${esc(t.texto)}</span>` +
+            (t.fechaVencimiento ? `<span class="tarea-fecha">${esc(t.fechaVencimiento)}</span>` : "") +
+            `<span class="tarea-prioridad badge-${t.prioridad}">${t.prioridad}</span>` +
+            `</div>`
+          );
+        },
+      )
+      .join("");
+
+    const formTarea = `
+      <form method="post" action="/clientes/${esc(ctx.parteId)}/tareas" data-tarea-form style="margin-top: 16px;">
+      ${hiddenIdentity(ctx.viewer)}
+      <label>Nueva tarea * <input name="texto" required maxlength="500" placeholder="Descripción..." /></label>
+      <label>Vencimiento <input name="fechaVencimiento" type="date" /></label>
+      <label>Prioridad
+        <select name="prioridad">
+          <option value="media">Media</option>
+          <option value="baja">Baja</option>
+          <option value="alta">Alta</option>
+        </select>
+      </label>
+      <button type="submit">Crear tarea</button>
+      </form>
+    `;
+
+    return `<div>${listaTareas}</div>` + formTarea;
   },
 };
 

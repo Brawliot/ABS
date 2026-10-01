@@ -16,6 +16,8 @@ import { SqliteDevolucionesStore } from "../adapters/sqlite-devoluciones-store.j
 import { SqliteFinanciachsStore } from "../adapters/sqlite-financiados-store.js";
 import { SqliteCreditoClienteStore } from "../adapters/sqlite-credito-cliente-store.js";
 import { SqliteNotasStore } from "../adapters/sqlite-notas-store.js";
+import { SqliteContactosStore } from "../adapters/sqlite-contactos-store.js";
+import { SqliteTareasCrmStore } from "../adapters/sqlite-tareas-crm-store.js";
 import {
   cantidadesPorOferta,
   movimientosStockDe,
@@ -166,6 +168,10 @@ export class AppRuntime {
   readonly creditoCliente: SqliteCreditoClienteStore;
   /** Notas de cliente (append-only). */
   readonly notas: SqliteNotasStore;
+  /** Contactos de cliente (múltiples por cliente). */
+  readonly contactos: SqliteContactosStore;
+  /** Tareas de CRM por cliente. */
+  readonly tareas: SqliteTareasCrmStore;
   flash: FlashMessage | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
@@ -201,6 +207,8 @@ export class AppRuntime {
       readonly financiados: SqliteFinanciachsStore;
       readonly creditoCliente: SqliteCreditoClienteStore;
       readonly notas: SqliteNotasStore;
+      readonly contactos: SqliteContactosStore;
+      readonly tareas: SqliteTareasCrmStore;
     },
     llmClient = createLlmClientFromEnv()
   ) {
@@ -216,6 +224,8 @@ export class AppRuntime {
     this.financiados = maestros.financiados;
     this.creditoCliente = maestros.creditoCliente;
     this.notas = maestros.notas;
+    this.contactos = maestros.contactos;
+    this.tareas = maestros.tareas;
     this.etiquetas = crearEtiquetador(boot.input);
     this.facts = new FactProvider();
     this.facts.attachStore(tenantId, store);
@@ -254,6 +264,8 @@ export class AppRuntime {
     const financiados = new SqliteFinanciachsStore(dbPath);
     const creditoCliente = new SqliteCreditoClienteStore(dbPath);
     const notas = new SqliteNotasStore(dbPath);
+    const contactos = new SqliteContactosStore(dbPath);
+    const tareas = new SqliteTareasCrmStore(dbPath);
     seedDemoPartes(partes, tenantId, boot);
     return new AppRuntime(boot, store, dbPath, subjects, pack, tenantId, {
       partes,
@@ -265,6 +277,8 @@ export class AppRuntime {
       financiados,
       creditoCliente,
       notas,
+      contactos,
+      tareas,
     });
   }
 
@@ -279,6 +293,8 @@ export class AppRuntime {
     this.financiados.close();
     this.creditoCliente.close();
     this.notas.close();
+    this.contactos.close();
+    this.tareas.close();
   }
 
   setFlash(flash: FlashMessage | undefined): void {
@@ -1295,6 +1311,75 @@ export class AppRuntime {
 
   contarNotasDelCliente(clienteId: string): number {
     return this.notas.contarNotasDelCliente(this.tenantId, clienteId);
+  }
+
+  registrarContacto(
+    clienteId: string,
+    datos: {
+      readonly nombre: string;
+      readonly telefono?: string;
+      readonly email?: string;
+      readonly cargo?: string;
+      readonly esPrincipal?: boolean;
+    },
+  ): { ok: true; id: string } | { ok: false; error: string } {
+    try {
+      const id = this.contactos.registrarContacto(this.tenantId, clienteId, datos);
+      return { ok: true, id };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+
+  contactosDelCliente(clienteId: string): readonly { readonly id: string; readonly nombre: string; readonly telefono?: string; readonly email?: string; readonly cargo?: string; readonly esPrincipal: boolean }[] {
+    return this.contactos.contactosDelCliente(this.tenantId, clienteId).map((c) => ({
+      id: c.id ?? "",
+      nombre: c.nombre,
+      ...(c.telefono ? { telefono: c.telefono } : {}),
+      ...(c.email ? { email: c.email } : {}),
+      ...(c.cargo ? { cargo: c.cargo } : {}),
+      esPrincipal: c.esPrincipal,
+    }));
+  }
+
+  establecerContactoPrincipal(clienteId: string, contactoId: string): void {
+    this.contactos.establecerPrincipal(this.tenantId, clienteId, contactoId);
+  }
+
+  crearTarea(
+    clienteId: string,
+    datos: {
+      readonly texto: string;
+      readonly fechaVencimiento?: string;
+      readonly prioridad?: "baja" | "media" | "alta";
+      readonly asignadoA?: string;
+    },
+  ): { ok: true; id: string } | { ok: false; error: string } {
+    try {
+      const id = this.tareas.crearTarea(this.tenantId, clienteId, datos);
+      return { ok: true, id };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+
+  tareasDelCliente(clienteId: string, filtro?: "pendientes" | "todas"): readonly { readonly id: string; readonly texto: string; readonly fechaVencimiento?: string; readonly estado: "pendiente" | "completada"; readonly asignadoA?: string; readonly prioridad: "baja" | "media" | "alta" }[] {
+    return this.tareas.tareasDelCliente(this.tenantId, clienteId, filtro).map((t) => ({
+      id: t.id ?? "",
+      texto: t.texto,
+      ...(t.fechaVencimiento ? { fechaVencimiento: t.fechaVencimiento } : {}),
+      estado: t.estado,
+      ...(t.asignadoA ? { asignadoA: t.asignadoA } : {}),
+      prioridad: t.prioridad,
+    }));
+  }
+
+  completarTarea(tareaId: string): void {
+    this.tareas.completarTarea(this.tenantId, tareaId);
+  }
+
+  contarTareas(clienteId: string, estado?: "pendiente" | "completada"): number {
+    return this.tareas.contarTareas(this.tenantId, clienteId, estado);
   }
 }
 
