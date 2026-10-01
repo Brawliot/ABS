@@ -253,22 +253,20 @@ const seccionContactos: SeccionDef<ContextoCrm> = {
   cubre: ["crm.contactos"],
   render: (ctx) => {
     const contactos = ctx.runtime.contactosDelCliente(ctx.parteId);
-    if (contactos.length === 0) {
-      return `<p class="empty">Sin contactos registrados.</p>`;
-    }
-
-    const listaContactos = contactos
-      .map(
-        (c) =>
-          `<div class="contacto" data-principal="${c.esPrincipal}">` +
-          `<strong>${esc(c.nombre)}</strong>` +
-          (c.esPrincipal ? ` <span class="badge-principal">[Principal]</span>` : "") +
-          (c.cargo ? `<div class="cargo">${esc(c.cargo)}</div>` : "") +
-          (c.telefono ? `<div class="dato"><strong>Tel:</strong> ${esc(c.telefono)}</div>` : "") +
-          (c.email ? `<div class="dato"><strong>Email:</strong> ${esc(c.email)}</div>` : "") +
-          `</div>`,
-      )
-      .join("");
+    const listaContactos = contactos.length === 0
+      ? `<p class="empty">Sin contactos registrados.</p>`
+      : contactos
+          .map(
+            (c) =>
+              `<div class="contacto" data-principal="${c.esPrincipal}">` +
+              `<strong>${esc(c.nombre)}</strong>` +
+              (c.esPrincipal ? ` <span class="badge-principal">[Principal]</span>` : "") +
+              (c.cargo ? `<div class="cargo">${esc(c.cargo)}</div>` : "") +
+              (c.telefono ? `<div class="dato"><strong>Tel:</strong> ${esc(c.telefono)}</div>` : "") +
+              (c.email ? `<div class="dato"><strong>Email:</strong> ${esc(c.email)}</div>` : "") +
+              `</div>`,
+          )
+          .join("");
 
     const formContacto = `
       <form method="post" action="/clientes/${esc(ctx.parteId)}/contactos" data-contacto-form style="margin-top: 16px;">
@@ -296,10 +294,6 @@ const seccionTareas: SeccionDef<ContextoCrm> = {
     const tareas = ctx.runtime.tareasDelCliente(ctx.parteId, "todas");
     const pendientes = tareas.filter((t) => t.estado === "pendiente");
 
-    if (tareas.length === 0) {
-      return `<p class="empty">Sin tareas registradas.</p>`;
-    }
-
     const hoy = new Date().toISOString().slice(0, 10);
     const clasificarFecha = (fecha?: string) => {
       if (!fecha) return "sin-fecha";
@@ -317,22 +311,24 @@ const seccionTareas: SeccionDef<ContextoCrm> = {
       futuro: "color:#999",
     };
 
-    const listaTareas = tareas
-      .map(
-        (t) => {
-          const cat = clasificarFecha(t.fechaVencimiento);
-          const estilo = colores[cat] ?? "";
-          return (
-            `<div class="tarea" data-estado="${t.estado}" style="${estilo}">` +
-            `<input type="checkbox" ${t.estado === "completada" ? "checked" : ""} />` +
-            `<span class="tarea-texto">${esc(t.texto)}</span>` +
-            (t.fechaVencimiento ? `<span class="tarea-fecha">${esc(t.fechaVencimiento)}</span>` : "") +
-            `<span class="tarea-prioridad badge-${t.prioridad}">${t.prioridad}</span>` +
-            `</div>`
-          );
-        },
-      )
-      .join("");
+    const listaTareas = tareas.length === 0
+      ? `<p class="empty">Sin tareas registradas.</p>`
+      : tareas
+          .map(
+            (t) => {
+              const cat = clasificarFecha(t.fechaVencimiento);
+              const estilo = colores[cat] ?? "";
+              return (
+                `<div class="tarea" data-estado="${t.estado}" style="${estilo}">` +
+                `<input type="checkbox" ${t.estado === "completada" ? "checked" : ""} />` +
+                `<span class="tarea-texto">${esc(t.texto)}</span>` +
+                (t.fechaVencimiento ? `<span class="tarea-fecha">${esc(t.fechaVencimiento)}</span>` : "") +
+                `<span class="tarea-prioridad badge-${t.prioridad}">${t.prioridad}</span>` +
+                `</div>`
+              );
+            },
+          )
+          .join("");
 
     const formTarea = `
       <form method="post" action="/clientes/${esc(ctx.parteId)}/tareas" data-tarea-form style="margin-top: 16px;">
@@ -362,21 +358,19 @@ const seccionNotas: SeccionDef<ContextoCrm> = {
   cubre: ["crm.notas"],
   render: (ctx) => {
     const notas = ctx.runtime.notasDelCliente(ctx.parteId);
-    if (notas.length === 0) {
-      return `<p class="empty">Sin notas registradas.</p>`;
-    }
-
-    const listaNotas = notas
-      .map(
-        (n) =>
-          `<div class="nota" data-tipo="${n.esInterna ? "interna" : "publica"}">` +
-          `<div class="nota-encabezado"><strong>${esc(n.autor)}</strong> ${esc(fecha(n.fecha))}` +
-          (n.esInterna ? ` <span class="badge-interna">[Interna]</span>` : "") +
-          `</div>` +
-          `<div class="nota-texto">${esc(n.texto).replace(/\n/g, "<br>")}</div>` +
-          `</div>`,
-      )
-      .join("");
+    const listaNotas = notas.length === 0
+      ? `<p class="empty">Sin notas registradas.</p>`
+      : notas
+          .map(
+            (n) =>
+              `<div class="nota" data-tipo="${n.esInterna ? "interna" : "publica"}">` +
+              `<div class="nota-encabezado"><strong>${esc(n.autor)}</strong> ${esc(fecha(n.fecha))}` +
+              (n.esInterna ? ` <span class="badge-interna">[Interna]</span>` : "") +
+              `</div>` +
+              `<div class="nota-texto">${esc(n.texto).replace(/\n/g, "<br>")}</div>` +
+              `</div>`,
+          )
+          .join("");
 
     const formNota = `
       <form method="post" action="/clientes/${esc(ctx.parteId)}/notas" data-nota-form style="margin-top: 16px;">
