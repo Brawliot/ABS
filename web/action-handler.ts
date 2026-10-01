@@ -192,14 +192,8 @@ export async function executeUiAction(
     return Promise.resolve({ ok: false, flash, idempotentReplay: false });
   }
 
-  if (!action.visibleRoles.includes(body.roleId)) {
-    const flash: FlashMessage = {
-      kind: "error",
-      text: "Su rol no tiene permiso para esta acción.",
-    };
-    runtime.setFlash(flash);
-    return Promise.resolve({ ok: false, flash, idempotentReplay: false });
-  }
+  // Nota: validación de permisos (roleId) ahora centralizada en judge.ts (fase "permiso")
+  // visibleRoles aquí es solo optimización de UI para ocultar botones (no bloquea)
 
   const subjectMeta = runtime.subjects.find((s) => s.id === body.subjectId);
   if (

@@ -1159,13 +1159,62 @@ export function reconstructFieldsFromEvents(
   for (const ev of events) {
     if (ev.kind !== "transicion" || !ev.data) continue;
     const d = ev.data as Partial<PolicyEventData>;
+
+    // Validar que fieldsAfter sea un objeto plano (sin funciones, símbolos, etc.)
     if (d.fieldsAfter && typeof d.fieldsAfter === "object") {
+      if (!isValidFieldsObject(d.fieldsAfter)) {
+        console.warn(
+          `[WARN] reconstructFieldsFromEvents: fieldsAfter corrupto en evento ${ev.id}, saltando`
+        );
+        continue;
+      }
       fields = { ...fields, ...d.fieldsAfter };
     } else if (d.calculations && typeof d.calculations === "object") {
+      if (!isValidFieldsObject(d.calculations)) {
+        console.warn(
+          `[WARN] reconstructFieldsFromEvents: calculations corrupto en evento ${ev.id}, saltando`
+        );
+        continue;
+      }
       fields = { ...fields, ...d.calculations };
     }
   }
   return fields;
+}
+
+/**
+ * Valida que un objeto sea un diccionario plano de valores simples.
+ * Rechaza funciones, símbolos, clases, etc.
+ */
+function isValidFieldsObject(obj: unknown): obj is Record<string, unknown> {
+  if (!obj || typeof obj !== "object") return false;
+  if (Array.isArray(obj)) return false;
+  if (obj.constructor !== Object) return false;
+
+  for (const value of Object.values(obj)) {
+    const t = typeof value;
+    if (t === "function" || t === "symbol") return false;
+    if (value !== null && typeof value === "object" && !isPlainValue(value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Valida que un valor sea un tipo primitivo permitido.
+ */
+function isPlainValue(val: unknown): boolean {
+  if (val === null || val === undefined) return true;
+  const t = typeof val;
+  if (t === "string" || t === "number" || t === "boolean") return true;
+  if (Array.isArray(val)) {
+    return val.every((v) => isPlainValue(v));
+  }
+  if (t === "object" && val.constructor === Object) {
+    return Object.values(val).every((v) => isPlainValue(v));
+  }
+  return false;
 }
 
 /**
