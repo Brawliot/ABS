@@ -248,9 +248,7 @@ const seccionCitas: SeccionDef<ContextoCrm> = {
 const seccionContactos: SeccionDef<ContextoCrm> = {
   id: "crm-contactos",
   titulo: () => "Contactos",
-  mostrar: (ctx) => {
-    return ctx.runtime.contactosDelCliente(ctx.parteId).length > 0;
-  },
+  mostrar: () => true,
   peso: () => 55,
   cubre: ["crm.contactos"],
   render: (ctx) => {
@@ -291,9 +289,7 @@ const seccionContactos: SeccionDef<ContextoCrm> = {
 const seccionTareas: SeccionDef<ContextoCrm> = {
   id: "crm-tareas",
   titulo: () => "Tareas",
-  mostrar: (ctx) => {
-    return ctx.runtime.contarTareas(ctx.parteId) > 0;
-  },
+  mostrar: () => true,
   peso: () => 50,
   cubre: ["crm.tareas"],
   render: (ctx) => {
@@ -361,9 +357,7 @@ const seccionTareas: SeccionDef<ContextoCrm> = {
 const seccionNotas: SeccionDef<ContextoCrm> = {
   id: "crm-notas",
   titulo: () => "Notas",
-  mostrar: (ctx) => {
-    return ctx.runtime.contarNotasDelCliente(ctx.parteId) > 0;
-  },
+  mostrar: () => true,
   peso: () => 60,
   cubre: ["crm.notas"],
   render: (ctx) => {
@@ -400,9 +394,7 @@ const seccionNotas: SeccionDef<ContextoCrm> = {
 const seccionAuditoria: SeccionDef<ContextoCrm> = {
   id: "crm-auditoria",
   titulo: () => "Historial de cambios",
-  mostrar: (ctx) => {
-    return ctx.runtime.auditoriaDe(ctx.parteId).length > 0;
-  },
+  mostrar: () => true,
   peso: () => 35,
   cubre: ["crm.auditoria"],
   render: (ctx) => {
