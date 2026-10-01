@@ -5,6 +5,7 @@
 
 import type { AppBootResult } from "../web/types.js";
 import type { AppRuntime } from "../web/runtime.js";
+import { moduloActivo } from "./rules/modules.js";
 import { probarCicloCompleto } from "./pruebas/ciclos.js";
 import {
   probarCobroHitos,
@@ -183,6 +184,25 @@ export function generarPuntos(boot: AppBootResult): readonly PuntoConPrueba[] {
         prueba: probarPoliticaLimiteCredito,
       } as PuntoConPrueba);
     }
+  }
+
+  // Stock
+  if (moduloActivo(boot.input, "stock")) {
+    puntos.push({
+      id: "stock.gestor",
+      nombre: "Gestor de stock: productos controlados visibles",
+      requiereData: () => true,
+      prueba: async (ctx: ContextoPrueba) => {
+        const controlados = ctx.runtime.obtenerProductosControlados();
+        const ok = controlados.size > 0;
+        return {
+          ok,
+          detalle: ok
+            ? `${controlados.size} producto(s) con control de stock`
+            : "No hay productos con control de stock activo",
+        };
+      },
+    });
   }
 
   return puntos;

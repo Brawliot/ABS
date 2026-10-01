@@ -8,6 +8,8 @@ import type { AppBootResult } from "./types.js";
 import type { Viewer } from "./maestros.js";
 import { esc, withDev, fecha, hiddenIdentity } from "./maestros.js";
 import { formatCentimos } from "../elements/oferta.js";
+import { formatCantidad } from "../elements/transaccion.js";
+import { moduloActivo } from "../generator/rules/modules.js";
 import { montar, type SeccionDef } from "../generator/secciones.js";
 
 export interface ContextoCrm {
@@ -18,7 +20,7 @@ export interface ContextoCrm {
 }
 
 export function seccionesCrm(ctx: ContextoCrm): readonly SeccionDef<ContextoCrm>[] {
-  return [
+  const secciones: SeccionDef<ContextoCrm>[] = [
     seccionResumen,
     seccionAbiertos,
     seccionSusFichas,
@@ -28,8 +30,16 @@ export function seccionesCrm(ctx: ContextoCrm): readonly SeccionDef<ContextoCrm>
     seccionTareas,
     seccionNotas,
     seccionAuditoria,
-    seccionHistorial,
   ];
+
+  // Agregar secciones de stock si el negocio tiene módulo stock
+  const hasStock = moduloActivo(ctx.boot.input, "stock");
+  if (hasStock) {
+    secciones.push(seccionProductosStock, seccionMovimientosStock, seccionAlertasStock);
+  }
+
+  secciones.push(seccionHistorial);
+  return secciones;
 }
 
 const seccionResumen: SeccionDef<ContextoCrm> = {
@@ -471,6 +481,139 @@ function extraerFichas(
   }
   return fichas;
 }
+
+const seccionProductosStock: SeccionDef<ContextoCrm> = {
+  id: "stock-productos",
+  titulo: () => "Stock de Productos",
+  mostrar: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    return controlados.size > 0;
+  },
+  peso: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    return controlados.size > 0 ? 85 : 0;
+  },
+  cubre: ["stock.productos"],
+  render: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    if (controlados.size === 0) {
+      return `<p class="empty">Sin productos con control de stock.</p>`;
+    }
+
+    const resumen = ctx.runtime.resumenStock();
+    const rows = Array.from(controlados.entries())
+      .map(([productoId, config]) => {
+        const prod = ctx.runtime.ofertas.get(ctx.runtime.tenantId, productoId);
+        if (!prod) return "";
+        const info = resumen.get(productoId);
+        const stock = info?.disponible ?? 0;
+        const estado = stock < config.minimo ? "bajo" : stock <= 0 ? "agotado" : "ok";
+        const estadoClass = estado === "ok" ? "" : ` class="${estado}"`;
+
+        return (
+          `<tr><td><a href="${esc(withDev(ctx.viewer, `/stock/${productoId}`))}">${esc(prod.nombre)}</a></td>` +
+          `<td class="num">${stock}</td>` +
+          `<td class="num">${config.minimo}</td>` +
+          `<td${estadoClass}>${estado === "ok" ? "✓" : estado === "bajo" ? "⚠" : "✗"}</td></tr>`
+        );
+      })
+      .filter((r) => r !== "")
+      .join("");
+
+    return (
+      `<table data-stock-productos><thead><tr><th>Producto</th><th>Stock</th><th>Mín.</th><th></th></tr></thead>` +
+      `<tbody>${rows}</tbody></table>` +
+      `<p><a href="${esc(withDev(ctx.viewer, "/stock"))}">→ Gestión de stock</a></p>`
+    );
+  },
+};
+
+const seccionMovimientosStock: SeccionDef<ContextoCrm> = {
+  id: "stock-movimientos",
+  titulo: () => "Movimientos de stock",
+  mostrar: (ctx) => {
+    const movs = ctx.runtime.movimientosStockRecientes(5);
+    return movs.length > 0;
+  },
+  peso: (ctx) => {
+    const movs = ctx.runtime.movimientosStockRecientes(5);
+    return movs.length > 0 ? 60 : 0;
+  },
+  cubre: ["stock.movimientos"],
+  render: (ctx) => {
+    const movs = ctx.runtime.movimientosStockRecientes(5);
+    if (movs.length === 0) {
+      return `<p class="empty">Sin movimientos.</p>`;
+    }
+
+    const rows = movs
+      .map((m) => {
+        const prod = ctx.runtime.ofertas.get(ctx.runtime.tenantId, m.ofertaId);
+        const tipo = m.origen === "ajuste" ? "Ajuste" : "Reserva";
+        const signo = m.delta > 0 ? "+" : "";
+        return (
+          `<tr><td>${esc(fecha(m.at))}</td><td>${esc(tipo)}</td>` +
+          `<td>${esc(prod?.nombre ?? m.ofertaId)}</td>` +
+          `<td class="num">${signo}${m.delta}</td></tr>`
+        );
+      })
+      .join("");
+
+    return (
+      `<table data-stock-movimientos><thead><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cant.</th></tr></thead>` +
+      `<tbody>${rows}</tbody></table>`
+    );
+  },
+};
+
+const seccionAlertasStock: SeccionDef<ContextoCrm> = {
+  id: "stock-alertas",
+  titulo: () => "Alertas de stock",
+  mostrar: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    if (controlados.size === 0) return false;
+    const resumen = ctx.runtime.resumenStock();
+    return Array.from(controlados.entries()).some(([id, cfg]) => {
+      const info = resumen.get(id);
+      return !info || info.disponible < cfg.minimo;
+    });
+  },
+  peso: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    if (controlados.size === 0) return 0;
+    const resumen = ctx.runtime.resumenStock();
+    const bajo = Array.from(controlados.entries()).filter(([id, cfg]) => {
+      const info = resumen.get(id);
+      return !info || info.disponible < cfg.minimo;
+    }).length;
+    return bajo > 0 ? 95 : 0;
+  },
+  cubre: ["stock.alertas"],
+  render: (ctx) => {
+    const controlados = ctx.runtime.obtenerProductosControlados();
+    const resumen = ctx.runtime.resumenStock();
+    const alertas = Array.from(controlados.entries())
+      .filter(([id, cfg]) => {
+        const info = resumen.get(id);
+        return !info || info.disponible < cfg.minimo;
+      })
+      .map(([id, cfg]) => {
+        const prod = ctx.runtime.ofertas.get(ctx.runtime.tenantId, id);
+        const info = resumen.get(id);
+        const stock = info?.disponible ?? 0;
+        return (
+          `<div class="alerta-stock"><strong>⚠ ${esc(prod?.nombre ?? id)}</strong>: ` +
+          `Stock ${stock} de ${cfg.minimo}. <a href="${esc(withDev(ctx.viewer, `/stock/${id}`))}">[Ajustar]</a></div>`
+        );
+      });
+
+    if (alertas.length === 0) {
+      return `<p class="empty">Sin alertas.</p>`;
+    }
+
+    return alertas.join("");
+  },
+};
 
 export function montarSeccionesCrm(ctx: ContextoCrm) {
   const defs = seccionesCrm(ctx);

@@ -289,6 +289,29 @@ export class AppRuntime {
     });
   }
 
+  obtenerProductosControlados(): ReadonlyMap<string, { readonly minimo: number }> {
+    return this.stockStore.controlados(this.tenantId);
+  }
+
+  resumenStock(): ReadonlyMap<string, { readonly disponible: number; readonly reservado: number; readonly total: number }> {
+    const { productos } = this.stock();
+    return new Map(
+      productos.map((p) => [
+        p.ofertaId,
+        {
+          disponible: p.disponible,
+          reservado: p.pendientes,
+          total: p.disponible + p.pendientes,
+        },
+      ]),
+    );
+  }
+
+  movimientosStockRecientes(limit: number): readonly MovimientoStock[] {
+    const { movimientos } = this.stock();
+    return movimientos.slice(-limit).reverse();
+  }
+
   close(): void {
     this.store.close();
     this.partes.close();
