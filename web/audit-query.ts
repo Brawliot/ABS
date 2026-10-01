@@ -66,8 +66,7 @@ export function queryAuditLog(query: AuditQuery): AuditReport {
  * Genera reporte de auditoría por actor.
  */
 export function auditByActor(actorId: string, limit?: number): AuditReport {
-  const query: AuditQuery = { actorId };
-  if (limit) query.limit = limit;
+  const query = { actorId, ...(limit ? { limit } : {}) } as AuditQuery;
   return queryAuditLog(query);
 }
 
@@ -75,8 +74,7 @@ export function auditByActor(actorId: string, limit?: number): AuditReport {
  * Genera reporte de auditoría de forzados (desviaciones de política).
  */
 export function auditForcedTransitions(limit?: number): AuditReport {
-  const query: AuditQuery = { kind: "judge_forced" };
-  if (limit) query.limit = limit;
+  const query = { kind: "judge_forced" as const, ...(limit ? { limit } : {}) } as AuditQuery;
   return queryAuditLog(query);
 }
 
@@ -88,8 +86,7 @@ export function auditRejectionsByPeriod(
   toIso: string,
   limit?: number
 ): AuditReport {
-  const query: AuditQuery = { kind: "judge_rejected", fromIso, toIso };
-  if (limit) query.limit = limit;
+  const query = { kind: "judge_rejected" as const, fromIso, toIso, ...(limit ? { limit } : {}) } as AuditQuery;
   return queryAuditLog(query);
 }
 

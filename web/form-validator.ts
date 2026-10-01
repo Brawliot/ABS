@@ -75,7 +75,11 @@ export function validateFormValues(
  * Útil para generar UI con validación client-side.
  */
 export function getFormSchema(transitionId: string): z.ZodSchema {
-  return formValueSchemas[transitionId] ?? formValueSchemas.default;
+  const schema = formValueSchemas[transitionId] ?? formValueSchemas.default;
+  if (!schema) {
+    throw new Error(`No schema available for transition ${transitionId}`);
+  }
+  return schema;
 }
 
 /**

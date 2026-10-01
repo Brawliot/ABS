@@ -118,7 +118,7 @@ export class JudgeLogger {
       at: new Date().toISOString(),
       subjectId,
       transitionId,
-      actorId,
+      ...(actorId ? { actorId } : {}),
       error,
       ruleSetVersion,
       ruleSetHash,
