@@ -39,6 +39,8 @@ describe("Level 2 Audit Tests", () => {
         occurredAt: "2026-01-01T00:00:00Z",
         transitionId: "t_aceptar",
         actorId: "user1",
+        actorKind: "humano",
+        evidence: { kind: "sistema", reference: "ref", recordedAt: "2026-01-01T00:00:00Z" },
         fromStateId: "estado_inicial",
         toStateId: "estado_aceptado",
         data: { calculations: {} },
@@ -232,6 +234,8 @@ describe("Level 2 Audit Tests", () => {
         occurredAt: "2026-01-01T00:00:00Z",
         transitionId: "t_aceptar",
         actorId: "user1",
+        actorKind: "humano",
+        evidence: { kind: "sistema", reference: "ref", recordedAt: "2026-01-01T00:00:00Z" },
         fromStateId: "s1",
         toStateId: "s2",
         data: {
@@ -256,6 +260,8 @@ describe("Level 2 Audit Tests", () => {
         occurredAt: "2026-01-01T00:00:00Z",
         transitionId: "t_aceptar",
         actorId: "user1",
+        actorKind: "humano",
+        evidence: { kind: "sistema", reference: "ref", recordedAt: "2026-01-01T00:00:00Z" },
         fromStateId: "s1",
         toStateId: "s2",
         data: {

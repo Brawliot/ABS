@@ -33,7 +33,11 @@ export function validateFormValues(
   transitionId: string,
   formValues: Readonly<Record<string, string>>,
 ): Record<string, unknown> {
-  const schema = formValueSchemas[transitionId] || formValueSchemas.default;
+  const schema = formValueSchemas[transitionId] ?? formValueSchemas.default;
+
+  if (!schema) {
+    throw new Error(`No schema available for transition ${transitionId}`);
+  }
 
   try {
     // Intenta coercer tipos numéricos si es posible
@@ -71,7 +75,7 @@ export function validateFormValues(
  * Útil para generar UI con validación client-side.
  */
 export function getFormSchema(transitionId: string): z.ZodSchema {
-  return formValueSchemas[transitionId] || formValueSchemas.default;
+  return formValueSchemas[transitionId] ?? formValueSchemas.default;
 }
 
 /**
