@@ -2004,7 +2004,8 @@ export class AppRuntime {
       // Generar proceso con el motor
       console.log("[MotorGenerador] Datos para generar:", {
         cliente_id: datosVenta.cliente_id,
-        líneas: datosVenta.líneas.length,
+        líneas_count: datosVenta.líneas.length,
+        líneas_sample: datosVenta.líneas[0],
         total: datosVenta.total,
       });
 
