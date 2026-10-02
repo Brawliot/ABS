@@ -167,8 +167,8 @@ describe("Documentos Compartidos - Módulo Futuro (75%)", () => {
     const historial = motorVersionado.obtenerHistorial(doc_id);
 
     expect(historial).toHaveLength(3);
-    expect(historial[0].número).toBe(1);
-    expect(historial[2].número).toBe(3);
+    expect(historial[0]!.número).toBe(1);
+    expect(historial[2]!.número).toBe(3);
   });
 
   it("revierte a versión anterior", () => {
@@ -183,7 +183,7 @@ describe("Documentos Compartidos - Módulo Futuro (75%)", () => {
     const historial = motorVersionado.obtenerHistorial(doc_id);
 
     expect(historial).toHaveLength(4);
-    expect(historial[3].contenido_nuevo).toBe("V1");
+    expect(historial[3]!.contenido_nuevo).toBe("V1");
   });
 
   it("compara dos versiones", () => {
@@ -318,7 +318,7 @@ describe("Documentos Compartidos - Módulo Futuro (75%)", () => {
 
     expect(comentariosDoc1).toHaveLength(1);
     expect(comentariosDoc2).toHaveLength(1);
-    expect(comentariosDoc1[0].autor_id).toBe("user-1");
-    expect(comentariosDoc2[0].autor_id).toBe("user-2");
+    expect(comentariosDoc1[0]!.autor_id).toBe("user-1");
+    expect(comentariosDoc2[0]!.autor_id).toBe("user-2");
   });
 });
