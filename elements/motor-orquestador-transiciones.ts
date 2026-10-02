@@ -8,8 +8,8 @@
  * → Automáticamente genera: factura, asientos contables, movimientos inventario, tareas
  */
 
-import type { Transacción } from "../core/transacción.js";
 import type { MotorGeneradorProcesos } from "./generador-procesos.js";
+import type { TransaccionProyectada } from "./transaccion.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -39,7 +39,9 @@ export interface ConfiguracionOrquestador {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export class MotorOrquestadorTransiciones {
-  private config: ConfiguracionOrquestador;
+  private config: {
+    reglasPorArchetype: Record<string, Record<string, ReglaDeGeneración>>;
+  };
 
   constructor(
     private motorGenerador: MotorGeneradorProcesos,
@@ -128,17 +130,18 @@ export class MotorOrquestadorTransiciones {
    * Se llama después de que la transición de estado ocurre.
    */
   async alTransicionar(
-    tx: Transacción,
+    tx: TransaccionProyectada,
+    archetypeId: string,
     transitionId: string,
     nuevoEstado: string,
   ): Promise<{ ok: boolean; error?: string; generados?: string[] }> {
     try {
-      console.log(`[MotorOrquestador] Transición detectada: ${tx.archetypeId}.${transitionId} → ${nuevoEstado}`);
+      console.log(`[MotorOrquestador] Transición detectada: ${archetypeId}.${transitionId} → ${nuevoEstado}`);
 
       // Obtener reglas aplicables
-      const reglasArchetype = this.config.reglasPorArchetype[tx.archetypeId];
+      const reglasArchetype = this.config.reglasPorArchetype[archetypeId];
       if (!reglasArchetype) {
-        console.log(`[MotorOrquestador] ℹ️ No hay reglas de generación para archetype: ${tx.archetypeId}`);
+        console.log(`[MotorOrquestador] ℹ️ No hay reglas de generación para archetype: ${archetypeId}`);
         return { ok: true, generados: [] };
       }
 
@@ -198,7 +201,7 @@ export class MotorOrquestadorTransiciones {
    * Valida que los datos requeridos existan antes de generar.
    */
   private validarPrecondiciones(
-    tx: Transacción,
+    tx: TransaccionProyectada,
     regla: ReglaDeGeneración,
   ): { ok: boolean; error?: string } {
     for (const requerido of regla.requiere) {
@@ -215,7 +218,7 @@ export class MotorOrquestadorTransiciones {
    * Delega al MotorGeneradorProcesos.
    */
   private async generarDocumento(
-    tx: Transacción,
+    tx: TransaccionProyectada,
     tipo: string,
   ): Promise<{ ok: boolean; id?: string; error?: string }> {
     try {

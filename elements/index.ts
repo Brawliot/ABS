@@ -399,3 +399,28 @@ export {
   crearPasoEjecución,
   crearEjecuciónProceso,
 } from "./ejecutor-procesos.js";
+
+// Capa 0.3: Motor Orquestador de Transiciones
+export type {
+  ReglaDeGeneración,
+  ReglasDePorArchetype,
+  ConfiguracionOrquestador,
+} from "./motor-orquestador-transiciones.js";
+export { MotorOrquestadorTransiciones } from "./motor-orquestador-transiciones.js";
+
+// Capa 0.3: Motor Validación de Transiciones
+export type {
+  ReglaDeValidación,
+  ResultadoValidación,
+  ConfiguracionValidacion,
+} from "./motor-validacion-transiciones.js";
+export { MotorValidacionTransiciones } from "./motor-validacion-transiciones.js";
+
+// Capa 0.3: Motor Notificaciones
+export type {
+  CanalNotificación,
+  Notificación,
+  ReglaDeNotificación,
+  ConfiguracionNotificaciones,
+} from "./motor-notificaciones.js";
+export { MotorNotificaciones as MotorNotificacionesCapa0 } from "./motor-notificaciones.js";

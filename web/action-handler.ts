@@ -536,6 +536,29 @@ async function executeUiActionLocked(
       slice.lifecycle,
       runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     );
+
+    // CAPA 0.3: Validación de Transición (antes de aplicar)
+    const transaccionPorValidar = runtime.datosDe(body.subjectId);
+    if (transaccionPorValidar) {
+      const validacionResult = runtime.motorValidacion.validarTransicion(
+        transaccionPorValidar,
+        slice.archetypeId,
+        request.transitionId,
+      );
+      if (!validacionResult.permitida) {
+        console.error(`[ActionHandler] ❌ Validación rechazada para ${slice.archetypeId}.${request.transitionId}:`, validacionResult.errores);
+        const flash: FlashMessage = {
+          kind: "error",
+          text: `No se puede «${runtime.etiquetas.accion(slice.id, action.transitionId)}»: ${validacionResult.errores.join(", ")}`,
+        };
+        runtime.setFlash(flash);
+        return { ok: false, flash, idempotentReplay };
+      }
+      if (validacionResult.advertencias.length > 0) {
+        console.warn(`[ActionHandler] ⚠️ Advertencias de validación:`, validacionResult.advertencias);
+      }
+    }
+
     const judged = attemptJudgedAdvance({
       subjectId: request.subjectId,
       lifecycle: slice.lifecycle,
@@ -581,6 +604,59 @@ async function executeUiActionLocked(
       runtime.confirmarReservasDelExpediente(body.subjectId);
     } else if ((toState?.kind as any) === "terminal_excepcion" || (toState?.kind as any) === "terminal_abandono") {
       runtime.cancelarReservasDelExpediente(body.subjectId);
+    }
+
+    // CAPA 0.3: Orquestación de Transiciones (después de cambio de estado)
+    const transaccionPorOrquestar = runtime.datosDe(body.subjectId);
+    if (transaccionPorOrquestar) {
+      try {
+        console.log(`[ActionHandler] 🔧 Ejecutando orquestador para ${slice.archetypeId}.${request.transitionId} → ${judged.event.toStateId}`);
+        const orqResult = await runtime.motorOrquestador.alTransicionar(
+          transaccionPorOrquestar,
+          slice.archetypeId,
+          request.transitionId,
+          judged.event.toStateId,
+        );
+        if (orqResult.ok) {
+          console.log(`[ActionHandler] ✅ Orquestación completada. Documentos generados:`, orqResult.generados);
+        } else {
+          console.error(`[ActionHandler] ⚠️ Error en orquestación: ${orqResult.error}`);
+          // La orquestación no bloquea (solo registra error)
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ActionHandler] ❌ Error en orquestador: ${msg}`);
+        // No bloquear - la orquestación es complementaria
+      }
+    }
+
+    // CAPA 0.3: Notificaciones de Transiciones (después de orquestación)
+    const transaccionPorNotificar = runtime.datosDe(body.subjectId);
+    if (transaccionPorNotificar) {
+      try {
+        console.log(`[ActionHandler] 📧 Generando notificaciones para ${slice.archetypeId}.${request.transitionId}`);
+        const notifResult = await runtime.motorNotificaciones.alTransicionar(
+          transaccionPorNotificar,
+          slice.archetypeId,
+          request.transitionId,
+        );
+        if (notifResult.ok && notifResult.notificaciones.length > 0) {
+          console.log(`[ActionHandler] 📤 Encoladas ${notifResult.notificaciones.length} notificación(es)`);
+          try {
+            // Enviar notificaciones asincronamente (no bloqueantes)
+            await runtime.motorNotificaciones.enviarNotificaciones(notifResult.notificaciones);
+            console.log(`[ActionHandler] ✅ Notificaciones enviadas`);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error(`[ActionHandler] ⚠️ Error enviando notificaciones: ${msg}`);
+            // No bloquear - las notificaciones no son críticas
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ActionHandler] ❌ Error en motor de notificaciones: ${msg}`);
+        // No bloquear - las notificaciones son complementarias
+      }
     }
 
     // Procesar automáticamente venta aceptada con MotorGeneradorProcesos

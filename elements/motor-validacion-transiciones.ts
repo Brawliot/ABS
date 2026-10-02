@@ -9,7 +9,7 @@
  * Se ejecuta ANTES de permitir que la transición ocurra.
  */
 
-import type { Transacción } from "../core/transacción.js";
+import type { TransaccionProyectada } from "./transaccion.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -21,7 +21,7 @@ export interface ReglaDeValidación {
   /** Descripción de qué valida */
   readonly descripción: string;
   /** Función que ejecuta la validación */
-  readonly validar: (tx: Transacción) => { ok: boolean; error?: string };
+  readonly validar: (tx: TransaccionProyectada) => { ok: boolean; error: string | undefined };
   /** Si no pasa, ¿bloquea la transición o es solo warning? */
   readonly bloqueante: boolean;
 }
@@ -45,7 +45,9 @@ export interface ConfiguracionValidacion {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export class MotorValidacionTransiciones {
-  private config: ConfiguracionValidacion;
+  private config: {
+    reglasPorArchetype: Record<string, Record<string, ReglaDeValidación[]>>;
+  };
 
   constructor() {
     this.config = this.construirConfiguracion();
@@ -212,18 +214,19 @@ export class MotorValidacionTransiciones {
    * Se ejecuta antes de actualizar el estado.
    */
   validarTransicion(
-    tx: Transacción,
+    tx: TransaccionProyectada,
+    archetypeId: string,
     transitionId: string,
   ): ResultadoValidación {
-    console.log(`[MotorValidación] Validando: ${tx.archetypeId}.${transitionId}`);
+    console.log(`[MotorValidación] Validando: ${archetypeId}.${transitionId}`);
 
     const errores: string[] = [];
     const advertencias: string[] = [];
 
     // Obtener reglas aplicables
-    const reglasArchetype = this.config.reglasPorArchetype[tx.archetypeId];
+    const reglasArchetype = this.config.reglasPorArchetype[archetypeId];
     if (!reglasArchetype) {
-      console.log(`[MotorValidación] ✅ No hay reglas para ${tx.archetypeId}`);
+      console.log(`[MotorValidación] ✅ No hay reglas para ${archetypeId}`);
       return { permitida: true, errores: [], advertencias: [] };
     }
 

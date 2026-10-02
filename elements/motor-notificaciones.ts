@@ -10,7 +10,7 @@
  * - Taller recibe: "Orden de trabajo creada"
  */
 
-import type { Transacción } from "../core/transacción.js";
+import type { TransaccionProyectada } from "./transaccion.js";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -27,9 +27,9 @@ export interface Notificación {
   readonly asunto: string;
   readonly contenido: string;
   readonly referencia: string; // La transacción que la dispara
-  readonly enviada: boolean;
-  readonly fechaEnvío?: Date;
-  readonly intentos: number;
+  enviada: boolean;
+  fechaEnvío?: Date;
+  intentos: number;
 }
 
 export interface ReglaDeNotificación {
@@ -40,11 +40,11 @@ export interface ReglaDeNotificación {
   /** Por qué canal */
   readonly canal: CanalNotificación;
   /** Cómo obtener el destinatario */
-  readonly obtenerDestinatario: (tx: Transacción) => string | undefined;
+  readonly obtenerDestinatario: (tx: TransaccionProyectada) => string | undefined;
   /** El asunto del mensaje */
-  readonly asunto: (tx: Transacción) => string;
+  readonly asunto: (tx: TransaccionProyectada) => string;
   /** El contenido */
-  readonly contenido: (tx: Transacción) => string;
+  readonly contenido: (tx: TransaccionProyectada) => string;
   /** Si está habilitada */
   readonly habilitada: boolean;
 }
@@ -62,7 +62,9 @@ export interface ConfiguracionNotificaciones {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export class MotorNotificaciones {
-  private config: ConfiguracionNotificaciones;
+  private config: {
+    reglasPorArchetype: Record<string, Record<string, ReglaDeNotificación[]>>;
+  };
   private notificacionesRegistradas: Notificación[] = [];
 
   constructor() {
@@ -231,17 +233,18 @@ export class MotorNotificaciones {
    * Se llama después de que la transición ocurra.
    */
   async alTransicionar(
-    tx: Transacción,
+    tx: TransaccionProyectada,
+    archetypeId: string,
     transitionId: string,
   ): Promise<{ ok: boolean; notificaciones: Notificación[] }> {
-    console.log(`[MotorNotificaciones] Procesando notificaciones para: ${tx.archetypeId}.${transitionId}`);
+    console.log(`[MotorNotificaciones] Procesando notificaciones para: ${archetypeId}.${transitionId}`);
 
     const notificaciones: Notificación[] = [];
 
     // Obtener reglas aplicables
-    const reglasArchetype = this.config.reglasPorArchetype[tx.archetypeId];
+    const reglasArchetype = this.config.reglasPorArchetype[archetypeId];
     if (!reglasArchetype) {
-      console.log(`[MotorNotificaciones] ℹ️ No hay reglas para ${tx.archetypeId}`);
+      console.log(`[MotorNotificaciones] ℹ️ No hay reglas para ${archetypeId}`);
       return { ok: true, notificaciones };
     }
 
