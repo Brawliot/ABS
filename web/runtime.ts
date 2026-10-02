@@ -26,6 +26,10 @@ import {
   MotorValidacionTransiciones,
   MotorOrquestadorTransiciones,
   MotorNotificaciones,
+  MotorCalculos,
+  MotorPoliticasDeNegocio,
+  MotorReversiones,
+  MotorSecuencias,
 } from "../elements/index.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -80,6 +84,10 @@ export class AppRuntime {
   readonly motorValidacion = new MotorValidacionTransiciones();
   readonly motorOrquestador = new MotorOrquestadorTransiciones();
   readonly motorNotificaciones = new MotorNotificaciones();
+  readonly motorCalculos = new MotorCalculos();
+  readonly motorPoliticas = new MotorPoliticasDeNegocio();
+  readonly motorReversiones = new MotorReversiones();
+  readonly motorSecuencias = new MotorSecuencias();
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;

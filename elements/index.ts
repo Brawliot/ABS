@@ -240,6 +240,11 @@ export * from "./projection.js";
 export * from "./factory.js";
 export * from "./exchange-direction.js";
 export * from "./retention-settlement.js";
+// Motores de Capa 0.3 - Orquestación
 export { MotorValidacionTransiciones } from "./motor-validacion-transiciones.js";
 export { MotorOrquestadorTransiciones } from "./motor-orquestador-transiciones.js";
 export { MotorNotificaciones } from "./motor-notificaciones.js";
+export { MotorCalculos } from "./motor-calculos.js";
+export { MotorPoliticasDeNegocio } from "./motor-politicas.js";
+export { MotorReversiones } from "./motor-reversiones.js";
+export { MotorSecuencias } from "./motor-secuencias.js";
