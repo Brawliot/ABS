@@ -5,18 +5,15 @@
  * estados, acciones y contexto del arquetipo. Soporta i18n (es/en).
  */
 
-import type { BusinessProfile } from "../core/business.js";
-import type { Transition } from "../core/lifecycle.js";
 import type {
   ActionSpec,
   ProcessGroupSpec,
   ViewSpec,
 } from "../presentation/types.js";
-import type { ComposedArchetypeSpec } from "../archetypes/types.js";
 
 export interface LocalizationContext {
-  readonly businessProfile: Partial<BusinessProfile>;
-  readonly archetype: ComposedArchetypeSpec;
+  readonly archetypeId: string;
+  readonly caseId: string;
   readonly locale: "es" | "en";
 }
 
