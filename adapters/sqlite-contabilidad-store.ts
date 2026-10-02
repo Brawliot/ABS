@@ -283,7 +283,7 @@ export class SqliteContabilidadStore {
       seq: undefined,
       tenant_id: tenantId,
       periodo,
-      fecha_cierre: fechaCierre,
+      fecha_cierre: fechaCierre as string,
       total_debe: totalDebe,
       total_haber: totalHaber,
       diferencia,
