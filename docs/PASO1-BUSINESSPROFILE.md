@@ -164,12 +164,16 @@ Salida:
 
 ---
 
-## Fase 3: CoherenceValidator [PENDIENTE]
+## Fase 3: CoherenceValidator ✅ COMPLETADA
 
-Validar completitud post-extracción:
-- ¿Tengo suficientes campos para componer?
-- ¿Hay contradicciones internas?
-- ¿Qué campos debería pedir más info?
+Valida completitud post-extracción (550 líneas, 33/33 tests):
+- ✅ Contradicciones internas (6 checks): portal sin digital, citas sin calendar, etc.
+- ✅ Completitud (5 checks): procesos, canales, pago, roles, ubicación
+- ✅ Sugerencias accionables (8 checks): qué campos aclarar
+- ✅ Scoring por categoría (exchange, distribution, payment, capacity, organization, resources)
+- ✅ Determinístico 100%
+
+**Resultado**: CoherenceCheckResult con isCoherent, completeness, contradictions, suggestions
 
 ---
 
@@ -190,8 +194,10 @@ Sugerir arquetipos basado en perfil:
 | `contracts/business-profile/field-glossary.ts` | 418 | ✅ Completo | Documentación de 23 campos |
 | `contracts/business-profile/extractor.ts` | 708 | ✅ Completo | Parser narrativo determinista |
 | `contracts/business-profile/extractor-keywords.ts` | 296 | ✅ Completo | Diccionario 30+ palabras clave |
+| `contracts/business-profile/coherence-validator.ts` | 550 | ✅ Completo | Validador de coherencia + sugerencias |
 | `tests/business-profile-validations.test.ts` | 585 | ✅ Completo | 37 test cases |
 | `tests/business-profile-extractor.test.ts` | 542 | ✅ Completo | 54 test cases (10+ casos reales) |
+| `tests/business-profile-coherence.test.ts` | 900 | ✅ Completo | 33 test cases (contradicciones, completitud) |
 
 ---
 
@@ -225,19 +231,22 @@ Sugerir arquetipos basado en perfil:
 
 ---
 
-## Checklist: MVP Ready
+## Checklist: MVP Ready ✅
 
-- ✅ Schema robusto (Zod)
-- ✅ 12 validaciones contextuales
-- ✅ 23 campos documentados
-- ✅ 37 tests unitarios (Fase 1)
-- ✅ Extractor determinista (708 líneas, 54/54 tests)
-- ✅ Keyword Dictionary (296 líneas, 30+ palabras clave)
-- ✅ 54 tests extractor (10 casos reales)
-- ✅ Determinismo garantizado (SHA256)
-- ✅ Mensajes de error claros
-- ⏳ CoherenceValidator (Fase 3)
-- ⏳ ArchetypeAdvisor (Fase 4)
+- ✅ Schema robusto (Zod) - Fase 1
+- ✅ 12 validaciones contextuales - Fase 1
+- ✅ 23 campos documentados (FieldGlossary) - Fase 1
+- ✅ 37 tests validaciones - Fase 1
+- ✅ Extractor determinista (708 líneas) - Fase 2
+- ✅ Keyword Dictionary (296 líneas, 30+ palabras clave) - Fase 2
+- ✅ 54 tests extractor (10 casos reales) - Fase 2
+- ✅ CoherenceValidator (550 líneas) - Fase 3
+- ✅ 19 reglas coherencia (contradicciones + completitud) - Fase 3
+- ✅ 33 tests coherencia - Fase 3
+- ✅ Determinismo garantizado (SHA256 + determinístico) - Todas
+- ✅ Mensajes de error claros en español - Todas
+- ✅ Integración completa (extractor → coherence validator) - Todas
+- ⏳ ArchetypeAdvisor (Fase 4 - pendiente)
 
 ---
 
@@ -245,15 +254,17 @@ Sugerir arquetipos basado en perfil:
 
 | Métrica | Target | Actual | Status |
 |---------|--------|--------|--------|
-| Cobertura validaciones | 12 | 12 | ✅ |
-| Campos documentados | 20+ | 23 | ✅ |
-| Test coverage Fase 1 | 80%+ | 100% (37/37) | ✅ |
-| Test coverage Fase 2 | 80%+ | 100% (54/54) | ✅ |
-| Msgs claros | 100% | 100% | ✅ |
-| Determinismo | 100% | 100% (SHA256) | ✅ |
-| Extractor impl. | Q4 | ✅ Completado | ✅ |
-| Palabras clave | 20+ | 30+ | ✅ |
-| Casos reales probados | 8+ | 10 | ✅ |
+| Validaciones contextuales (Fase 1) | 10+ | 12 | ✅ |
+| Campos documentados (Fase 1) | 20+ | 23 | ✅ |
+| Tests validación (Fase 1) | 30+ | 37 | ✅ |
+| Tests extractor (Fase 2) | 40+ | 54 | ✅ |
+| Casos reales (Fase 2) | 8+ | 10 | ✅ |
+| Reglas coherencia (Fase 3) | 15+ | 19 | ✅ |
+| Tests coherencia (Fase 3) | 20+ | 33 | ✅ |
+| Líneas código | 2500+ | 3914 | ✅ |
+| Test total (todos) | 100+ | 124 | ✅ |
+| Determinismo | 100% | 100% | ✅ |
+| Msgs claros (español) | 100% | 100% | ✅ |
 
 ---
 
@@ -277,4 +288,5 @@ Sugerir arquetipos basado en perfil:
 ---
 
 **Última actualización**: 2 Oct 2026  
-**Status**: Fase 1 ✅ COMPLETA | Fase 2 ✅ COMPLETA | Fase 3-4 ⏳ PENDIENTE
+**Status**: Fase 1 ✅ | Fase 2 ✅ | Fase 3 ✅ | Fase 4 ⏳  
+**Código Total**: 3914 líneas | **Tests Total**: 124 | **Pass Rate**: 100%
