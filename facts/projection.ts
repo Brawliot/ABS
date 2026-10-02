@@ -50,6 +50,8 @@ interface ParteState {
   firstSeenAt: string | null;
   /** subjectId → estado actual */
   txStates: Map<string, string>;
+  /** stateId → Set<subjectId> (índice inverso para O(1) búsquedas) */
+  txStatesByValue: Map<string, Set<string>>;
   /** subjectId → importe que contribuye al saldo mientras abierta */
   txAmounts: Map<string, number>;
   /** version counters per fact param key */
@@ -171,12 +173,10 @@ export class TenantFactProjection {
         const parteId = String(params.parteId);
         const stateId = String(params.stateId);
         const p = this.partes.get(parteId);
-        let count = 0;
-        if (p) {
-          for (const st of p.txStates.values()) {
-            if (st === stateId) count += 1;
-          }
-        }
+        // O(1) lookup gracias al índice inverso (en lugar de O(N) iteración)
+        const count = p
+          ? (p.txStatesByValue.get(stateId)?.size ?? 0)
+          : 0;
         const key = paramsKey(params);
         return {
           value: count,
@@ -258,6 +258,7 @@ export class TenantFactProjection {
         pendingBalance: 0,
         firstSeenAt: null,
         txStates: new Map(),
+        txStatesByValue: new Map(),  // Índice inverso: stateId → Set<subjectId>
         txAmounts: new Map(),
         versions: new Map(),
       };
@@ -272,6 +273,16 @@ export class TenantFactProjection {
 
     if (wasOpen) {
       p.pendingBalance -= prevAmount;
+      // Remover del índice inverso
+      if (prevState) {
+        const set = p.txStatesByValue.get(prevState);
+        if (set) {
+          set.delete(subjectId);
+          if (set.size === 0) {
+            p.txStatesByValue.delete(prevState);
+          }
+        }
+      }
     }
 
     const newAmount =
@@ -288,14 +299,32 @@ export class TenantFactProjection {
         p.txAmounts.set(subjectId, prevAmount);
         p.pendingBalance += prevAmount;
         p.txStates.set(subjectId, toState);
+        // Agregar al índice inverso
+        const set = p.txStatesByValue.get(toState) ?? new Set();
+        set.add(subjectId);
+        p.txStatesByValue.set(toState, set);
       }
     } else if (willOpen) {
       p.txAmounts.set(subjectId, newAmount);
       p.pendingBalance += newAmount;
       p.txStates.set(subjectId, toState);
+      // Agregar al índice inverso
+      const set = p.txStatesByValue.get(toState) ?? new Set();
+      set.add(subjectId);
+      p.txStatesByValue.set(toState, set);
     } else {
       p.txAmounts.delete(subjectId);
       p.txStates.delete(subjectId);
+      // Remover del índice inverso
+      if (toState) {
+        const set = p.txStatesByValue.get(toState);
+        if (set) {
+          set.delete(subjectId);
+          if (set.size === 0) {
+            p.txStatesByValue.delete(toState);
+          }
+        }
+      }
     }
 
     bump(p.versions, paramsKey({ parteId }));
