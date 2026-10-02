@@ -221,6 +221,11 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
       50000
     );
 
+    // Refrescar presupuesto para obtener presupuesto_total actualizado
+    const presupuestoActualizado = motorPresupuestos.obtenerPresupuesto(
+      presupuesto.id
+    )!;
+
     // Escenario: reducir 20% de salarios, aumentar 10% de gastos
     const ajustes = new Map([
       [p1.id, 80000], // 20% reducción
@@ -228,7 +233,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     ]);
 
     const resultado = motorAlertas.crearEscenario(
-      presupuesto,
+      presupuestoActualizado,
       "Escenario Conservador",
       ajustes
     );
@@ -247,14 +252,19 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
       50000
     );
 
+    // Refrescar presupuesto para obtener presupuesto_total actualizado
+    const presupuestoActualizado = motorPresupuestos.obtenerPresupuesto(
+      presupuesto.id
+    )!;
+
     const escenarios = [
       motorAlertas.crearEscenario(
-        presupuesto,
+        presupuestoActualizado,
         "Escenario 1",
         new Map([[partida.id, 45000]])
       ),
       motorAlertas.crearEscenario(
-        presupuesto,
+        presupuestoActualizado,
         "Escenario 2",
         new Map([[partida.id, 55000]])
       ),
@@ -264,7 +274,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     const escenarioObjs = [
       {
         id: "esc1",
-        presupuesto_id: presupuesto.id,
+        presupuesto_id: presupuestoActualizado.id,
         nombre: "E1",
         ajustes: new Map(),
         presupuesto_ajustado: escenarios[0].presupuesto_ajustado,
@@ -272,7 +282,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
       },
       {
         id: "esc2",
-        presupuesto_id: presupuesto.id,
+        presupuesto_id: presupuestoActualizado.id,
         nombre: "E2",
         ajustes: new Map(),
         presupuesto_ajustado: escenarios[1].presupuesto_ajustado,
@@ -281,7 +291,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     ];
 
     const comparativa = motorAlertas.compararEscenarios(
-      presupuesto,
+      presupuestoActualizado,
       escenarioObjs
     );
 

@@ -76,7 +76,7 @@ export class MotorFlujos {
 
   async ejecutarFlujo(
     flujo_id: string,
-    datos: Record<string, unknown> = {}
+    datos_iniciales: Record<string, unknown> = {}
   ): Promise<{
     éxito: boolean;
     resultados_pasos: unknown[];
@@ -95,6 +95,7 @@ export class MotorFlujos {
     const resultados_pasos: unknown[] = [];
     const errores: string[] = [];
     let registros_procesados = 0;
+    let datos = { ...datos_iniciales }; // Mantener datos mutables entre pasos
 
     try {
       for (const paso of flujo.pasos) {
@@ -116,6 +117,7 @@ export class MotorFlujos {
                 datos,
                 paso.configuración
               );
+              datos = (resultado as Record<string, unknown>) ?? datos;
               break;
 
             case "validar":

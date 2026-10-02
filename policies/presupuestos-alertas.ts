@@ -60,11 +60,10 @@ export class MotorAlertasPresupuesto {
 
     // Calcular presupuesto con ajustes
     let presupuesto_ajustado = 0;
-    const partidas_ajustadas = presupuesto.partidas.map((p) => {
-      const monto_ajustado = ajustes.get(p.id) ?? p.presupuestado;
+    for (const partida of presupuesto.partidas) {
+      const monto_ajustado = ajustes.get(partida.id) ?? partida.presupuestado;
       presupuesto_ajustado += monto_ajustado;
-      return monto_ajustado;
-    });
+    }
 
     const gasto_proyectado = presupuesto.gasto_real;
     const varianza_esperada = presupuesto_ajustado - gasto_proyectado;
