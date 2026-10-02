@@ -286,8 +286,8 @@ export class MotorSEO_Técnico {
     let match;
     while ((match = aRegex.exec(contenidoHTML)) !== null) {
       totalEnlaces++;
-      const href = match[1];
-      const texto = match[2].trim();
+      const href = match[1] ?? "";
+      const texto = (match[2] ?? "").trim();
 
       if (href.startsWith("/") || href.startsWith("http://localhost")) {
         enlacesInternos++;
