@@ -6,6 +6,7 @@
 import type { DomainEvent, TransitionEvent } from "../core/events.js";
 import type { TenantId } from "../tenancy/index.js";
 import { FACT_IDS, paramsKey, type FactParams } from "./catalog.js";
+import { PositionCache } from "./position-cache.js";
 
 /** Terminales que liquidan deuda / liberan recurso. */
 const TERMINAL_STATES = new Set([
@@ -77,6 +78,8 @@ export class TenantFactProjection {
     string,
     { value: number; version: number }
   >();
+  /** Caché LRU para proyecciones en posición histórica (readAt). */
+  private readonly positionCache = new PositionCache(10);
 
   constructor(readonly tenantId: TenantId) {}
 
@@ -115,6 +118,7 @@ export class TenantFactProjection {
     this.stream = [];
     this.partes.clear();
     this.recursos.clear();
+    this.positionCache.clear();  // Invalidar caché
     this.scopes.clear();
     this.turnoOverrides.clear();
     for (const e of events) this.apply(e);
@@ -226,6 +230,7 @@ export class TenantFactProjection {
   /**
    * Lee hechos como estaban tras exactamente `atPosition` eventos
    * (consistencia temporal con la transición evaluada).
+   * Usa caché LRU para evitar reconstrucciones duplicadas.
    */
   readAt(
     factId: string,
@@ -236,8 +241,16 @@ export class TenantFactProjection {
     if (atPosition === this.position) {
       return this.read(factId, params, nowMs);
     }
-    const tmp = new TenantFactProjection(this.tenantId);
-    tmp.rebuild(this.stream.slice(0, Math.max(0, atPosition)));
+
+    // Intentar obtener del caché
+    let tmp = this.positionCache.get(atPosition);
+    if (!tmp) {
+      // No estaba en caché: reconstruir y guardar
+      tmp = new TenantFactProjection(this.tenantId);
+      tmp.rebuild(this.stream.slice(0, Math.max(0, atPosition)));
+      this.positionCache.set(atPosition, tmp);
+    }
+
     return tmp.read(factId, params, nowMs);
   }
 
