@@ -461,3 +461,35 @@
 {"at":"2026-10-02T15:38:15.784Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
 {"at":"2026-10-02T15:38:15.785Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
 {"at":"2026-10-02T15:38:15.785Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-10-02T15:41:23.301Z","kind":"login_ok","accountId":"acc_00fec8ef-e66","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-10-02T15:41:23.361Z","kind":"logout_all","accountId":"acc_00fec8ef-e66","companyId":"concesionaria"}
+{"at":"2026-10-02T15:41:23.945Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-10-02T15:41:27.383Z","kind":"login_ok","accountId":"acc_5f03d970-5a9","companyId":"concesionaria","emailFp":"4a1be198740322c2"}
+{"at":"2026-10-02T15:41:27.449Z","kind":"logout_all","accountId":"acc_5f03d970-5a9","companyId":"concesionaria"}
+{"at":"2026-10-02T15:41:27.965Z","kind":"login_fail","emailFp":"3514525e4537c55d","companyId":"empresa-b","detail":"Sin acceso a esa empresa"}
+{"at":"2026-10-02T15:41:34.745Z","kind":"login_ok","accountId":"acc_77f4a5c6-928","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-10-02T15:41:34.750Z","kind":"role_change","accountId":"acc_77f4a5c6-928","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-10-02T15:41:35.399Z","kind":"login_ok","accountId":"acc_6bd64710-4cb","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-10-02T15:41:35.577Z","kind":"login_ok","accountId":"acc_b98fa4b0-088","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-10-02T15:41:35.578Z","kind":"membership_revoked","accountId":"acc_b98fa4b0-088","companyId":"co"}
+{"at":"2026-10-02T15:41:35.781Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-10-02T15:41:36.222Z","kind":"login_ok","accountId":"acc_34797706-547","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-10-02T15:41:36.418Z","kind":"login_ok","accountId":"acc_34797706-547","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-10-02T15:41:36.418Z","kind":"logout_all","accountId":"acc_34797706-547","companyId":"co"}
+{"at":"2026-10-02T15:41:36.466Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-10-02T15:41:39.237Z","kind":"login_ok","accountId":"acc_00969742-79c","companyId":"empresa-a","emailFp":"cc84fc880dacfa4e"}
+{"at":"2026-10-02T15:41:39.239Z","kind":"role_change","accountId":"acc_00969742-79c","companyId":"empresa-b","detail":"switch_company from=empresa-a"}
+{"at":"2026-10-02T15:41:39.897Z","kind":"login_ok","accountId":"acc_0721f1e0-30b","companyId":"co","emailFp":"566e933b8b151e82"}
+{"at":"2026-10-02T15:41:40.072Z","kind":"login_ok","accountId":"acc_a290d841-329","companyId":"co","emailFp":"c1ad88820e206b61"}
+{"at":"2026-10-02T15:41:40.072Z","kind":"membership_revoked","accountId":"acc_a290d841-329","companyId":"co"}
+{"at":"2026-10-02T15:41:40.270Z","kind":"login_fail","emailFp":"c1ad88820e206b61","companyId":"co","detail":"Sin acceso a esa empresa"}
+{"at":"2026-10-02T15:41:40.613Z","kind":"login_ok","accountId":"acc_62a57f9b-240","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-10-02T15:41:40.808Z","kind":"login_ok","accountId":"acc_62a57f9b-240","companyId":"co","emailFp":"080a3f5eea0c8591"}
+{"at":"2026-10-02T15:41:40.809Z","kind":"logout_all","accountId":"acc_62a57f9b-240","companyId":"co"}
+{"at":"2026-10-02T15:41:40.846Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-10-02T15:42:23.793Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-10-02T15:42:23.795Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-10-02T15:42:23.795Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-10-02T15:42:28.139Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-10-02T15:42:28.140Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-10-02T15:42:28.140Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}

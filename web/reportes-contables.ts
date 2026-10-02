@@ -153,8 +153,10 @@ export class GeneradorReportesContables {
       readonly concepto: string;
     }>,
   ): PerdidayGanancia {
-    // Filtrar asientos en rango
-    const asientosPeriodo = asientos.filter((a) => a.fecha >= desde && a.fecha <= hasta);
+    // Filtrar asientos en rango (comparar fechas como strings ISO)
+    const asientosPeriodo = asientos.filter((a) => {
+      return a.fecha >= desde && a.fecha <= hasta;
+    });
 
     const ingresos: PyLLinea[] = [];
     const costos: PyLLinea[] = [];
@@ -162,32 +164,35 @@ export class GeneradorReportesContables {
 
     // Clasificar por cuenta
     for (const asiento of asientosPeriodo) {
-      // Ingresos (700-799)
-      if (asiento.cuenta_acreedora.startsWith('7')) {
+      const deudora = (asiento.cuenta_deudora ?? '').toString();
+      const acreedora = (asiento.cuenta_acreedora ?? '').toString();
+
+      // Ingresos: Acreditados a cuentas 700-799
+      if (acreedora.charAt(0) === '7') {
         ingresos.push({
-          concepto: asiento.concepto,
-          monto_centimos: asiento.importe_centimos,
+          concepto: asiento.concepto ?? '',
+          monto_centimos: asiento.importe_centimos ?? 0,
         });
       }
-      // Costos (500-599)
-      if (asiento.cuenta_deudora.startsWith('5')) {
+      // Costos: Debitados a cuentas 500-599
+      if (deudora.charAt(0) === '5') {
         costos.push({
-          concepto: asiento.concepto,
-          monto_centimos: asiento.importe_centimos,
+          concepto: asiento.concepto ?? '',
+          monto_centimos: asiento.importe_centimos ?? 0,
         });
       }
-      // Gastos (600-699)
-      if (asiento.cuenta_deudora.startsWith('6')) {
+      // Gastos: Debitados a cuentas 600-699
+      if (deudora.charAt(0) === '6') {
         gastos.push({
-          concepto: asiento.concepto,
-          monto_centimos: asiento.importe_centimos,
+          concepto: asiento.concepto ?? '',
+          monto_centimos: asiento.importe_centimos ?? 0,
         });
       }
     }
 
-    const totalIngresos = ingresos.reduce((sum, l) => sum + l.monto_centimos, 0);
-    const totalCostos = costos.reduce((sum, l) => sum + l.monto_centimos, 0);
-    const totalGastos = gastos.reduce((sum, l) => sum + l.monto_centimos, 0);
+    const totalIngresos = ingresos.reduce((sum, l) => sum + (l.monto_centimos ?? 0), 0);
+    const totalCostos = costos.reduce((sum, l) => sum + (l.monto_centimos ?? 0), 0);
+    const totalGastos = gastos.reduce((sum, l) => sum + (l.monto_centimos ?? 0), 0);
 
     const utilidadBruta = totalIngresos - totalCostos;
     const utilidadNeta = utilidadBruta - totalGastos;

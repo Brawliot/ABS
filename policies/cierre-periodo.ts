@@ -51,19 +51,40 @@ export class MotorCierrePeriodo {
       (a) => a.fecha.substring(5, 7) === mesStr && a.fecha.substring(0, 4) === String(año),
     );
 
-    // Calcular totales
-    const totalDebe = asientosMes.reduce((sum, a) => sum + a.importe_centimos, 0);
-    const totalHaber = asientosMes.reduce((sum, a) => sum + a.importe_centimos, 0);
+    // Calcular saldos por cuenta
+    const saldosPorCuenta = new Map<string, number>();
 
-    // Validar cuadratura
-    const cuadrado = totalDebe === totalHaber;
+    for (const asiento of asientosMes) {
+      // Débito a cuenta_deudora
+      saldosPorCuenta.set(
+        asiento.cuenta_deudora,
+        (saldosPorCuenta.get(asiento.cuenta_deudora) ?? 0) + asiento.importe_centimos
+      );
+      // Crédito a cuenta_acreedora
+      saldosPorCuenta.set(
+        asiento.cuenta_acreedora,
+        (saldosPorCuenta.get(asiento.cuenta_acreedora) ?? 0) - asiento.importe_centimos
+      );
+    }
 
-    if (!cuadrado) {
+    // Validar que todas las cuentas cuadren (saldo = 0)
+    const cuentasDescuadradas: string[] = [];
+    for (const [cuenta, saldo] of saldosPorCuenta) {
+      if (saldo !== 0) {
+        cuentasDescuadradas.push(`${cuenta} (saldo: ${saldo})`);
+      }
+    }
+
+    if (cuentasDescuadradas.length > 0) {
       return {
         ok: false,
-        error: `No cuadra: Debe ${totalDebe} ≠ Haber ${totalHaber}`,
+        error: `No cuadra: Cuentas descuadradas: ${cuentasDescuadradas.join(', ')}`,
       };
     }
+
+    const totalDebe = asientosMes.reduce((sum, a) => sum + a.importe_centimos, 0);
+    const totalHaber = asientosMes.reduce((sum, a) => sum + a.importe_centimos, 0);
+    const cuadrado = totalDebe === totalHaber;
 
     const periodo: PeriodoCerrado = {
       id: `cierre-${año}-${mesStr}`,
