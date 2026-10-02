@@ -230,10 +230,14 @@ export class MotorRutas {
     // Recalcular distancia
     let distancia = 0;
     for (let i = 0; i < paradasCopia.length - 1; i++) {
-      distancia += this.calcularDistancia(
-        paradasCopia[i].localizacion,
-        paradasCopia[i + 1].localizacion,
-      );
+      const parada1 = paradasCopia[i];
+      const parada2 = paradasCopia[i + 1];
+      if (parada1 && parada2) {
+        distancia += this.calcularDistancia(
+          parada1.localizacion,
+          parada2.localizacion,
+        );
+      }
     }
 
     return {
