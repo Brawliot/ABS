@@ -81,40 +81,53 @@ import type { InterfaceCopyPack } from "../design/copy/types.js";
 import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
+// Capa 0: Motores de Orquestación
+import {
+  MotorGeneradorProcesos,
+  MotorValidacionTransiciones,
+  MotorOrquestadorTransiciones,
+  MotorNotificaciones,
+  MotorCalculos,
+  MotorPoliticasDeNegocio,
+  MotorReversiones,
+  MotorSecuencias,
+} from "../elements/index.js";
+// Activos Fijos
 import { MotorDepreciación } from "../policies/depreciacion.js";
 import { MotorMantenimiento } from "../policies/mantenimiento-activos.js";
+import { SqliteActivosStore } from "../adapters/sqlite-activos-store.js";
+// Email Marketing
 import { MotorContactosEmail } from "../policies/email-contactos.js";
 import { MotorCampañasEmail } from "../policies/email-campañas.js";
 import { MotorTrackingEmail } from "../policies/email-tracking.js";
 import { MotorWebhooksEmail } from "../policies/email-webhooks.js";
-import { SqliteActivosStore } from "../adapters/sqlite-activos-store.js";
 import { SqliteEmailMarketingStore } from "../adapters/sqlite-email-marketing-store.js";
+// Simulador Financiero
 import { MotorSimuladorModelos } from "../policies/simulador-modelos.js";
 import { MotorEscenarios } from "../policies/simulador-escenarios.js";
 import { MotorSensibilidad } from "../policies/simulador-sensibilidad.js";
 import { MotorValidaciónSimulador } from "../policies/simulador-validacion.js";
 import { SqliteSimuladorStore } from "../adapters/sqlite-simulador-store.js";
+// I+D
 import { MotorProyectosIyD } from "../policies/iyad-motor-proyectos.js";
 import { MotorExperimentos } from "../policies/iyad-experimentos.js";
 import { MotorIntegración } from "../policies/iyad-integracion-produccion.js";
 import { SqliteIyDStore } from "../adapters/sqlite-iyad-store.js";
-// Fase Futuro: Integraciones Externas
+// Integraciones Externas
 import { MotorConnectors } from "../policies/integraciones-connectors.js";
 import { MotorFlujos } from "../policies/integraciones-flujos.js";
 import { SqliteIntegracionesStore } from "../adapters/sqlite-integraciones-store.js";
-// Fase Futuro: Documentos Compartidos
+// Documentos Compartidos
 import { MotorAccesoDocumentos } from "../policies/documentos-acceso.js";
 import { MotorVersionado } from "../policies/documentos-versionado.js";
 import { MotorBúsquedaDocumentos } from "../policies/documentos-busqueda.js";
 import { SqliteDocumentosStore } from "../adapters/sqlite-documentos-store.js";
-// Fase Futuro: Presupuestos
+// Presupuestos
 import { MotorPresupuestos } from "../policies/presupuestos-motor.js";
 import { MotorAlertasPresupuesto } from "../policies/presupuestos-alertas.js";
 import { MotorReportesPresupuesto } from "../policies/presupuestos-reportes.js";
 import { SqlitePresupuestosStore } from "../adapters/sqlite-presupuestos-store.js";
-
-// Fase 5: CORE Operativo - MotorGeneradorProcesos
-import { MotorGeneradorProcesos } from "../elements/generador-procesos.js";
+// Fase 5: CORE Operativo
 import { SqliteGeneradorProcesosStore } from "../adapters/sqlite-generador-procesos-store.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -234,6 +247,17 @@ export class AppRuntime {
   /** Reglas adicionales de escenario (p. ej. hito de fase en reformas). */
   readonly extraRules: import("../policies/types.js").CompiledRule[] = [];
 
+  // Motores de Capa 0.2 - Generación
+  readonly motorGenerador!: MotorGeneradorProcesos;
+  // Motores de Capa 0.3 - Orquestación
+  readonly motorValidacion = new MotorValidacionTransiciones();
+  readonly motorOrquestador!: MotorOrquestadorTransiciones;
+  readonly motorNotificaciones!: MotorNotificaciones;
+  readonly motorCalculos!: MotorCalculos;
+  readonly motorPoliticas = new MotorPoliticasDeNegocio();
+  readonly motorReversiones!: MotorReversiones;
+  readonly motorSecuencias = new MotorSecuencias();
+
   // Activos Fijos
   readonly motorDepreciación: MotorDepreciación;
   readonly motorMantenimiento: MotorMantenimiento;
@@ -276,8 +300,7 @@ export class AppRuntime {
   readonly motorReportesPresupuesto: MotorReportesPresupuesto;
   readonly storePresupuestos: SqlitePresupuestosStore;
 
-  // CORE Operativo (Fase 5) - MotorGeneradorProcesos
-  readonly motorGeneradorProcesos: MotorGeneradorProcesos;
+  // CORE Operativo (Fase 5)
   readonly storeGeneradorProcesos: SqliteGeneradorProcesosStore;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
@@ -341,6 +364,13 @@ export class AppRuntime {
     this.tenantId = tenantId;
     this.subjects = subjects;
 
+    // Motores de Capa 0 que dependen del store
+    this.motorGenerador = new MotorGeneradorProcesos(store);
+    this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
+    this.motorNotificaciones = new MotorNotificaciones(store);
+    this.motorReversiones = new MotorReversiones(store);
+    this.motorCalculos = new MotorCalculos(store);
+
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
     this.motorMantenimiento = new MotorMantenimiento();
@@ -388,8 +418,7 @@ export class AppRuntime {
     const presupuestosDbPath = join(dirname(dbPath), `${tenantId}-presupuestos.sqlite`);
     this.storePresupuestos = new SqlitePresupuestosStore(presupuestosDbPath);
 
-    // Inicializar CORE Operativo (Fase 5) - MotorGeneradorProcesos
-    this.motorGeneradorProcesos = new MotorGeneradorProcesos();
+    // Inicializar CORE Operativo (Fase 5)
     const generadorProcesosDbPath = join(dirname(dbPath), `${tenantId}-generador-procesos.sqlite`);
     this.storeGeneradorProcesos = new SqliteGeneradorProcesosStore(generadorProcesosDbPath);
   }

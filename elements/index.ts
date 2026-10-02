@@ -362,7 +362,6 @@ export type {
   NotificaciónGenerada,
   ProcesoGenerado,
 } from "./generador-procesos.js";
-export { MotorGeneradorProcesos } from "./generador-procesos.js";
 export type {
   PlantillaDocumento,
 } from "./plantillas-documentos.js";
@@ -399,3 +398,14 @@ export {
   crearPasoEjecución,
   crearEjecuciónProceso,
 } from "./ejecutor-procesos.js";
+
+// Motores de Capa 0.2 - Generación
+export { MotorGeneradorProcesos } from "./motor-generador-procesos.js";
+// Motores de Capa 0.3 - Orquestación
+export { MotorValidacionTransiciones } from "./motor-validacion-transiciones.js";
+export { MotorOrquestadorTransiciones } from "./motor-orquestador-transiciones.js";
+export { MotorNotificaciones } from "./motor-notificaciones.js";
+export { MotorCalculos } from "./motor-calculos.js";
+export { MotorPoliticasDeNegocio } from "./motor-politicas.js";
+export { MotorReversiones } from "./motor-reversiones.js";
+export { MotorSecuencias } from "./motor-secuencias.js";

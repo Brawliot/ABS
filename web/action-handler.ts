@@ -128,6 +128,7 @@ export interface ActionResult {
   readonly idempotentReplay: boolean;
   readonly eventId?: string;
   readonly newStateId?: string;
+  readonly calculados?: readonly { readonly campo: string; readonly valor: number; readonly formula: string }[];
 }
 
 function actionsByIdMap(
@@ -269,10 +270,68 @@ async function executeUiActionLocked(
     return { ok: false, flash, idempotentReplay: false };
   }
 
+  // FASE 0: VALIDAR transición (MotorValidacionTransiciones)
+  const priorFields = reconstructFieldsFromEvents(
+    runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
+    { parte_id: body.parteId },
+  );
+  const txDataForValidation = {
+    ...priorFields,
+    arquetipo_id: slice.archetypeId,
+    parte_id: body.parteId,
+    ...body.formValues,
+  };
+  const validacion = runtime.motorValidacion.validarTransicion(
+    txDataForValidation,
+    action.transitionId,
+  );
+  if (!validacion.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: validacion.errores.join("; "),
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
+
+  // FASE 0B: VALIDAR políticas de negocio (MotorPoliticasDeNegocio)
+  const politicasResult = runtime.motorPoliticas.validarPoliticas(
+    txDataForValidation,
+  );
+  if (!politicasResult.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: politicasResult.violaciones
+        .map((v) => `${v.descripcion} (límite: ${v.valor_limite}, actual: ${v.valor_actual})`)
+        .join("; "),
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
+  if (politicasResult.advertencias.length > 0) {
+    console.log(
+      `⚠️ Advertencias de política: ${politicasResult.advertencias.map((a) => a.descripcion).join("; ")}`,
+    );
+  }
+
+  // FASE 0C: VALIDAR secuencias (MotorSecuencias)
   const history = runtime.store.getBySubject(
     body.subjectId,
   ) as TransitionEvent[];
   const derived: DerivedState = deriveState(slice.lifecycle, history);
+  const secuenciaResult = runtime.motorSecuencias.validarSecuencia(
+    txDataForValidation,
+    action.transitionId,
+    derived.currentStateId,
+  );
+  if (!secuenciaResult.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: secuenciaResult.razon ?? "Transición no permitida en este estado",
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
 
   // Bloqueos de composición (secundarios) antes del Juez
   const composition = runtime.boot.input.composition;
@@ -419,8 +478,10 @@ async function executeUiActionLocked(
     runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     { parte_id: body.parteId },
   );
-  const hitosFields = runtime.camposHitosPagados(body.subjectId);
+  const hitosFields = runtime.camposHitosPagados?.(body.subjectId) ?? {};
+
   const fields: Record<string, unknown> = {
+    ...txDataForValidation,
     ...priorFields,
     parte_id: body.parteId,
     ...enrichedForm,
@@ -578,51 +639,78 @@ async function executeUiActionLocked(
     // Gestionar reservas de stock al cambiar estado
     const toState = slice.lifecycle.states.find((s) => s.id === judged.event.toStateId);
     if ((toState?.kind as any) === "terminal_exito") {
-      runtime.confirmarReservasDelExpediente(body.subjectId);
+      runtime.confirmarReservasDelExpediente?.(body.subjectId);
     } else if ((toState?.kind as any) === "terminal_excepcion" || (toState?.kind as any) === "terminal_abandono") {
-      runtime.cancelarReservasDelExpediente(body.subjectId);
+      runtime.cancelarReservasDelExpediente?.(body.subjectId);
     }
 
-    // Procesar automáticamente venta aceptada con MotorGeneradorProcesos
-    console.log("[ActionHandler] Evento detectado:", {
-      archetype: slice.archetypeId,
-      toStateId: judged.event.toStateId,
-      isVenta: slice.archetypeId === "venta",
-      isAceptada: judged.event.toStateId === "aceptada",
-    });
-
-    if (
-      slice.archetypeId === "venta" &&
-      judged.event.toStateId === "aceptada"
-    ) {
-      console.log("[ActionHandler] ✅ Detectado: Venta aceptada! Ejecutando motor...");
-      try {
-        const resultado = runtime.procesarVentaAceptada(body.subjectId, request.actorId);
-        console.log("[ActionHandler] Resultado del motor:", resultado);
-        if (resultado.ok) {
-          // Registrar en auditoria que se procesó la venta automáticamente
-          const sliceLabel = runtime.etiquetas.proceso(slice.id);
-          runtime.registrarCambioAuditoria(
-            body.parteId,
-            "proceso_automatico_generador",
-            "pendiente",
-            `Proceso generado: ${resultado.procesoId}`,
-            request.actorId,
-          );
-        }
-        // No bloquear la transición si hay error en el procesamiento automático
-        // El error se registra pero no afecta el cambio de estado
-      } catch (err) {
-        // Log silencioso del error; no afecta el flujo principal
-        console.error("Error en procesamiento automático de venta:", err);
+    // FASE 0D: EJECUTAR reversiones si es transición de cancelación (MotorReversiones)
+    const reversionesResult = runtime.motorReversiones.revertir(
+      txDataForValidation,
+      action.transitionId,
+    );
+    if (reversionesResult.acciones_ejecutadas.length > 0) {
+      console.log(
+        `↩️ Reversiones ejecutadas: ${reversionesResult.acciones_ejecutadas.map((a) => a.tipo).join(", ")}`,
+      );
+      for (const accion of reversionesResult.acciones_ejecutadas) {
+        console.log(
+          `   → ${accion.tipo}: ${accion.entidad} (${accion.razon})`,
+        );
       }
+    }
+
+    // FASE 0E: CALCULAR valores derivados (MotorCalculos)
+    const calculosResult = runtime.motorCalculos.calcularTodos(
+      txDataForValidation,
+    );
+    if (calculosResult.length > 0) {
+      console.log(
+        `📊 Cálculos ejecutados: ${calculosResult.map((c) => `${c.campo}=${c.valor}`).join(", ")}`,
+      );
+    }
+
+    // FASE 1: ORQUESTAR generaciones automáticas (MotorOrquestadorTransiciones)
+    const orquestacion = runtime.motorOrquestador.alTransicionar(
+      txDataForValidation,
+      action.transitionId,
+      judged.event.toStateId,
+    );
+
+    // FASE 2: NOTIFICAR a roles interesados (MotorNotificaciones)
+    const notificacionesResult = await runtime.motorNotificaciones.alTransicionar(
+      txDataForValidation,
+      action.transitionId,
+    );
+    await runtime.motorNotificaciones.enviarNotificaciones(
+      notificacionesResult.notificaciones,
+      txDataForValidation,
+    );
+
+    // Construir mensaje con info completa
+    let flashText = idempotentReplay
+      ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
+      : `Listo: el expediente pasó a «${judged.event.toStateId}».`;
+
+    if (reversionesResult.acciones_ejecutadas.length > 0) {
+      const reversionesLabel = reversionesResult.acciones_ejecutadas
+        .map((a) => a.tipo)
+        .join(", ");
+      flashText += ` (Revertidas: ${reversionesLabel})`;
+    }
+    if (orquestacion.generados.length > 0) {
+      const generadosLabel = orquestacion.generados
+        .map((g) => g.tipo)
+        .join(", ");
+      flashText += ` (Generado: ${generadosLabel})`;
+    }
+    if (notificacionesResult.notificaciones.length > 0) {
+      flashText += ` (${notificacionesResult.notificaciones.length} notificación(es) enviada(s))`;
     }
 
     const flash: FlashMessage = {
       kind: "ok",
-      text: idempotentReplay
-        ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
-        : `Listo: ahora está en «${runtime.etiquetas.estado(slice.id, judged.event.toStateId)}».`,
+      text: flashText,
       ...(idempotentReplay ? { idempotentReplay: true } : {}),
     };
     runtime.setFlash(flash);
@@ -632,6 +720,7 @@ async function executeUiActionLocked(
       idempotentReplay,
       eventId: judged.event.id,
       newStateId: judged.event.toStateId,
+      ...(calculosResult.length > 0 ? { calculados: calculosResult } : {}),
     };
   } catch (err) {
     if (err instanceof ForceNotAllowedError) {
