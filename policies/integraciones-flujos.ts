@@ -60,7 +60,7 @@ export class MotorFlujos {
     frecuencia?: string
   ): FlujoIntegración {
     const id = randomUUID();
-    const flujo: FlujoIntegración = {
+    const flujo = {
       id,
       nombre,
       pasos: pasos.map((p, idx) => ({ ...p, orden: idx })),
@@ -68,7 +68,7 @@ export class MotorFlujos {
       activo: true,
       frecuencia,
       fecha_creación: new Date(),
-    };
+    } as FlujoIntegración;
 
     this.flujos.set(id, flujo);
     return flujo;
@@ -164,28 +164,28 @@ export class MotorFlujos {
       }
 
       const duracion_ms = Date.now() - inicio;
-      const registro: RegistroEjecuciónFlujo = {
+      const registro = {
         fecha: new Date(),
         éxito: errores.length === 0,
         registros_procesados,
         tiempo_ms: duracion_ms,
         detalles_errores: errores.length > 0 ? errores : undefined,
-      };
+      } as RegistroEjecuciónFlujo;
 
       this.historialEjecución.push(registro);
 
       // Actualizar última ejecución del flujo
-      const flujoActualizado: FlujoIntegración = {
+      const flujoActualizado = {
         ...flujo,
         última_ejecución: new Date(),
-      };
+      } as FlujoIntegración;
       this.flujos.set(flujo_id, flujoActualizado);
 
       return {
         éxito: errores.length === 0,
         resultados_pasos,
         errores: errores.length > 0 ? errores : undefined,
-      };
+      } as any;
     } catch (e) {
       const errorMsg =
         e instanceof Error ? e.message : "Error desconocido";
