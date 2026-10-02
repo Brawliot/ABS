@@ -87,7 +87,7 @@ export class AppRuntime {
   readonly motorValidacion = new MotorValidacionTransiciones();
   readonly motorOrquestador!: MotorOrquestadorTransiciones;
   readonly motorNotificaciones = new MotorNotificaciones();
-  readonly motorCalculos = new MotorCalculos();
+  readonly motorCalculos!: MotorCalculos;
   readonly motorPoliticas = new MotorPoliticasDeNegocio();
   readonly motorReversiones!: MotorReversiones;
   readonly motorSecuencias = new MotorSecuencias();
@@ -122,6 +122,7 @@ export class AppRuntime {
     this.motorGenerador = new MotorGeneradorProcesos(store);
     this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
     this.motorReversiones = new MotorReversiones(store);
+    this.motorCalculos = new MotorCalculos(store);
   }
 
   static open(

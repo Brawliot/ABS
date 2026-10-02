@@ -1,6 +1,6 @@
 /**
  * MotorCalculos (Capa 0.3)
- * Calcula valores derivados automáticamente (NO se guardan, se calculan on-demand).
+ * Calcula valores derivados automáticamente y los persiste en EventStore.
  * Ejemplos: total, iva, saldo_pendiente, margen, días_atraso.
  */
 
@@ -21,9 +21,14 @@ export class MotorCalculos {
   private config: {
     readonly calculosPorArchetype: Record<string, CalculoRule[]>;
   };
+  private eventStore?: any; // Referencia a SqliteEventStore para persistencia
 
-  constructor() {
+  constructor(eventStore?: any) {
+    this.eventStore = eventStore;
     this.config = this.construirConfiguracion();
+    console.log(
+      `[MotorCalculos] ${eventStore ? "Inicializado con EventStore" : "Sin persistencia - modo simulación"}`,
+    );
   }
 
   private construirConfiguracion() {
@@ -130,11 +135,17 @@ export class MotorCalculos {
     for (const regla of reglas) {
       try {
         const valor = this.evaluarFormula(regla, tx);
-        resultados.push({
+        const resultado: CalculoResult = {
           campo: regla.campo,
           valor,
           formula: regla.formula,
-        });
+        };
+        resultados.push(resultado);
+
+        // Persistir cálculo en EventStore
+        if (this.eventStore) {
+          this.persistirCalculoEnEventStore(resultado, tx, archetype);
+        }
       } catch (err) {
         console.log(
           `⚠️ Error calculando ${regla.campo}: ${err instanceof Error ? err.message : String(err)}`,
@@ -249,5 +260,45 @@ export class MotorCalculos {
 
   obtenerConfiguracion() {
     return this.config;
+  }
+
+  private persistirCalculoEnEventStore(
+    calculo: CalculoResult,
+    tx: Record<string, unknown>,
+    archetype: string,
+  ): void {
+    try {
+      // Crear evento de Modificación para registro del cálculo
+      const evento = {
+        id: `calc-${calculo.campo}-${Date.now()}`,
+        kind: "modificacion" as const,
+        subjectId: (tx.id as string) ?? "unknown",
+        occurredAt: new Date().toISOString(),
+        actorId: "sys-calculos",
+        actorKind: "sistema" as const,
+        evidence: {
+          kind: "sistema" as const,
+          reference: `Cálculo derivado: ${calculo.campo}`,
+          recordedAt: new Date().toISOString(),
+        },
+        freeText: JSON.stringify({
+          campo: calculo.campo,
+          valor: calculo.valor,
+          formula: calculo.formula,
+          archetype,
+          timestamp: new Date().toISOString(),
+        }),
+      };
+
+      this.eventStore.append(evento);
+      console.log(
+        `📝 Cálculo persistido en EventStore: ${calculo.campo}=${calculo.valor}`,
+      );
+    } catch (err) {
+      console.log(
+        `⚠️ Error persistiendo cálculo en EventStore: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // No fallar el cálculo si la persistencia falla
+    }
   }
 }
