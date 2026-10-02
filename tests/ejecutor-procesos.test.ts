@@ -484,8 +484,8 @@ describe("MotorEjecutorProcesos", () => {
         total: 100,
       });
 
-      const ejecución1 = await motor.ejecutar(proceso1);
-      const ejecución2 = await motor.ejecutar(proceso1);
+      await motor.ejecutar(proceso1);
+      await motor.ejecutar(proceso1);
 
       const historial = motor.obtenerHistorial(proceso1.id);
       expect(historial.length).toBeGreaterThanOrEqual(0);
@@ -516,8 +516,8 @@ describe("MotorEjecutorProcesos", () => {
 
       const ejecución = await motor.ejecutar(proceso);
 
-      const exitosos = ejecución.pasos_ejecutados.filter(p => p.estado === "éxito");
-      const fallidos = ejecución.pasos_ejecutados.filter(p =>
+      const exitosos = ejecución.pasos_ejecutados.filter((p: any) => p.estado === "éxito");
+      const fallidos = ejecución.pasos_ejecutados.filter((p: any) =>
         p.estado.includes("error")
       );
 

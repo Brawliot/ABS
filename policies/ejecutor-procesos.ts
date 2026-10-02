@@ -157,7 +157,7 @@ export class MotorEjecutorProcesos {
 
       // Evaluar condición si existe
       if (paso.condición) {
-        const contexto: ContextoEjecución = {
+        const contexto: any = {
           ejecución,
           paso_actual: paso,
           variables: {},
@@ -194,7 +194,7 @@ export class MotorEjecutorProcesos {
       }
 
       // Disparar evento por paso
-      const evento: EventoDisparo = {
+      const evento: any = {
         id: randomUUID(),
         ejecución_id,
         tipo: `paso_${resultado.estado}`,
@@ -211,14 +211,14 @@ export class MotorEjecutorProcesos {
 
       // Detener si hay error crítico
       if (resultado.estado === "error_crítico") {
-        errores_acumulados.push(`Error crítico en paso ${paso.id}: ${resultado.error}`);
+        errores_acumulados.push(`Error crítico en paso ${paso.id}: ${resultado.error || "Unknown error"}`);
         estado = "fallido";
         break;
       }
 
       // Detener si requiere intervención
       if (resultado.estado === "requiere_intervención") {
-        errores_acumulados.push(`Intervención requerida en paso ${paso.id}: ${resultado.error}`);
+        errores_acumulados.push(`Intervención requerida en paso ${paso.id}: ${resultado.error || "Intervention required"}`);
         estado = "fallido";
         break;
       }
