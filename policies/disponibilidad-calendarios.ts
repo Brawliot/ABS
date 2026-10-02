@@ -150,7 +150,7 @@ END:VEVENT
     const ahora = new Date();
     const limite = new Date(ahora.getTime() + diasAdelante * 24 * 60 * 60 * 1000);
 
-    return reservas
+    return (reservas
       .filter(
         r =>
           r.estado === "confirmada" &&
@@ -164,7 +164,7 @@ END:VEVENT
         fin: r.fechaFin,
         descripcion: r.descripcion,
       }))
-      .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+      .sort((a, b) => a.inicio.getTime() - b.inicio.getTime())) as Evento[];
   }
 
   verificarRecordatoriosPendientes(reservas: readonly Reserva[]): Recordatorio[] {
