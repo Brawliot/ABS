@@ -31,7 +31,7 @@ export class MotorVersionado {
 
     const contenido_anterior =
       versionesActuales.length > 0
-        ? versionesActuales[versionesActuales.length - 1].contenido_nuevo
+        ? ((versionesActuales[versionesActuales.length - 1]?.contenido_nuevo) ?? "")
         : "";
 
     const diff = this.calcularDiferencial(contenido_anterior, contenido_nuevo);
@@ -65,10 +65,10 @@ export class MotorVersionado {
     }
 
     // Crear nueva versión revertida
-    const contenido_nuevo = versionTarget.contenido_nuevo;
+    const contenido_nuevo = versionTarget?.contenido_nuevo ?? "";
     const contenido_anterior =
       versiones.length > 0
-        ? versiones[versiones.length - 1].contenido_nuevo
+        ? ((versiones[versiones.length - 1]?.contenido_nuevo) ?? "")
         : "";
 
     const versionRevertida: Versión = {
@@ -123,7 +123,7 @@ export class MotorVersionado {
     }
 
     // Retornar el diff de la última versión
-    return versiones[versiones.length - 1].diff ?? "Sin cambios detectados";
+    return (versiones[versiones.length - 1]?.diff) ?? "Sin cambios detectados";
   }
 
   private calcularDiferencial(anterior: string, nuevo: string): string {
