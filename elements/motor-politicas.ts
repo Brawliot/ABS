@@ -73,7 +73,7 @@ export class MotorPolicias {
   /**
    * Construye la configuración de políticas por archetype.
    */
-  private construirConfiguracion(): ConfiguracionPolicias {
+  private construirConfiguracion(): ConfiguracionPoliticas {
     return {
       reglasPorArchetype: {
         // ═══════════════════════════════════════════════════════════════════════
@@ -85,7 +85,7 @@ export class MotorPolicias {
             id: "venta-cliente-activo",
             tipo: "restriccion_cliente",
             descripción: "Cliente debe estar activo",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const clienteActivo = (tx.datos as any).cliente_activo !== false;
               return {
                 ok: clienteActivo,
@@ -101,7 +101,7 @@ export class MotorPolicias {
             id: "venta-limite-credito",
             tipo: "limite_credito",
             descripción: "No puede exceder límite de crédito del cliente",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const total = (tx.datos as any).total || 0;
               const creditoDisponible = (tx.datos as any).cliente_credito_disponible || 0;
 
@@ -120,7 +120,7 @@ export class MotorPolicias {
             id: "venta-margen-minimo",
             tipo: "margen_minimo",
             descripción: "Margen mínimo debe ser 20%",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const total = (tx.datos as any).total || 0;
               const costo = (tx.datos as any).costo_total || 0;
               const margen = costo > 0 ? ((total - costo) / total) * 100 : 100;
@@ -140,7 +140,7 @@ export class MotorPolicias {
             id: "venta-lista-negra",
             tipo: "restriccion_cliente",
             descripción: "Cliente no debe estar en lista negra",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const enListaNegra = (tx.datos as any).cliente_lista_negra === true;
               return {
                 ok: !enListaNegra,
@@ -161,7 +161,7 @@ export class MotorPolicias {
             id: "compra-proveedor-activo",
             tipo: "restriccion_cliente",
             descripción: "Proveedor debe estar activo",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const proveedorActivo = (tx.datos as any).proveedor_activo !== false;
               return {
                 ok: proveedorActivo,
@@ -177,7 +177,7 @@ export class MotorPolicias {
             id: "compra-precio-valido",
             tipo: "validacion_precio",
             descripción: "Precio debe estar dentro del rango histórico",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const precioActual = (tx.datos as any).precio_unitario || 0;
               const precioPromedio = (tx.datos as any).precio_promedio_historico || precioActual;
               const variacion = Math.abs((precioActual - precioPromedio) / precioPromedio) * 100;
@@ -197,7 +197,7 @@ export class MotorPolicias {
             id: "compra-margen-minimo",
             tipo: "margen_minimo",
             descripción: "Margen mínimo de compra debe ser 10%",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const costoCompra = (tx.datos as any).total || 0;
               const precioVenta = (tx.datos as any).precio_venta_estimado || 0;
               const margen = precioVenta > 0 ? ((precioVenta - costoCompra) / precioVenta) * 100 : 100;
@@ -222,7 +222,7 @@ export class MotorPolicias {
             id: "servicio-cliente-activo",
             tipo: "restriccion_cliente",
             descripción: "Cliente debe estar activo para contratar servicios",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const clienteActivo = (tx.datos as any).cliente_activo !== false;
               return {
                 ok: clienteActivo,
@@ -238,7 +238,7 @@ export class MotorPolicias {
             id: "servicio-minimo-hitos",
             tipo: "regla_negocio",
             descripción: "Se requiere mínimo 1 hito para servicios",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const hitos = (tx.datos as any).hitos?.length || 0;
               const permitido = hitos >= 1;
               return {
@@ -255,7 +255,7 @@ export class MotorPolicias {
             id: "servicio-precio-minimo",
             tipo: "validacion_precio",
             descripción: "Precio mínimo de servicio es €50",
-            validar: (tx) => {
+            validar: (tx: TransaccionProyectada) => {
               const tarifa = (tx.datos as any).tarifa_servicio || 0;
               const precioMinimo = 5000; // €50
               const permitido = tarifa >= precioMinimo;
@@ -357,7 +357,7 @@ export class MotorPolicias {
   /**
    * Obtiene la configuración actual.
    */
-  obtenerConfiguracion(): ConfiguracionPolicias {
+  obtenerConfiguracion(): ConfiguracionPoliticas {
     return this.config;
   }
 }

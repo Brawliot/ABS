@@ -743,6 +743,37 @@ async function executeUiActionLocked(
       }
     }
 
+    // CAPA 0.6: Auditoría de Transiciones (después de todo)
+    const transaccionPorAuditar = runtime.datosDe(body.subjectId);
+    if (transaccionPorAuditar) {
+      try {
+        console.log(`[ActionHandler] 📝 Registrando auditoría para ${slice.archetypeId}.${request.transitionId}`);
+        const estadoAntes = slice.lifecycle.states.find(
+          (s) => s.id === freshDerived.currentStateId,
+        )?.label || freshDerived.currentStateId;
+        const estadoDespues = slice.lifecycle.states.find(
+          (s) => s.id === judged.event.toStateId,
+        )?.label || judged.event.toStateId;
+
+        await runtime.motorAuditoria.registrarTransicion(
+          body.subjectId,
+          request.actorId,
+          estadoAntes,
+          estadoDespues,
+          {
+            transitionId: request.transitionId,
+            archetype: slice.archetypeId,
+            timestamp: judged.event.occurredAt,
+          },
+        );
+        console.log(`[ActionHandler] ✅ Auditoría registrada`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ActionHandler] ⚠️ Error registrando auditoría: ${msg}`);
+        // La auditoría no bloquea la transición
+      }
+    }
+
     const flash: FlashMessage = {
       kind: "ok",
       text: idempotentReplay

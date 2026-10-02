@@ -440,7 +440,16 @@ export type {
   TipoPolitica,
   RespuestaValidacion,
   ReglaDePolitica,
-  ConfiguracionPolicias,
+  ConfiguracionPoliticas,
   ResultadoPolitica,
 } from "./motor-politicas.js";
 export { MotorPolicias } from "./motor-politicas.js";
+
+// Capa 0.6: Motor Auditoría
+export type {
+  TipoEvento,
+  RegistroAuditoria,
+  ConfiguracionAuditoria,
+  ResultadoAuditoria,
+} from "./motor-auditoria.js";
+export { MotorAuditoria } from "./motor-auditoria.js";
