@@ -72,11 +72,13 @@ describe("MotorEjecutorProcesos", () => {
       const ejecución = await motor.ejecutar(proceso);
 
       expect(ejecución.pasos_ejecutados).toBeDefined();
-      const pasos = ejecución.pasos_ejecutados;
-      for (let i = 1; i < pasos.length; i++) {
-        expect(pasos[i].timestamp.getTime()).toBeGreaterThanOrEqual(
-          pasos[i - 1].timestamp.getTime()
-        );
+      if (ejecución.pasos_ejecutados && ejecución.pasos_ejecutados.length > 0) {
+        const pasos = ejecución.pasos_ejecutados;
+        for (let i = 1; i < pasos.length; i++) {
+          expect(pasos[i]?.timestamp.getTime()).toBeGreaterThanOrEqual(
+            pasos[i - 1]?.timestamp.getTime() || 0
+          );
+        }
       }
     });
 

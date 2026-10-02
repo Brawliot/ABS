@@ -208,20 +208,20 @@ export class SqliteEjecutorProcesosStore {
       .all(id) as any[];
 
     return {
-      id: ejecRow.id,
-      proceso_id: ejecRow.proceso_id,
-      estado: ejecRow.estado,
+      id: String(ejecRow.id),
+      proceso_id: String(ejecRow.proceso_id),
+      estado: ejecRow.estado as any,
       fecha_inicio: new Date(ejecRow.fecha_inicio),
       fecha_fin: ejecRow.fecha_fin ? new Date(ejecRow.fecha_fin) : undefined,
-      pasos_ejecutados: pasos.map(this.mapearResultadoPaso),
+      pasos_ejecutados: pasos.map((p: Record<string, any>) => this.mapearResultadoPaso(p)),
       pasos_pendientes: [],
       errores_acumulados: [],
-      eventos_disparados: eventos.map(this.mapearEvento),
-      webhooks_enviados: webhooks.map(this.mapearWebhook),
-      transacción_id: ejecRow.transacción_id,
-      usuario_ejecutor: ejecRow.usuario_ejecutor,
-      número_secuencia: ejecRow.número_secuencia,
-    };
+      eventos_disparados: eventos.map((e: Record<string, any>) => this.mapearEvento(e)),
+      webhooks_enviados: webhooks.map((w: Record<string, any>) => this.mapearWebhook(w)),
+      transacción_id: ejecRow.transacción_id ? String(ejecRow.transacción_id) : undefined,
+      usuario_ejecutor: String(ejecRow.usuario_ejecutor),
+      número_secuencia: Number(ejecRow.número_secuencia),
+    } as EjecuciónProceso;
   }
 
   /**
@@ -353,13 +353,13 @@ export class SqliteEjecutorProcesosStore {
     estado: row.estado,
     datos_entrada: JSON.parse(row.datos_entrada),
     datos_salida: row.datos_salida ? JSON.parse(row.datos_salida) : undefined,
-    error: row.error || undefined,
-    stack_trace: row.stack_trace || undefined,
+    error: row.error ? row.error : undefined,
+    stack_trace: row.stack_trace ? row.stack_trace : undefined,
     intentos_usados: row.intentos_usados,
     tiempo_ms: row.tiempo_ms,
     webhook_disparado: row.webhook_disparado === 1 ? true : undefined,
     secuencia: row.secuencia,
-  });
+  } as ResultadoEjecuciónPaso);
 
   /**
    * Mapear registro de webhook a tipo

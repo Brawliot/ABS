@@ -111,14 +111,20 @@ export class MotorEjecutorProcesos {
 
     // 8. Actualizar ejecución con resultado final
     const ejecuciónFinal: EjecuciónProceso = {
-      ...resultadoEjecución,
       id: ejecuciónConPasos.id,
       proceso_id: proceso.id,
-      transacción_id,
+      estado: (resultadoEjecución.estado || "completado") as any,
+      fecha_inicio: resultadoEjecución.fecha_inicio || ejecuciónConPasos.fecha_inicio,
+      fecha_fin: new Date(),
+      pasos_ejecutados: resultadoEjecución.pasos_ejecutados || [],
+      pasos_pendientes: [],
+      errores_acumulados: resultadoEjecución.errores_acumulados || [],
+      eventos_disparados: resultadoEjecución.eventos_disparados || [],
+      webhooks_enviados: resultadoEjecución.webhooks_enviados || [],
+      transacción_id: transacción_id || undefined,
       usuario_ejecutor: config.usuario_ejecutor || "sistema",
       número_secuencia: ejecuciónConPasos.número_secuencia,
-      fecha_fin: new Date(),
-    };
+    } as EjecuciónProceso;
 
     this.ejecuciones.set(ejecuciónFinal.id, ejecuciónFinal);
     return ejecuciónFinal;
@@ -164,7 +170,7 @@ export class MotorEjecutorProcesos {
           resultado_anterior: pasos_ejecutados.length > 0 ? pasos_ejecutados[pasos_ejecutados.length - 1] : undefined,
         };
 
-        const condiciónCumple = this.evaluarCondición(paso.condición, contexto);
+        const condiciónCumple = this.evaluarCondición(paso.condición as string, contexto);
         if (!condiciónCumple) {
           continue;
         }
@@ -211,14 +217,16 @@ export class MotorEjecutorProcesos {
 
       // Detener si hay error crítico
       if (resultado.estado === "error_crítico") {
-        errores_acumulados.push(`Error crítico en paso ${paso.id}: ${resultado.error || "Unknown error"}`);
+        const errorMsg = resultado.error ? resultado.error : "Unknown error";
+        errores_acumulados.push(`Error crítico en paso ${paso.id}: ${errorMsg}`);
         estado = "fallido";
         break;
       }
 
       // Detener si requiere intervención
       if (resultado.estado === "requiere_intervención") {
-        errores_acumulados.push(`Intervención requerida en paso ${paso.id}: ${resultado.error || "Intervention required"}`);
+        const errorMsg = resultado.error ? resultado.error : "Intervention required";
+        errores_acumulados.push(`Intervención requerida en paso ${paso.id}: ${errorMsg}`);
         estado = "fallido";
         break;
       }
@@ -245,46 +253,37 @@ export class MotorEjecutorProcesos {
     ejecución: EjecuciónProceso,
     secuencia: number
   ): Promise<ResultadoEjecuciónPaso> {
-    const resultadoPaso: ResultadoEjecuciónPaso = {
-      id: randomUUID(),
-      paso_id: paso.id,
-      ejecución_id: ejecución.id,
-      timestamp: new Date(),
-      estado: "error_crítico",
-      datos_entrada: paso.configuración,
-      intentos_usados: 0,
-      tiempo_ms: 0,
-      secuencia,
-    };
-
     const inicio = Date.now();
     let ultimoError: string | undefined;
+    let datos_salida: Record<string, any> | undefined;
+    let error: string | undefined;
+    let stack_trace: string | undefined;
+    let estado: ResultadoPaso = "error_crítico";
+    let intentos_usados = 0;
 
     for (let intento = 0; intento <= reintentos_máximos; intento++) {
-      resultadoPaso.intentos_usados = intento + 1;
+      intentos_usados = intento + 1;
 
       try {
         // Ejecutar paso con timeout
         const resultado = await this.ejecutarPasoConTimeout(paso);
 
-        resultadoPaso.estado = "éxito";
-        resultadoPaso.datos_salida = resultado;
-        resultadoPaso.tiempo_ms = Date.now() - inicio;
-        return resultadoPaso;
-      } catch (error: any) {
-        ultimoError = error?.message || "Error desconocido";
+        estado = "éxito";
+        datos_salida = resultado;
+        break;
+      } catch (err: any) {
+        ultimoError = err?.message || "Error desconocido";
 
         // Determinar si es recuperable
         const esRecuperable = this.esErrorRecuperable(ultimoError);
 
         if (!esRecuperable || intento === reintentos_máximos) {
-          resultadoPaso.error = ultimoError;
-          resultadoPaso.stack_trace = error?.stack;
-          resultadoPaso.estado = esRecuperable ? "error_recuperable" : "error_crítico";
-          resultadoPaso.tiempo_ms = Date.now() - inicio;
+          error = ultimoError;
+          stack_trace = err?.stack;
+          estado = esRecuperable ? "error_recuperable" : "error_crítico";
 
           if (!esRecuperable) {
-            return resultadoPaso;
+            break;
           }
         }
 
@@ -296,11 +295,22 @@ export class MotorEjecutorProcesos {
       }
     }
 
-    // Último intento falló
-    resultadoPaso.error = ultimoError;
-    resultadoPaso.estado = "error_crítico";
-    resultadoPaso.tiempo_ms = Date.now() - inicio;
-    return resultadoPaso;
+    const resultado: ResultadoEjecuciónPaso = {
+      id: randomUUID(),
+      paso_id: paso.id,
+      ejecución_id: ejecución.id,
+      timestamp: new Date(),
+      estado,
+      datos_entrada: paso.configuración,
+      datos_salida: datos_salida || undefined,
+      error: error || undefined,
+      stack_trace: stack_trace || undefined,
+      intentos_usados,
+      tiempo_ms: Date.now() - inicio,
+      secuencia,
+    } as ResultadoEjecuciónPaso;
+
+    return resultado;
   }
 
   /**
@@ -477,20 +487,26 @@ export class MotorEjecutorProcesos {
       e => e.proceso_id === proceso_id
     );
 
-    return ejecucionesDelProceso.map(e => ({
-      ejecución_id: e.id,
-      proceso_id: e.proceso_id,
-      fecha_inicio: e.fecha_inicio,
-      fecha_fin: e.fecha_fin,
-      total_pasos: e.pasos_ejecutados.length,
-      pasos_exitosos: e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado === "éxito").length,
-      pasos_fallidos: e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado.includes("error")).length,
-      tiempo_total_ms: e.fecha_fin
+    return ejecucionesDelProceso.map(e => {
+      const pasos_exitosos = e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado === "éxito").length;
+      const pasos_fallidos = e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado.includes("error")).length;
+      const tiempo_total = e.fecha_fin
         ? e.fecha_fin.getTime() - e.fecha_inicio.getTime()
-        : Date.now() - e.fecha_inicio.getTime(),
-      estado_final: e.estado,
-      errores: e.errores_acumulados,
-    }));
+        : Date.now() - e.fecha_inicio.getTime();
+
+      return {
+        ejecución_id: e.id,
+        proceso_id: e.proceso_id,
+        fecha_inicio: e.fecha_inicio,
+        fecha_fin: e.fecha_fin,
+        total_pasos: e.pasos_ejecutados.length,
+        pasos_exitosos,
+        pasos_fallidos,
+        tiempo_total_ms: tiempo_total,
+        estado_final: e.estado,
+        errores: e.errores_acumulados,
+      } as HistorialEjecución;
+    });
   }
 
   /**
@@ -536,31 +552,38 @@ export class MotorEjecutorProcesos {
     datos: Record<string, any>
   ): Promise<ResultadoWebhook> {
     const inicio = Date.now();
+    let éxito = false;
+    let status_code: number | undefined;
+    let respuesta: string | undefined;
+    let error: string | undefined;
+
+    try {
+      // En implementación real, aquí se haría una llamada HTTP
+      // Por ahora, simulamos éxito
+      éxito = true;
+      status_code = 200;
+      respuesta = JSON.stringify({ ok: true });
+    } catch (err: any) {
+      error = err?.message;
+      éxito = false;
+    }
+
     const resultado: ResultadoWebhook = {
       id: randomUUID(),
       ejecución_id: datos.ejecución_id,
       url,
       método: "POST",
-      payload: datos,
+      payload: datos || undefined,
+      status_code: status_code || undefined,
+      respuesta: respuesta || undefined,
+      error: error || undefined,
       timestamp: new Date(),
       reintentos: 0,
-      éxito: false,
-      tiempo_ms: 0,
+      éxito,
+      tiempo_ms: Date.now() - inicio,
       secuencia: 0,
-    };
+    } as ResultadoWebhook;
 
-    try {
-      // En implementación real, aquí se haría una llamada HTTP
-      // Por ahora, simulamos éxito
-      resultado.éxito = true;
-      resultado.status_code = 200;
-      resultado.respuesta = JSON.stringify({ ok: true });
-    } catch (error: any) {
-      resultado.error = error?.message;
-      resultado.éxito = false;
-    }
-
-    resultado.tiempo_ms = Date.now() - inicio;
     return resultado;
   }
 
