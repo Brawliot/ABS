@@ -383,9 +383,9 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
       motorPresupuestos.crearPresupuesto("2024", 2024),
     ];
 
-    motorPresupuestos.agregarPartida(presupuestos[0].id, "P", "otros", 80000);
-    motorPresupuestos.agregarPartida(presupuestos[1].id, "P", "otros", 90000);
-    motorPresupuestos.agregarPartida(presupuestos[2].id, "P", "otros", 100000);
+    motorPresupuestos.agregarPartida(presupuestos[0]!.id, "P", "otros", 80000);
+    motorPresupuestos.agregarPartida(presupuestos[1]!.id, "P", "otros", 90000);
+    motorPresupuestos.agregarPartida(presupuestos[2]!.id, "P", "otros", 100000);
 
     const presupuestosObjetos = presupuestos.map((p) =>
       motorPresupuestos.obtenerPresupuesto(p.id)!
