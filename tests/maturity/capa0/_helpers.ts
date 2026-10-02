@@ -4,6 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { expect } from "vitest";
 import type { Lifecycle, Transition } from "../../../core/lifecycle.js";
 import type { DomainEvent, TransitionEvent } from "../../../core/events.js";
 import { ventaArchetype } from "../../../archetypes/venta.js";
@@ -133,27 +134,33 @@ export function requirePgOrThrow(): string {
  * Estos helpers verifican invariantes y precondiciones/postcondiciones en cada paso.
  */
 
+export type DerivedStateType = ReturnType<typeof import("../../../core/derivation.js").deriveState>;
+
 export interface WalkStep {
   /** Evento que inicia este paso */
   event: DomainEvent;
   /** Estado derivado después de este evento */
-  state: ReturnType<typeof import("../../../core/derivation.js").deriveState>;
+  state: DerivedStateType;
   /** Índice en la secuencia de eventos (0-based) */
   stepIndex: number;
 }
 
 /**
  * Verifica que eventCount incremente exactamente en 1 respecto al paso anterior.
+ * Acepta DerivedState o WalkStep.
  */
 export function expectEventCountIncrement(
-  previous: WalkStep | null,
-  current: WalkStep,
+  previous: DerivedStateType | WalkStep | null,
+  current: DerivedStateType | WalkStep,
 ): void {
-  if (previous === null) {
+  const prevState = previous === null ? null : ("state" in previous ? previous.state : previous);
+  const currState = "state" in current ? current.state : current;
+
+  if (prevState === null) {
     // Primer evento
-    expect(current.state.eventCount).toBe(1);
+    expect(currState.eventCount).toBe(1);
   } else {
-    expect(current.state.eventCount).toBe(previous.state.eventCount + 1);
+    expect(currState.eventCount).toBe(prevState.eventCount + 1);
   }
 }
 
@@ -174,18 +181,22 @@ export function expectStateIsReachable(
 /**
  * Verifica que los compromisos son monótonos crecientes
  * (una vez cumplido, nunca se vuelve pendiente).
+ * Acepta DerivedState o WalkStep.
  */
 export function expectCommitmentsMonotonic(
-  previous: WalkStep | null,
-  current: WalkStep,
+  previous: DerivedStateType | WalkStep | null,
+  current: DerivedStateType | WalkStep,
 ): void {
   if (previous === null) {
     return; // Primer paso no tiene restricción
   }
 
+  const prevState = "state" in previous ? previous.state : previous;
+  const currState = "state" in current ? current.state : current;
+
   // Cada compromiso cumplido en el paso anterior debe seguir cumplido
-  for (const commitId of previous.state.fulfilledCommitmentIds) {
-    expect(current.state.fulfilledCommitmentIds.has(commitId)).toBe(true);
+  for (const commitId of prevState.fulfilledCommitmentIds) {
+    expect(currState.fulfilledCommitmentIds.has(commitId)).toBe(true);
   }
 }
 
