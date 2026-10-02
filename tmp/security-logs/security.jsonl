@@ -458,3 +458,6 @@
 {"at":"2026-10-02T15:37:45.316Z","kind":"login_ok","accountId":"acc_16d6dfa9-da5","companyId":"co","emailFp":"080a3f5eea0c8591"}
 {"at":"2026-10-02T15:37:45.316Z","kind":"logout_all","accountId":"acc_16d6dfa9-da5","companyId":"co"}
 {"at":"2026-10-02T15:37:45.350Z","kind":"session_reject","detail":"action sin sesión en producción"}
+{"at":"2026-10-02T15:38:15.784Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
+{"at":"2026-10-02T15:38:15.785Z","kind":"personal_data_access","companyId":"co-gdpr","detail":"erase parte:parte-cli-1"}
+{"at":"2026-10-02T15:38:15.785Z","kind":"personal_data_access","companyId":"co-gdpr","accountId":"acc_reader","detail":"export parte:parte-cli-1"}
