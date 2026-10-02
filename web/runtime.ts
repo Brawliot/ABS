@@ -23,6 +23,7 @@ import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
 import {
+  MotorGeneradorProcesos,
   MotorValidacionTransiciones,
   MotorOrquestadorTransiciones,
   MotorNotificaciones,
@@ -80,9 +81,11 @@ export class AppRuntime {
   /** Reglas adicionales de escenario (p. ej. hito de fase en reformas). */
   readonly extraRules: import("../policies/types.js").CompiledRule[] = [];
 
+  // Motores de Capa 0.2 - Generación
+  readonly motorGenerador = new MotorGeneradorProcesos();
   // Motores de Capa 0.3 - Orquestación
   readonly motorValidacion = new MotorValidacionTransiciones();
-  readonly motorOrquestador = new MotorOrquestadorTransiciones();
+  readonly motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
   readonly motorNotificaciones = new MotorNotificaciones();
   readonly motorCalculos = new MotorCalculos();
   readonly motorPoliticas = new MotorPoliticasDeNegocio();

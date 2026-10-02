@@ -31,6 +31,9 @@ export class MotorOrquestadorTransiciones {
   constructor(motorGenerador?: any) {
     this.motorGenerador = motorGenerador;
     this.config = this.construirConfiguracion();
+    console.log(
+      `[MotorOrquestadorTransiciones] ${motorGenerador ? "Inicializado con MotorGeneradorProcesos" : "Sin generador - modo simulación"}`,
+    );
   }
 
   private construirConfiguracion() {
@@ -121,15 +124,33 @@ export class MotorOrquestadorTransiciones {
     tx: Record<string, unknown>,
     transitionId: string,
   ): OrquestacionResult["generados"][number] | undefined {
-    // Simulación: en producción, llamaría al MotorGeneradorProcesos
+    // Usar MotorGeneradorProcesos real si está disponible
+    if (this.motorGenerador) {
+      try {
+        const resultado = this.motorGenerador.generarDocumento({
+          tipo,
+          tx,
+          razon: `Generado automáticamente por transición ${transitionId}`,
+        });
+
+        if (resultado.exitosa && resultado.documentos.length > 0) {
+          const doc = resultado.documentos[0]!;
+          return {
+            tipo,
+            id: doc.id,
+            label: `${tipo} (${doc.id})`,
+          };
+        }
+      } catch (err) {
+        console.log(
+          `⚠️ Error usando MotorGenerador: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    // Fallback a simulación si no hay generador o falló
     const id = `${tipo}-${Date.now()}`;
-    const label = `${tipo} generado`;
-
-    // Aquí iría la lógica real de generación
-    // if (this.motorGenerador) {
-    //   return this.motorGenerador.generar(tipo, tx);
-    // }
-
+    const label = `${tipo} simulado`;
     return { tipo, id, label };
   }
 
