@@ -197,7 +197,7 @@ describe('Transporte Fase 3', () => {
 
       const proveedoresZona = motor.obtenerProveedoresZona('centro');
       expect(proveedoresZona).toHaveLength(1);
-      expect(proveedoresZona[0].nombre).toBe('Fedex');
+      expect(proveedoresZona[0]!.nombre).toBe('Fedex');
     });
 
     it('calcula costo de ruta', () => {
@@ -395,7 +395,7 @@ describe('Transporte Fase 3', () => {
       const conflictos = planificador.detectarConflictos([ruta], [], 1000);
 
       expect(conflictos.length).toBeGreaterThan(0);
-      expect(conflictos[0].tipo).toBe('capacidad_excedida');
+      expect(conflictos[0]!.tipo).toBe('capacidad_excedida');
     });
 
     it('optimiza planificación', () => {
@@ -482,7 +482,7 @@ describe('Transporte Fase 3', () => {
       const entregas = store.obtenerEntregasRuta('tenant1', 'ruta-1');
 
       expect(entregas).toHaveLength(1);
-      expect(entregas[0].firma_cliente).toBe('firma-cliente');
+      expect(entregas[0]!.firma_cliente).toBe('firma-cliente');
 
       store.close();
     });
@@ -497,7 +497,7 @@ describe('Transporte Fase 3', () => {
       const tarifas = store.obtenerTarifasZona('tenant1', 'centro');
 
       expect(tarifas).toHaveLength(1);
-      expect(tarifas[0].proveedor_id).toBe('fedex');
+      expect(tarifas[0]!.proveedor_id).toBe('fedex');
 
       store.close();
     });
@@ -512,7 +512,7 @@ describe('Transporte Fase 3', () => {
       const tracking = store.obtenerTrackingRuta('tenant1', 'ruta-1');
 
       expect(tracking).toHaveLength(1);
-      expect(tracking[0].velocidad_kmh).toBe(60);
+      expect(tracking[0]!.velocidad_kmh).toBe(60);
 
       store.close();
     });
