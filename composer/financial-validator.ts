@@ -48,20 +48,19 @@ export function validateFinancialCoherence(
   // ¿Hay al menos una señal válida?
   const signals: { readonly name: string; readonly present: boolean }[] = [];
 
-  // Señal 1: aPlazos=true
+  // Señal 1: aPlazos=enabled (PlazosDecl con enabled=true)
   const cobros = profile.cobros;
   if (cobros?.aPlazos && isKnown(cobros.aPlazos)) {
     const v = cobros.aPlazos.value;
-    const isTruthy = v !== false && (v === true || (typeof v === "object" && v !== null && v.enabled));
-    signals.push({ name: "aPlazos=true", present: isTruthy });
+    const isTruthy = typeof v === "object" && v !== null && (v as any).enabled === true;
+    signals.push({ name: "aPlazos=enabled", present: isTruthy });
   }
 
   // Señal 2: aCredito=true o cuenta_parte
   if (cobros?.aCredito && isKnown(cobros.aCredito)) {
     const v = cobros.aCredito.value;
-    const isTrue = v === true;
-    const isCuentaParte = typeof v === "object" && v !== null && v.kind === "cuenta_parte";
-    signals.push({ name: "aCredito={true|cuenta_parte}", present: isTrue || isCuentaParte });
+    const isCuentaParte = typeof v === "object" && v !== null && (v as any).kind === "cuenta_parte";
+    signals.push({ name: "aCredito={cuenta_parte}", present: isCuentaParte });
   }
 
   // Señal 3: paymentMode=financiado|diferido

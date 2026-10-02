@@ -19,6 +19,9 @@ import {
 import { COMPOSITION_RULES, SAMPLE_PLANTILLA_TO_TPL } from "./rules.js";
 import { defaultFinancieraBinding } from "./bindings.js";
 import { hashComposerOutput } from "./hash.js";
+import { normalizeBusinessProfile } from "./normalizers.js";
+import { validateFinancieraCombined } from "./financial-validator.js";
+import { sortRuleIdsByPrecedence } from "./precedence.js";
 import type {
   ComposerQuestion,
   ComposerResult,
@@ -239,22 +242,43 @@ export interface ComposeOptions {
  * Compone un BusinessProfile validado.
  * Nunca adivina: unknown con política ask → pregunta.
  * Composición inválida → error (no se entrega).
+ *
+ * FASE 1 COMPOSITOR:
+ * 1. Normalización: cobros=null → modelo normalizado (EC1)
+ * 2. Precedencia: reglas ordenadas por prioridad explícita
+ * 3. Validación: coherencia financiera (EC3)
  */
 export function composeBusinessProfile(
   profile: BusinessProfile,
   options?: ComposeOptions,
 ): ComposerResult {
-  const traces: TraceEntry[] = [];
+  // PASO 1: Normalización (Fase 1 Compositor)
+  // Resuelve cobros=null, aPlazos/aCredito unknown sin asumir
+  const { normalized, traces: normalizationTraces } = normalizeBusinessProfile(profile);
+  const normalizedProfile = {
+    ...profile,
+    ...normalized,
+  } as BusinessProfile;
+
+  // Registrar trazas de normalización
+  const traces: TraceEntry[] = normalizationTraces.map((t) => ({
+    elementId: `normalized.${t.field}`,
+    elementKind: "composition",
+    field: t.field,
+    ruleId: "R_NORMALIZER",
+    decision: `${t.source} (conf=${t.confidence.toFixed(2)}): ${t.reason}`,
+  }));
+
   const questions: ComposerQuestion[] = [];
   const visibility: VisibilityRequirement[] = [];
   const nonComposable: NonComposableItem[] = [];
   const policyTemplates: PolicyTemplateInvocation[] = [
-    ...collectPolicyTemplatesFromProfile(profile),
+    ...collectPolicyTemplatesFromProfile(normalizedProfile),
   ];
   const forbidden = new Set<ArchetypeId>();
   const secondariesByArch = new Map<ArchetypeId, SecondaryBinding>();
 
-  if (!isKnown(profile.processes)) {
+  if (!isKnown(normalizedProfile.processes)) {
     return {
       ok: false,
       code: "INCOMPLETE_PROFILE",
@@ -265,8 +289,8 @@ export function composeBusinessProfile(
     };
   }
 
-  const processes: ProcessDecl[] = [...profile.processes.value];
-  const dominant = profile.policyMeta.dominantArchetypeId;
+  const processes: ProcessDecl[] = [...normalizedProfile.processes.value];
+  const dominant = normalizedProfile.policyMeta.dominantArchetypeId;
   const processArchetypes = new Set(processes.map((p) => p.archetypeId));
 
   traces.push({
@@ -279,8 +303,8 @@ export function composeBusinessProfile(
   });
 
   // Perfil ya trae composition known → respetar (tras validar)
-  if (profile.composition && isKnown(profile.composition)) {
-    const composition = profile.composition.value;
+  if (normalizedProfile.composition && isKnown(normalizedProfile.composition)) {
+    const composition = normalizedProfile.composition.value;
     const v = validateComposition(composition);
     if (!v.ok) {
       return {
@@ -334,7 +358,7 @@ export function composeBusinessProfile(
   }
 
   const ctx: EvalCtx = {
-    profile,
+    profile: normalizedProfile,
     dominant,
     processArchetypes,
     forbiddenSecondaries: forbidden,
@@ -542,8 +566,16 @@ export function composeBusinessProfile(
     }
   };
 
-  // Aplicar reglas en orden estable
-  for (const rule of COMPOSITION_RULES) {
+  // PASO 2: Aplicar reglas CON PRECEDENCIA EXPLÍCITA (Fase 1 Compositor)
+  // Ordenar por prioridad: reglas de mayor prioridad se aplican primero
+  // Esto resuelve conflictos silenciosos en las 5 reglas financieras
+  const ruleIds = COMPOSITION_RULES.map((r) => r.id);
+  const sortedRuleIds = sortRuleIdsByPrecedence(ruleIds);
+  const sortedRules = sortedRuleIds
+    .map((id) => COMPOSITION_RULES.find((r) => r.id === id))
+    .filter((r) => r !== undefined) as typeof COMPOSITION_RULES;
+
+  for (const rule of sortedRules) {
     if (rule.then.length === 0) continue;
     if (!evalWhen(rule.when, ctx)) continue;
     for (const action of rule.then) {
@@ -553,8 +585,8 @@ export function composeBusinessProfile(
 
   // Hitos: validar lista si known → commitments + grafo de bloqueos (no financiera)
   let milestones: HitoPagoSpec[] | undefined;
-  if (isHitos(profile) && profile.cobros && isKnown(profile.cobros.pagosPorHitos)) {
-    const hitosDecl = profile.cobros.pagosPorHitos.value;
+  if (isHitos(normalizedProfile) && normalizedProfile.cobros && isKnown(normalizedProfile.cobros.pagosPorHitos)) {
+    const hitosDecl = normalizedProfile.cobros.pagosPorHitos.value;
     if (typeof hitosDecl === "object" && hitosDecl !== null && "hitos" in hitosDecl) {
       const specs: HitoPagoSpec[] = hitosDecl.hitos.map((h) => ({
         id: h.id,
@@ -698,12 +730,36 @@ export function composeBusinessProfile(
     ...(milestones !== undefined ? { milestones } : {}),
   };
 
-  return {
+  const result = {
     ok: true,
     ...outBase,
     traces,
     compositionHash: hashComposerOutput(outBase),
-  };
+  } as const;
+
+  // PASO 3: Validar coherencia financiera (Fase 1 Compositor)
+  // Resuelve EC3: "Financiera prohibida Y activada" → error claro
+  try {
+    validateFinancieraCombined(
+      result as typeof result & { ok: true },
+      normalizedProfile,
+    );
+  } catch (err) {
+    if (err instanceof Error && "code" in err && err.code === "FINANCIAL_INCOHERENCE") {
+      const details = "details" in err && Array.isArray(err.details) ? err.details : [];
+      return {
+        ok: false,
+        code: "CONTRADICTION",
+        message: err.message,
+        details,
+        traces,
+        questions,
+      };
+    }
+    throw err;
+  }
+
+  return result;
 }
 
 /** Resuelve plantilla sample → tpl.* si existe. */

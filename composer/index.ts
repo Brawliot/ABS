@@ -38,3 +38,27 @@ export {
   defaultFinancieraBinding,
   defaultPostventaServicioBinding,
 } from "./bindings.js";
+
+// —— Fase 1 Compositor: Precedencia + Normalización + Validación ——
+export {
+  RULE_PRECEDENCE,
+  getRulePriority,
+  getRulePrecedenceInfo,
+  sortRuleIdsByPrecedence,
+  canRulesConflict,
+  type RulePrecedence,
+} from "./precedence.js";
+export {
+  normalizeBusinessProfile,
+  normalizeCobrosModel,
+  normalizeAPlazos,
+  normalizeACredito,
+  describeNormalization,
+  type NormalizationTrace,
+} from "./normalizers.js";
+export {
+  validateFinancialCoherence,
+  validateNoForbidConflicts,
+  validateFinancieraCombined,
+  FinancialCoherenceError,
+} from "./financial-validator.js";
