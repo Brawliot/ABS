@@ -30,7 +30,7 @@ describe('Estadísticas Fase 3', () => {
       const kpi = motor.calcularKPI(
         'kpi-test',
         'Test KPI',
-        (datos) => datos.ingresos - datos.gastos,
+        (datos) => (datos.ingresos ?? 0) - (datos.gastos ?? 0),
         { ingresos: 100000, gastos: 30000 },
         'EUR',
       );
@@ -86,9 +86,9 @@ describe('Estadísticas Fase 3', () => {
 
       expect(comparativa.periodo1).toBe('2026-08');
       expect(comparativa.periodo2).toBe('2026-09');
-      expect(comparativa.kpis[0].nombre).toBe('Ingresos');
-      expect(comparativa.kpis[0].cambio_pct).toBeCloseTo(25, 1); // (500000-400000)/400000*100
-      expect(comparativa.kpis[0].tendencia).toBe('positiva');
+      expect(comparativa.kpis[0]!.nombre).toBe('Ingresos');
+      expect(comparativa.kpis[0]!.cambio_pct).toBeCloseTo(25, 1); // (500000-400000)/400000*100
+      expect(comparativa.kpis[0]!.tendencia).toBe('positiva');
     });
 
     it('crea alerta si KPI cae por debajo de umbral', () => {
@@ -134,15 +134,15 @@ describe('Estadísticas Fase 3', () => {
       const predicciones = motor.predecirDemanda(historico, 4);
 
       expect(predicciones).toHaveLength(4);
-      expect(predicciones[0].semana).toBe(7);
-      expect(predicciones[0].demanda_predicha).toBeGreaterThan(0);
+      expect(predicciones[0]!.semana).toBe(7);
+      expect(predicciones[0]!.demanda_predicha).toBeGreaterThan(0);
       expect(
-        predicciones[0].intervalo_confianza_min <=
-          predicciones[0].demanda_predicha,
+        (predicciones[0]!.intervalo_confianza_min ?? 0) <=
+          (predicciones[0]!.demanda_predicha ?? 0),
       ).toBe(true);
       expect(
-        predicciones[0].intervalo_confianza_max >=
-          predicciones[0].demanda_predicha,
+        (predicciones[0]!.intervalo_confianza_max ?? 0) >=
+          (predicciones[0]!.demanda_predicha ?? 0),
       ).toBe(true);
     });
 
@@ -175,9 +175,9 @@ describe('Estadísticas Fase 3', () => {
       expect(forecast.confianza_general_pct).toBeGreaterThan(0);
 
       // Verificar estructura de predicciones
-      const primera = forecast.predicciones[0];
-      expect(primera.intervalo_min <= primera.valor).toBe(true);
-      expect(primera.intervalo_max >= primera.valor).toBe(true);
+      const primera = forecast.predicciones[0]!;
+      expect((primera.intervalo_min ?? 0) <= (primera.valor ?? 0)).toBe(true);
+      expect((primera.intervalo_max ?? 0) >= (primera.valor ?? 0)).toBe(true);
     });
 
     it('valida predicción dentro de rango', () => {
@@ -301,8 +301,8 @@ describe('Estadísticas Fase 3', () => {
       const snapshots = store.obtenerSnapshotsPeriodo('tenant1', '2026-09');
 
       expect(snapshots).toHaveLength(1);
-      expect(snapshots[0].kpi_id).toBe('kpi-margen');
-      expect(snapshots[0].valor).toBe(70.5);
+      expect(snapshots[0]!.kpi_id).toBe('kpi-margen');
+      expect(snapshots[0]!.valor).toBe(70.5);
 
       store.close();
     });
@@ -327,7 +327,7 @@ describe('Estadísticas Fase 3', () => {
       const historico = store.obtenerHistoricoKPI('tenant1', 'kpi-margen', 12);
 
       expect(historico.length).toBeGreaterThan(0);
-      expect(historico[0].kpi_id).toBe('kpi-margen');
+      expect(historico[0]!.kpi_id).toBe('kpi-margen');
 
       store.close();
     });
@@ -352,7 +352,7 @@ describe('Estadísticas Fase 3', () => {
       );
 
       expect(datos).toHaveLength(2);
-      expect(datos[0].metrica).toBe('ingresos');
+      expect(datos[0]!.metrica).toBe('ingresos');
 
       store.close();
     });
@@ -375,8 +375,8 @@ describe('Estadísticas Fase 3', () => {
       const alertas = store.obtenerAlertasActivas('tenant1');
 
       expect(alertas).toHaveLength(1);
-      expect(alertas[0].tipo).toBe('critical');
-      expect(alertas[0].activa).toBe(true);
+      expect(alertas[0]!.tipo).toBe('critical');
+      expect(alertas[0]!.activa).toBe(true);
 
       store.close();
     });
@@ -399,8 +399,8 @@ describe('Estadísticas Fase 3', () => {
       let alertas = store.obtenerAlertasActivas('tenant1');
       expect(alertas).toHaveLength(1);
 
-      if (alertas[0].seq) {
-        store.desactivarAlerta(alertas[0].seq);
+      if (alertas[0]?.seq) {
+        store.desactivarAlerta(alertas[0]!.seq);
       }
 
       alertas = store.obtenerAlertasActivas('tenant1');
@@ -418,7 +418,7 @@ describe('Estadísticas Fase 3', () => {
       for (let i = 0; i < fechas.length; i++) {
         store.guardarDatoHistorico(
           'tenant1',
-          fechas[i],
+          fechas[i] ?? '2026-09-01',
           'ingresos',
           100000 + i * 10000,
         );
@@ -427,8 +427,8 @@ describe('Estadísticas Fase 3', () => {
       const tendencia = store.obtenerTendencia('tenant1', 'ingresos', 6);
 
       expect(tendencia).toHaveLength(3);
-      expect(tendencia[0].valor).toBe(100000);
-      expect(tendencia[1].valor).toBe(110000);
+      expect(tendencia[0]!.valor).toBe(100000);
+      expect(tendencia[1]!.valor).toBe(110000);
     });
   });
 });
