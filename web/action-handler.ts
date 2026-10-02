@@ -13,6 +13,7 @@ import { deriveState, type DerivedState } from "../core/derivation.js";
 import type { TransitionEvent } from "../core/events.js";
 import type { ActorKind } from "../core/grammar.js";
 import { findState } from "../core/lifecycle.js";
+import { EventStoreError } from "../core/event-store.js";
 import type { Lifecycle, Transition } from "../core/lifecycle.js";
 import { resolveJudgeError } from "../design/copy/index.js";
 import { z } from "zod";
@@ -602,7 +603,7 @@ async function executeUiActionLocked(
             },
             failureMode: "ask_clarification",
           });
-          
+
           if (llmResult.kind === "ok") {
             text = llmResult.data.explicacion;
           } else {
@@ -621,6 +622,16 @@ async function executeUiActionLocked(
         }
       }
       const flash: FlashMessage = { kind: "error", text };
+      runtime.setFlash(flash);
+      return { ok: false, flash, idempotentReplay };
+    }
+    if (err instanceof EventStoreError) {
+      const flash: FlashMessage = {
+        kind: "error",
+        text: err.message.includes("ya existe")
+          ? "Error: esta solicitud ya fue procesada. Si intencionalmente desea repetirla, use una nueva solicitud con ID diferente."
+          : `Error de persistencia: ${err.message}`,
+      };
       runtime.setFlash(flash);
       return { ok: false, flash, idempotentReplay };
     }
