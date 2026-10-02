@@ -165,9 +165,19 @@ export class PostgresEventStore {
       const res = await client.query<{ payload: string }>(
         `SELECT payload FROM abs_events.events
          WHERE company_id = $1 AND subject_id = $2
-         ORDER BY stream_version ASC`,
+         ORDER BY stream_version ASC
+         LIMIT 10000`,
         [this.companyId, subjectId],
       );
+      // LIMIT 10000: Prevenir OOM en agregados muy grandes.
+      // Típicamente, una transacción tiene 5-20 eventos; incluso con 1000 eventos es rara.
+      // Si alcanza 10000, necesitamos snapshots o paginación (ver Fase 3).
+      if (res.rows.length >= 10000) {
+        console.warn(
+          `[getBySubject] WARNING: Sujeto ${subjectId} tiene >=10000 eventos; ` +
+          `implementar snapshots para mejor performance`
+        );
+      }
       return res.rows.map((r) => JSON.parse(r.payload) as AppendOnlyEvent);
     });
   }
@@ -177,9 +187,18 @@ export class PostgresEventStore {
       const res = await client.query<{ payload: string }>(
         `SELECT payload FROM abs_events.events
          WHERE company_id = $1
-         ORDER BY seq ASC`,
+         ORDER BY seq ASC
+         LIMIT 100000`,
         [this.companyId],
       );
+      // LIMIT 100000: Prevenir OOM al cargar toda la historia de eventos de una empresa.
+      // all() se usa en diagnósticos (/info endpoint); para datos reales, usar getBySubject().
+      if (res.rows.length >= 100000) {
+        console.warn(
+          `[all] WARNING: Empresa ${this.companyId} tiene >=100000 eventos total; ` +
+          `considerar particionamiento si productividad es alta`
+        );
+      }
       return res.rows.map((r) => JSON.parse(r.payload) as AppendOnlyEvent);
     });
   }
