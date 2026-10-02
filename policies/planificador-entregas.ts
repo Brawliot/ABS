@@ -53,7 +53,7 @@ export class PlanificadorEntregas {
     capacidadStandardKg: number = 1000,
     capacidadStandardM3: number = 10,
   ): PlanificacionDia {
-    const fecha = paquetes.length > 0 ? paquetes[0].fecha_entrega : new Date().toISOString().split('T')[0];
+    const fecha = paquetes.length > 0 ? ((paquetes[0]?.fecha_entrega) ?? new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0];
 
     // Agrupar paquetes por zona
     const paquetesPorZona = new Map<string, Paquete[]>();
@@ -87,7 +87,7 @@ export class PlanificadorEntregas {
     }
 
     return {
-      fecha,
+      fecha: fecha as string,
       rutas,
       vehiculos_asignados: new Map(),
       conflictos: [],
