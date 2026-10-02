@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import bcrypt from 'bcrypt';
+const bcrypt = require('bcrypt') as any;
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
 
