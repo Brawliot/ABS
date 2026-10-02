@@ -434,3 +434,13 @@ export type {
   ResultadoCalculo,
 } from "./motor-calculos.js";
 export { MotorCalculos } from "./motor-calculos.js";
+
+// Capa 0.5: Motor Políticas
+export type {
+  TipoPolitica,
+  RespuestaValidacion,
+  ReglaDePolitica,
+  ConfiguracionPolicias,
+  ResultadoPolitica,
+} from "./motor-politicas.js";
+export { MotorPolicias } from "./motor-politicas.js";

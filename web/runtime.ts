@@ -123,6 +123,7 @@ import {
   MotorValidacionTransiciones,
   MotorNotificacionesCapa0,
   MotorCalculos,
+  MotorPolicias,
 } from "../elements/index.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -293,6 +294,7 @@ export class AppRuntime {
   readonly motorOrquestador: MotorOrquestadorTransiciones;
   readonly motorNotificaciones: MotorNotificacionesCapa0;
   readonly motorCalculos: MotorCalculos;
+  readonly motorPolicias: MotorPolicias;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -412,6 +414,7 @@ export class AppRuntime {
     this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGeneradorProcesos);
     this.motorNotificaciones = new MotorNotificacionesCapa0();
     this.motorCalculos = new MotorCalculos();
+    this.motorPolicias = new MotorPolicias();
   }
 
   static open(

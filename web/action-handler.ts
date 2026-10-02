@@ -548,15 +548,41 @@ async function executeUiActionLocked(
         );
         if (calcResult.ok) {
           console.log(`[ActionHandler] ✅ Calculados:`, calcResult.calculados);
-          // Los cálculos se registran en logs para auditoría
-          // En futuro: actualizar datos de transacción con valores calculados
         } else {
           console.error(`[ActionHandler] ⚠️ Error en cálculos: ${calcResult.error}`);
-          // Los cálculos no bloquean la transición (solo informan)
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[ActionHandler] ❌ Error en motor de cálculos: ${msg}`);
+      }
+    }
+
+    // CAPA 0.5: Políticas de Negocio (antes de validación)
+    const transaccionPorPoliticas = runtime.datosDe(body.subjectId);
+    if (transaccionPorPoliticas) {
+      try {
+        console.log(`[ActionHandler] 📋 Aplicando políticas para ${slice.archetypeId}`);
+        const polResult = await runtime.motorPolicias.aplicar(
+          transaccionPorPoliticas,
+          slice.archetypeId,
+        );
+        if (polResult.permitido) {
+          console.log(`[ActionHandler] ✅ Políticas permitidas. Aplicadas:`, polResult.aplicadas);
+        } else {
+          console.error(`[ActionHandler] ❌ Política bloqueada:`, polResult.errores);
+          const flash: FlashMessage = {
+            kind: "error",
+            text: `Política rechazada: ${polResult.errores.join(", ")}`,
+          };
+          runtime.setFlash(flash);
+          return { ok: false, flash, idempotentReplay };
+        }
+        if (polResult.advertencias.length > 0) {
+          console.warn(`[ActionHandler] ⚠️ Advertencias de política:`, polResult.advertencias);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ActionHandler] ❌ Error en motor de políticas: ${msg}`);
       }
     }
 
