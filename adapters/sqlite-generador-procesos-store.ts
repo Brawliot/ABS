@@ -7,7 +7,7 @@
  * - Estado se deriva de los eventos (event sourcing)
  */
 
-import { Database } from "better-sqlite3";
+import BetterSqlite3 from "better-sqlite3";
 import {
   type ProcesoGenerado,
   type DocumentoGenerado,
@@ -20,10 +20,10 @@ import {
 } from "../elements/generador-procesos.js";
 
 export class SqliteGeneradorProcesosStore {
-  private db: Database;
+  private db: BetterSqlite3.Database;
 
   constructor(dbPath: string) {
-    this.db = new (require("better-sqlite3"))(dbPath) as Database;
+    this.db = new BetterSqlite3(dbPath);
     this.inicializarTablas();
   }
 
