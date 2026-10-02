@@ -77,6 +77,7 @@ import {
   getStoredWizardDraft,
   applyWizardDecisions,
 } from "./cli.js";
+import { handleApiProcesos } from "./api-procesos-handler.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -678,6 +679,12 @@ export function startWebServer(
 
       if (path === "/imprimir.js") {
         return send(res, 200, IMPRIMIR_JS, "application/javascript; charset=utf-8");
+      }
+
+      // API de Procesos
+      if (path.startsWith("/api/procesos") || path.startsWith("/api/contabilidad") || path.startsWith("/api/inventario") || path.startsWith("/api/documentos")) {
+        const out = await handleApiProcesos(runtime, req, path, method, () => readBody(req));
+        return send(res, out.status, out.body, out.contentType);
       }
 
       if (isInicioPath(path)) {
