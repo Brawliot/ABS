@@ -107,10 +107,14 @@ export class MotorRutas {
     // Estimar distancia inicial (sin optimizar)
     if (paradas.length > 1) {
       for (let i = 0; i < paradas.length - 1; i++) {
-        distanciaTotal += this.calcularDistancia(
-          paradas[i].localizacion,
-          paradas[i + 1].localizacion,
-        );
+        const parada1 = paradas[i];
+        const parada2 = paradas[i + 1];
+        if (parada1 && parada2) {
+          distanciaTotal += this.calcularDistancia(
+            parada1.localizacion,
+            parada2.localizacion,
+          );
+        }
       }
     }
 
@@ -153,7 +157,15 @@ export class MotorRutas {
     let distanciaOptimizada = 0;
 
     // Comenzar con la primera parada
-    ordenOptimizado.push(paradas[0]);
+    const primerParada = paradas[0];
+    if (!primerParada) return {
+      ruta_original_km: ruta.distancia_km,
+      ruta_optimizada_km: ruta.distancia_km,
+      ahorro_km: 0,
+      ahorro_pct: 0,
+      paradas_ordenadas: ruta.paradas,
+    };
+    ordenOptimizado.push(primerParada);
     const visitadas = new Set([0]);
 
     // Nearest neighbor: siempre ir a la parada no visitada más cercana
@@ -167,14 +179,17 @@ export class MotorRutas {
 
       for (let i = 0; i < paradas.length; i++) {
         if (!visitadas.has(i)) {
-          const dist = this.calcularDistancia(
-            ultimaParada.localizacion,
-            paradas[i]!.localizacion,
-          );
-          if (dist < distanciaMinima) {
-            distanciaMinima = dist;
-            proximaParada = paradas[i];
-            indiceMinimo = i;
+          const parada = paradas[i];
+          if (parada) {
+            const dist = this.calcularDistancia(
+              ultimaParada.localizacion,
+              parada.localizacion,
+            );
+            if (dist < distanciaMinima) {
+              distanciaMinima = dist;
+              proximaParada = parada;
+              indiceMinimo = i;
+            }
           }
         }
       }
