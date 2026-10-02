@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken') as any;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod';
 
