@@ -203,7 +203,7 @@ describe("Módulo de Soporte - Fase Complementaria", () => {
 
       const resultados = motor.buscarSolución("cómo cambiar mi contraseña");
       expect(resultados.length).toBeGreaterThan(0);
-      expect(resultados[0].similitud).toBeGreaterThan(30);
+      expect(resultados[0]!.similitud).toBeGreaterThan(30);
     });
 
     it("marca artículos como útiles", () => {
