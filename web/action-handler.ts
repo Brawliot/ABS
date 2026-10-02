@@ -578,12 +578,21 @@ async function executeUiActionLocked(
     }
 
     // Procesar automáticamente venta aceptada con MotorGeneradorProcesos
+    console.log("[ActionHandler] Evento detectado:", {
+      archetype: slice.archetypeId,
+      toStateId: judged.event.toStateId,
+      isVenta: slice.archetypeId === "venta",
+      isAceptada: judged.event.toStateId === "aceptada",
+    });
+
     if (
       slice.archetypeId === "venta" &&
       judged.event.toStateId === "aceptada"
     ) {
+      console.log("[ActionHandler] ✅ Detectado: Venta aceptada! Ejecutando motor...");
       try {
         const resultado = runtime.procesarVentaAceptada(body.subjectId, request.actorId);
+        console.log("[ActionHandler] Resultado del motor:", resultado);
         if (resultado.ok) {
           // Registrar en auditoria que se procesó la venta automáticamente
           const sliceLabel = runtime.etiquetas.proceso(slice.id);
