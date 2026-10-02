@@ -300,7 +300,8 @@ export class AppRuntime {
   readonly motorReportesPresupuesto: MotorReportesPresupuesto;
   readonly storePresupuestos: SqlitePresupuestosStore;
 
-  // CORE Operativo (Fase 5)
+  // CORE Operativo (Fase 5) - alias para compatibilidad
+  get motorGeneradorProcesos() { return this.motorGenerador; }
   readonly storeGeneradorProcesos: SqliteGeneradorProcesosStore;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
