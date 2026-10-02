@@ -157,7 +157,7 @@ export class SqliteCMSStore {
     const stmt = this.db.prepare("SELECT * FROM páginas_cms");
     const rows = stmt.all() as any[];
 
-    return rows.map((row) => ({
+    return (rows.map((row) => ({
       id: row.id,
       título: row.título,
       slug: row.slug,
@@ -181,7 +181,7 @@ export class SqliteCMSStore {
       fechaProgramada: row.fecha_programada
         ? new Date(row.fecha_programada)
         : undefined,
-    })) as PáginaCMS[];
+    }) as unknown) as PáginaCMS[];
   }
 
   saveVersión(versión: VorisiónPágina): void {
