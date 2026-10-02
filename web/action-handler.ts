@@ -278,6 +278,14 @@ async function executeUiActionLocked(
   // Calcular total a partir de las líneas de la transacción actual
   const txCurrent = runtime.datosDe(body.subjectId);
   const totalCentimos = txCurrent ? calcularTotales(txCurrent.datos.lineas).total : 0;
+  // Preparar datos para validación, incluyendo cliente_id/proveedor_id como fallback
+  const currentFields = txCurrent?.datos.campos ? { ...txCurrent.datos.campos } : {};
+  if (!currentFields.cliente_id && txCurrent?.datos.parteId) {
+    currentFields.cliente_id = txCurrent.datos.parteId;
+  }
+  if (!currentFields.proveedor_id && txCurrent?.datos.parteId) {
+    currentFields.proveedor_id = txCurrent.datos.parteId;
+  }
   const txDataForValidation = {
     ...priorFields,
     arquetipo_id: slice.archetypeId,
@@ -285,7 +293,7 @@ async function executeUiActionLocked(
     ...body.formValues,
     ...(totalCentimos > 0 ? { total: totalCentimos / 100 } : { total: 0 }),
     // Incluir campos de la transacción actual si existe
-    ...(txCurrent?.datos.campos ?? {}),
+    ...currentFields,
   };
   const validacion = runtime.motorValidacion.validarTransicion(
     txDataForValidation,

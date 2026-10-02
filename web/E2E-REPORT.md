@@ -1,6 +1,6 @@
 # E2E-REPORT — suite de navegador (Playwright)
 
-**Generado:** 2026-10-02T17:12:39.475Z
+**Generado:** 2026-10-02T17:19:05.348Z
 **Tiempo total suite navegador:** 0 ms (0.0 s)
 
 ## Por perfil
