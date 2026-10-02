@@ -285,10 +285,44 @@ async function executeUiActionLocked(
     return { ok: false, flash, idempotentReplay: false };
   }
 
+  // FASE 0B: VALIDAR políticas de negocio (MotorPoliticasDeNegocio)
+  const politicasResult = runtime.motorPoliticas.validarPoliticas(
+    txDataForValidation,
+  );
+  if (!politicasResult.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: politicasResult.violaciones
+        .map((v) => `${v.descripcion} (límite: ${v.valor_limite}, actual: ${v.valor_actual})`)
+        .join("; "),
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
+  if (politicasResult.advertencias.length > 0) {
+    console.log(
+      `⚠️ Advertencias de política: ${politicasResult.advertencias.map((a) => a.descripcion).join("; ")}`,
+    );
+  }
+
+  // FASE 0C: VALIDAR secuencias (MotorSecuencias)
   const history = runtime.store.getBySubject(
     body.subjectId,
   ) as TransitionEvent[];
   const derived: DerivedState = deriveState(slice.lifecycle, history);
+  const secuenciaResult = runtime.motorSecuencias.validarSecuencia(
+    txDataForValidation,
+    action.transitionId,
+    derived.currentStateId,
+  );
+  if (!secuenciaResult.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: secuenciaResult.razon ?? "Transición no permitida en este estado",
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
 
   // Bloqueos de composición (secundarios) antes del Juez
   const composition = runtime.boot.input.composition;
