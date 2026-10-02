@@ -1149,6 +1149,24 @@ export function reconstructFieldsFromEvents(
   initial: TransactionFields = {},
 ): Record<string, unknown> {
   let fields: Record<string, unknown> = { ...initial };
+
+  // Procesar evento "alta" primero - contiene campos iniciales
+  const altaEvent = events.find((e: any) => e.kind === "alta") as any;
+  if (altaEvent?.datos?.campos && typeof altaEvent.datos.campos === "object") {
+    fields = { ...fields, ...altaEvent.datos.campos };
+  }
+
+  // Procesar eventos "datos" - cambios posteriores a campos
+  for (const ev of events) {
+    if ((ev as any).kind === "datos") {
+      const datosEv = ev as any;
+      if (datosEv.cambios?.campos && typeof datosEv.cambios.campos === "object") {
+        fields = { ...fields, ...datosEv.cambios.campos };
+      }
+    }
+  }
+
+  // Procesar eventos "transicion" - cambios de políticas y cálculos
   for (const ev of events) {
     if (ev.kind !== "transicion" || !ev.data) continue;
     const d = ev.data as Partial<PolicyEventData>;

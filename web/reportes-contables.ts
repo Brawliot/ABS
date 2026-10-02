@@ -173,25 +173,24 @@ export class GeneradorReportesContables {
       const importe = Number(asiento.importe_centimos || 0);
       const concepto = String(asiento.concepto || '');
 
-      // Ingresos: Acreditados a cuentas 700-799
+      // Clasificación usando lógica excluyente (else if)
+      // Ingresos: Acreditados a cuentas 700-799 (prioridad: es la forma principal de reconocer ingresos)
       if (cuentaAcreedora[0] === '7') {
         ingresos.push({
           concepto,
           monto_centimos: importe,
         });
       }
-
-      // Costos: Debitados a cuentas 500-599
-      if (cuentaDeudora[0] === '5') {
-        costos.push({
+      // Gastos de Operación: Debitados a cuentas 600-699
+      else if (cuentaDeudora[0] === '6') {
+        gastos.push({
           concepto,
           monto_centimos: importe,
         });
       }
-
-      // Gastos: Debitados a cuentas 600-699
-      if (cuentaDeudora[0] === '6') {
-        gastos.push({
+      // Costos de Venta: Debitados a cuentas 500-599 (COGS)
+      else if (cuentaDeudora[0] === '5') {
+        costos.push({
           concepto,
           monto_centimos: importe,
         });

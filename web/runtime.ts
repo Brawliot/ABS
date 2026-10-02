@@ -1646,8 +1646,11 @@ export class AppRuntime {
     const referencia = entrada.referencia?.trim();
     const notas = entrada.notas?.trim();
     const permitidos = new Set(this.camposDeProceso(entrada.lifecycleId).map((c) => c.campo));
+    // Agregar campos estándar de negocio que siempre son permitidos
+    const camposEstandar = new Set(["cliente_id", "proveedor_id"]);
+    const camposValidos = new Set([...permitidos, ...camposEstandar]);
     const campos = Object.fromEntries(
-      Object.entries(entrada.campos ?? {}).filter(([k, v]) => permitidos.has(k) && v !== ""),
+      Object.entries(entrada.campos ?? {}).filter(([k, v]) => camposValidos.has(k) && v !== ""),
     );
     const vinculadoA = entrada.vinculadoA?.trim();
     if (vinculadoA && !this.principalesAbiertos().some((s) => s.id === vinculadoA) && previos?.vinculadoA !== vinculadoA) {
