@@ -277,7 +277,19 @@ export class TenantFactProjection {
     const newAmount =
       payload.importe !== undefined ? Number(payload.importe) : prevAmount;
 
-    if (willOpen) {
+    // Validar que el importe sea un número válido (no NaN, Infinity, etc.)
+    if (!isFinite(newAmount)) {
+      console.warn(
+        `[TenantFactProjection.applyParte] WARNING: Importe inválido para ${subjectId}: ${newAmount}; ` +
+        `usando valor anterior ${prevAmount}`
+      );
+      // Usar prevAmount si newAmount es inválido
+      if (willOpen) {
+        p.txAmounts.set(subjectId, prevAmount);
+        p.pendingBalance += prevAmount;
+        p.txStates.set(subjectId, toState);
+      }
+    } else if (willOpen) {
       p.txAmounts.set(subjectId, newAmount);
       p.pendingBalance += newAmount;
       p.txStates.set(subjectId, toState);
@@ -311,6 +323,13 @@ export class TenantFactProjection {
       this.recursos.set(key, r);
     }
     const units = Number(payload.capacityUnits);
+    // Validar que units sea un número válido
+    if (!isFinite(units)) {
+      console.warn(
+        `[TenantFactProjection.applyRecurso] WARNING: capacityUnits inválido: ${units}; ignorando actualización`
+      );
+      return;
+    }
     if (TERMINAL_STATES.has(toState) || toState === "disponible") {
       r.committed = Math.max(0, r.committed - units);
     } else if (toState === "reservado" || toState === "en_entrega" || toState === "aceptada") {
@@ -327,9 +346,30 @@ export class TenantFactProjection {
       s = { volumen: 0, valor: 0, tasa: 0, version: 0 };
       this.scopes.set(scopeId, s);
     }
-    if (payload.volumenDelta !== undefined) s.volumen += Number(payload.volumenDelta);
-    if (payload.valorDelta !== undefined) s.valor += Number(payload.valorDelta);
-    if (payload.tasaValue !== undefined) s.tasa = Number(payload.tasaValue);
+    if (payload.volumenDelta !== undefined) {
+      const delta = Number(payload.volumenDelta);
+      if (isFinite(delta)) {
+        s.volumen += delta;
+      } else {
+        console.warn(`[TenantFactProjection.applyScope] WARNING: volumenDelta inválido: ${delta}`);
+      }
+    }
+    if (payload.valorDelta !== undefined) {
+      const delta = Number(payload.valorDelta);
+      if (isFinite(delta)) {
+        s.valor += delta;
+      } else {
+        console.warn(`[TenantFactProjection.applyScope] WARNING: valorDelta inválido: ${delta}`);
+      }
+    }
+    if (payload.tasaValue !== undefined) {
+      const tasa = Number(payload.tasaValue);
+      if (isFinite(tasa)) {
+        s.tasa = tasa;
+      } else {
+        console.warn(`[TenantFactProjection.applyScope] WARNING: tasaValue inválido: ${tasa}`);
+      }
+    }
     s.version += 1;
   }
 }
