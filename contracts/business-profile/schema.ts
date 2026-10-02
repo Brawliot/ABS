@@ -268,7 +268,7 @@ const portalClienteSchema = z.object({
   autoservicio: z.boolean(),
 });
 
-export const businessProfileZod = z.object({
+const baseBusinessProfileZod = z.object({
   schemaVersion: z.string().min(1),
   identity: z.object({
     companyId: z.string().min(1),
@@ -304,6 +304,204 @@ export const businessProfileZod = z.object({
   policyTemplates: fieldSchema(z.array(policyTemplateInvocationSchema)).optional(),
   portalCliente: fieldSchema(portalClienteSchema).optional(),
   pipelineStateIds: fieldSchema(z.array(z.string().min(1))),
+});
+
+/**
+ * Validaciones contextuales adicionales para BusinessProfile.
+ * Se aplican tras el parse básico usando superRefine().
+ */
+export const businessProfileZod = baseBusinessProfileZod.superRefine((data, ctx) => {
+  // VALIDACIÓN 1: Si portalCliente.autoservicio=true, debe existir canal "autoservicio"
+  if (
+    data.portalCliente &&
+    "value" in data.portalCliente &&
+    data.portalCliente.value?.autoservicio === true
+  ) {
+    if (
+      data.channels.status === "known" &&
+      !data.channels.value.includes("autoservicio")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'portalCliente.autoservicio=true requiere canal "autoservicio" en channels',
+        path: ["portalCliente"],
+      });
+    }
+  }
+
+  // VALIDACIÓN 2: Si channels incluye "autoservicio", roles debe incluir "cliente"
+  if (data.channels.status === "known" && data.channels.value.includes("autoservicio")) {
+    if (data.roles.status === "known") {
+      const hasClienteRole = data.roles.value.some((r) => r.id === "cliente");
+      if (!hasClienteRole) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'Canal "autoservicio" requiere rol "cliente" en roles',
+          path: ["roles"],
+        });
+      }
+    }
+  }
+
+  // VALIDACIÓN 3: resourceSubtypes no puede estar vacío si es known
+  if (
+    data.resourceSubtypes.status === "known" &&
+    Array.isArray(data.resourceSubtypes.value) &&
+    data.resourceSubtypes.value.length === 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "resourceSubtypes no puede ser un array vacío. Si no aplica, use status=not_applicable",
+      path: ["resourceSubtypes"],
+    });
+  }
+
+  // VALIDACIÓN 4: Si organization es known, roles debe tener al menos un rol asignado
+  if (data.organization.status === "known" && data.organization.value) {
+    const org = data.organization.value;
+    if (org.assignments && org.assignments.length > 0 && data.roles.status === "known") {
+      const assignedRoleIds = new Set(org.assignments.map((a) => a.roleId));
+      const roleIds = new Set(data.roles.value.map((r) => r.id));
+      for (const assigned of assignedRoleIds) {
+        if (!roleIds.has(assigned)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Rol asignado en organization "${assigned}" no existe en roles`,
+            path: ["organization"],
+          });
+        }
+      }
+    }
+  }
+
+  // VALIDACIÓN 5: Si hasCalendar=true, capacityMode es más fuertemente recomendado
+  if (
+    data.capabilities.hasCalendar.status === "known" &&
+    data.capabilities.hasCalendar.value === true &&
+    data.capacityMode?.status === "unknown"
+  ) {
+    // No bloqueamos, pero marcamos que se requiere
+    // (el materializador aplicará default)
+  }
+
+  // VALIDACIÓN 6: Si tiene "capacidad_temporal" en resourceSubtypes, debe tener hasCalendar=true
+  if (
+    data.resourceSubtypes.status === "known" &&
+    data.resourceSubtypes.value.includes("capacidad_temporal")
+  ) {
+    if (
+      data.capabilities.hasCalendar.status === "known" &&
+      data.capabilities.hasCalendar.value === false
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'resourceSubtypes incluye "capacidad_temporal" pero hasCalendar=false (requiere calendarios)',
+        path: ["resourceSubtypes"],
+      });
+    }
+  }
+
+  // VALIDACIÓN 7: Si hasFiscalCompliance=true, debe haber hasFormalDocuments=true
+  if (
+    data.capabilities.hasFiscalCompliance.status === "known" &&
+    data.capabilities.hasFiscalCompliance.value === true
+  ) {
+    if (
+      data.capabilities.hasFormalDocuments.status === "known" &&
+      data.capabilities.hasFormalDocuments.value === false
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "hasFiscalCompliance=true requiere hasFormalDocuments=true (cumplimiento requiere documentos)",
+        path: ["capabilities"],
+      });
+    }
+  }
+
+  // VALIDACIÓN 8: Si tiene compliance policies, no puede haber hasFormalDocuments=false
+  if (
+    data.capabilities.hasFormalDocuments.status === "known" &&
+    data.capabilities.hasFormalDocuments.value === false &&
+    data.compliance.status === "known" &&
+    data.compliance.value.length > 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "hasFormalDocuments=false incompatible con políticas de compliance (requieren documentos)",
+      path: ["capabilities"],
+    });
+  }
+
+  // VALIDACIÓN 9: roles no puede estar vacío si es known
+  if (data.roles.status === "known" && data.roles.value.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "roles no puede ser un array vacío. Debe haber al menos un rol definido",
+      path: ["roles"],
+    });
+  }
+
+  // VALIDACIÓN 10: Inconsistencia de composición con dominantArchetypeId
+  if (
+    data.composition?.status === "known" &&
+    data.composition.value.dominant !== data.policyMeta.dominantArchetypeId
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `composition.dominant="${data.composition.value.dominant}" no coincide con policyMeta.dominantArchetypeId="${data.policyMeta.dominantArchetypeId}"`,
+      path: ["composition"],
+    });
+  }
+
+  // VALIDACIÓN 11: Si processes tiene exchangeDirection="empresa_vende" con paymentMode=diferido
+  // entonces requiere hasFormalDocuments=true (facturas)
+  if (data.processes.status === "known" && data.processes.value.length > 0) {
+    const hasVendor = data.processes.value.some(
+      (p) => p.exchangeDirection === "empresa_vende",
+    );
+    if (
+      hasVendor &&
+      data.paymentMode.status === "known" &&
+      data.paymentMode.value === "diferido"
+    ) {
+      if (
+        data.capabilities.hasFormalDocuments.status === "known" &&
+        data.capabilities.hasFormalDocuments.value === false
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'empresa_vende con paymentMode="diferido" requiere hasFormalDocuments=true (facturas)',
+          path: ["paymentMode"],
+        });
+      }
+    }
+  }
+
+  // VALIDACIÓN 12: naturalezaBienes con "propios_por_cantidad" requiere hasPartes=true
+  if (
+    data.naturalezaBienes.status === "known" &&
+    data.naturalezaBienes.value.includes("propios_por_cantidad")
+  ) {
+    if (
+      data.capabilities.hasPartes.status === "known" &&
+      data.capabilities.hasPartes.value === false
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'naturalezaBienes="propios_por_cantidad" requiere hasPartes=true (inventario)',
+        path: ["naturalezaBienes"],
+      });
+    }
+  }
 });
 
 export type BusinessProfileZod = z.infer<typeof businessProfileZod>;
