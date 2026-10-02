@@ -1,6 +1,6 @@
 # Informe escenarios adversos (Playwright)
 
-Fecha: 2026-10-02T15:52:29.122Z
+Fecha: 2026-10-02T15:54:55.085Z
 Total: 0 · OK: 0 · Fallos: 0
 
 ## Hallazgos con gravedad
