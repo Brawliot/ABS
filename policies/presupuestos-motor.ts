@@ -60,7 +60,7 @@ export class MotorPresupuestos {
     departamento?: string
   ): Presupuesto {
     const id = randomUUID();
-    const presupuesto: Presupuesto = {
+    const presupuesto = {
       id,
       nombre,
       año,
@@ -70,7 +70,7 @@ export class MotorPresupuestos {
       presupuesto_total: 0,
       gasto_real: 0,
       fecha_creación: new Date(),
-    };
+    } as Presupuesto;
 
     this.presupuestos.set(id, presupuesto);
     return presupuesto;
