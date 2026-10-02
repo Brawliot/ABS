@@ -119,7 +119,7 @@ export class SqliteIntegracionesStore {
 
     if (!row) return undefined;
 
-    const conector: Conector = {
+    return {
       id: row.id,
       nombre: row.nombre,
       tipo: row.tipo,
@@ -129,8 +129,7 @@ export class SqliteIntegracionesStore {
       próximo_sync: row.próximo_sync ? new Date(row.próximo_sync) : undefined,
       tasa_éxito: row.tasa_éxito,
       fecha_creación: new Date(row.fecha_creación),
-    };
-    return conector;
+    } as Conector;
   }
 
   listarConectores(): Conector[] {
@@ -147,7 +146,7 @@ export class SqliteIntegracionesStore {
       próximo_sync: row.próximo_sync ? new Date(row.próximo_sync) : undefined,
       tasa_éxito: row.tasa_éxito,
       fecha_creación: new Date(row.fecha_creación),
-    }));
+    })) as Conector[];
   }
 
   actualizarEstadoConector(id: string, estado: string): void {
@@ -216,7 +215,7 @@ export class SqliteIntegracionesStore {
         conector_id: p.conector_id,
         configuración: JSON.parse(p.configuración),
       })),
-    };
+    } as FlujoIntegración;
   }
 
   listarFlujos(activos?: boolean): FlujoIntegración[] {
@@ -253,7 +252,7 @@ export class SqliteIntegracionesStore {
           configuración: JSON.parse(p.configuración),
         })),
       };
-    });
+    }) as FlujoIntegración[];
   }
 
   registrarSincronización(conector_id: string, resultado: ResultadoSincronización): void {
