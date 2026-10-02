@@ -91,3 +91,6 @@ export {
   type ValidationWarning,
   type ValidationErrorType,
 } from "./generator-input-validator.js";
+
+// —— Fase 3 Compositor: 11 Reglas Faltantes para Cobertura Completa ——
+export { COMPOSITION_RULES_PHASE_3, getAllCompositionRules, getPhase3Coverage } from "./rules-phase3.js";

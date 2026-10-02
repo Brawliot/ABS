@@ -17,6 +17,7 @@ import {
   type HitoPagoSpec,
 } from "../archetypes/milestones.js";
 import { COMPOSITION_RULES, SAMPLE_PLANTILLA_TO_TPL } from "./rules.js";
+import { COMPOSITION_RULES_PHASE_3 } from "./rules-phase3.js";
 import { defaultFinancieraBinding } from "./bindings.js";
 import { hashComposerOutput } from "./hash.js";
 import { normalizeBusinessProfile } from "./normalizers.js";
@@ -566,14 +567,15 @@ export function composeBusinessProfile(
     }
   };
 
-  // PASO 2: Aplicar reglas CON PRECEDENCIA EXPLÍCITA (Fase 1 Compositor)
+  // PASO 2: Aplicar reglas CON PRECEDENCIA EXPLÍCITA (Fase 1 + 2 + 3 Compositor)
   // Ordenar por prioridad: reglas de mayor prioridad se aplican primero
-  // Esto resuelve conflictos silenciosos en las 5 reglas financieras
-  const ruleIds = COMPOSITION_RULES.map((r) => r.id);
+  // Esto resuelve conflictos silenciosos en las reglas financieras y asegura cobertura completa
+  const allRules = [...COMPOSITION_RULES, ...COMPOSITION_RULES_PHASE_3];
+  const ruleIds = allRules.map((r) => r.id);
   const sortedRuleIds = sortRuleIdsByPrecedence(ruleIds);
   const sortedRules = sortedRuleIds
-    .map((id) => COMPOSITION_RULES.find((r) => r.id === id))
-    .filter((r) => r !== undefined) as typeof COMPOSITION_RULES;
+    .map((id) => allRules.find((r) => r.id === id))
+    .filter((r) => r !== undefined) as typeof allRules;
 
   for (const rule of sortedRules) {
     if (rule.then.length === 0) continue;

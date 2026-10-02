@@ -202,6 +202,80 @@ export const RULE_PRECEDENCE: readonly RulePrecedence[] = [
     reason: "Datos sensibles → documentar filtro",
     conflictsWith: [],
   },
+
+  // ——————————————————————————————————————————————————————————————————
+  // FASE 3: 11 REGLAS FALTANTES PARA COBERTURA COMPLETA
+  // ——————————————————————————————————————————————————————————————————
+
+  // Arquetipos nuevos (compra, servicio, servicio_proyecto, suscripcion, uso_temporal, intermediacion)
+  {
+    ruleId: "R_COMPRA_EXPLICIT",
+    priority: 65,
+    reason: "Proceso compra presente → arqueotipo compra + aprobación",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_SERVICIO_CITAS",
+    priority: 64,
+    reason: "Servicio + citas individuales → capacidad + políticas de citas",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_SERVICIO_PROYECTO_HITOS",
+    priority: 63,
+    reason: "Servicio proyecto con hitos → validación y políticas de hitos",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_SUSCRIPCION_INTERVALO",
+    priority: 62,
+    reason: "Cuotas recurrentes → arqueotipo suscripción + renovación automática",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_USO_TEMPORAL_RETORNABLE",
+    priority: 61,
+    reason: "Bienes del cliente / temporales → arqueotipo uso_temporal + devolución",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_INTERMEDIACION_PARTES",
+    priority: 60,
+    reason: "Múltiples partes / cuenta parte → arqueotipo intermediacion + comisiones",
+    conflictsWith: [],
+  },
+
+  // Capacidades transversales
+  {
+    ruleId: "R_CAPACIDAD_RECURSO",
+    priority: 55,
+    reason: "capacityMode definido + servicios → gestión de capacidad + cola",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_BIENES_CANTIDAD",
+    priority: 54,
+    reason: "Bienes por cantidad → gestión de inventario + stock + caducidad",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_PROCESOS_COMPLEJOS",
+    priority: 53,
+    reason: "Múltiples procesos → coordinación entre etapas + validación",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_LOCATION_COMPLIANCE",
+    priority: 52,
+    reason: "Ubicación conocida → compliance local (RGPD, impuestos)",
+    conflictsWith: [],
+  },
+  {
+    ruleId: "R_ROLES_ESCALACION",
+    priority: 51,
+    reason: "Roles múltiples → escalación automática + delegación",
+    conflictsWith: [],
+  },
 ];
 
 /**
