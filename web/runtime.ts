@@ -1958,14 +1958,18 @@ export class AppRuntime {
       // Obtener datos de la venta
       const tx = this.datosDe(ventaId);
       if (!tx) {
+        console.log("[MotorGenerador] Venta no encontrada:", ventaId);
         return { ok: false, error: "Venta no encontrada" };
       }
 
       // Obtener información del expediente
       const estado = this.estadoDe(ventaId);
+      console.log("[MotorGenerador] Estado actual:", estado?.id, "esperado: aceptada");
       if (!estado || estado.id !== "aceptada") {
-        return { ok: false, error: "La venta debe estar en estado Aceptada" };
+        console.log("[MotorGenerador] Validación fallida. Estado recibido:", estado);
+        return { ok: false, error: `La venta debe estar en estado Aceptada. Estado actual: ${estado?.id}` };
       }
+      console.log("[MotorGenerador] ✅ Venta aceptada detectada, procesando...");
 
       const slice = this.lifecycleForSubject(ventaId);
       if (!slice || slice.archetypeId !== "venta") {
