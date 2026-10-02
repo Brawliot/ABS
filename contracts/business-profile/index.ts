@@ -56,3 +56,12 @@ export type {
   Contradiction,
   Suggestion,
 } from "./coherence-validator.js";
+export {
+  ArchetypeAdvisor,
+  adviseArchetype,
+} from "./archetype-advisor.js";
+export type {
+  ArchetypeRecommendation,
+  ArchetypeAdvice,
+  SignalMatch,
+} from "./archetype-advisor.js";
