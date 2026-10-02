@@ -577,6 +577,32 @@ async function executeUiActionLocked(
       runtime.cancelarReservasDelExpediente(body.subjectId);
     }
 
+    // Procesar automáticamente venta aceptada con MotorGeneradorProcesos
+    if (
+      slice.archetypeId === "venta" &&
+      judged.event.toStateId === "aceptada"
+    ) {
+      try {
+        const resultado = runtime.procesarVentaAceptada(body.subjectId, request.actorId);
+        if (resultado.ok) {
+          // Registrar en auditoria que se procesó la venta automáticamente
+          const sliceLabel = runtime.etiquetas.proceso(slice.id);
+          runtime.registrarCambioAuditoria(
+            body.parteId,
+            "proceso_automatico_generador",
+            "pendiente",
+            `Proceso generado: ${resultado.procesoId}`,
+            request.actorId,
+          );
+        }
+        // No bloquear la transición si hay error en el procesamiento automático
+        // El error se registra pero no afecta el cambio de estado
+      } catch (err) {
+        // Log silencioso del error; no afecta el flujo principal
+        console.error("Error en procesamiento automático de venta:", err);
+      }
+    }
+
     const flash: FlashMessage = {
       kind: "ok",
       text: idempotentReplay

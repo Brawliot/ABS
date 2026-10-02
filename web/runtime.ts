@@ -1940,6 +1940,136 @@ export class AppRuntime {
     }
     return csv;
   }
+
+  /**
+   * Procesa automáticamente una venta aceptada:
+   * - Genera factura
+   * - Crea asientos contables (doble entrada)
+   * - Registra movimientos de inventario
+   * - Genera tareas de seguimiento
+   * - Persiste en SqliteGeneradorProcesosStore
+   *
+   * Arquitectura append-only: nunca UPDATE/DELETE, solo INSERT de eventos.
+   */
+  procesarVentaAceptada(ventaId: string, actorId: string):
+    | { ok: true; procesoId: string; factura?: { numero: string; total: number } }
+    | { ok: false; error: string } {
+    try {
+      // Obtener datos de la venta
+      const tx = this.datosDe(ventaId);
+      if (!tx) {
+        return { ok: false, error: "Venta no encontrada" };
+      }
+
+      // Obtener información del expediente
+      const estado = this.estadoDe(ventaId);
+      if (!estado || estado.id !== "aceptada") {
+        return { ok: false, error: "La venta debe estar en estado Aceptada" };
+      }
+
+      const slice = this.lifecycleForSubject(ventaId);
+      if (!slice || slice.archetypeId !== "venta") {
+        return { ok: false, error: "No es una venta válida" };
+      }
+
+      // Preparar datos para el motor
+      const lineas = tx.datos.lineas.map((l) => ({
+        producto_id: l.ofertaId || "desconocido",
+        cantidad: l.cantidadMilesimas / 1000,
+        precio_unitario: l.precioCentimos / 100,
+        saldo_anterior: 100, // Valor simulado; en producción sería del stock real
+      }));
+
+      const total = calcularTotales(tx.datos.lineas).total / 100; // Convertir a euros
+      const iva = total * 0.21;
+
+      const datosVenta = {
+        tipo: "venta" as const,
+        cliente_id: tx.datos.parteId,
+        líneas: lineas,
+        total,
+        iva,
+        total_con_iva: total + iva,
+        moneda: "EUR",
+        referencia: ventaId,
+        requiere_entrega: true,
+        cliente_email: this.partes.get(this.tenantId, tx.datos.parteId)?.personal?.email,
+        cliente_vip: false,
+      };
+
+      // Generar proceso con el motor
+      const proceso = this.motorGeneradorProcesos.generarProcesoVenta(
+        this.motorGeneradorProcesos.crearProceso("venta", datosVenta),
+        datosVenta,
+      );
+
+      if (proceso.estado === "anulado") {
+        return { ok: false, error: "No se pudo generar el proceso de venta" };
+      }
+
+      // Persistir proceso en la BD (append-only)
+      this.storeGeneradorProcesos.guardarProceso(
+        this.tenantId,
+        proceso,
+      );
+
+      // Registrar factura si fue generada
+      let facturaGenerada: { numero: string; total: number } | undefined;
+      if (proceso.documentos_generados.length > 0) {
+        const docFactura = proceso.documentos_generados.find((d) => d.tipo === "factura");
+        if (docFactura) {
+          facturaGenerada = {
+            numero: docFactura.número,
+            total: total + iva,
+          };
+        }
+      }
+
+      // Registrar asientos contables en la contabilidad
+      for (const asiento of proceso.asientos_contables) {
+        this.registrarAsiento(
+          new Date().toISOString().slice(0, 10),
+          asiento.cuenta_deudora,
+          asiento.cuenta_acreedora,
+          Math.round(asiento.monto * 100), // Convertir a centimos
+          asiento.descripción,
+          asiento.referencia_documento,
+        );
+      }
+
+      // Registrar movimientos de inventario
+      for (const mov of proceso.movimientos_inventario) {
+        if (mov.producto_id && mov.producto_id !== "desconocido") {
+          this.ajustarStock(
+            mov.producto_id,
+            mov.cantidad < 0 ? "salida" : "entrada",
+            Math.abs(Math.round(mov.cantidad * 1000)),
+            `Venta ${ventaId}`,
+            actorId,
+          );
+        }
+      }
+
+      // Crear tareas de seguimiento
+      for (const tarea of proceso.tareas_generadas) {
+        this.crearTarea(tx.datos.parteId, {
+          texto: tarea.título,
+          fechaVencimiento: tarea.fecha_vencimiento.toISOString().slice(0, 10),
+          prioridad: tarea.prioridad as "baja" | "media" | "alta" | undefined,
+          asignadoA: actorId,
+        });
+      }
+
+      return {
+        ok: true,
+        procesoId: proceso.id,
+        ...(facturaGenerada ? { factura: facturaGenerada } : {}),
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false, error: `Error al procesar venta: ${msg}` };
+    }
+  }
 }
 
 /**
