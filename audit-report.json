@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-09-28T12:45:04.279Z",
+  "measuredAt": "2026-10-02T20:57:16.214Z",
   "classification": {
     "n": 32,
     "correct": 32,
@@ -184,21 +184,21 @@
     "detail": "Diseñador↔Generador: tokens semánticos, estructura estable, fallback de patrones, a11y aplicada"
   },
   "fourSpecialists": {
-    "score": 3,
+    "score": 1,
     "phase": "fase3_ampliada_cuatro_especialistas",
     "architectIa": true,
-    "redactor": true,
-    "qaTester": true,
-    "securityReviewer": true,
-    "passCount": 4,
+    "redactor": false,
+    "qaTester": false,
+    "securityReviewer": false,
+    "passCount": 1,
     "totalChecks": 4,
     "details": {
       "architectIa": "IA por rol (5) con menú ≤7",
-      "redactor": "Redactor: sin jerga, hash estable al regenerar",
-      "qaTester": "Probador: venta a crédito→cerrada en 201ms",
-      "securityReviewer": "Seguridad: concesionaria sin críticos (propuestas no aplicadas)"
+      "redactor": "CopyValidationError: Pack de copy inválido",
+      "qaTester": "CopyValidationError: Pack de copy inválido",
+      "securityReviewer": "CopyValidationError: Pack de copy inválido"
     },
-    "detail": "Cuatro especialistas OK: IA, Redactor, Probador, Revisor seguridad"
+    "detail": "Especialistas parciales: 1/4 — IA:true copy:false qa:false sec:false"
   },
   "grammarBypassNote": "validateLifecycle se impone en toda función que recibe una máquina (deriveState, assertCanAdvance, Registry)",
   "determinism": {
@@ -207,6 +207,7 @@
     "stubOnly": false,
     "extractorProvider": "heuristic",
     "extractorModel": "HeuristicDiagnosisExtractor",
+    "extractorMode": "heuristic_offline",
     "n": 42,
     "extractorAccuracyPct": 35.71,
     "finalAccuracyPct": 73.81,
@@ -235,7 +236,7 @@
       }
     ],
     "g15ContradictionTriggersReask": true,
-    "detail": "E2E texto→extractor→clasificador medido en tests/bank (≥40). El 96.88% previo solo era classifyFromAnswers con booleanos oro.",
-    "reportPath": "C:\\Users\\34689\\Desktop\\PROYECTOS\\ABS\\tests\\bank\\e2e-diagnosis-report.json"
+    "detail": "E2E texto→extractor→clasificador. El % histórico 96.88 solo medía classifyFromAnswers con booleanos oro.",
+    "reportPath": "/home/user/ABS/tests/bank/e2e-diagnosis-report.json"
   }
 }

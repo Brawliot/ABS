@@ -30,3 +30,26 @@ export { buildProcessGroups } from "./process-groups.js";
 export { LocalizationGenerator } from "./localization-generator.js";
 export type { LocalizationContext } from "./localization-generator.js";
 export { ViewActionIndex } from "./indexing.js";
+
+// Fase 2: Exportar sistemas extensibles
+export { FormTemplateRegistry } from "./form-templates.js";
+export type {
+  FormTemplateConfig,
+  FieldTemplate,
+  FormSection,
+} from "./form-templates.js";
+export {
+  ActionBuilder,
+  ViewBuilder,
+  FormBuilder,
+} from "./builders.js";
+export {
+  PluginManager,
+  createValidationPlugin,
+  createAuditPlugin,
+  createRoleFilterPlugin,
+} from "./plugin-system.js";
+export type {
+  GeneratorPlugin,
+  GeneratorHooks,
+} from "./plugin-system.js";

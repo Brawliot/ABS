@@ -35,6 +35,8 @@ import { validateUiSpec } from "../presentation/uispec-validator.js";
 import type { ValidatedUiSpec } from "../presentation/validated.js";
 import { LocalizationGenerator } from "./localization-generator.js";
 import { ViewActionIndex } from "./indexing.js";
+import { FormTemplateRegistry } from "./form-templates.js";
+import { PluginManager } from "./plugin-system.js";
 
 export interface GenerateOptions {
   readonly overlay?: PresentationOverlay;
@@ -97,65 +99,12 @@ function evidenceFields(kind: EvidenceKind): FormFieldSpec[] {
   ];
 }
 
-function entityForms(): FormSpec[] {
-  return [
-    {
-      id: "form.parte",
-      entityKind: "parte",
-      fields: [
-        {
-          name: "parte_id",
-          labelKey: "field.parte_id",
-          type: "reference",
-          required: true,
-          referenceEntity: "parte",
-        },
-        {
-          name: "nombre_ref",
-          labelKey: "field.parte_ref_label",
-          type: "string",
-          required: false,
-        },
-      ],
-    },
-    {
-      id: "form.oferta",
-      entityKind: "oferta",
-      fields: [
-        {
-          name: "oferta_version",
-          labelKey: "field.oferta_version",
-          type: "number",
-          required: true,
-        },
-        {
-          name: "descripcion",
-          labelKey: "field.oferta_desc",
-          type: "string",
-          required: false,
-        },
-      ],
-    },
-    {
-      id: "form.recurso",
-      entityKind: "recurso",
-      fields: [
-        {
-          name: "recurso_id",
-          labelKey: "field.recurso_id",
-          type: "reference",
-          required: true,
-          referenceEntity: "recurso",
-        },
-        {
-          name: "cantidad",
-          labelKey: "field.cantidad",
-          type: "number",
-          required: false,
-        },
-      ],
-    },
-  ];
+/**
+ * Genera formularios desde el registro de plantillas (Fase 2).
+ * Fase 1 (hardcoded) reemplazado por extensible FormTemplateRegistry.
+ */
+function entityForms(formRegistry: FormTemplateRegistry): FormSpec[] {
+  return formRegistry.getAll().map((template) => formRegistry.generateForm(template.id));
 }
 
 /** Tableros por estado + acciones por transición (derivado de procesos). */
@@ -372,12 +321,19 @@ export function applyOverlay(
 /**
  * Genera UiSpec determinista a partir de procesos + composición + señales.
  * La salida queda validada y sellada (obligatorio antes de render/persistir).
+ *
+ * Fase 2: Ahora usa FormTemplateRegistry (extensible) y PluginManager (plugins).
  */
 export function generateUiSpec(
   input: GeneratorInput,
   options: GenerateOptions = {},
 ): ValidatedUiSpec {
   const generatedAt = options.generatedAt ?? input.generatedAt;
+
+  // Fase 2: Inicializar sistemas extensibles
+  const formRegistry = FormTemplateRegistry.createDefaults();
+  const pluginManager = new PluginManager();
+
   const matches = deduceModules(input);
   const { views: stateViews, actions } = buildActionsAndViews(input);
   const panels = derivePresentationPanels(input);
@@ -385,7 +341,7 @@ export function generateUiSpec(
   const views = [...stateViews, ...panelViews].sort((a, b) =>
     a.id.localeCompare(b.id),
   );
-  const forms = entityForms();
+  const forms = entityForms(formRegistry);
   const { processGroups, recorridos: processRecorridos } = buildProcessGroups(
     input,
     views,
