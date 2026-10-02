@@ -47,9 +47,19 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
   const out: ResultadoCiclo[] = [];
   for (const slice of boot.input.lifecycles) {
     // Datos adicionales como los rellenaría el negocio (fianza > 0; el resto vacío = 0)
-    const campos = Object.fromEntries(
+    const campos: Record<string, number | boolean | string> = Object.fromEntries(
       rt.camposDeProceso(slice.id).filter((c) => c.campo.includes("fianza")).map((c) => [c.campo, 50]),
     );
+
+    // Agregar cliente_id para arquetipos que lo requieren
+    if (slice.archetypeId === "venta" || slice.archetypeId === "servicio" || slice.archetypeId === "servicio_proyecto") {
+      campos.cliente_id = "parte-demo-1";
+    }
+    // Agregar proveedor_id para compras
+    if (slice.archetypeId === "compra") {
+      campos.proveedor_id = "parte-demo-1";
+    }
+
     const lineas = [{ descripcion: "Servicio", cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }];
     const alta = rt.crearTransaccion(
       {
