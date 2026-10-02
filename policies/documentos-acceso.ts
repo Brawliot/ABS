@@ -117,14 +117,14 @@ export class MotorAccesoDocumentos {
     this.linksPublicos.set(código, link);
 
     // Crear permiso público
-    const permiso: Permiso = {
+    const permiso = {
       id: randomUUID(),
       documento_id,
       tipo_compartir: contraseña ? "público_con_contraseña" : "público_sin_restricción",
       nivel: nivelFinal,
       contraseña: contraseñaHash,
       fecha_creación: new Date(),
-    };
+    } as Permiso;
 
     const permisos = this.permisos.get(documento_id) ?? [];
     permisos.push(permiso);
