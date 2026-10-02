@@ -240,7 +240,7 @@ export class MotorSEO_Alertas {
   ): MejoraSEO {
     const id = randomUUID();
 
-    const mejora: MejoraSEO = {
+    const mejora = {
       id,
       título,
       descripción,
@@ -248,7 +248,7 @@ export class MotorSEO_Alertas {
       esfuerzo,
       estado: "pendiente",
       fechaRecomendación: new Date(),
-    };
+    } as any as MejoraSEO;
 
     this.mejoras.set(id, mejora);
     return mejora;
@@ -317,7 +317,7 @@ export class MotorSEO_Alertas {
       últimoReporte: reportes[0],
       puntuaciónPromedio,
       tendencia,
-    };
+    } as any;
   }
 
   configurarAlertas(keywords: KeywordMonitoring[]): void {
