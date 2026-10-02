@@ -594,6 +594,23 @@ async function executeUiActionLocked(
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
 
+    // FASE 0D: EJECUTAR reversiones si es transición de cancelación (MotorReversiones)
+    const reversionesResult = runtime.motorReversiones.revertir(
+      txDataForValidation,
+      action.transitionId,
+    );
+    if (reversionesResult.acciones_ejecutadas.length > 0) {
+      console.log(
+        `↩️ Reversiones ejecutadas: ${reversionesResult.acciones_ejecutadas.map((a) => a.tipo).join(", ")}`,
+      );
+      // Registrar acciones de reversión como parte del audit
+      for (const accion of reversionesResult.acciones_ejecutadas) {
+        console.log(
+          `   → ${accion.tipo}: ${accion.entidad} (${accion.razon})`,
+        );
+      }
+    }
+
     // FASE 1: ORQUESTAR generaciones automáticas (MotorOrquestadorTransiciones)
     const orquestacion = runtime.motorOrquestador.alTransicionar(
       txDataForValidation,
@@ -615,6 +632,12 @@ async function executeUiActionLocked(
       ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
       : `Listo: el expediente pasó a «${judged.event.toStateId}».`;
 
+    if (reversionesResult.acciones_ejecutadas.length > 0) {
+      const reversionesLabel = reversionesResult.acciones_ejecutadas
+        .map((a) => a.tipo)
+        .join(", ");
+      flashText += ` (Revertidas: ${reversionesLabel})`;
+    }
     if (orquestacion.generados.length > 0) {
       const generadosLabel = orquestacion.generados
         .map((g) => g.tipo)
