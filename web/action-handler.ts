@@ -126,6 +126,7 @@ export interface ActionResult {
   readonly idempotentReplay: boolean;
   readonly eventId?: string;
   readonly newStateId?: string;
+  readonly calculados?: readonly { readonly campo: string; readonly valor: number; readonly formula: string }[];
 }
 
 function actionsByIdMap(
@@ -611,6 +612,16 @@ async function executeUiActionLocked(
       }
     }
 
+    // FASE 0E: CALCULAR valores derivados (MotorCalculos)
+    const calculosResult = runtime.motorCalculos.calcularTodos(
+      txDataForValidation,
+    );
+    if (calculosResult.length > 0) {
+      console.log(
+        `📊 Cálculos ejecutados: ${calculosResult.map((c) => `${c.campo}=${c.valor}`).join(", ")}`,
+      );
+    }
+
     // FASE 1: ORQUESTAR generaciones automáticas (MotorOrquestadorTransiciones)
     const orquestacion = runtime.motorOrquestador.alTransicionar(
       txDataForValidation,
@@ -660,6 +671,7 @@ async function executeUiActionLocked(
       idempotentReplay,
       eventId: judged.event.id,
       newStateId: judged.event.toStateId,
+      ...(calculosResult.length > 0 ? { calculados: calculosResult } : {}),
     };
   } catch (err) {
     if (err instanceof ForceNotAllowedError) {
