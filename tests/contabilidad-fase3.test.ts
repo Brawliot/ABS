@@ -371,7 +371,7 @@ describe('Contabilidad Fase 3', () => {
 
       const asientos = store.obtenerAsientosPeriodo('tenant1', '2026-09-01', '2026-09-30');
       expect(asientos).toHaveLength(1);
-      expect(asientos[0].concepto).toBe('Nómina');
+      expect(asientos[0]!.concepto).toBe('Nómina');
 
       store.close();
     });
