@@ -266,7 +266,7 @@ export class MotorConnectors {
       tasa_éxito: conector.tasa_éxito,
       conexión_validada: auth.ok,
       mensajes_error: auth.error ? [auth.error] : [],
-    };
+    } as any;
   }
 
   obtenerConector(id: string): Conector | undefined {
