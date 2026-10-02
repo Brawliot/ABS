@@ -62,3 +62,32 @@ export {
   validateFinancieraCombined,
   FinancialCoherenceError,
 } from "./financial-validator.js";
+
+// —— Fase 2 Compositor: DSL Extendido + Traceabilidad V2 + Validación ——
+export {
+  RuleBuilder,
+  evaluateCondition,
+  describeCondition,
+  getConditionDepth,
+  countOperands,
+  serializeCondition,
+  deserializeCondition,
+  type RuleCondition,
+  type ComposerContext,
+} from "./dsl-extended.js";
+export {
+  Tracer,
+  buildFieldSnapshot,
+  type TraceEntryV2,
+  type FieldSnapshot,
+  type RuleDecision,
+} from "./trace-v2.js";
+export {
+  GeneratorInputValidator,
+  validateGeneratorInputFast,
+  getCriticalValidationErrors,
+  type GeneratorInputValidation,
+  type ValidationError,
+  type ValidationWarning,
+  type ValidationErrorType,
+} from "./generator-input-validator.js";
