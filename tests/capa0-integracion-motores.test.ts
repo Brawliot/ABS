@@ -24,6 +24,7 @@ describe("Integración: Capa 0.3 - Flujo Completo de Transición", () => {
       lifecycleId: "venta-lifecycle",
       datos: {
         parteId: "cliente-1",
+        cliente_id: "cliente-1",
         fecha: new Date().toISOString(),
         cliente_email: "cliente@example.com",
         lineas: [{ cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }] as any,
@@ -155,6 +156,7 @@ describe("Integración: Capa 0.3 - Flujo Completo de Transición", () => {
           proveedor_email: "proveedor@example.com",
           lineas: [{ cantidadMilesimas: 1000, precioCentimos: 5000, ivaPct: 21 }] as any,
           orden_compra: "OC-2026-001",
+          factura_proveedor: "FAC-PROV-2026-001",
         } as unknown as TransaccionDatos,
         creadaEn: new Date().toISOString(),
         creadaPor: "test",

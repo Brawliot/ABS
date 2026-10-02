@@ -63,7 +63,7 @@ export class MotorOrquestadorTransiciones {
           // Propuesta → Aceptada: Generar factura, asientos, movimientos, tareas
           "t_aceptar": {
             genera: ["factura", "asientos_contables", "movimientos_inventario", "tareas"],
-            requiere: ["cliente_id", "líneas", "total"],
+            requiere: ["cliente_id", "lineas", "total"],
             obligatorio: true,
           },
           // Aceptada → En Entrega: No genera documentos, solo registra evento
@@ -87,7 +87,7 @@ export class MotorOrquestadorTransiciones {
           // Requisición → OC Emitida: Generar OC
           "t_emitir_oc": {
             genera: ["orden_compra"],
-            requiere: ["proveedor_id", "líneas"],
+            requiere: ["proveedor_id", "lineas"],
             obligatorio: true,
           },
           // OC Emitida → Recibida: Generar movimientos de inventario

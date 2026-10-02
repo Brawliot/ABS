@@ -20,6 +20,7 @@ describe("MotorOrquestadorTransiciones", () => {
       lifecycleId: "venta-lifecycle",
       datos: {
         parteId: "cliente-1",
+        cliente_id: "cliente-1",
         fecha: new Date().toISOString(),
         lineas: [{ cantidadMilesimas: 1000, precioCentimos: 10000, ivaPct: 21 }] as any,
         total: 12100,
@@ -39,6 +40,7 @@ describe("MotorOrquestadorTransiciones", () => {
         proveedor_id: "proveedor-1",
         lineas: [{ cantidadMilesimas: 1000, precioCentimos: 5000, ivaPct: 21 }] as any,
         orden_compra: "OC-2026-001",
+        factura_proveedor: "FAC-PROV-2026-001",
       } as unknown as TransaccionDatos,
       creadaEn: new Date().toISOString(),
       creadaPor: "test",
@@ -50,9 +52,9 @@ describe("MotorOrquestadorTransiciones", () => {
       lifecycleId: "servicio-lifecycle",
       datos: {
         parteId: "cliente-2",
+        cliente_id: "cliente-2",
         fecha: new Date().toISOString(),
         hitos: ["hito-1"],
-        cliente_id: "cliente-2",
         total: 50000,
         lineas: [] as any,
       } as unknown as TransaccionDatos,
