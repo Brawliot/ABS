@@ -182,6 +182,43 @@ export class PostgresEventStore {
     });
   }
 
+  /**
+   * Batch query: obtener eventos de múltiples sujetos en 1 query (no N).
+   * Retorna Map<subjectId, eventos[]> para indexación rápida.
+   * Usado por projectRows() para evitar N+1 pattern.
+   */
+  async getBySubjects(
+    subjectIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly AppendOnlyEvent[]>> {
+    if (subjectIds.length === 0) {
+      return new Map();
+    }
+    return this.withClient(async (client) => {
+      // PostgreSQL array syntax: unnest para iterar sobre valores
+      const placeholders = subjectIds
+        .map((_, i) => `$${i + 2}`)
+        .join(",");
+      const res = await client.query<{
+        subject_id: string;
+        payload: string;
+      }>(
+        `SELECT subject_id, payload FROM abs_events.events
+         WHERE company_id = $1 AND subject_id = ANY($${subjectIds.length + 2}::text[])
+         ORDER BY subject_id, stream_version ASC
+         LIMIT 10000`,
+        [this.companyId, subjectIds],
+      );
+      // Agrupar por subject_id
+      const result = new Map<string, AppendOnlyEvent[]>();
+      for (const row of res.rows) {
+        const list = result.get(row.subject_id) ?? [];
+        list.push(JSON.parse(row.payload) as AppendOnlyEvent);
+        result.set(row.subject_id, list);
+      }
+      return result;
+    });
+  }
+
   async all(): Promise<readonly AppendOnlyEvent[]> {
     return this.withClient(async (client) => {
       const res = await client.query<{ payload: string }>(

@@ -185,7 +185,10 @@ export class AppRuntime {
     (this.subjects as RuntimeSubject[]).push(subject);
   }
 
-  /** Filas de UI derivadas solo de eventos (no estado local de cliente). */
+  /** Filas de UI derivadas solo de eventos (no estado local de cliente).
+   * Versión sincrónica: usa getBySubject() (N queries).
+   * Para evitar N+1, usar projectRowsAsync() que usa getBySubjects().
+   */
   projectRows(filter?: {
     readonly sedeId?: string;
     readonly sedeScoped?: boolean;
@@ -235,6 +238,80 @@ export class AppRuntime {
         });
       }
     }
+    return rows;
+  }
+
+  /**
+   * Versión async de projectRows() que usa getBySubjects() (batch).
+   * Reduce de N queries a 1 query para todas las filas.
+   * RECOMENDADO para UI en producción con muchas transacciones.
+   */
+  async projectRowsAsync(filter?: {
+    readonly sedeId?: string;
+    readonly sedeScoped?: boolean;
+  }): Promise<readonly SampleRow[]> {
+    const rows: SampleRow[] = [];
+
+    // Filtrar sujetos según criterio
+    const filteredSubs = this.subjects.filter((sub) => {
+      if (
+        !filter?.sedeScoped ||
+        !filter.sedeId ||
+        !sub.sedeId ||
+        sub.sedeId === filter.sedeId
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    // Batch query: obtener eventos de TODOS los sujetos en 1 query
+    const subjectIds = filteredSubs.map((s) => s.id);
+    const eventsBySubject = subjectIds.length > 0
+      ? await (this.store as any).getBySubjects(subjectIds)  // Cast porque SQLite no tiene este método
+      : new Map();
+
+    for (const sub of filteredSubs) {
+      const slice = this.boot.input.lifecycles.find(
+        (l) => l.id === sub.lifecycleId,
+      );
+      if (!slice) continue;
+
+      const events = eventsBySubject.get(sub.id) ?? [];
+      const derived = deriveState(slice.lifecycle, events as TransitionEvent[]);
+      const state = findState(slice.lifecycle, derived.currentStateId);
+
+      rows.push({
+        id: sub.id,
+        label: sub.label,
+        stateId: derived.currentStateId,
+        parteId: sub.parteId,
+        meta: `estado=${derived.currentStateId}${state ? ` (${state.label})` : ""}${sub.vinculadaA ? ` · vinculada_a=${sub.vinculadaA}` : ""}`,
+        ...(sub.sedeId !== undefined ? { sedeId: sub.sedeId } : {}),
+        ...(sub.vinculadaA !== undefined
+          ? { vinculadaA: sub.vinculadaA }
+          : {}),
+      });
+    }
+
+    // Agregar paneles indicadores igual que en versión sync
+    for (const v of this.boot.spec.views) {
+      if (
+        v.kind === "panel_agenda" ||
+        v.kind === "panel_retencion" ||
+        v.kind === "panel_credito" ||
+        v.kind === "panel_periodos"
+      ) {
+        rows.push({
+          id: `panel-info-${v.kind}`,
+          label: `Indicador ${v.kind}`,
+          stateId: null,
+          parteId: this.subjects[0]?.parteId ?? "parte-demo-1",
+          meta: v.kind,
+        });
+      }
+    }
+
     return rows;
   }
 
