@@ -27,3 +27,6 @@ export {
   portalVisibilityRoles,
 } from "./presentation-rules.js";
 export { buildProcessGroups } from "./process-groups.js";
+export { LocalizationGenerator } from "./localization-generator.js";
+export type { LocalizationContext } from "./localization-generator.js";
+export { ViewActionIndex } from "./indexing.js";
