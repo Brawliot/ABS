@@ -279,7 +279,7 @@ export class SqliteContabilidadStore {
         now,
       );
 
-    const periodo_obj: CierrePeriodo = {
+    const periodo_obj = {
       seq: undefined,
       tenant_id: tenantId,
       periodo,
@@ -290,7 +290,7 @@ export class SqliteContabilidadStore {
       cuadrado,
       estado: 'cerrado',
       created_at: now,
-    };
+    } as any as CierrePeriodo;
     return periodo_obj;
   }
 
