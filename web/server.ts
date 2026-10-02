@@ -84,7 +84,7 @@ import {
   applyWizardDecisions,
 } from "./cli.js";
 import { handleApiProcesos } from "./api-procesos-handler.js";
-import { renderMainAppHtml } from "./main-app.js";
+import { renderMainAppHtml, renderDashboardHtml } from "./main-app.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -673,6 +673,18 @@ export function startWebServer(
           res,
           200,
           renderMainAppHtml(boot),
+          "text/html; charset=utf-8",
+        );
+      }
+
+      // ✅ RUTA: GET /dashboard (dashboard - requiere auth)
+      if (path === "/dashboard" && method === "GET") {
+        // TODO: Verificar autenticación
+        // Por ahora, renderizar sin protección (agregar auth después)
+        return send(
+          res,
+          200,
+          renderDashboardHtml(boot),
           "text/html; charset=utf-8",
         );
       }

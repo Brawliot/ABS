@@ -1,6 +1,8 @@
 /**
- * Página principal: Hero sticky + Chatbot + Pricing + Contacto
- * GET /app (HTML con hero sticky, chatbot, precios)
+ * Página principal: Hero + Pricing + Contacto
+ * Con modales de autenticación (Login/Signup con GitHub y Google)
+ * GET /app (HTML público)
+ * GET /dashboard (HTML protegido, requiere auth)
  */
 
 import type { AppBootResult } from "./types.js";
@@ -42,7 +44,7 @@ function estilosMainApp(boot: AppBootResult): string {
 
     .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-    /* HERO STICKY */
+    /* HERO */
     .hero {
       position: relative;
       background: linear-gradient(135deg, var(--primary) 0%, rgba(0,0,0,0.05) 100%);
@@ -129,7 +131,7 @@ function estilosMainApp(boot: AppBootResult): string {
       padding: 12px 20px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease, padding 0.3s ease;
+      transition: opacity 0.3s ease;
     }
 
     .sticky-header.active {
@@ -159,6 +161,8 @@ function estilosMainApp(boot: AppBootResult): string {
       text-decoration: none;
       font-weight: 600;
       font-size: 0.95em;
+      cursor: pointer;
+      border: none;
       transition: all 0.3s ease;
     }
 
@@ -193,126 +197,6 @@ function estilosMainApp(boot: AppBootResult): string {
       text-align: center;
       max-width: 600px;
       margin: 0 auto 40px;
-    }
-
-    /* CHATBOT SECTION */
-    .chatbot-container {
-      max-width: 900px;
-      margin: 40px auto 0;
-    }
-
-    .chatbot-box {
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      background: white;
-      display: flex;
-      flex-direction: column;
-      height: 500px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    .chatbot-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .message {
-      display: flex;
-      gap: 12px;
-      animation: slideIn 0.3s ease;
-    }
-
-    .message.user {
-      justify-content: flex-end;
-    }
-
-    .message-bubble {
-      max-width: 70%;
-      padding: 12px 16px;
-      border-radius: 12px;
-      word-wrap: break-word;
-    }
-
-    .message.bot .message-bubble {
-      background: #f0f0f0;
-      color: var(--text);
-    }
-
-    .message.user .message-bubble {
-      background: var(--primary);
-      color: white;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .chatbot-input {
-      padding: 15px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 10px;
-    }
-
-    .chatbot-input input {
-      flex: 1;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 1em;
-    }
-
-    .chatbot-input input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .chatbot-input button {
-      padding: 10px 20px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .chatbot-input button:hover {
-      opacity: 0.9;
-    }
-
-    .section-buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      margin-top: 40px;
-      flex-wrap: wrap;
-    }
-
-    .section-buttons .btn {
-      padding: 12px 28px;
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .section-buttons .btn:hover {
-      opacity: 0.9;
-      transform: translateY(-2px);
     }
 
     /* PRICING */
@@ -489,6 +373,160 @@ function estilosMainApp(boot: AppBootResult): string {
       transform: translateY(-2px);
     }
 
+    /* MODALES */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .modal-header h2 {
+      font-size: 1.8em;
+      margin: 0 0 10px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: var(--light);
+    }
+
+    .oauth-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .oauth-btn {
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .oauth-btn:hover {
+      background: #f9fafb;
+      border-color: var(--primary);
+    }
+
+    .divider {
+      text-align: center;
+      margin: 20px 0;
+      color: var(--light);
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 45%;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 1em;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .submit-form-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .submit-form-btn:hover {
+      opacity: 0.9;
+    }
+
+    .modal-toggle {
+      text-align: center;
+      font-size: 0.95em;
+      color: var(--light);
+      margin-top: 20px;
+    }
+
+    .modal-toggle button {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
     /* FOOTER */
     footer {
       background: #1f2937;
@@ -564,10 +602,6 @@ function estilosMainApp(boot: AppBootResult): string {
         font-size: 1.8em;
       }
 
-      .chatbot-box {
-        height: 400px;
-      }
-
       .sticky-header-content {
         flex-direction: column;
         gap: 10px;
@@ -578,18 +612,13 @@ function estilosMainApp(boot: AppBootResult): string {
         grid-template-columns: 1fr;
       }
 
-      .section-buttons {
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .section-buttons .btn {
-        width: 100%;
-      }
-
       footer .container {
         grid-template-columns: 1fr;
         gap: 30px;
+      }
+
+      .modal-content {
+        padding: 30px;
       }
     }
 
@@ -607,6 +636,7 @@ function estilosMainApp(boot: AppBootResult): string {
 export function renderMainAppHtml(boot: AppBootResult): string {
   const css = estilosMainApp(boot);
   const nombre = esc(boot.brandName);
+
   const tiers = [
     {
       name: "Iniciador",
@@ -642,7 +672,7 @@ export function renderMainAppHtml(boot: AppBootResult): string {
       <ul class="pricing-features">
         ${tier.features.map((f) => `<li>${esc(f)}</li>`).join("")}
       </ul>
-      <button class="pricing-btn">Comienza ahora</button>
+      <button class="pricing-btn" onclick="openLoginModal()">Comienza ahora</button>
     </div>
   `,
     )
@@ -662,7 +692,7 @@ export function renderMainAppHtml(boot: AppBootResult): string {
   <div class="sticky-header" id="stickyHeader">
     <div class="sticky-header-content">
       <div class="sticky-title">${esc(nombre)}</div>
-      <a href="#contacto" class="sticky-cta">Contáctanos</a>
+      <button class="sticky-cta" onclick="openLoginModal()">Acceso</button>
     </div>
   </div>
 
@@ -672,38 +702,11 @@ export function renderMainAppHtml(boot: AppBootResult): string {
       <h1>Gestiona tu negocio de forma inteligente</h1>
       <p class="hero-subtitle">Soluciones ágiles, resultados confiables. Automatiza, integra y crece.</p>
       <div class="hero-cta">
-        <button class="btn btn-primary" onclick="document.getElementById('chatbot').scrollIntoView({behavior: 'smooth'})">Probar ahora</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('howWorks').scrollIntoView({behavior: 'smooth'})">Cómo funciona</button>
+        <button class="btn btn-primary" onclick="openLoginModal()">Acceso</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})">Ver planes</button>
       </div>
     </div>
   </div>
-
-  <!-- CHATBOT SECTION -->
-  <section id="chatbot">
-    <div class="container">
-      <h2>Pruébalo ahora</h2>
-      <p>Empieza una conversación para conocer las capacidades de nuestro asistente</p>
-
-      <div class="chatbot-container">
-        <div class="chatbot-box">
-          <div class="chatbot-messages" id="messages">
-            <div class="message bot">
-              <div class="message-bubble">¡Hola! Soy el asistente de ${esc(nombre)}. ¿En qué puedo ayudarte hoy? 👋</div>
-            </div>
-          </div>
-          <div class="chatbot-input">
-            <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." />
-            <button onclick="sendMessage()">Enviar</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="section-buttons">
-        <button class="btn btn-primary" onclick="document.getElementById('howWorks').scrollIntoView({behavior: 'smooth'})">Cómo funciona</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})">Ver precios</button>
-      </div>
-    </div>
-  </section>
 
   <!-- HOW IT WORKS SECTION -->
   <section id="howWorks">
@@ -782,7 +785,6 @@ export function renderMainAppHtml(boot: AppBootResult): string {
       </div>
       <div>
         <h3>Producto</h3>
-        <a href="#chatbot">Probar</a>
         <a href="#pricing">Precios</a>
         <a href="#howWorks">Cómo funciona</a>
       </div>
@@ -790,13 +792,11 @@ export function renderMainAppHtml(boot: AppBootResult): string {
         <h3>Empresa</h3>
         <a href="/web">Landing</a>
         <a href="#contacto">Contacto</a>
-        <a href="#">Blog</a>
       </div>
       <div>
         <h3>Legal</h3>
         <a href="#">Privacidad</a>
         <a href="#">Términos</a>
-        <a href="#">Cookie</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -804,8 +804,77 @@ export function renderMainAppHtml(boot: AppBootResult): string {
     </div>
   </footer>
 
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content" style="position: relative;">
+      <button class="modal-close" onclick="closeModals()">✕</button>
+
+      <div class="modal-header">
+        <h2>Inicia sesión</h2>
+        <p style="color: var(--light); margin: 0;">Accede a tu cuenta</p>
+      </div>
+
+      <div class="oauth-buttons">
+        <button class="oauth-btn" onclick="loginWithProvider('github')">
+          <span>🐙</span> Continuar con GitHub
+        </button>
+        <button class="oauth-btn" onclick="loginWithProvider('google')">
+          <span>🔵</span> Continuar con Google
+        </button>
+      </div>
+
+      <div class="divider">o</div>
+
+      <form onsubmit="handleEmailLogin(event)">
+        <input type="email" class="form-input" placeholder="tu@email.com" required />
+        <input type="password" class="form-input" placeholder="Contraseña" required />
+        <button type="submit" class="submit-form-btn">Inicia sesión</button>
+      </form>
+
+      <div class="modal-toggle">
+        ¿No tienes cuenta?
+        <button onclick="switchToSignup()">Regístrate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP MODAL -->
+  <div class="modal" id="signupModal">
+    <div class="modal-content" style="position: relative;">
+      <button class="modal-close" onclick="closeModals()">✕</button>
+
+      <div class="modal-header">
+        <h2>Crea tu cuenta</h2>
+        <p style="color: var(--light); margin: 0;">Únete a nosotros en minutos</p>
+      </div>
+
+      <div class="oauth-buttons">
+        <button class="oauth-btn" onclick="loginWithProvider('github')">
+          <span>🐙</span> Regístrate con GitHub
+        </button>
+        <button class="oauth-btn" onclick="loginWithProvider('google')">
+          <span>🔵</span> Regístrate con Google
+        </button>
+      </div>
+
+      <div class="divider">o</div>
+
+      <form onsubmit="handleEmailSignup(event)">
+        <input type="text" class="form-input" placeholder="Tu nombre" required />
+        <input type="email" class="form-input" placeholder="tu@email.com" required />
+        <input type="password" class="form-input" placeholder="Contraseña (min. 8 caracteres)" required minlength="8" />
+        <button type="submit" class="submit-form-btn">Crear cuenta</button>
+      </form>
+
+      <div class="modal-toggle">
+        ¿Ya tienes cuenta?
+        <button onclick="switchToLogin()">Inicia sesión</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Sticky Header Logic
+    // Sticky Header
     const hero = document.querySelector('.hero');
     const stickyHeader = document.getElementById('stickyHeader');
 
@@ -818,43 +887,227 @@ export function renderMainAppHtml(boot: AppBootResult): string {
       }
     });
 
-    // Chatbot Logic
-    const messagesContainer = document.getElementById('messages');
-    const chatInput = document.getElementById('chatInput');
-
-    function sendMessage() {
-      const message = chatInput.value.trim();
-      if (!message) return;
-
-      // Add user message
-      const userDiv = document.createElement('div');
-      userDiv.className = 'message user';
-      userDiv.innerHTML = \`<div class="message-bubble">\${message}</div>\`;
-      messagesContainer.appendChild(userDiv);
-
-      chatInput.value = '';
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-      // Simulate bot response
-      setTimeout(() => {
-        const botDiv = document.createElement('div');
-        botDiv.className = 'message bot';
-        const responses = [
-          '¡Excelente pregunta! Puedo ayudarte con eso.',
-          'Perfecto. Te proporciono más información sobre eso.',
-          'Entendido. Déjame darte los detalles que necesitas.',
-          'Claro, aquí está lo que buscas.',
-        ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        botDiv.innerHTML = \`<div class="message-bubble">\${randomResponse}</div>\`;
-        messagesContainer.appendChild(botDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }, 800);
+    // Modal Management
+    function openLoginModal() {
+      closeModals();
+      document.getElementById('loginModal').classList.add('active');
     }
 
-    chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
+    function openSignupModal() {
+      closeModals();
+      document.getElementById('signupModal').classList.add('active');
+    }
+
+    function closeModals() {
+      document.getElementById('loginModal').classList.remove('active');
+      document.getElementById('signupModal').classList.remove('active');
+    }
+
+    function switchToSignup() {
+      openSignupModal();
+    }
+
+    function switchToLogin() {
+      openLoginModal();
+    }
+
+    function loginWithProvider(provider) {
+      window.location.href = '/auth/oauth-' + provider;
+    }
+
+    function handleEmailLogin(e) {
+      e.preventDefault();
+      const email = e.target.querySelector('input[type="email"]').value;
+      const password = e.target.querySelector('input[type="password"]').value;
+      // TODO: Enviar POST a /auth/login
+      console.log('Login:', email, password);
+      window.location.href = '/dashboard';
+    }
+
+    function handleEmailSignup(e) {
+      e.preventDefault();
+      const name = e.target.querySelector('input[type="text"]').value;
+      const email = e.target.querySelectorAll('input[type="email"]')[0].value;
+      const password = e.target.querySelector('input[type="password"]').value;
+      // TODO: Enviar POST a /auth/signup
+      console.log('Signup:', name, email, password);
+      window.location.href = '/dashboard';
+    }
+
+    // Close modals on outside click
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        closeModals();
+      }
     });
+  </script>
+</body>
+</html>`;
+}
+
+export function renderDashboardHtml(boot: AppBootResult): string {
+  const css = estilosMainApp(boot);
+  const nombre = esc(boot.brandName);
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${esc(nombre)} — Dashboard</title>
+  <style>
+    ${css}
+
+    .dashboard-wrapper {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .dashboard-header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 10%;
+      min-height: 60px;
+    }
+
+    .dashboard-header h1 {
+      font-size: 1.5em;
+      margin: 0;
+      color: var(--text);
+    }
+
+    .dashboard-user {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .logout-btn {
+      padding: 8px 16px;
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .dashboard-body {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding: 30px;
+      height: 90%;
+      overflow-y: auto;
+    }
+
+    .dashboard-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+
+    .dashboard-card:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-color: var(--primary);
+    }
+
+    .dashboard-card h3 {
+      margin: 0 0 15px;
+      color: var(--text);
+      font-size: 1.1em;
+    }
+
+    .dashboard-card p {
+      margin: 0;
+      color: var(--light);
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-body {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-body {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <!-- HEADER 10% -->
+    <div class="dashboard-header">
+      <h1>${esc(nombre)}</h1>
+      <div class="dashboard-user">
+        <div class="user-avatar">JD</div>
+        <div>
+          <p style="margin: 0; font-weight: 600;">Juan Díaz</p>
+          <p style="margin: 0; font-size: 0.85em; color: var(--light);">juan@empresa.com</p>
+        </div>
+        <button class="logout-btn" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- BODY 90% - 3 COLUMNAS -->
+    <div class="dashboard-body">
+      <div class="dashboard-card">
+        <h3>📊 Resumen</h3>
+        <p>Vista general de tu negocio con métricas clave en tiempo real.</p>
+      </div>
+      <div class="dashboard-card">
+        <h3>📈 Reportes</h3>
+        <p>Genera reportes detallados y exporta datos en múltiples formatos.</p>
+      </div>
+      <div class="dashboard-card">
+        <h3>⚙️ Configuración</h3>
+        <p>Personaliza tu experiencia y gestiona preferencias de cuenta.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      if (confirm('¿Quieres cerrar sesión?')) {
+        window.location.href = '/app';
+      }
+    }
   </script>
 </body>
 </html>`;
