@@ -306,8 +306,8 @@ describe("MotorNotificaciones (Capa 0.3)", () => {
       motor.registrarRegla("venta", "t_custom", novaRegla);
 
       const config = motor.obtenerConfiguracion();
-      expect(config.reglasPorArchetype.venta["t_custom"]).toBeDefined();
-      expect(config.reglasPorArchetype.venta["t_custom"].length).toBeGreaterThan(0);
+      expect(config.reglasPorArchetype.venta!["t_custom"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_custom"]!.length).toBeGreaterThan(0);
     });
 
     it("✅ debe usar regla personalizada registrada", async () => {
@@ -349,9 +349,9 @@ describe("MotorNotificaciones (Capa 0.3)", () => {
     it("✅ debe tener reglas para cada transición", () => {
       const config = motor.obtenerConfiguracion();
 
-      expect(config.reglasPorArchetype.venta["t_aceptar"]).toBeDefined();
-      expect(config.reglasPorArchetype.compra["t_emitir_oc"]).toBeDefined();
-      expect(config.reglasPorArchetype.servicio["t_ejecutar"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_aceptar"]).toBeDefined();
+      expect(config.reglasPorArchetype.compra!["t_emitir_oc"]).toBeDefined();
+      expect(config.reglasPorArchetype.servicio!["t_ejecutar"]).toBeDefined();
     });
   });
 

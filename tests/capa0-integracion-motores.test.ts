@@ -391,9 +391,9 @@ describe("Integración: Capa 0.3 - Flujo Completo de Transición", () => {
       const configOrq = motorOrquestador.obtenerConfiguracion();
       const configNotif = motorNotificaciones.obtenerConfiguracion();
 
-      expect(configVal.reglasPorArchetype.venta["t_custom"]).toBeDefined();
-      expect(configOrq.reglasPorArchetype.venta["t_custom"]).toBeDefined();
-      expect(configNotif.reglasPorArchetype.venta["t_custom"]).toBeDefined();
+      expect(configVal.reglasPorArchetype.venta!["t_custom"]).toBeDefined();
+      expect(configOrq.reglasPorArchetype.venta!["t_custom"]).toBeDefined();
+      expect(configNotif.reglasPorArchetype.venta!["t_custom"]).toBeDefined();
     });
   });
 

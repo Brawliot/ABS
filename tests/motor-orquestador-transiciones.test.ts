@@ -236,8 +236,8 @@ describe("MotorOrquestadorTransiciones", () => {
       motor.registrarRegla("venta", "t_reporte", novaRegla);
 
       const config = motor.obtenerConfiguracion();
-      expect(config.reglasPorArchetype.venta["t_reporte"]).toBeDefined();
-      expect(config.reglasPorArchetype.venta["t_reporte"].genera).toContain("reporte_ventas");
+      expect(config.reglasPorArchetype.venta!["t_reporte"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_reporte"]!.genera).toContain("reporte_ventas");
     });
 
     it("✅ debe usar regla personalizada registrada", async () => {
@@ -274,14 +274,14 @@ describe("MotorOrquestadorTransiciones", () => {
     it("✅ debe tener reglas para cada transición", () => {
       const config = motor.obtenerConfiguracion();
 
-      expect(config.reglasPorArchetype.venta["t_aceptar"]).toBeDefined();
-      expect(config.reglasPorArchetype.compra["t_emitir_oc"]).toBeDefined();
-      expect(config.reglasPorArchetype.servicio["t_ejecutar"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_aceptar"]).toBeDefined();
+      expect(config.reglasPorArchetype.compra!["t_emitir_oc"]).toBeDefined();
+      expect(config.reglasPorArchetype.servicio!["t_ejecutar"]).toBeDefined();
     });
 
     it("✅ debe mostrar documentos generados por regla", () => {
       const config = motor.obtenerConfiguracion();
-      const reglaVentaAcepta = config.reglasPorArchetype.venta["t_aceptar"];
+      const reglaVentaAcepta = config.reglasPorArchetype.venta!["t_aceptar"]!;
 
       expect(reglaVentaAcepta.genera).toContain("factura");
       expect(reglaVentaAcepta.genera).toContain("asientos_contables");
