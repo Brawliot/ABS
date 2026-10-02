@@ -2066,9 +2066,18 @@ export class AppRuntime {
 
       // Crear tareas de seguimiento
       for (const tarea of proceso.tareas_generadas) {
+        let fechaVencimiento: string;
+        if (tarea.fecha_vencimiento instanceof Date) {
+          fechaVencimiento = tarea.fecha_vencimiento.toISOString().slice(0, 10);
+        } else if (typeof tarea.fecha_vencimiento === "string") {
+          fechaVencimiento = tarea.fecha_vencimiento.slice(0, 10);
+        } else {
+          fechaVencimiento = new Date().toISOString().slice(0, 10); // Fallback
+        }
+
         this.crearTarea(tx.datos.parteId, {
           texto: tarea.título,
-          fechaVencimiento: tarea.fecha_vencimiento.toISOString().slice(0, 10),
+          fechaVencimiento,
           prioridad: tarea.prioridad as "baja" | "media" | "alta" | undefined,
           asignadoA: actorId,
         });
