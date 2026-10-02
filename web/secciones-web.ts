@@ -44,25 +44,24 @@ export const seccionPortada = {
   render: (ctx: ContextoWeb, variante: string) => {
     const { boot } = ctx;
     const nombre = esc(boot.brandName);
+    const tagline = "Soluciones ágiles, resultados confiables";
 
     if (variante === "grande") {
       return `
-<header style="text-align: center; padding: 60px 20px; margin-bottom: 40px;">
-  <h1 style="font-size: 3em; margin-bottom: 20px; color: var(--color-primary);">
-    ${nombre}
-  </h1>
-  <p style="font-size: 1.2em; color: #666; margin-bottom: 10px;">
-    Te ayudamos con lo que necesites
-  </p>
+<header style="text-align: center;">
+  <div class="container">
+    <h1>${nombre}</h1>
+    <p>${tagline}</p>
+  </div>
 </header>`;
     }
 
     // sobria
     return `
-<header style="text-align: center; padding: 30px 20px; margin-bottom: 30px; border-bottom: 1px solid var(--color-border);">
-  <h1 style="font-size: 2em; margin-bottom: 10px; color: var(--color-primary);">
-    ${nombre}
-  </h1>
+<header>
+  <div class="container">
+    <h1>${nombre}</h1>
+  </div>
 </header>`;
   },
 };
@@ -99,45 +98,58 @@ export const seccionOferta = {
     // Placeholder: sin ofertas reales en los datos de muestra
     if (variante === "tabla") {
       return `
-<section style="margin: 40px 0;">
+<section class="container">
   <h2>Nuestras ofertas</h2>
-  <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-    <thead>
-      <tr style="border-bottom: 2px solid var(--color-border);">
-        <th style="text-align: left; padding: 10px;">Producto</th>
-        <th style="text-align: right; padding: 10px;">Precio</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom: 1px solid var(--color-border);">
-        <td style="padding: 10px;">Servicio estándar</td>
-        <td style="text-align: right; padding: 10px; color: var(--color-primary); font-weight: 600;">Consultar</td>
-      </tr>
-    </tbody>
-  </table>
+  <div style="overflow-x: auto; margin-top: 30px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f9fafb; border-bottom: 2px solid var(--color-border);">
+          <th style="text-align: left; padding: 15px; font-weight: 600;">Producto</th>
+          <th style="text-align: right; padding: 15px; font-weight: 600;">Precio</th>
+          <th style="text-align: center; padding: 15px; font-weight: 600;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid var(--color-border); transition: background 0.2s;">
+          <td style="padding: 15px;">Servicio estándar</td>
+          <td style="text-align: right; padding: 15px; color: var(--color-primary); font-weight: 700; font-size: 1.1em;">Consultar</td>
+          <td style="text-align: center; padding: 15px;"><a href="#solicitud" class="cta-button" style="padding: 8px 16px; font-size: 0.9em;">Solicitar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>`;
     }
 
     if (variante === "lista") {
       return `
-<section style="margin: 40px 0;">
+<section class="container">
   <h2>Nuestras ofertas</h2>
-  <ul style="list-style: none; margin-top: 20px;">
-    <li style="padding: 15px; border-bottom: 1px solid var(--color-border);">
-      <strong>Servicio estándar</strong> — Precio a consultar
-    </li>
-  </ul>
+  <div style="margin-top: 30px;">
+    <div style="padding: 20px; border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-weight: 700; font-size: 1.1em; margin-bottom: 5px;">Servicio estándar</div>
+        <div style="color: var(--color-light); font-size: 0.95em;">Solución completa para tu negocio</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="color: var(--color-primary); font-weight: 700; font-size: 1.3em;">Consultar</div>
+        <a href="#solicitud" class="cta-button" style="display: inline-block; padding: 8px 16px; margin-top: 8px; font-size: 0.9em;">Solicitar</a>
+      </div>
+    </div>
+  </div>
 </section>`;
     }
 
     // tarjetas (default)
     return `
-<section style="margin: 40px 0;">
+<section class="container">
   <h2>Nuestras ofertas</h2>
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
-    <div style="border: 1px solid var(--color-border); border-radius: 8px; padding: 20px;">
-      <strong style="display: block; font-size: 1.1em; margin-bottom: 10px;">Servicio estándar</strong>
-      <p style="color: var(--color-primary); font-weight: 600; font-size: 1.3em;">Consultar</p>
+  <div class="offers">
+    <div class="offer-card">
+      <div class="offer-title">Servicio estándar</div>
+      <div class="offer-price">Consultar</div>
+      <p class="offer-desc">Solución completa diseñada para tu negocio</p>
+      <a href="#solicitud" class="cta-button">Solicitar información</a>
     </div>
   </div>
 </section>`;
@@ -176,12 +188,10 @@ export const seccionComoTrabajamos = {
     const html = estados
       .map(
         (estado: any, idx: any) => `
-    <div style="display: flex; margin-bottom: 20px;">
-      <div style="background: var(--color-primary); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">
-        ${idx + 1}
-      </div>
-      <div>
-        <strong>${esc(estado.label ?? estado.id)}</strong>
+    <div class="step">
+      <div class="step-number">${idx + 1}</div>
+      <div class="step-content">
+        <h3>${esc(estado.label ?? estado.id)}</h3>
       </div>
     </div>
   `,
@@ -189,9 +199,9 @@ export const seccionComoTrabajamos = {
       .join("");
 
     return `
-<section style="margin: 40px 0;">
+<section class="container">
   <h2>Cómo trabajamos</h2>
-  <div style="margin-top: 20px;">
+  <div class="steps-container">
     ${html}
   </div>
 </section>`;
@@ -218,9 +228,12 @@ export const seccionHorario= {
     const horarioText = first?.label ?? "Consúltanos disponibilidad";
 
     return `
-<section style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 40px 0;">
-  <h3 style="margin-bottom: 10px;">Horario</h3>
-  <p>${esc(horarioText)}</p>
+<section class="container">
+  <div class="info-section">
+    <h3 style="margin-top: 0;">📅 Horario y disponibilidad</h3>
+    <p>${esc(horarioText)}</p>
+    <p style="color: var(--color-light); font-size: 0.95em; margin-top: 10px;">Contáctanos para conocer nuestros horarios específicos y disponibilidad.</p>
+  </div>
 </section>`;
   },
 };
@@ -252,31 +265,34 @@ export const seccionSolicitud= {
     const btnText = firstState?.label ?? "Solicitar presupuesto";
 
     return `
-<section style="background: #f9fafb; padding: 30px; border-radius: 8px; margin: 40px 0;">
-  <h2>${esc(btnText)}</h2>
+<section class="container">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h2 id="solicitud">${esc(btnText)}</h2>
+    <p style="color: var(--color-light); font-size: 1.05em;">Completa el formulario y nos pondremos en contacto contigo pronto</p>
+  </div>
 
-  <form method="post" action="/web/solicitud" style="max-width: 500px; margin: 20px 0;">
-    <div style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tu nombre</label>
-      <input type="text" name="nombre" required style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: 1em;" />
-    </div>
+  <div class="form-container">
+    <form method="post" action="/web/solicitud">
+      <div class="form-group">
+        <label for="nombre">Tu nombre</label>
+        <input type="text" id="nombre" name="nombre" required placeholder="Juan García" />
+      </div>
 
-    <div style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 8px; font-weight: 500;">Teléfono o correo</label>
-      <input type="text" name="contacto" required style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: 1em;" />
-    </div>
+      <div class="form-group">
+        <label for="contacto">Teléfono o correo</label>
+        <input type="text" id="contacto" name="contacto" required placeholder="+34 612 345 678 o tu@email.com" />
+      </div>
 
-    <div style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 8px; font-weight: 500;">Cuéntanos qué necesitas</label>
-      <textarea name="mensaje" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 4px; font-family: inherit; font-size: 1em; resize: vertical; min-height: 100px;"></textarea>
-    </div>
+      <div class="form-group">
+        <label for="mensaje">Cuéntanos qué necesitas</label>
+        <textarea id="mensaje" name="mensaje" placeholder="Describe brevemente tu necesidad..."></textarea>
+      </div>
 
-    <input type="hidden" name="trampa" value="" />
+      <input type="hidden" name="trampa" value="" />
 
-    <button type="submit" style="width: 100%; padding: 12px; background: var(--color-primary); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 1em;">
-      ${esc(btnText)}
-    </button>
-  </form>
+      <button type="submit">${esc(btnText)}</button>
+    </form>
+  </div>
 </section>`;
   },
 };
@@ -295,13 +311,79 @@ export const seccionPreguntas= {
   seleccionarVariante: () => "faq",
   render: () => {
     return `
-<section style="margin: 40px 0;">
+<section class="container">
   <h2>Preguntas frecuentes</h2>
-  <div style="margin-top: 20px;">
-    <details style="margin-bottom: 15px; border: 1px solid var(--color-border); padding: 15px; border-radius: 4px;">
-      <summary style="font-weight: 600; cursor: pointer;">¿Cuál es tu política de devoluciones?</summary>
-      <p style="margin-top: 10px; color: #666;">Consulta nuestros términos y condiciones.</p>
+  <div style="max-width: 700px; margin: 30px auto;">
+    <details>
+      <summary>✓ ¿Cuál es tu política de devoluciones?</summary>
+      <p>Oferecemos garantía de satisfacción. Consulta nuestros términos y condiciones para más detalles sobre plazos y condiciones específicas.</p>
     </details>
+
+    <details>
+      <summary>✓ ¿Cuáles son tus plazos de entrega?</summary>
+      <p>Los plazos dependen del tipo de servicio. Te proporcionaremos un estimado personalizado tras revisar tu solicitud.</p>
+    </details>
+
+    <details>
+      <summary>✓ ¿Ofrecen soporte después de la venta?</summary>
+      <p>Sí, contamos con equipo de soporte disponible para resolver tus consultas e inquietudes.</p>
+    </details>
+
+    <details>
+      <summary>✓ ¿Cómo puedo contactar para más información?</summary>
+      <p>Puedes usar el formulario de solicitud anterior, enviarnos un email, o llamar directamente a nuestro equipo.</p>
+    </details>
+  </div>
+</section>`;
+  },
+};
+
+/** CARACTERÍSTICAS: atributos principales del negocio. */
+export const seccionCaracteristicas = {
+  id: "caracteristicas",
+  cubre: ["web.caracteristicas"],
+  aplica: (ctx: any) => {
+    const { boot } = ctx;
+    // Siempre mostrar para dar contexto visual
+    return true;
+  },
+  peso: (ctx: any) => {
+    const { boot } = ctx;
+    // Mostrar más prominentemente en servicios
+    if (boot.input.lifecycles.some((l: any) =>
+      l.archetypeId === "servicio" || l.archetypeId === "servicio_proyecto"
+    )) {
+      return 500;
+    }
+    return 200;
+  },
+  variantes: ["destacadas"],
+  seleccionarVariante: () => "destacadas",
+  render: (ctx: any) => {
+    const { boot } = ctx;
+    const características = [
+      { titulo: "Rápido", descripcion: "Procesos ágiles y eficientes", icono: "⚡" },
+      { titulo: "Confiable", descripcion: "Soluciones probadas y seguras", icono: "✓" },
+      { titulo: "Accesible", descripcion: "Atención personalizada siempre", icono: "👥" },
+      { titulo: "Transparente", descripcion: "Sin costos ocultos ni sorpresas", icono: "💡" },
+    ];
+
+    const html = características
+      .map(
+        (car: any) => `
+      <div class="feature-card">
+        <div class="feature-icon">${car.icono}</div>
+        <h3>${esc(car.titulo)}</h3>
+        <p>${esc(car.descripcion)}</p>
+      </div>
+    `,
+      )
+      .join("");
+
+    return `
+<section class="container">
+  <div class="features-grid">
+    ${html}
   </div>
 </section>`;
   },
@@ -310,6 +392,7 @@ export const seccionPreguntas= {
 /** Lista de todas las secciones web disponibles. */
 export const SECCIONES_WEB: readonly any[] = [
   seccionPortada,
+  seccionCaracteristicas,
   seccionOferta,
   seccionComoTrabajamos,
   seccionHorario,

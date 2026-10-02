@@ -34,6 +34,8 @@ function estiloNegocio(
   const bgColor = ds.tokens.colors.neutrals.background ?? "#ffffff";
   const textColor = ds.tokens.colors.neutrals.text ?? "#1f2937";
   const borderColor = ds.tokens.colors.neutrals.border ?? "#e5e7eb";
+  const successColor = ds.tokens.colors.success ?? "#10b981";
+  const textLightColor = ds.tokens.colors.neutrals.textLight ?? "#6b7280";
 
   const css = `
     :root {
@@ -41,156 +43,412 @@ function estiloNegocio(
       --color-bg: ${esc(bgColor)};
       --color-text: ${esc(textColor)};
       --color-border: ${esc(borderColor)};
+      --color-success: ${esc(successColor)};
+      --color-light: ${esc(textLightColor)};
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--color-bg);
       color: var(--color-text);
       line-height: 1.6;
-      padding: 20px;
+      font-size: 16px;
     }
 
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
     header {
-      text-align: center;
-      padding: 40px 20px;
-      border-bottom: 2px solid var(--color-border);
-      margin-bottom: 40px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, rgba(0,0,0,0.05) 100%);
+      color: white;
+      padding: 80px 20px;
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--color-border);
     }
 
-    h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
-      color: var(--color-primary);
+    header h1 {
+      font-size: clamp(2em, 5vw, 3.5em);
+      margin-bottom: 15px;
+      color: white;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 1.1em;
+      opacity: 0.95;
+      max-width: 600px;
+      margin: 0;
     }
 
     h2 {
-      font-size: 1.5em;
-      margin: 30px 0 20px;
-      border-bottom: 1px solid var(--color-border);
-      padding-bottom: 10px;
+      font-size: 2em;
+      margin: 50px 0 30px;
+      color: var(--color-text);
+      font-weight: 700;
     }
+
+    h3 {
+      font-size: 1.3em;
+      margin: 20px 0 15px;
+      color: var(--color-text);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin: 40px 0;
+    }
+
+    .feature-card {
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      transform: translateY(-5px);
+      border-color: var(--color-primary);
+    }
+
+    .feature-icon {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+
+    .feature-card h3 { margin-top: 0; }
+    .feature-card p { color: var(--color-light); margin: 10px 0 0; }
 
     .offers {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin: 20px 0;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
     }
 
     .offer-card {
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      padding: 20px;
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      padding: 30px 25px;
       background: var(--color-bg);
-      transition: box-shadow 0.2s;
+      transition: all 0.3s ease;
+      text-align: center;
     }
 
     .offer-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: var(--color-primary);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+      transform: translateY(-4px);
     }
 
     .offer-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 1.1em;
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 1.2em;
+      color: var(--color-text);
     }
 
     .offer-price {
-      font-size: 1.4em;
+      font-size: 1.8em;
       color: var(--color-primary);
-      font-weight: bold;
+      font-weight: 700;
+      margin: 15px 0;
+    }
+
+    .offer-desc {
+      color: var(--color-light);
+      font-size: 0.95em;
       margin: 10px 0;
     }
 
+    .cta-button {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--color-primary);
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: 2px solid var(--color-primary);
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .cta-button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .cta-secondary {
+      background: transparent;
+      color: var(--color-primary);
+    }
+
+    .cta-secondary:hover {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .steps-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin: 40px 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 20px;
+    }
+
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      min-width: 50px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: white;
+      font-weight: 700;
+      font-size: 1.3em;
+    }
+
+    .step-content h3 { margin-top: 0; }
+    .step-content p { color: var(--color-light); }
+
     .info-section {
+      background: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.05));
+      padding: 30px;
+      border-radius: 12px;
+      margin: 40px 0;
+      border-left: 4px solid var(--color-primary);
+    }
+
+    .form-container {
       background: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 20px 0;
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 550px;
+      margin: 40px auto;
     }
 
     form {
-      background: #f9fafb;
-      padding: 30px;
-      border-radius: 8px;
-      max-width: 500px;
-      margin: 30px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--color-text);
+      font-size: 0.95em;
     }
 
     input[type="text"],
     input[type="email"],
     input[type="tel"],
     textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 6px;
       font-family: inherit;
       font-size: 1em;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 120px;
     }
 
     input[type="hidden"] {
       display: none;
     }
 
-    button {
-      width: 100%;
-      padding: 12px;
+    button[type="submit"] {
+      padding: 14px 20px;
       background: var(--color-primary);
       color: white;
       border: none;
-      border-radius: 4px;
-      font-weight: 600;
+      border-radius: 6px;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 1em;
+      font-size: 1.05em;
+      transition: all 0.3s;
+      margin-top: 10px;
     }
 
-    button:hover {
+    button[type="submit"]:hover {
       opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    button[type="submit"]:active {
+      transform: translateY(0);
     }
 
     .success-message {
-      background: #d1fae5;
-      color: #065f46;
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
+      background: #dcfce7;
+      color: #166534;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 30px;
       text-align: center;
+      border-left: 4px solid var(--color-success);
+      font-weight: 500;
+    }
+
+    .error-message {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #ef4444;
     }
 
     footer {
       text-align: center;
+      padding: 50px 20px;
+      margin-top: 60px;
+      border-top: 2px solid var(--color-border);
+      background: #f9fafb;
+      color: var(--color-light);
+    }
+
+    footer p { margin: 8px 0; }
+
+    .social-links {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .social-links a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .social-links a:hover {
+      opacity: 0.7;
+    }
+
+    details {
+      margin: 15px 0;
       padding: 20px;
-      margin-top: 40px;
-      border-top: 1px solid var(--color-border);
-      font-size: 0.9em;
-      color: #6b7280;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+    }
+
+    details summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--color-text);
+      user-select: none;
+    }
+
+    details summary:hover {
+      color: var(--color-primary);
+    }
+
+    details p {
+      margin: 15px 0 0;
+      color: var(--color-light);
     }
 
     @media (max-width: 768px) {
-      h1 { font-size: 1.5em; }
-      h2 { font-size: 1.2em; }
-      form { padding: 20px; }
-      .offers { grid-template-columns: 1fr; }
+      header {
+        padding: 50px 20px;
+      }
+
+      header h1 {
+        font-size: 2em;
+      }
+
+      header p {
+        font-size: 1em;
+      }
+
+      h2 {
+        font-size: 1.6em;
+        margin: 35px 0 20px;
+      }
+
+      .features-grid,
+      .offers,
+      .steps-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .step {
+        gap: 15px;
+      }
+
+      .form-container {
+        padding: 25px;
+      }
+
+      form {
+        gap: 15px;
+      }
+
+      .step-number {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1em;
+      }
+
+      footer {
+        padding: 30px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        font-size: 14px;
+      }
+
+      h2 {
+        font-size: 1.4em;
+      }
+
+      .container {
+        padding: 0 15px;
+      }
+
+      header {
+        padding: 40px 15px;
+      }
     }
   `;
 
@@ -243,19 +501,41 @@ export function renderLandingHtml(boot: AppBootResult, query?: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${esc(boot.brandName)} — Bienvenido</title>
+  <meta name="description" content="Soluciones ágiles y confiables para tu negocio" />
+  <title>${esc(boot.brandName)} — Soluciones de negocio</title>
   <style>${css}</style>
 </head>
 <body>
-  <div class="container">
-    ${successMsg}
+  ${successMsg}
 
-    ${(resultado.html ?? resultado) as any}
+  ${(resultado.html ?? resultado) as any}
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid var(--color-border); font-size: 0.9em; color: #6b7280;">
-      <p>&copy; 2026 ${esc(boot.brandName)}. Todos los derechos reservados.</p>
-    </footer>
-  </div>
+  <footer>
+    <div class="container">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-bottom: 40px;">
+        <div>
+          <h3 style="color: var(--color-primary); margin-bottom: 15px;">${esc(boot.brandName)}</h3>
+          <p style="margin: 0; font-size: 0.95em;">Soluciones ágiles, resultados confiables</p>
+        </div>
+        <div>
+          <h4 style="margin-top: 0; margin-bottom: 10px;">Rápido</h4>
+          <p style="margin: 0; color: var(--color-light); font-size: 0.9em;">Procesos optimizados</p>
+        </div>
+        <div>
+          <h4 style="margin-top: 0; margin-bottom: 10px;">Confiable</h4>
+          <p style="margin: 0; color: var(--color-light); font-size: 0.9em;">Garantizado</p>
+        </div>
+        <div>
+          <h4 style="margin-top: 0; margin-bottom: 10px;">Contacto</h4>
+          <p style="margin: 0; color: var(--color-light); font-size: 0.9em;"><a href="#solicitud" style="color: var(--color-primary); text-decoration: none;">Solicita información</a></p>
+        </div>
+      </div>
+      <div style="border-top: 1px solid var(--color-border); padding-top: 30px; text-align: center;">
+        <p style="margin: 0; font-size: 0.9em;">&copy; 2026 ${esc(boot.brandName)}. Todos los derechos reservados.</p>
+        <p style="margin: 10px 0 0; font-size: 0.85em; color: var(--color-light);">Hecho con ❤️ — Soluciones deterministas basadas en eventos</p>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>`;
 }
