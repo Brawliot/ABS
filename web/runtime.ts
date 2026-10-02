@@ -7,9 +7,11 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SqliteEventStore } from "../adapters/sqlite-event-store.js";
+import { createNoOpOutboxHandler } from "../adapters/outbox-handler.js";
 import type { ArchetypeId } from "../archetypes/types.js";
 import { createLlmClientFromEnv } from "../llm/index.js";
 import type { LlmClient } from "../llm/index.js";
+import { OutboxPublisher } from "../services/outbox-publisher.js";
 import {
   evaluateBlocks,
   type SubTransactionSnapshot,
@@ -60,6 +62,7 @@ export class AppRuntime {
   readonly dbPath: string;
   readonly subjects: RuntimeSubject[];
   flash: FlashMessage | undefined;
+  outboxPublisher: OutboxPublisher | undefined;
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
   private readonly subjectLocks = new Set<string>();
@@ -121,7 +124,31 @@ export class AppRuntime {
   }
 
   close(): void {
+    if (this.outboxPublisher) {
+      this.outboxPublisher.stop();
+    }
     this.store.close();
+  }
+
+  /**
+   * Inicializa el Outbox Publisher (background job que publica efectos externos).
+   * Nota: SQLite no tiene soporte para multi-tenant outbox (que requiere Pool de PostgreSQL).
+   * En modo desarrollo/test, este método es un no-op o loguea que estaría publicado.
+   */
+  initOutboxPublisher(options?: { readonly intervalMs?: number }): void {
+    // En dev/SQLite, no hay Pool real. En producción PostgreSQL, habría que pasar el pool.
+    // Por ahora, creamos un publisher con handler no-op que solo loguea.
+    const handler = createNoOpOutboxHandler();
+    this.outboxPublisher = new OutboxPublisher({
+      pool: null as any,  // En SQLite no es necesario
+      handler,
+      intervalMs: options?.intervalMs ?? 60000,
+    });
+    // En producción, llamaría: this.outboxPublisher.start()
+    console.log(
+      "[AppRuntime.initOutboxPublisher] En dev (SQLite): outbox solo se loguea. " +
+      "En prod (PostgreSQL): implementar drainOutbox() periódicamente."
+    );
   }
 
   setFlash(flash: FlashMessage | undefined): void {
