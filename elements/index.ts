@@ -424,3 +424,13 @@ export type {
   ConfiguracionNotificaciones,
 } from "./motor-notificaciones.js";
 export { MotorNotificaciones as MotorNotificacionesCapa0 } from "./motor-notificaciones.js";
+
+// Capa 0.4: Motor Cálculos
+export type {
+  TipoCalculo,
+  TipoRedondeo,
+  ReglaDeCalculo,
+  ConfiguracionCalculos,
+  ResultadoCalculo,
+} from "./motor-calculos.js";
+export { MotorCalculos } from "./motor-calculos.js";

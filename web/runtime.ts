@@ -117,11 +117,12 @@ import { SqlitePresupuestosStore } from "../adapters/sqlite-presupuestos-store.j
 import { MotorGeneradorProcesos } from "../elements/generador-procesos.js";
 import { SqliteGeneradorProcesosStore } from "../adapters/sqlite-generador-procesos-store.js";
 
-// Capa 0.3: Motores de Orquestación
+// Capa 0: Motores de Orquestación
 import {
   MotorOrquestadorTransiciones,
   MotorValidacionTransiciones,
   MotorNotificacionesCapa0,
+  MotorCalculos,
 } from "../elements/index.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -287,10 +288,11 @@ export class AppRuntime {
   readonly motorGeneradorProcesos: MotorGeneradorProcesos;
   readonly storeGeneradorProcesos: SqliteGeneradorProcesosStore;
 
-  // Capa 0.3: Orquestación de Transiciones
+  // Capa 0: Orquestación de Transiciones
   readonly motorValidacion: MotorValidacionTransiciones;
   readonly motorOrquestador: MotorOrquestadorTransiciones;
   readonly motorNotificaciones: MotorNotificacionesCapa0;
+  readonly motorCalculos: MotorCalculos;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -405,10 +407,11 @@ export class AppRuntime {
     const generadorProcesosDbPath = join(dirname(dbPath), `${tenantId}-generador-procesos.sqlite`);
     this.storeGeneradorProcesos = new SqliteGeneradorProcesosStore(generadorProcesosDbPath);
 
-    // Inicializar Capa 0.3: Orquestación de Transiciones
+    // Inicializar Capa 0: Orquestación de Transiciones
     this.motorValidacion = new MotorValidacionTransiciones();
     this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGeneradorProcesos);
     this.motorNotificaciones = new MotorNotificacionesCapa0();
+    this.motorCalculos = new MotorCalculos();
   }
 
   static open(

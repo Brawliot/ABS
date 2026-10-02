@@ -537,6 +537,29 @@ async function executeUiActionLocked(
       runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     );
 
+    // CAPA 0.4: Cálculos de Valores (antes de validación)
+    const transaccionPorCalcular = runtime.datosDe(body.subjectId);
+    if (transaccionPorCalcular) {
+      try {
+        console.log(`[ActionHandler] 🧮 Calculando valores para ${slice.archetypeId}`);
+        const calcResult = await runtime.motorCalculos.alCrear(
+          transaccionPorCalcular,
+          slice.archetypeId,
+        );
+        if (calcResult.ok) {
+          console.log(`[ActionHandler] ✅ Calculados:`, calcResult.calculados);
+          // Los cálculos se registran en logs para auditoría
+          // En futuro: actualizar datos de transacción con valores calculados
+        } else {
+          console.error(`[ActionHandler] ⚠️ Error en cálculos: ${calcResult.error}`);
+          // Los cálculos no bloquean la transición (solo informan)
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ActionHandler] ❌ Error en motor de cálculos: ${msg}`);
+      }
+    }
+
     // CAPA 0.3: Validación de Transición (antes de aplicar)
     const transaccionPorValidar = runtime.datosDe(body.subjectId);
     if (transaccionPorValidar) {
