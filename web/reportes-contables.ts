@@ -153,9 +153,13 @@ export class GeneradorReportesContables {
       readonly concepto: string;
     }>,
   ): PerdidayGanancia {
-    // Filtrar asientos en rango (comparar fechas como strings ISO)
+    // Filtrar asientos en rango - usar comparación numérica de fechas
+    const desdeNum = new Date(desde).getTime();
+    const hastaNum = new Date(hasta).getTime();
+
     const asientosPeriodo = asientos.filter((a) => {
-      return a.fecha >= desde && a.fecha <= hasta;
+      const fechaNum = new Date(a.fecha).getTime();
+      return fechaNum >= desdeNum && fechaNum <= hastaNum;
     });
 
     const ingresos: PyLLinea[] = [];
@@ -164,28 +168,32 @@ export class GeneradorReportesContables {
 
     // Clasificar por cuenta
     for (const asiento of asientosPeriodo) {
-      const deudora = (asiento.cuenta_deudora ?? '').toString();
-      const acreedora = (asiento.cuenta_acreedora ?? '').toString();
+      const cuentaDeudora = String(asiento.cuenta_deudora || '');
+      const cuentaAcreedora = String(asiento.cuenta_acreedora || '');
+      const importe = Number(asiento.importe_centimos || 0);
+      const concepto = String(asiento.concepto || '');
 
       // Ingresos: Acreditados a cuentas 700-799
-      if (acreedora.charAt(0) === '7') {
+      if (cuentaAcreedora[0] === '7') {
         ingresos.push({
-          concepto: asiento.concepto ?? '',
-          monto_centimos: asiento.importe_centimos ?? 0,
+          concepto,
+          monto_centimos: importe,
         });
       }
+
       // Costos: Debitados a cuentas 500-599
-      if (deudora.charAt(0) === '5') {
+      if (cuentaDeudora[0] === '5') {
         costos.push({
-          concepto: asiento.concepto ?? '',
-          monto_centimos: asiento.importe_centimos ?? 0,
+          concepto,
+          monto_centimos: importe,
         });
       }
+
       // Gastos: Debitados a cuentas 600-699
-      if (deudora.charAt(0) === '6') {
+      if (cuentaDeudora[0] === '6') {
         gastos.push({
-          concepto: asiento.concepto ?? '',
-          monto_centimos: asiento.importe_centimos ?? 0,
+          concepto,
+          monto_centimos: importe,
         });
       }
     }
