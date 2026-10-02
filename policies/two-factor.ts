@@ -1,5 +1,5 @@
-import speakeasy from 'speakeasy';
-import QRCode from 'qrcode';
+const speakeasy = require('speakeasy') as any;
+const QRCode = require('qrcode') as any;
 
 export interface Secret2FA {
   readonly secret: string;
