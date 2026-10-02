@@ -147,7 +147,7 @@ describe("Integraciones Externas - Módulo Futuro (75%)", () => {
     const historial = motorConnectors.obtenerHistorial(conector.id);
 
     expect(historial.length).toBeGreaterThan(0);
-    if (historial.length > 0) {
+    if (historial.length > 0 && historial[0]) {
       expect(historial[0].resultado).toBeDefined();
     }
   });
