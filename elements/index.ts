@@ -256,3 +256,26 @@ export type { Dashboard } from "../web/dashboard-estadisticas.js";
 export type { Ruta, Parada, ResultadoOptimizacion } from "../policies/rutas-transporte.js";
 export type { TarifaProveedor, CostoRuta, ComparativaProveedores, Margen } from "../policies/costos-transporte.js";
 export type { Paquete, Vehiculo, PlanificacionDia, Conflicto } from "../policies/planificador-entregas.js";
+
+// Fase 4B: Simulador
+export type {
+  ModeloProyeccion,
+  Tendencia as TendenciaProyección,
+  EscenarioTipo,
+  DatoPunto,
+  ProyeccionLineal,
+  ProyeccionExponencial,
+  ProyeccionEstacional,
+  ProyeccionPolinómica,
+  Proyección,
+  Escenario,
+  ComparativaEscenarios,
+  AnálisisSensibilidad,
+  Elasticidad,
+  PuntoEquilibrio,
+  GráficoTornadoSensibilidad,
+  GuardadoSimulación,
+  ValidacionSimulación,
+  AccuracyPorModelo,
+  RecomendaciónModelo,
+} from "./simulador.js";

@@ -89,6 +89,11 @@ import { MotorTrackingEmail } from "../policies/email-tracking.js";
 import { MotorWebhooksEmail } from "../policies/email-webhooks.js";
 import { SqliteActivosStore } from "../adapters/sqlite-activos-store.js";
 import { SqliteEmailMarketingStore } from "../adapters/sqlite-email-marketing-store.js";
+import { MotorSimuladorModelos } from "../policies/simulador-modelos.js";
+import { MotorEscenarios } from "../policies/simulador-escenarios.js";
+import { MotorSensibilidad } from "../policies/simulador-sensibilidad.js";
+import { MotorValidaciónSimulador } from "../policies/simulador-validacion.js";
+import { SqliteSimuladorStore } from "../adapters/sqlite-simulador-store.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -219,6 +224,13 @@ export class AppRuntime {
   readonly motorWebhooksEmail: MotorWebhooksEmail;
   readonly storeEmailMarketing: SqliteEmailMarketingStore;
 
+  // Simulador Financiero (Fase 4B)
+  readonly motorSimuladorModelos: MotorSimuladorModelos;
+  readonly motorEscenarios: MotorEscenarios;
+  readonly motorSensibilidad: MotorSensibilidad;
+  readonly motorValidaciónSimulador: MotorValidaciónSimulador;
+  readonly storeSimulador: SqliteSimuladorStore;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -293,6 +305,13 @@ export class AppRuntime {
     this.motorWebhooksEmail = new MotorWebhooksEmail(this.motorTrackingEmail);
     const emailDbPath = join(dirname(dbPath), `${tenantId}-email.sqlite`);
     this.storeEmailMarketing = new SqliteEmailMarketingStore(emailDbPath);
+
+    // Inicializar Simulador Financiero (Fase 4B)
+    this.motorSimuladorModelos = new MotorSimuladorModelos();
+    this.motorEscenarios = new MotorEscenarios();
+    this.motorSensibilidad = new MotorSensibilidad();
+    this.motorValidaciónSimulador = new MotorValidaciónSimulador();
+    this.storeSimulador = new SqliteSimuladorStore();
   }
 
   static open(
