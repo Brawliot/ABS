@@ -15,14 +15,15 @@ import { InMemoryEventStore } from "../../core/event-store.js";
 import { ExperienceTelemetryStore } from "../../bridges/presentation-intelligence/store.js";
 import {
   buildTelemetryRecord,
-  ExperiencePrivacyError,
 } from "../../bridges/presentation-intelligence/privacy.js";
 import { buildRecorridoFunnel } from "../../bridges/presentation-intelligence/funnel.js";
 import type {
   ExperienceTelemetryRecord,
   RecorridoFunnel,
   FunnelStepStats,
+  ExperiencePrivacyError,
 } from "../../bridges/presentation-intelligence/types.js";
+import { ExperiencePrivacyError as ExperiencePrivacyErrorClass } from "../../bridges/presentation-intelligence/types.js";
 
 // ═══════════════════════════════════════════════════════════════
 // TEST 1: Abandon NO escribe en EventStore
@@ -200,7 +201,7 @@ describe("Capa 2 — Telemetría y Analítica (6 Checks)", () => {
           email: "juan@example.com", // Esto causa error
         },
       });
-    }).toThrow(ExperiencePrivacyError);
+    }).toThrow(ExperiencePrivacyErrorClass);
   });
 
   // ═══════════════════════════════════════════════════════════════
