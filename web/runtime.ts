@@ -2150,7 +2150,8 @@ function seedDemoPartes(
   boot: AppBootResult,
 ): void {
   if (partes.list(tenantId).length > 0) return;
-  for (const p of boot.samplePartes) {
+  const samplePartes = (boot.samplePartes ?? []) as any[];
+  for (const p of samplePartes) {
     partes.put(
       tenantId,
       p.id,
