@@ -250,7 +250,7 @@ describe("MotorGeneradorProcesos - Integración con Venta Aceptada", () => {
       };
 
       const proceso = motor.crearProceso("venta", datosVenta);
-      const movimiento = proceso.movimientos_inventario[0];
+      const movimiento = proceso.movimientos_inventario[0]!;
 
       expect(movimiento.saldo_anterior).toBe(50);
       expect(movimiento.saldo_posterior).toBe(45); // 50 - 5
