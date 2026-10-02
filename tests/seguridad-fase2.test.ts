@@ -5,7 +5,7 @@ import { Sqlite2FAStore } from '../adapters/sqlite-2fa-store.js';
 import { SecretsVault } from '../policies/secrets-vault.js';
 import { AuditLogger } from '../policies/audit-logger.js';
 import { TokenManager } from '../policies/token-manager.js';
-import speakeasy from 'speakeasy';
+const speakeasy = require('speakeasy') as any;
 
 describe('Seguridad Fase 2', () => {
   let motor2fa: Motor2FA;
