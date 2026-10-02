@@ -1031,16 +1031,33 @@ export class MotorGeneradorProcesos {
   private validarDatosVenta(datos: any): { pasó: boolean; errores?: string[] } {
     const errores: string[] = [];
 
+    console.log("[ValidarVenta] Inicio validación:", {
+      cliente_id: datos.cliente_id,
+      líneas_count: datos.líneas?.length,
+      total: datos.total,
+    });
+
     if (!datos.cliente_id) errores.push("Cliente requerido");
     if (!datos.líneas || datos.líneas.length === 0) errores.push("Líneas requeridas");
     if (!datos.total || datos.total <= 0) errores.push("Total debe ser mayor a 0");
 
     for (const línea of datos.líneas || []) {
+      console.log("[ValidarVenta] Validando línea:", {
+        producto_id: línea.producto_id,
+        cantidad: línea.cantidad,
+        saldo_anterior: línea.saldo_anterior,
+      });
+
       if (línea.cantidad <= 0) errores.push(`Cantidad inválida para ${línea.producto_id}`);
       if (línea.saldo_anterior < 0) errores.push(`Stock insuficiente para ${línea.producto_id}`);
       if (línea.cantidad > línea.saldo_anterior) {
+        console.log(`[ValidarVenta] ❌ Stock insuficiente: cantidad ${línea.cantidad} > saldo ${línea.saldo_anterior}`);
         errores.push(`Stock insuficiente para ${línea.producto_id}`);
       }
+    }
+
+    if (errores.length > 0) {
+      console.log("[ValidarVenta] Errores encontrados:", errores);
     }
 
     const result: { pasó: boolean; errores?: string[] } = {
