@@ -82,10 +82,10 @@ export class AppRuntime {
   readonly extraRules: import("../policies/types.js").CompiledRule[] = [];
 
   // Motores de Capa 0.2 - Generación
-  readonly motorGenerador = new MotorGeneradorProcesos();
+  readonly motorGenerador!: MotorGeneradorProcesos;
   // Motores de Capa 0.3 - Orquestación
   readonly motorValidacion = new MotorValidacionTransiciones();
-  readonly motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
+  readonly motorOrquestador!: MotorOrquestadorTransiciones;
   readonly motorNotificaciones = new MotorNotificaciones();
   readonly motorCalculos = new MotorCalculos();
   readonly motorPoliticas = new MotorPoliticasDeNegocio();
@@ -117,6 +117,10 @@ export class AppRuntime {
     this.llmClient = createLlmClientFromEnv();
     this.tenantId = tenantId;
     this.subjects = subjects;
+
+    // Inicializar motores que dependen del store
+    this.motorGenerador = new MotorGeneradorProcesos(store);
+    this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
   }
 
   static open(

@@ -2,6 +2,7 @@
  * MotorGeneradorProcesos (Capa 0.2)
  * Genera documentos, asientos contables, movimientos de inventario.
  * Se coordina con MotorOrquestadorTransiciones.
+ * Persiste documentos en EventStore.
  */
 
 export interface DocumentoGenerado {
@@ -26,6 +27,11 @@ export interface GeneracionResult {
 
 export class MotorGeneradorProcesos {
   private documentos: DocumentoGenerado[] = [];
+  private eventStore?: any; // Referencia a SqliteEventStore para persistencia
+
+  constructor(eventStore?: any) {
+    this.eventStore = eventStore;
+  }
 
   generarDocumento(request: GeneracionRequest): GeneracionResult {
     console.log(
@@ -39,6 +45,12 @@ export class MotorGeneradorProcesos {
       const doc = this.crearDocumento(request);
       documentos.push(doc);
       this.documentos.push(doc);
+
+      // Persistir en EventStore si está disponible
+      if (this.eventStore) {
+        this.persistirEnEventStore(doc, request);
+      }
+
       console.log(`✅ Generado: ${request.tipo} (${doc.id})`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -145,5 +157,43 @@ export class MotorGeneradorProcesos {
 
   obtenerDocumentosPorEntidad(entidad_id: string): DocumentoGenerado[] {
     return this.documentos.filter((d) => d.entidad_id === entidad_id);
+  }
+
+  private persistirEnEventStore(
+    doc: DocumentoGenerado,
+    request: GeneracionRequest,
+  ): void {
+    try {
+      // Crear evento de Modificación para registro del documento generado
+      const evento = {
+        id: `gen-${doc.id}`,
+        kind: "modificacion" as const,
+        subjectId: doc.entidad_id,
+        occurredAt: doc.creado_en,
+        actorId: "sys-generador",
+        actorKind: "sistema" as const,
+        evidence: {
+          kind: "sistema" as const,
+          reference: `Documento generado: ${doc.tipo}`,
+          recordedAt: doc.creado_en,
+        },
+        freeText: JSON.stringify({
+          documento_id: doc.id,
+          tipo: doc.tipo,
+          razon: request.razon,
+          datos: doc.data,
+        }),
+      };
+
+      this.eventStore.append(evento);
+      console.log(
+        `📝 Documento persistido en EventStore: ${doc.id}`,
+      );
+    } catch (err) {
+      console.log(
+        `⚠️ Error persistiendo en EventStore: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // No fallar la generación si la persistencia falla
+    }
   }
 }
