@@ -10,7 +10,7 @@ import {
 } from "../archetypes/composed-runtime.js";
 import type { ComposedArchetypeSpec } from "../archetypes/types.js";
 import { deriveState, type DerivedState } from "../core/derivation.js";
-import type { TransitionEvent } from "../core/events.js";
+import type { TransitionEvent, ExceptionEvent } from "../core/events.js";
 import type { ActorKind } from "../core/grammar.js";
 import { findState } from "../core/lifecycle.js";
 import { EventStoreError } from "../core/event-store.js";
@@ -623,6 +623,37 @@ async function executeUiActionLocked(
       }
       const flash: FlashMessage = { kind: "error", text };
       runtime.setFlash(flash);
+
+      // Registrar el rechazo como ExceptionEvent para auditoría
+      try {
+        const exceptionEvent: ExceptionEvent = {
+          id: `exc_${request.id}_${Date.now()}`,  // ID único para excepción
+          kind: "excepcion",
+          subjectId: body.subjectId,
+          fromStateId: derived.currentStateId,
+          toStateId: derived.currentStateId,  // No cambia estado en rechazo
+          reason: err.trace.reason || "Rechazado por política",
+          occurredAt: new Date().toISOString(),
+          actorId: request.actorId,
+          actorKind: request.actorKind,
+          data: {
+            transitionId: action.transitionId,
+            appliedRuleId: err.trace.appliedRuleId,
+            phase: err.trace.phase || "desconocida",
+          },
+        };
+        // Guardar en EventStore para auditoría (sin notificar al usuario de error)
+        runtime.store.append(exceptionEvent);
+        runtime.facts.applyEvent(runtime.tenantId, exceptionEvent);
+        console.log(
+          `[action-handler] ExceptionEvent registrado: ${exceptionEvent.id} ` +
+          `para ${body.subjectId} por ${request.actorId}`
+        );
+      } catch (auditErr) {
+        // No romper el flujo si falla la auditoría
+        console.error("[action-handler] Error registrando ExceptionEvent:", auditErr);
+      }
+
       return { ok: false, flash, idempotentReplay };
     }
     if (err instanceof EventStoreError) {
