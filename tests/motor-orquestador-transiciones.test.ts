@@ -77,7 +77,7 @@ describe("MotorOrquestadorTransiciones", () => {
     it("❌ debe rechazar si faltan datos requeridos", async () => {
       const ventaSinCliente = {
         ...ventaAceptada,
-        datos: { ...ventaAceptada.datos, cliente_id: undefined, parteId: undefined },
+        datos: { ...ventaAceptada.datos, cliente_id: undefined, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       const resultado = await motor.alTransicionar(
@@ -323,7 +323,7 @@ describe("MotorOrquestadorTransiciones", () => {
     it("✅ debe rechazar si dato obligatorio falta", async () => {
       const ventaSinCliente = {
         ...ventaAceptada,
-        datos: { ...ventaAceptada.datos, cliente_id: undefined, parteId: undefined },
+        datos: { ...ventaAceptada.datos, cliente_id: undefined, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       const resultado = await motor.alTransicionar(

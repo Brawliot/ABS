@@ -77,7 +77,7 @@ describe("Integración: Capa 0.3 - Flujo Completo de Transición", () => {
 
       const ventaInvalida = {
         ...venta,
-        datos: { ...venta.datos, parteId: undefined },
+        datos: { ...venta.datos, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       // PASO 1: VALIDACIÓN falla

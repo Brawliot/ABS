@@ -66,7 +66,7 @@ describe("MotorValidacionTransiciones", () => {
     it("❌ debe rechazar venta sin cliente", () => {
       const ventaSinCliente = {
         ...ventaMinima,
-        datos: { ...ventaMinima.datos, parteId: undefined },
+        datos: { ...ventaMinima.datos, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       const resultado = motor.validarTransicion(ventaSinCliente, "venta", "t_aceptar");
@@ -157,7 +157,7 @@ describe("MotorValidacionTransiciones", () => {
     it("❌ debe rechazar servicio sin cliente", () => {
       const servicioSinCliente = {
         ...servicioMinimo,
-        datos: { ...servicioMinimo.datos, parteId: undefined },
+        datos: { ...servicioMinimo.datos, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       const resultado = motor.validarTransicion(
@@ -188,7 +188,7 @@ describe("MotorValidacionTransiciones", () => {
 
       // La regla debe estar registrada
       const config = motor.obtenerConfiguracion();
-      expect(config.reglasPorArchetype.venta["t_aceptar"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_aceptar"]).toBeDefined();
     });
 
     it("✅ debe validar con regla personalizada registrada", () => {
@@ -228,9 +228,9 @@ describe("MotorValidacionTransiciones", () => {
     it("✅ debe tener reglas para cada transición", () => {
       const config = motor.obtenerConfiguracion();
 
-      expect(config.reglasPorArchetype.venta["t_aceptar"]).toBeDefined();
-      expect(config.reglasPorArchetype.compra["t_emitir_oc"]).toBeDefined();
-      expect(config.reglasPorArchetype.servicio["t_ejecutar"]).toBeDefined();
+      expect(config.reglasPorArchetype.venta!["t_aceptar"]).toBeDefined();
+      expect(config.reglasPorArchetype.compra!["t_emitir_oc"]).toBeDefined();
+      expect(config.reglasPorArchetype.servicio!["t_ejecutar"]).toBeDefined();
     });
   });
 
@@ -252,7 +252,7 @@ describe("MotorValidacionTransiciones", () => {
     it("✅ debe marcar reglas bloqueantes como errores", () => {
       const ventaSinCliente = {
         ...ventaMinima,
-        datos: { ...ventaMinima.datos, parteId: undefined },
+        datos: { ...ventaMinima.datos, parteId: undefined } as unknown as TransaccionDatos,
       };
 
       const resultado = motor.validarTransicion(ventaSinCliente, "venta", "t_aceptar");
