@@ -98,6 +98,20 @@ import { MotorProyectosIyD } from "../policies/iyad-motor-proyectos.js";
 import { MotorExperimentos } from "../policies/iyad-experimentos.js";
 import { MotorIntegración } from "../policies/iyad-integracion-produccion.js";
 import { SqliteIyDStore } from "../adapters/sqlite-iyad-store.js";
+// Fase Futuro: Integraciones Externas
+import { MotorConnectors } from "../policies/integraciones-connectors.js";
+import { MotorFlujos } from "../policies/integraciones-flujos.js";
+import { SqliteIntegracionesStore } from "../adapters/sqlite-integraciones-store.js";
+// Fase Futuro: Documentos Compartidos
+import { MotorAccesoDocumentos } from "../policies/documentos-acceso.js";
+import { MotorVersionado } from "../policies/documentos-versionado.js";
+import { MotorBúsquedaDocumentos } from "../policies/documentos-busqueda.js";
+import { SqliteDocumentosStore } from "../adapters/sqlite-documentos-store.js";
+// Fase Futuro: Presupuestos
+import { MotorPresupuestos } from "../policies/presupuestos-motor.js";
+import { MotorAlertasPresupuesto } from "../policies/presupuestos-alertas.js";
+import { MotorReportesPresupuesto } from "../policies/presupuestos-reportes.js";
+import { SqlitePresupuestosStore } from "../adapters/sqlite-presupuestos-store.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -241,6 +255,23 @@ export class AppRuntime {
   readonly motorIntegración: MotorIntegración;
   readonly storeIyD: SqliteIyDStore;
 
+  // Integraciones Externas (Futuro 75%)
+  readonly motorConectores: MotorConnectors;
+  readonly motorFlujos: MotorFlujos;
+  readonly storeIntegraciones: SqliteIntegracionesStore;
+
+  // Documentos Compartidos (Futuro 75%)
+  readonly motorAccesoDocumentos: MotorAccesoDocumentos;
+  readonly motorVersionado: MotorVersionado;
+  readonly motorBúsquedaDocumentos: MotorBúsquedaDocumentos;
+  readonly storeDocumentos: SqliteDocumentosStore;
+
+  // Presupuestos (Futuro 75%)
+  readonly motorPresupuestos: MotorPresupuestos;
+  readonly motorAlertasPresupuesto: MotorAlertasPresupuesto;
+  readonly motorReportesPresupuesto: MotorReportesPresupuesto;
+  readonly storePresupuestos: SqlitePresupuestosStore;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -328,6 +359,26 @@ export class AppRuntime {
     this.motorExperimentos = new MotorExperimentos();
     this.motorIntegración = new MotorIntegración();
     this.storeIyD = new SqliteIyDStore();
+
+    // Inicializar Integraciones Externas (Futuro 75%)
+    this.motorConectores = new MotorConnectors();
+    this.motorFlujos = new MotorFlujos();
+    const integracionesDbPath = join(dirname(dbPath), `${tenantId}-integraciones.sqlite`);
+    this.storeIntegraciones = new SqliteIntegracionesStore(integracionesDbPath);
+
+    // Inicializar Documentos Compartidos (Futuro 75%)
+    this.motorAccesoDocumentos = new MotorAccesoDocumentos();
+    this.motorVersionado = new MotorVersionado();
+    this.motorBúsquedaDocumentos = new MotorBúsquedaDocumentos();
+    const documentosDbPath = join(dirname(dbPath), `${tenantId}-documentos.sqlite`);
+    this.storeDocumentos = new SqliteDocumentosStore(documentosDbPath);
+
+    // Inicializar Presupuestos (Futuro 75%)
+    this.motorPresupuestos = new MotorPresupuestos();
+    this.motorAlertasPresupuesto = new MotorAlertasPresupuesto();
+    this.motorReportesPresupuesto = new MotorReportesPresupuesto();
+    const presupuestosDbPath = join(dirname(dbPath), `${tenantId}-presupuestos.sqlite`);
+    this.storePresupuestos = new SqlitePresupuestosStore(presupuestosDbPath);
   }
 
   static open(

@@ -299,3 +299,49 @@ export type {
   PortfolioExperimentos,
   IntegracióProducción,
 } from "./proyecto-iyd.js";
+
+// Fase Futuro: Integraciones Externas
+export type {
+  TipoConector,
+  Conector,
+  MapeoDatos,
+  ResultadoSincronización,
+  EstadoConector,
+} from "../policies/integraciones-connectors.js";
+export type {
+  TipoTrigger,
+  TipoPaso,
+  FlujoIntegración,
+  PasoFlujo,
+  RegistroEjecuciónFlujo,
+  ErrorFrecuente,
+} from "../policies/integraciones-flujos.js";
+
+// Fase Futuro: Documentos Compartidos
+export type {
+  NivelAcceso,
+  Documento,
+  Permiso,
+  LinkPublico,
+} from "../policies/documentos-acceso.js";
+export type { Versión, CambioDetectado } from "../policies/documentos-versionado.js";
+export type { Comentario, ResultadoBúsqueda } from "../policies/documentos-busqueda.js";
+
+// Fase Futuro: Presupuestos
+export type {
+  EstadoPresupuesto,
+  TipoPartida,
+  Presupuesto,
+  PartidaPresupuestaria,
+  EjecuciónPresupuesto,
+} from "../policies/presupuestos-motor.js";
+export type {
+  ConfiguraciónAlerta,
+  Escenario as EscenarioPresupuesto,
+  ComparativaEscenario,
+} from "../policies/presupuestos-alertas.js";
+export type {
+  DetallePartida,
+  TendenciaPresupuesto,
+  ReporteEjecución,
+} from "../policies/presupuestos-reportes.js";
