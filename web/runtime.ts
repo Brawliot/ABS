@@ -86,7 +86,7 @@ export class AppRuntime {
   // Motores de Capa 0.3 - Orquestación
   readonly motorValidacion = new MotorValidacionTransiciones();
   readonly motorOrquestador!: MotorOrquestadorTransiciones;
-  readonly motorNotificaciones = new MotorNotificaciones();
+  readonly motorNotificaciones!: MotorNotificaciones;
   readonly motorCalculos!: MotorCalculos;
   readonly motorPoliticas = new MotorPoliticasDeNegocio();
   readonly motorReversiones!: MotorReversiones;
@@ -121,6 +121,7 @@ export class AppRuntime {
     // Inicializar motores que dependen del store
     this.motorGenerador = new MotorGeneradorProcesos(store);
     this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
+    this.motorNotificaciones = new MotorNotificaciones(store);
     this.motorReversiones = new MotorReversiones(store);
     this.motorCalculos = new MotorCalculos(store);
   }

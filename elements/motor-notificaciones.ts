@@ -47,9 +47,14 @@ export interface NotificacionesResult {
 
 export class MotorNotificaciones {
   private config: ConfigType;
+  private eventStore?: any; // Referencia a SqliteEventStore para persistencia
 
-  constructor() {
+  constructor(eventStore?: any) {
+    this.eventStore = eventStore;
     this.config = this.construirConfiguracion();
+    console.log(
+      `[MotorNotificaciones] ${eventStore ? "Inicializado con EventStore" : "Sin persistencia - modo simulación"}`,
+    );
   }
 
   private construirConfiguracion(): ConfigType {
@@ -155,6 +160,17 @@ export class MotorNotificaciones {
             tx,
           );
           notificaciones.push(notif);
+
+          // Persistir notificación en EventStore
+          if (this.eventStore) {
+            this.persistirNotificacionEnEventStore(
+              notif,
+              tx,
+              transitionId,
+              archetype,
+            );
+          }
+
           console.log(
             `📬 Notificación preparada: ${receptor.actorId} via ${canal}`,
           );
@@ -208,6 +224,7 @@ export class MotorNotificaciones {
 
   async enviarNotificaciones(
     notificaciones: Notificacion[],
+    tx?: Record<string, unknown>,
   ): Promise<void> {
     console.log(
       `[MotorNotificaciones] Enviando ${notificaciones.length} notificación(es)...`,
@@ -216,6 +233,12 @@ export class MotorNotificaciones {
     for (const notif of notificaciones) {
       try {
         await this.enviarPorCanal(notif);
+
+        // Persistir envío exitoso en EventStore
+        if (this.eventStore && tx) {
+          this.persistirEnvioEnEventStore(notif, tx);
+        }
+
         console.log(
           `✅ Enviado: ${notif.canal} a ${notif.actorId} (${notif.id})`,
         );
@@ -278,5 +301,89 @@ export class MotorNotificaciones {
 
   obtenerConfiguracion() {
     return this.config;
+  }
+
+  private persistirNotificacionEnEventStore(
+    notif: Notificacion,
+    tx: Record<string, unknown>,
+    transitionId: string,
+    archetype: string,
+  ): void {
+    try {
+      // Crear evento de Modificación para registro de notificación preparada
+      const evento = {
+        id: `notif-prep-${notif.id}`,
+        kind: "modificacion" as const,
+        subjectId: (tx.id as string) ?? "unknown",
+        occurredAt: new Date().toISOString(),
+        actorId: "sys-notificaciones",
+        actorKind: "sistema" as const,
+        evidence: {
+          kind: "sistema" as const,
+          reference: `Notificación preparada: ${notif.canal}`,
+          recordedAt: new Date().toISOString(),
+        },
+        freeText: JSON.stringify({
+          notif_id: notif.id,
+          notif_actor_id: notif.actorId,
+          notif_canal: notif.canal,
+          notif_asunto: notif.asunto,
+          transicion_id: transitionId,
+          archetype,
+          estado: "preparada",
+          timestamp: new Date().toISOString(),
+        }),
+      };
+
+      this.eventStore.append(evento);
+      console.log(
+        `📝 Notificación persistida en EventStore: ${notif.canal} → ${notif.actorId}`,
+      );
+    } catch (err) {
+      console.log(
+        `⚠️ Error persistiendo notificación en EventStore: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // No fallar la notificación si la persistencia falla
+    }
+  }
+
+  private persistirEnvioEnEventStore(
+    notif: Notificacion,
+    tx: Record<string, unknown>,
+  ): void {
+    try {
+      // Crear evento de Modificación para registro de envío exitoso
+      const evento = {
+        id: `notif-sent-${notif.id}`,
+        kind: "modificacion" as const,
+        subjectId: (tx.id as string) ?? "unknown",
+        occurredAt: new Date().toISOString(),
+        actorId: "sys-notificaciones",
+        actorKind: "sistema" as const,
+        evidence: {
+          kind: "sistema" as const,
+          reference: `Notificación enviada: ${notif.canal}`,
+          recordedAt: new Date().toISOString(),
+        },
+        freeText: JSON.stringify({
+          notif_id: notif.id,
+          notif_actor_id: notif.actorId,
+          notif_canal: notif.canal,
+          notif_asunto: notif.asunto,
+          estado: "enviada",
+          timestamp: new Date().toISOString(),
+        }),
+      };
+
+      this.eventStore.append(evento);
+      console.log(
+        `📝 Envío persistido en EventStore: ${notif.canal} → ${notif.actorId}`,
+      );
+    } catch (err) {
+      console.log(
+        `⚠️ Error persistiendo envío en EventStore: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // No fallar el envío si la persistencia falla
+    }
   }
 }
