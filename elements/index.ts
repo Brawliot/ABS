@@ -244,3 +244,15 @@ export * from "./empleado.js";
 export * from "./vacaciones.js";
 export * from "./activo-fijo.js";
 export * from "./email-marketing.js";
+
+// Fase 3: Contabilidad, Estadísticas, Transporte
+export type { AsientoRegistro } from "../adapters/sqlite-asientos-store.js";
+export type { AsientoAutomatico } from "../policies/contabilidad-automatica.js";
+export type { PeriodoCerrado, CuadraturaPeriodo } from "../policies/cierre-periodo.js";
+export type { BalanceGeneral, PerdidayGanancia, FlujoEfectivo } from "../web/reportes-contables.js";
+export type { KPI, KPIPeriodo, ComparativaPeriodos, Alerta } from "../policies/kpi-engine.js";
+export type { Tendencia, PrediccionDemanda, Anomalia, Forecast } from "../policies/predicciones.js";
+export type { Dashboard } from "../web/dashboard-estadisticas.js";
+export type { Ruta, Parada, ResultadoOptimizacion } from "../policies/rutas-transporte.js";
+export type { TarifaProveedor, CostoRuta, ComparativaProveedores, Margen } from "../policies/costos-transporte.js";
+export type { Paquete, Vehiculo, PlanificacionDia, Conflicto } from "../policies/planificador-entregas.js";
