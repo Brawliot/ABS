@@ -127,7 +127,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     const varianzas = motorPresupuestos.calcularVarianzas(presupuesto.id);
 
     expect(varianzas.partidas_en_rojo).toHaveLength(1);
-    expect(varianzas.partidas_en_rojo[0].concepto).toBe("En Rojo");
+    expect(varianzas.partidas_en_rojo[0]!.concepto).toBe("En Rojo");
   });
 
   it("aprueba presupuesto", () => {
@@ -277,16 +277,16 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
         presupuesto_id: presupuestoActualizado.id,
         nombre: "E1",
         ajustes: new Map(),
-        presupuesto_ajustado: escenarios[0].presupuesto_ajustado,
-        varianza_esperada: escenarios[0].varianza_esperada,
+        presupuesto_ajustado: escenarios[0]!.presupuesto_ajustado,
+        varianza_esperada: escenarios[0]!.varianza_esperada,
       },
       {
         id: "esc2",
         presupuesto_id: presupuestoActualizado.id,
         nombre: "E2",
         ajustes: new Map(),
-        presupuesto_ajustado: escenarios[1].presupuesto_ajustado,
-        varianza_esperada: escenarios[1].varianza_esperada,
+        presupuesto_ajustado: escenarios[1]!.presupuesto_ajustado,
+        varianza_esperada: escenarios[1]!.varianza_esperada,
       },
     ];
 
@@ -296,8 +296,8 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     );
 
     expect(comparativa).toHaveLength(2);
-    expect(comparativa[0].impacto_presupuesto).toBeCloseTo(-5000, 0);
-    expect(comparativa[1].impacto_presupuesto).toBeCloseTo(5000, 0);
+    expect(comparativa[0]!.impacto_presupuesto).toBeCloseTo(-5000, 0);
+    expect(comparativa[1]!.impacto_presupuesto).toBeCloseTo(5000, 0);
   });
 
   // ==================== TESTS REPORTES ====================
@@ -352,8 +352,8 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     const detalles = motorReportes.generarDetallePartidas(presupuestoConGastos);
 
     expect(detalles).toHaveLength(2);
-    expect(detalles[0].estado).toBe("dentro");
-    expect(detalles[1].estado).toBe("alerta");
+    expect(detalles[0]!.estado).toBe("dentro");
+    expect(detalles[1]!.estado).toBe("alerta");
   });
 
   it("compara períodos (año vs año)", () => {
@@ -393,10 +393,10 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
     const tendencias = motorReportes.obtenerTendencia(presupuestosObjetos);
 
     expect(tendencias).toHaveLength(3);
-    expect(tendencias[0].año).toBe(2022);
-    expect(tendencias[2].año).toBe(2024);
-    expect(tendencias[0].presupuesto).toBeLessThan(
-      tendencias[2].presupuesto
+    expect(tendencias[0]!.año).toBe(2022);
+    expect(tendencias[2]!.año).toBe(2024);
+    expect(tendencias[0]!.presupuesto).toBeLessThan(
+      tendencias[2]!.presupuesto
     );
   });
 
@@ -415,7 +415,7 @@ describe("Presupuestos - Módulo Futuro (75%)", () => {
 
     expect(departamentosVentas).toHaveLength(1);
     expect(departamentosTI).toHaveLength(1);
-    expect(departamentosVentas[0].nombre).toBe("Dept A");
+    expect(departamentosVentas[0]!.nombre).toBe("Dept A");
   });
 
   it("valida que no se apruebe presupuesto con errores", () => {
