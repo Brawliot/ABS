@@ -275,11 +275,17 @@ async function executeUiActionLocked(
     runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     { parte_id: body.parteId },
   );
+  // Calcular total a partir de las líneas de la transacción actual
+  const txCurrent = runtime.datosDe(body.subjectId);
+  const totalCentimos = txCurrent ? calcularTotales(txCurrent.datos.lineas).total : 0;
   const txDataForValidation = {
     ...priorFields,
     arquetipo_id: slice.archetypeId,
     parte_id: body.parteId,
     ...body.formValues,
+    ...(totalCentimos > 0 ? { total: totalCentimos / 100 } : { total: 0 }),
+    // Incluir campos de la transacción actual si existe
+    ...(txCurrent?.datos.campos ?? {}),
   };
   const validacion = runtime.motorValidacion.validarTransicion(
     txDataForValidation,

@@ -54,6 +54,8 @@ export async function probarCiclos(boot: AppBootResult, rt: AppRuntime): Promise
     // Agregar cliente_id para arquetipos que lo requieren
     if (slice.archetypeId === "venta" || slice.archetypeId === "servicio" || slice.archetypeId === "servicio_proyecto") {
       campos.cliente_id = "parte-demo-1";
+      // Agregar margen_pct para cumplir política de margen mínimo (20%)
+      campos.margen_pct = 30;
     }
     // Agregar proveedor_id para compras
     if (slice.archetypeId === "compra") {

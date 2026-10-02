@@ -1652,6 +1652,15 @@ export class AppRuntime {
     const campos = Object.fromEntries(
       Object.entries(entrada.campos ?? {}).filter(([k, v]) => camposValidos.has(k) && v !== ""),
     );
+    // Si no hay cliente_id explícito, usar parteId como default para ventas/servicios
+    const sliceActual = this.boot.input.lifecycles.find((l) => l.id === entrada.lifecycleId);
+    if (!campos.cliente_id && sliceActual && (sliceActual.archetypeId === "venta" || sliceActual.archetypeId === "servicio" || sliceActual.archetypeId === "servicio_proyecto")) {
+      campos.cliente_id = entrada.parteId;
+    }
+    // Si no hay proveedor_id explícito, usar parteId como default para compras
+    if (!campos.proveedor_id && sliceActual && sliceActual.archetypeId === "compra") {
+      campos.proveedor_id = entrada.parteId;
+    }
     const vinculadoA = entrada.vinculadoA?.trim();
     if (vinculadoA && !this.principalesAbiertos().some((s) => s.id === vinculadoA) && previos?.vinculadoA !== vinculadoA) {
       errors.push("El expediente principal elegido no existe o ya está cerrado.");
