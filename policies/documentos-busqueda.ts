@@ -132,17 +132,19 @@ export class MotorBúsquedaDocumentos {
 
     if (índice !== -1) {
       const comentario = comentarios[índice];
-      comentarios[índice] = {
-        id: comentario.id,
-        documento_id: comentario.documento_id,
-        línea: comentario.línea,
-        texto: comentario.texto,
-        autor_id: comentario.autor_id,
-        fecha_creación: comentario.fecha_creación,
-        resuelta: true,
-        respuestas: comentario.respuestas,
-      };
-      this.comentarios.set(documento_id, comentarios);
+      if (comentario) {
+        comentarios[índice] = {
+          id: comentario.id,
+          documento_id: comentario.documento_id,
+          línea: comentario.línea,
+          texto: comentario.texto,
+          autor_id: comentario.autor_id,
+          fecha_creación: comentario.fecha_creación,
+          resuelta: true,
+          respuestas: comentario.respuestas,
+        } as Comentario;
+        this.comentarios.set(documento_id, comentarios);
+      }
     }
   }
 
