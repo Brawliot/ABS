@@ -9,7 +9,8 @@
  */
 
 import { createHash } from "crypto";
-import type { BusinessProfile, ProcessDecl, ArchetypeId } from "./types.js";
+import type { BusinessProfile, ProcessDecl } from "./types.js";
+import type { ArchetypeId } from "../../archetypes/types.js";
 import {
   ARCHETYPE_IDS,
   CHANNEL_IDS,
@@ -25,6 +26,8 @@ import {
   extractNumbers,
   extractUrls,
 } from "./extractor-keywords.js";
+import { validateCoherence } from "./coherence-validator.js";
+import type { CoherenceCheckResult } from "./coherence-validator.js";
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -63,6 +66,7 @@ export interface ExtractionResult {
   businessProfile: Partial<BusinessProfile>;
   extraction: ExtractionMetadata;
   warnings: ExtractionWarning[];
+  coherenceCheck?: CoherenceCheckResult; // Fase 3: Validación de coherencia
 }
 
 // ============================================================================
@@ -101,7 +105,7 @@ export class BusinessProfileExtractor {
    * Ejecuta la extracción completa.
    */
   async extract(): Promise<ExtractionResult> {
-    const profile: Partial<BusinessProfile> = {
+    const profileData: Record<string, any> = {
       schemaVersion: "1.2.0",
       identity: {
         companyId: `auto_${this.generateCompanyId()}`,
@@ -126,36 +130,41 @@ export class BusinessProfileExtractor {
     this.extractPortalCliente();
 
     // Mapear al perfil
-    profile.processes = this.getProfileField("processes");
-    profile.channels = this.getProfileField("channels");
-    profile.paymentMode = this.getProfileField("paymentMode");
-    profile.naturalezaBienes = this.getProfileField("naturalezaBienes");
-    profile.location = this.getProfileField("location");
-    profile.capacityMode = this.getProfileField("capacityMode");
-    profile.resourceSubtypes = this.getProfileField("resourceSubtypes");
-    profile.capabilities = {
+    profileData.processes = this.getProfileField("processes");
+    profileData.channels = this.getProfileField("channels");
+    profileData.paymentMode = this.getProfileField("paymentMode");
+    profileData.naturalezaBienes = this.getProfileField("naturalezaBienes");
+    profileData.location = this.getProfileField("location");
+    profileData.capacityMode = this.getProfileField("capacityMode");
+    profileData.resourceSubtypes = this.getProfileField("resourceSubtypes");
+    profileData.capabilities = {
       hasPartes: this.getProfileField("hasPartes"),
       hasMovimientos: this.getProfileField("hasMovimientos"),
       hasFormalDocuments: this.getProfileField("hasFormalDocuments"),
       hasFiscalCompliance: this.getProfileField("hasFiscalCompliance"),
       hasCalendar: this.getProfileField("hasCalendar"),
     };
-    profile.organization = this.getProfileField("organization");
-    profile.portalCliente = this.getProfileField("portalCliente");
+    profileData.organization = this.getProfileField("organization");
+    profileData.portalCliente = this.getProfileField("portalCliente");
 
     // Actualizar archetype dominante
     if (this.fieldCoverage.has("dominantArchetype")) {
       const arch = this.fieldCoverage.get("dominantArchetype");
       if (arch?.status === "confident") {
-        profile.policyMeta!.dominantArchetypeId = arch.source as ArchetypeId;
+        profileData.policyMeta.dominantArchetypeId = arch.source as ArchetypeId;
       }
     }
+
+    const profile = profileData as Partial<BusinessProfile>;
 
     // Calcular confidence promedio
     const avgConfidence =
       this.confidences.length > 0
         ? this.confidences.reduce((a, b) => a + b, 0) / this.confidences.length
         : 0.5;
+
+    // Fase 3: Validar coherencia del perfil
+    const coherenceCheck = validateCoherence(profile);
 
     return {
       businessProfile: profile,
@@ -167,6 +176,7 @@ export class BusinessProfileExtractor {
         inputHash: this.getExtractionHash(),
       },
       warnings: this.warnings,
+      coherenceCheck,
     };
   }
 
@@ -246,10 +256,7 @@ export class BusinessProfileExtractor {
     this.confidences.push(Math.min(confidence, 0.95));
   }
 
-  private extractExchangeDirectionForProcess(): "empresa_vende" | "empresa_compra" | undefined {
-    if (this.hasKeyword("empresa_vende")) {
-      return "empresa_vende";
-    }
+  private extractExchangeDirectionForProcess(): "empresa_vende" | "empresa_compra" {
     if (this.hasKeyword("empresa_compra")) {
       return "empresa_compra";
     }
@@ -408,15 +415,19 @@ export class BusinessProfileExtractor {
     if (Object.keys(detected).length === 0) {
       this.fieldCoverage.set("paymentMode", { status: "unknown" });
     } else {
-      const mode = Object.entries(detected).sort(([, a], [, b]) => b - a)[0][0];
-      if (mode in PAYMENT_MODES) {
-        const confidence = detected[mode];
-        this.fieldCoverage.set("paymentMode", {
-          status: "confident",
-          confidence: Math.min(confidence, 0.95),
-          source: mode,
-        });
-        this.confidences.push(Math.min(confidence, 0.95));
+      const sortedEntries = Object.entries(detected).sort(([, a], [, b]) => b - a);
+      const topEntry = sortedEntries[0];
+      if (topEntry) {
+        const mode = topEntry[0];
+        if (mode in PAYMENT_MODES) {
+          const confidence = detected[mode] || 0;
+          this.fieldCoverage.set("paymentMode", {
+            status: "confident",
+            confidence: Math.min(confidence, 0.95),
+            source: mode,
+          });
+          this.confidences.push(Math.min(confidence, 0.95));
+        }
       }
     }
   }

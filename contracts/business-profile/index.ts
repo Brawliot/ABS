@@ -46,3 +46,13 @@ export { generateSystemIds, slugFromCompanyId } from "./system-ids.js";
 export type { SystemIds } from "./system-ids.js";
 export { defaultBusinessHoursCalendar, DEFAULT_CALENDAR_CONFIDENCE } from "./defaults.js";
 export { holidaysForLocation } from "./holidays.js";
+export {
+  CoherenceValidator,
+  validateCoherence,
+} from "./coherence-validator.js";
+export type {
+  CoherenceCheckResult,
+  CompletenessScore,
+  Contradiction,
+  Suggestion,
+} from "./coherence-validator.js";
