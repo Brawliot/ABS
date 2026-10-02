@@ -50,15 +50,15 @@ export class MotorAnálisisTemporal {
     let denominador = 0;
 
     for (let i = 0; i < n; i++) {
-      numerador += (x[i] - xMean) * (y[i] - yMean);
-      denominador += (x[i] - xMean) ** 2;
+      numerador += ((x[i] ?? 0) - xMean) * ((y[i] ?? 0) - yMean);
+      denominador += ((x[i] ?? 0) - xMean) ** 2;
     }
 
     const pendiente = denominador !== 0 ? numerador / denominador : 0;
 
     // Calcular R²
-    const yPred = x.map(xi => yMean + pendiente * (xi - xMean));
-    const ssRes = y.reduce((sum, yi, i) => sum + (yi - yPred[i]) ** 2, 0);
+    const yPred = x.map(xi => yMean + pendiente * ((xi ?? 0) - xMean));
+    const ssRes = y.reduce((sum, yi, i) => sum + ((yi ?? 0) - (yPred[i] ?? 0)) ** 2, 0);
     const ssTot = y.reduce((sum, yi) => sum + (yi - yMean) ** 2, 0);
     const r2 = ssTot !== 0 ? 1 - ssRes / ssTot : 0;
 
@@ -87,13 +87,14 @@ export class MotorAnálisisTemporal {
     const umbral = 2.5; // Z-score
 
     for (let i = 0; i < serie.length; i++) {
-      const zScore = Math.abs((valores[i] - media) / (desviacionEstandar || 1));
+      const val = valores[i] ?? 0;
+      const zScore = Math.abs((val - media) / (desviacionEstandar || 1));
       if (zScore > umbral) {
         anomalias.push({
-          fecha: serie[i].fecha,
-          valor: valores[i],
+          fecha: (serie[i]?.fecha) ?? new Date(),
+          valor: val,
           desviaciónEstándar: zScore,
-          tipo: valores[i] > media ? "pico" : "caída",
+          tipo: val > media ? "pico" : "caída",
         });
       }
     }
@@ -119,12 +120,12 @@ export class MotorAnálisisTemporal {
     const cambioPromedio = actualPromedio - anteriorPromedio;
     const cambioMaximo = Math.max(
       ...periodoActual.map((p, i) =>
-        i < periodoAnterior.length ? p.valor - periodoAnterior[i].valor : 0
+        i < periodoAnterior.length ? (p.valor ?? 0) - ((periodoAnterior[i]?.valor) ?? 0) : 0
       )
     );
     const cambioMinimo = Math.min(
       ...periodoActual.map((p, i) =>
-        i < periodoAnterior.length ? p.valor - periodoAnterior[i].valor : 0
+        i < periodoAnterior.length ? (p.valor ?? 0) - ((periodoAnterior[i]?.valor) ?? 0) : 0
       )
     );
 
@@ -147,8 +148,8 @@ export class MotorAnálisisTemporal {
       valores.reduce((sum, v) => sum + (v - media) ** 2, 0) / valores.length
     );
 
-    const ultimaFecha = serie[serie.length - 1].fecha;
-    const ultimoValor = serie[serie.length - 1].valor;
+    const ultimaFecha = (serie[serie.length - 1]?.fecha) ?? new Date();
+    const ultimoValor = (serie[serie.length - 1]?.valor) ?? 0;
 
     const proyecciones: Proyección[] = [];
 
