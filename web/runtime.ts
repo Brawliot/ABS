@@ -2061,7 +2061,7 @@ export class AppRuntime {
       // Registrar factura si fue generada
       let facturaGenerada: { numero: string; total: number } | undefined;
       if (proceso.documentos_generados.length > 0) {
-        const docFactura = proceso.documentos_generados.find((d) => d.tipo === "factura");
+        const docFactura = proceso.documentos_generados.find((d: any) => d.tipo === "factura");
         if (docFactura) {
           facturaGenerada = {
             numero: docFactura.número,
@@ -2109,7 +2109,7 @@ export class AppRuntime {
         this.crearTarea(tx.datos.parteId, {
           texto: tarea.título,
           fechaVencimiento,
-          prioridad: tarea.prioridad as "baja" | "media" | "alta" | undefined,
+          prioridad: (tarea.prioridad as "baja" | "media" | "alta" | undefined) ?? "baja",
           asignadoA: actorId,
         });
       }

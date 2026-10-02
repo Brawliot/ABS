@@ -25,47 +25,4 @@ export async function handleApiProcesos(
     }),
     contentType: "application/json; charset=utf-8",
   };
-
-    // GET /api/documentos/factura/:numero/pdf
-    if (path.startsWith("/api/documentos/factura/") && path.endsWith("/pdf")) {
-      const numero = path
-        .replace("/api/documentos/factura/", "")
-        .replace("/pdf", "");
-
-      const doc = runtime.motorGeneradorProcesos.obtenerDocumento(
-        "factura",
-        numero,
-      );
-
-      if (!doc) {
-        return {
-          status: 404,
-          body: JSON.stringify({ error: "No encontrado" }),
-          contentType: "application/json; charset=utf-8",
-        };
-      }
-
-      return {
-        status: 200,
-        body: Buffer.from(
-          `%PDF-1.4\n%Documento ${numero}`,
-        ).toString("base64"),
-        contentType: "application/pdf",
-      };
-    }
-
-    return {
-      status: 404,
-      body: "Not found",
-      contentType: "text/plain",
-    };
-  } catch (error) {
-    return {
-      status: 500,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Error desconocido",
-      }),
-      contentType: "application/json; charset=utf-8",
-    };
-  }
 }
