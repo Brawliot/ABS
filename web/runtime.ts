@@ -1870,7 +1870,7 @@ export class AppRuntime {
     },
   ): { ok: true; id: string } | { ok: false; error: string } {
     try {
-      const resultado = this.tareas.crearTarea(this.tenantId, clienteId, {
+      const resultado = (this.tareas as any).crearTarea(this.tenantId, clienteId, {
         ...datos,
         prioridad: (datos.prioridad ?? "baja") as "baja" | "media" | "alta"
       });
