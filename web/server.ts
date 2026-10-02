@@ -653,7 +653,7 @@ export function startWebServer(
           res,
           200,
           JSON.stringify({
-            status: "ok",
+            ok: true,
             timestamp: new Date().toISOString(),
             profileId: boot.profileId,
             sealed: true,
