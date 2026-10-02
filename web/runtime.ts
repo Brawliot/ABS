@@ -89,7 +89,7 @@ export class AppRuntime {
   readonly motorNotificaciones = new MotorNotificaciones();
   readonly motorCalculos = new MotorCalculos();
   readonly motorPoliticas = new MotorPoliticasDeNegocio();
-  readonly motorReversiones = new MotorReversiones();
+  readonly motorReversiones!: MotorReversiones;
   readonly motorSecuencias = new MotorSecuencias();
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
@@ -121,6 +121,7 @@ export class AppRuntime {
     // Inicializar motores que dependen del store
     this.motorGenerador = new MotorGeneradorProcesos(store);
     this.motorOrquestador = new MotorOrquestadorTransiciones(this.motorGenerador);
+    this.motorReversiones = new MotorReversiones(store);
   }
 
   static open(

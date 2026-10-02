@@ -1,7 +1,7 @@
 /**
  * MotorReversiones (Capa 0.3)
  * Define qué pasa si cancelas/anulapas una transacción.
- * Genera compensaciones automáticas.
+ * Genera compensaciones automáticas y las persiste en EventStore.
  */
 
 interface RetencionAction {
@@ -26,9 +26,14 @@ export class MotorReversiones {
   private config: {
     readonly reversionesPorArchetype: Record<string, Record<string, ReversionRule>>;
   };
+  private eventStore?: any; // Referencia a SqliteEventStore para persistencia
 
-  constructor() {
+  constructor(eventStore?: any) {
+    this.eventStore = eventStore;
     this.config = this.construirConfiguracion();
+    console.log(
+      `[MotorReversiones] ${eventStore ? "Inicializado con EventStore" : "Sin persistencia - modo simulación"}`,
+    );
   }
 
   private construirConfiguracion() {
@@ -152,6 +157,12 @@ export class MotorReversiones {
       try {
         this.ejecutarAccion(accion, tx);
         acciones_ejecutadas.push(accion);
+
+        // Persistir acción de reversión en EventStore
+        if (this.eventStore) {
+          this.persistirAccionEnEventStore(accion, tx, transitionId);
+        }
+
         console.log(`↩️ Ejecutada: ${accion.tipo} (${accion.entidad})`);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -228,5 +239,45 @@ export class MotorReversiones {
 
   obtenerConfiguracion() {
     return this.config;
+  }
+
+  private persistirAccionEnEventStore(
+    accion: RetencionAction,
+    tx: Record<string, unknown>,
+    transitionId: string,
+  ): void {
+    try {
+      // Crear evento de Modificación para registro de acción de reversión
+      const evento = {
+        id: `rev-${accion.tipo}-${Date.now()}`,
+        kind: "modificacion" as const,
+        subjectId: (tx.id as string) ?? "unknown",
+        occurredAt: new Date().toISOString(),
+        actorId: "sys-reversiones",
+        actorKind: "sistema" as const,
+        evidence: {
+          kind: "sistema" as const,
+          reference: `Acción de reversión: ${accion.tipo}`,
+          recordedAt: new Date().toISOString(),
+        },
+        freeText: JSON.stringify({
+          accion_tipo: accion.tipo,
+          accion_entidad: accion.entidad,
+          accion_razon: accion.razon,
+          transicion_id: transitionId,
+          timestamp: new Date().toISOString(),
+        }),
+      };
+
+      this.eventStore.append(evento);
+      console.log(
+        `📝 Acción de reversión persistida en EventStore: ${accion.tipo}`,
+      );
+    } catch (err) {
+      console.log(
+        `⚠️ Error persistiendo reversión en EventStore: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // No fallar la reversión si la persistencia falla
+    }
   }
 }
