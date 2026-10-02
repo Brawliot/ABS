@@ -433,8 +433,8 @@ describe('Transporte Fase 3', () => {
       const rutas = store.obtenerRutasDia('tenant1', '2026-10-01');
 
       expect(rutas).toHaveLength(1);
-      expect(rutas[0].zona).toBe('centro');
-      expect(rutas[0].distancia_km).toBe(100);
+      expect(rutas[0]!.zona).toBe('centro');
+      expect(rutas[0]!.distancia_km).toBe(100);
 
       store.close();
     });
@@ -459,7 +459,7 @@ describe('Transporte Fase 3', () => {
       const paradas = store.obtenerParadas('tenant1', 'ruta-1');
 
       expect(paradas).toHaveLength(1);
-      expect(paradas[0].cliente_id).toBe('cliente-1');
+      expect(paradas[0]!.cliente_id).toBe('cliente-1');
 
       store.close();
     });
