@@ -345,3 +345,34 @@ export type {
   TendenciaPresupuesto,
   ReporteEjecución,
 } from "../policies/presupuestos-reportes.js";
+
+// Fase 5: CORE Operativo - MotorGeneradorProcesos
+export type {
+  TipoProceso,
+  EstadoProceso,
+  EstadoDocumento,
+  TipoDocumento,
+  TipoTarea,
+  TipoNotificación,
+  DocumentoGenerado,
+  EventoProceso,
+  MovimientoInventario,
+  AsientoContable,
+  TareaGenerada,
+  NotificaciónGenerada,
+  ProcesoGenerado,
+} from "./generador-procesos.js";
+export { MotorGeneradorProcesos } from "./generador-procesos.js";
+export type {
+  PlantillaDocumento,
+} from "./plantillas-documentos.js";
+export {
+  PlantillaOrdenVenta,
+  PlantillaFactura,
+  PlantillaRemisión,
+  PlantillaRecibo,
+  PlantillaNotaCrédito,
+  PlantillaOC,
+  PlantillaContrato,
+  FactoryPlantillas,
+} from "./plantillas-documentos.js";

@@ -113,6 +113,10 @@ import { MotorAlertasPresupuesto } from "../policies/presupuestos-alertas.js";
 import { MotorReportesPresupuesto } from "../policies/presupuestos-reportes.js";
 import { SqlitePresupuestosStore } from "../adapters/sqlite-presupuestos-store.js";
 
+// Fase 5: CORE Operativo - MotorGeneradorProcesos
+import { MotorGeneradorProcesos } from "../elements/generador-procesos.js";
+import { SqliteGeneradorProcesosStore } from "../adapters/sqlite-generador-procesos-store.js";
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 export interface RuntimeSubject {
@@ -272,6 +276,10 @@ export class AppRuntime {
   readonly motorReportesPresupuesto: MotorReportesPresupuesto;
   readonly storePresupuestos: SqlitePresupuestosStore;
 
+  // CORE Operativo (Fase 5) - MotorGeneradorProcesos
+  readonly motorGeneradorProcesos: MotorGeneradorProcesos;
+  readonly storeGeneradorProcesos: SqliteGeneradorProcesosStore;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -379,6 +387,11 @@ export class AppRuntime {
     this.motorReportesPresupuesto = new MotorReportesPresupuesto();
     const presupuestosDbPath = join(dirname(dbPath), `${tenantId}-presupuestos.sqlite`);
     this.storePresupuestos = new SqlitePresupuestosStore(presupuestosDbPath);
+
+    // Inicializar CORE Operativo (Fase 5) - MotorGeneradorProcesos
+    this.motorGeneradorProcesos = new MotorGeneradorProcesos();
+    const generadorProcesosDbPath = join(dirname(dbPath), `${tenantId}-generador-procesos.sqlite`);
+    this.storeGeneradorProcesos = new SqliteGeneradorProcesosStore(generadorProcesosDbPath);
   }
 
   static open(
