@@ -18,7 +18,8 @@ import { servicioArchetype } from "../../../archetypes/servicio.js";
 import { financieraArchetype } from "../../../archetypes/financiera.js";
 import { suscripcionArchetype } from "../../../archetypes/suscripcion.js";
 import { usoTemporalArchetype } from "../../../archetypes/uso-temporal.js";
-import { mkTransitionEvent } from "./_helpers.js";
+import { intermediacionArchetype } from "../../../archetypes/intermediacion.js";
+import { mkTransitionEvent, expectEventCountIncrement, expectCommitmentsMonotonic } from "./_helpers.js";
 
 const ARCHETYPES = [
   { name: "venta", archetype: ventaArchetype },
@@ -33,9 +34,9 @@ function outgoing(lifecycle: Lifecycle, stateId: string): readonly Transition[] 
 }
 
 describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
-  describe("Invariante 1: Derivación es determinista (replay idéntico)", () => {
+  describe("Invariante 1: Derivación es determinista (replay idéntico en cada paso)", () => {
     for (const { name, archetype } of ARCHETYPES) {
-      it(`${name}: replay idéntico → mismo estado`, () => {
+      it(`${name}: múltiples replays → estado idéntico en cada paso`, () => {
         const life = archetype.lifecycle;
 
         // Construye una secuencia de eventos
@@ -45,9 +46,11 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
         let currentState = initialState.id;
 
         let attempts = 0;
+        const maxAttempts = 15;
+
         while (
           !isTerminalState(life, currentState) &&
-          attempts < 15
+          attempts < maxAttempts
         ) {
           const available = outgoing(life, currentState);
           if (available.length === 0) break;
@@ -66,28 +69,36 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
           attempts++;
         }
 
-        // Replay 1: primeras derivaciones
-        const derived1a = deriveState(life, events);
-        const derived1b = deriveState(life, events);
-        const derived1c = deriveState(life, events);
+        // Verificar determinismo en cada paso acumulativo
+        for (let i = 1; i <= events.length; i++) {
+          const partialEvents = events.slice(0, i);
 
-        // Invariante: todos iguales
-        expect(derived1a.currentStateId).toBe(derived1b.currentStateId);
-        expect(derived1b.currentStateId).toBe(derived1c.currentStateId);
+          // Tres replays del mismo evento parcial
+          const derived1 = deriveState(life, partialEvents);
+          const derived2 = deriveState(life, partialEvents);
+          const derived3 = deriveState(life, partialEvents);
 
-        // Invariante: compromisos iguales
-        expect(setsEqual(
-          derived1a.fulfilledCommitmentIds,
-          derived1b.fulfilledCommitmentIds,
-        )).toBe(true);
-        expect(setsEqual(
-          derived1b.fulfilledCommitmentIds,
-          derived1c.fulfilledCommitmentIds,
-        )).toBe(true);
+          // Invariante: estado idéntico
+          expect(derived1.currentStateId).toBe(derived2.currentStateId);
+          expect(derived2.currentStateId).toBe(derived3.currentStateId);
 
-        // Invariante: conteo de eventos igual
-        expect(derived1a.eventCount).toBe(derived1b.eventCount);
-        expect(derived1b.eventCount).toBe(derived1c.eventCount);
+          // Invariante: commitments idénticos
+          expect(setsEqual(derived1.fulfilledCommitmentIds, derived2.fulfilledCommitmentIds))
+            .toBe(true);
+          expect(setsEqual(derived2.fulfilledCommitmentIds, derived3.fulfilledCommitmentIds))
+            .toBe(true);
+
+          // Invariante: pending idénticos
+          expect(setsEqual(derived1.pendingCommitmentIds, derived2.pendingCommitmentIds))
+            .toBe(true);
+          expect(setsEqual(derived2.pendingCommitmentIds, derived3.pendingCommitmentIds))
+            .toBe(true);
+
+          // Invariante: eventCount idéntico
+          expect(derived1.eventCount).toBe(derived2.eventCount);
+          expect(derived2.eventCount).toBe(derived3.eventCount);
+          expect(derived1.eventCount).toBe(i);
+        }
       });
     }
   });
@@ -167,7 +178,7 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
   });
 
   describe("Invariante 6: Si se intenta forzar, derivación rechaza", () => {
-    it("venta: fuerzo no cambia el estado interno", () => {
+    it("venta: fuerzo no cambia el estado interno (múltiples intentos)", () => {
       const life = ventaArchetype.lifecycle;
 
       // Construye eventos válidos
@@ -177,6 +188,8 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
       let currentState = initialState.id;
 
       let attempts = 0;
+      const validDerived: ReturnType<typeof deriveState>[] = [];
+
       while (
         !isTerminalState(life, currentState) &&
         attempts < 10
@@ -195,32 +208,104 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
           ),
         );
         currentState = t.to;
+
+        // Guardar derivación en cada paso
+        validDerived.push(deriveState(life, events));
         attempts++;
       }
 
       // Derivación normal
       const derivedNormal = deriveState(life, events);
 
-      // "Intento de fuerzo": agregaríamos evento con actorKind="sistema"
-      // que intentara saltar a un estado diferente.
-      // Sin embargo, en Capa 0, deriveState no conoce Capa 1 ni sistemas externos.
-      // El rechazo ocurre en judge.ts cuando Capa 1 intenta forzar.
-
-      // Lo que verificamos: la derivación es determinista
-      // Si alguien intenta inyectar un evento "forzado", deriveState lo rechazará
-      // porque no coincide con la máquina de estados.
-
-      const forceAttempt = mkTransitionEvent(
-        "e-force",
+      // Intento 1: transición inexistente desde estado actual
+      const forceAttempt1 = mkTransitionEvent(
+        "e-force-1",
         "subject-1",
-        "t_nonexistent", // Transición que no existe
+        "t_nonexistent_123", // Transición que definitivamente no existe
         derivedNormal.currentStateId,
-        "estado_inventado",
+        "estado_inventado_xyz",
       );
 
-      // Esto debe fallar en derivación
+      // Esto debe fallar en derivación (no encuentra la transición)
       expect(() => {
-        deriveState(life, [...events, forceAttempt]);
+        deriveState(life, [...events, forceAttempt1]);
+      }).toThrow();
+
+      // Intento 2: saltarse varios estados intermedios
+      if (events.length > 2) {
+        const midStateFromEvent = validDerived[0]?.currentStateId;
+        const finalStateId = derivedNormal.currentStateId;
+
+        if (midStateFromEvent && midStateFromEvent !== finalStateId) {
+          const skipEvent = mkTransitionEvent(
+            "e-force-2",
+            "subject-1",
+            "t_ghost_skip", // Transición que saltaría pasos
+            finalStateId,
+            "estado_final_forzado",
+          );
+
+          expect(() => {
+            deriveState(life, [...events, skipEvent]);
+          }).toThrow();
+        }
+      }
+
+      // Intento 3: modificar un evento existente y replayed
+      const modifiedEvent = mkTransitionEvent(
+        events[0]?.id ?? "e-0",
+        "subject-1",
+        events[0]?.transitionId ?? "t_ghost",
+        "estado_incorrecto", // Origen incorrecto
+        events[0]?.toStateId ?? "estado_inventado",
+      );
+
+      expect(() => {
+        deriveState(life, [modifiedEvent, ...events.slice(1)]);
+      }).toThrow();
+    });
+
+    it("suscripcion: intentos de fuerzo en diferentes puntos del walk", () => {
+      const life = suscripcionArchetype.lifecycle;
+
+      // Construye un walk válido
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+      let currentState = initialState.id;
+
+      while (!isTerminalState(life, currentState) && events.length < 10) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const t = available[0]!;
+        events.push(
+          mkTransitionEvent(
+            `e-${events.length}`,
+            "subject-1",
+            t.id,
+            t.from,
+            t.to,
+          ),
+        );
+        currentState = t.to;
+      }
+
+      // Verificar que el walk normal es válido
+      const validDerived = deriveState(life, events);
+      expect(validDerived.eventCount).toBe(events.length);
+
+      // Intento: inyectar transición falsa después del walk válido
+      const fakeTransition = mkTransitionEvent(
+        "e-fake-end",
+        "subject-1",
+        "t_fake_closure",
+        validDerived.currentStateId,
+        "final_no_autorizado",
+      );
+
+      expect(() => {
+        deriveState(life, [...events, fakeTransition]);
       }).toThrow();
     });
   });
@@ -254,6 +339,122 @@ describe("Capa 0 — Core Force Invariant (Determinism & Integrity)", () => {
 
       expect(true).toBe(true); // Documentación, no test de runtime
     });
+  });
+
+  describe("Invariante 8: Walks con intermediación mantienen determinismo", () => {
+    it("intermediacion: múltiples actores, derivación determinista", () => {
+      const life = intermediacionArchetype.lifecycle;
+
+      // Construye walk con múltiples actores
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+      let currentState = initialState.id;
+
+      const actors = ["intermediario-1", "proveedor-1", "plataforma-1"];
+      let stepIndex = 0;
+
+      while (!isTerminalState(life, currentState) && stepIndex < 15) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const t = available[0]!;
+        const actor = actors[stepIndex % actors.length]!;
+
+        events.push(
+          mkTransitionEvent(
+            `e-inter-${stepIndex}`,
+            actor,
+            t.id,
+            t.from,
+            t.to,
+          ),
+        );
+        currentState = t.to;
+        stepIndex++;
+      }
+
+      // Verificar determinismo: múltiples replays deben dar el mismo resultado
+      const replays = [
+        deriveState(life, events),
+        deriveState(life, events),
+        deriveState(life, events),
+      ];
+
+      for (let i = 1; i < replays.length; i++) {
+        expect(replays[i]!.currentStateId).toBe(replays[0]!.currentStateId);
+        expect(setsEqual(
+          replays[i]!.fulfilledCommitmentIds,
+          replays[0]!.fulfilledCommitmentIds,
+        )).toBe(true);
+        expect(setsEqual(
+          replays[i]!.pendingCommitmentIds,
+          replays[0]!.pendingCommitmentIds,
+        )).toBe(true);
+      }
+    });
+  });
+
+  describe("Invariante 9: Walk monotonicidad en todos los arquetipos", () => {
+    const testArchetypes = [
+      { name: "venta", archetype: ventaArchetype },
+      { name: "servicio", archetype: servicioArchetype },
+      { name: "suscripcion", archetype: suscripcionArchetype },
+      { name: "intermediacion", archetype: intermediacionArchetype },
+    ];
+
+    for (const { name, archetype } of testArchetypes) {
+      it(`${name}: compromisos son siempre monótonos crecientes`, () => {
+        const life = archetype.lifecycle;
+
+        const events: any[] = [];
+        const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+        if (!initialState) return;
+        let currentState = initialState.id;
+
+        const derivedStates: ReturnType<typeof deriveState>[] = [];
+        derivedStates.push(deriveState(life, [])); // Estado inicial
+
+        while (!isTerminalState(life, currentState) && events.length < 20) {
+          const available = outgoing(life, currentState);
+          if (available.length === 0) break;
+
+          const t = available[0]!;
+          events.push(
+            mkTransitionEvent(
+              `e-mono-${events.length}`,
+              "subject-1",
+              t.id,
+              t.from,
+              t.to,
+            ),
+          );
+          currentState = t.to;
+
+          // Derivar después de cada evento
+          derivedStates.push(deriveState(life, events));
+        }
+
+        // Verificar monotonicidad: los compromisos cumplidos nunca disminuyen
+        for (let i = 1; i < derivedStates.length; i++) {
+          const prev = derivedStates[i - 1]!;
+          const curr = derivedStates[i]!;
+
+          // Cada compromiso que estaba cumplido debe seguir cumplido
+          for (const commitId of prev.fulfilledCommitmentIds) {
+            expect(curr.fulfilledCommitmentIds.has(commitId))
+              .toBe(true);
+          }
+
+          // El total de compromisos debe ser constante
+          const prevTotal = prev.fulfilledCommitmentIds.size +
+            prev.pendingCommitmentIds.size;
+          const currTotal = curr.fulfilledCommitmentIds.size +
+            curr.pendingCommitmentIds.size;
+          expect(prevTotal).toBe(currTotal);
+        }
+      });
+    }
   });
 
   describe("Invariante 7: Máquina es isomorfa entre replays", () => {

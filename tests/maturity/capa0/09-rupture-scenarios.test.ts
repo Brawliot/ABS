@@ -469,6 +469,128 @@ describe("Capa 0 — 7 Rupture Scenarios (Walk Execution)", () => {
     });
   });
 
+  describe("8. Casos temporal: prestación y devolución", () => {
+    it("walk: uso-temporal → prestación → devolución → cierre", () => {
+      const life = usoTemporalArchetype.lifecycle;
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+
+      let currentState = initialState.id;
+      let stepIndex = 0;
+      let previousDerived: ReturnType<typeof deriveState> | null = null;
+      let prestacionCount = 0;
+
+      while (!isTerminalState(life, currentState) && stepIndex < 50) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const transition = available[0]!;
+
+        // Rastrear transiciones de prestación
+        if (transition.id.includes("prestaci") || transition.id.includes("presta")) {
+          prestacionCount++;
+        }
+
+        const event = mkTransitionEvent(
+          `e-temporal-${stepIndex}`,
+          "subject-1",
+          transition.id,
+          transition.from,
+          transition.to,
+        );
+
+        events.push(event);
+        currentState = transition.to;
+
+        const derived = deriveState(life, events);
+
+        expectEventCountIncrement(previousDerived, {
+          event,
+          state: derived,
+          stepIndex,
+        });
+
+        if (previousDerived !== null) {
+          expectCommitmentsMonotonic(previousDerived, {
+            event,
+            state: derived,
+            stepIndex,
+          });
+        }
+
+        previousDerived = derived;
+        stepIndex++;
+      }
+
+      expect(isTerminalState(life, currentState)).toBe(true);
+      const finalDerived = deriveState(life, events);
+      expect(finalDerived.eventCount).toBe(events.length);
+    });
+  });
+
+  describe("9. Casos intermediación: comisiones y terceros", () => {
+    it("walk: intermediación → registro de terceros → distribución de comisiones → cierre", () => {
+      const life = intermediacionArchetype.lifecycle;
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+
+      let currentState = initialState.id;
+      let stepIndex = 0;
+      let previousDerived: ReturnType<typeof deriveState> | null = null;
+      const partiesInvolved = new Set<string>();
+
+      while (!isTerminalState(life, currentState) && stepIndex < 50) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const transition = available[0]!;
+
+        // Distribuir entre partes: intermediario, proveedor, plataforma
+        const parties = ["intermediario-1", "proveedor-1", "plataforma-1"];
+        const party = parties[stepIndex % 3]!;
+        partiesInvolved.add(party);
+
+        const event = mkTransitionEvent(
+          `e-intermediacion-${stepIndex}`,
+          party,
+          transition.id,
+          transition.from,
+          transition.to,
+        );
+
+        events.push(event);
+        currentState = transition.to;
+
+        const derived = deriveState(life, events);
+
+        expectEventCountIncrement(previousDerived, {
+          event,
+          state: derived,
+          stepIndex,
+        });
+
+        if (previousDerived !== null) {
+          expectCommitmentsMonotonic(previousDerived, {
+            event,
+            state: derived,
+            stepIndex,
+          });
+        }
+
+        previousDerived = derived;
+        stepIndex++;
+      }
+
+      expect(isTerminalState(life, currentState)).toBe(true);
+      expect(partiesInvolved.size).toBeGreaterThan(0);
+
+      const finalDerived = deriveState(life, events);
+      expect(finalDerived.eventCount).toBe(events.length);
+    });
+  });
+
   describe("Invariante: todos los walks llegan a terminal", () => {
     it("venta siempre tiene camino a terminal", () => {
       const life = ventaArchetype.lifecycle;
@@ -504,6 +626,70 @@ describe("Capa 0 — 7 Rupture Scenarios (Walk Execution)", () => {
 
     it("suscripcion siempre tiene camino a terminal", () => {
       const life = suscripcionArchetype.lifecycle;
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+      let currentState = initialState.id;
+
+      let attempts = 0;
+      while (
+        !isTerminalState(life, currentState) &&
+        attempts < 50
+      ) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const t = available[0]!;
+        events.push(
+          mkTransitionEvent(
+            `e-${attempts}`,
+            "subject-1",
+            t.id,
+            t.from,
+            t.to,
+          ),
+        );
+        currentState = t.to;
+        attempts++;
+      }
+
+      expect(isTerminalState(life, currentState)).toBe(true);
+    });
+
+    it("uso-temporal siempre tiene camino a terminal", () => {
+      const life = usoTemporalArchetype.lifecycle;
+      const events: any[] = [];
+      const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
+      if (!initialState) return;
+      let currentState = initialState.id;
+
+      let attempts = 0;
+      while (
+        !isTerminalState(life, currentState) &&
+        attempts < 50
+      ) {
+        const available = outgoing(life, currentState);
+        if (available.length === 0) break;
+
+        const t = available[0]!;
+        events.push(
+          mkTransitionEvent(
+            `e-${attempts}`,
+            "subject-1",
+            t.id,
+            t.from,
+            t.to,
+          ),
+        );
+        currentState = t.to;
+        attempts++;
+      }
+
+      expect(isTerminalState(life, currentState)).toBe(true);
+    });
+
+    it("intermediacion siempre tiene camino a terminal", () => {
+      const life = intermediacionArchetype.lifecycle;
       const events: any[] = [];
       const initialState = life.states.find((s: StateNode) => s.kind === "inicial");
       if (!initialState) return;

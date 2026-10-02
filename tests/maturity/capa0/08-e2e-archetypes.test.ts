@@ -137,7 +137,7 @@ describe("Capa 0 — E2E Happy Path + Exception por Arquetipo", () => {
           }).toThrow();
         }
       });
-    }
+    });
   }
 
   describe("Walks expandidos: uso-temporal e intermediación", () => {
