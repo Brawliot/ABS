@@ -261,6 +261,30 @@ async function executeUiActionLocked(
     return { ok: false, flash, idempotentReplay: false };
   }
 
+  // FASE 0: VALIDAR transición (MotorValidacionTransiciones)
+  const priorFields = reconstructFieldsFromEvents(
+    runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
+    { parte_id: body.parteId },
+  );
+  const txDataForValidation = {
+    ...priorFields,
+    arquetipo_id: slice.archetypeId,
+    parte_id: body.parteId,
+    ...body.formValues,
+  };
+  const validacion = runtime.motorValidacion.validarTransicion(
+    txDataForValidation,
+    action.transitionId,
+  );
+  if (!validacion.permitida) {
+    const flash: FlashMessage = {
+      kind: "error",
+      text: validacion.errores.join("; "),
+    };
+    runtime.setFlash(flash);
+    return { ok: false, flash, idempotentReplay: false };
+  }
+
   const history = runtime.store.getBySubject(
     body.subjectId,
   ) as TransitionEvent[];
@@ -407,12 +431,8 @@ async function executeUiActionLocked(
     };
   }
 
-  const priorFields = reconstructFieldsFromEvents(
-    runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
-    { parte_id: body.parteId },
-  );
   const fields: Record<string, unknown> = {
-    ...priorFields,
+    ...txDataForValidation,
     parte_id: body.parteId,
     ...enrichedForm,
     ...request.fields,
@@ -540,11 +560,40 @@ async function executeUiActionLocked(
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
 
+    // FASE 1: ORQUESTAR generaciones automáticas (MotorOrquestadorTransiciones)
+    const orquestacion = runtime.motorOrquestador.alTransicionar(
+      txDataForValidation,
+      action.transitionId,
+      judged.event.toStateId,
+    );
+
+    // FASE 2: NOTIFICAR a roles interesados (MotorNotificaciones)
+    const notificacionesResult = await runtime.motorNotificaciones.alTransicionar(
+      txDataForValidation,
+      action.transitionId,
+    );
+    await runtime.motorNotificaciones.enviarNotificaciones(
+      notificacionesResult.notificaciones,
+    );
+
+    // Construir mensaje con info completa
+    let flashText = idempotentReplay
+      ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
+      : `Listo: el expediente pasó a «${judged.event.toStateId}».`;
+
+    if (orquestacion.generados.length > 0) {
+      const generadosLabel = orquestacion.generados
+        .map((g) => g.tipo)
+        .join(", ");
+      flashText += ` (Generado: ${generadosLabel})`;
+    }
+    if (notificacionesResult.notificaciones.length > 0) {
+      flashText += ` (${notificacionesResult.notificaciones.length} notificación(es) enviada(s))`;
+    }
+
     const flash: FlashMessage = {
       kind: "ok",
-      text: idempotentReplay
-        ? "Acción reenviada: se reutilizó la misma solicitud (sin duplicar)."
-        : `Listo: el expediente pasó a «${judged.event.toStateId}».`,
+      text: flashText,
       ...(idempotentReplay ? { idempotentReplay: true } : {}),
     };
     runtime.setFlash(flash);

@@ -22,6 +22,11 @@ import type { InterfaceCopyPack } from "../design/copy/types.js";
 import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
+import {
+  MotorValidacionTransiciones,
+  MotorOrquestadorTransiciones,
+  MotorNotificaciones,
+} from "../elements/index.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -70,6 +75,11 @@ export class AppRuntime {
   }[] = [];
   /** Reglas adicionales de escenario (p. ej. hito de fase en reformas). */
   readonly extraRules: import("../policies/types.js").CompiledRule[] = [];
+
+  // Motores de Capa 0.3 - Orquestación
+  readonly motorValidacion = new MotorValidacionTransiciones();
+  readonly motorOrquestador = new MotorOrquestadorTransiciones();
+  readonly motorNotificaciones = new MotorNotificaciones();
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;

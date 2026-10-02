@@ -240,3 +240,6 @@ export * from "./projection.js";
 export * from "./factory.js";
 export * from "./exchange-direction.js";
 export * from "./retention-settlement.js";
+export { MotorValidacionTransiciones } from "./motor-validacion-transiciones.js";
+export { MotorOrquestadorTransiciones } from "./motor-orquestador-transiciones.js";
+export { MotorNotificaciones } from "./motor-notificaciones.js";
