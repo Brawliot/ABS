@@ -161,7 +161,7 @@ export class SqliteDocumentosStore {
         : undefined,
       contraseña: row.contraseña,
       fecha_creación: new Date(row.fecha_creación),
-    }));
+    })) as Permiso[];
   }
 
   guardarVersión(versión: Versión): void {
