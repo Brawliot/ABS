@@ -156,7 +156,7 @@ export class MotorCapturaLeads {
       this.capturarLead(
         email,
         nombre,
-        datos["empresa"],
+        (datos["empresa"] ?? "") as string,
         datos["teléfono"],
         "formulario"
       );
