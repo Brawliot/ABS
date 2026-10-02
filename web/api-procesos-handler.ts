@@ -14,69 +14,17 @@ export async function handleApiProcesos(
   method: string,
   readBodyFn: () => Promise<string>,
 ): Promise<{ status: number; body: string; contentType: string }> {
-  try {
-    // POST /api/procesos/generar
-    if (path === "/api/procesos/generar" && method === "POST") {
-      const body = await readBodyFn();
-      const data = JSON.parse(body);
-
-      const proceso = runtime.motorGeneradorProcesos.generarProceso(
-        data.tipo || "venta",
-        data,
-      );
-
-      return {
-        status: 201,
-        body: JSON.stringify({
-          ok: true,
-          id: proceso.id,
-          estado: proceso.estado,
-          documentos_generados: proceso.documentos_generados.map((doc) => ({
-            tipo: doc.tipo,
-            número: doc.número,
-          })),
-        }),
-        contentType: "application/json; charset=utf-8",
-      };
-    }
-
-    // GET /api/contabilidad/asientos
-    if (path.startsWith("/api/contabilidad/asientos")) {
-      const asientos = runtime.motorGeneradorProcesos
-        .obtenerAsientosContables("test-proceso")
-        .map((a) => ({
-          monto: a.monto,
-          cuenta_deudora: a.cuenta_deudora,
-          cuenta_acreedora: a.cuenta_acreedora,
-          referencia_documento: a.referencia_documento,
-        }));
-
-      return {
-        status: 200,
-        body: JSON.stringify(asientos),
-        contentType: "application/json; charset=utf-8",
-      };
-    }
-
-    // GET /api/inventario/producto
-    if (path.startsWith("/api/inventario/producto/")) {
-      const movimientos = runtime.motorGeneradorProcesos
-        .obtenerMovimientosInventario("AUTO-001");
-
-      return {
-        status: 200,
-        body: JSON.stringify({
-          saldo_anterior: 100,
-          saldo_actual: 99,
-          movimientos: movimientos.map((m) => ({
-            tipo: m.tipo,
-            cantidad: m.cantidad,
-            fecha: m.fecha,
-          })),
-        }),
-        contentType: "application/json; charset=utf-8",
-      };
-    }
+  // Este handler es de Fase 5 y está en desarrollo
+  // Todos los endpoints retornan 501 Not Implemented
+  // Los endpoints de Capa 0 están en query-handler.ts
+  return {
+    status: 501,
+    body: JSON.stringify({
+      error: "Endpoints de Fase 5 no implementados aún",
+      info: "Use los endpoints de Capa 0: /api/transacciones/{id}/documentos, /calculos, /notificaciones, /audits",
+    }),
+    contentType: "application/json; charset=utf-8",
+  };
 
     // GET /api/documentos/factura/:numero/pdf
     if (path.startsWith("/api/documentos/factura/") && path.endsWith("/pdf")) {

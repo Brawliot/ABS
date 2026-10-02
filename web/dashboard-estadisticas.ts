@@ -68,7 +68,7 @@ export class GeneradorDashboard {
     alertas: Alerta[],
     datosSeries: Array<{ fecha: string; ingresos: number; gastos: number; clientes: number }>,
   ): Dashboard {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date().toISOString().split('T')[0] ?? new Date().toISOString();
     const alertasActivas = alertas.filter((a) => a.activa);
 
     // 1. Calcular KPIs principales
