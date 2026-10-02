@@ -877,6 +877,20 @@ export function evaluatePolicyGuards(
 }
 
 /**
+ * Función principal del puente Judge: aplica 4 fases en orden:
+ * 1. Cumplimiento (nunca forzable)
+ * 2. Permiso (puede forzarse con autorización)
+ * 3. Política (puede forzarse con autorización)
+ * 4. Núcleo (nunca forzable)
+ *
+ * Determinista: mismos inputs → mismo resultado.
+ * Retorna JudgedAdvanceResult con trace completo.
+ */
+export function judgedAdvance(input: JudgedAdvanceInput): JudgedAdvanceResult {
+  return attemptJudgedAdvance(input);
+}
+
+/**
  * Pipeline juzgado: políticas primero, luego assertCanAdvance (núcleo).
  * Emite evento con cálculos y versión del RuleSet para reconstrucción.
  * Vía de forzado: solo Permiso/Política, con permiso explícito y motivo.
