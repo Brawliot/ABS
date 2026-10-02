@@ -186,6 +186,12 @@ export async function executeUiAction(
   runtime: AppRuntime,
   body: ActionRequestBody,
 ): Promise<ActionResult> {
+  console.log("[ExecuteUiAction] Acción recibida:", {
+    actionId: body.actionId,
+    subjectId: body.subjectId,
+    roleId: body.roleId,
+  });
+
   const action = runtime.actionById(body.actionId);
   if (!action) {
     const flash: FlashMessage = {
