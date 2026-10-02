@@ -275,7 +275,7 @@ describe("Integraciones Externas - Módulo Futuro (75%)", () => {
     const errores = motorFlujos.obtenerErroresFrecuentes(flujo.id);
 
     expect(errores.length).toBeGreaterThan(0);
-    expect(errores[0].ocurrencias).toBeGreaterThan(1);
+    expect(errores[0]!.ocurrencias).toBeGreaterThan(1);
   });
 
   it("programa ejecución periódica de flujo", () => {
@@ -319,8 +319,8 @@ describe("Integraciones Externas - Módulo Futuro (75%)", () => {
     const historial = motorFlujos.obtenerHistorialFlujo(flujo.id, 10);
 
     expect(historial.length).toBeGreaterThan(0);
-    expect(historial[0].fecha).toBeDefined();
-    expect(historial[0].tiempo_ms).toBeGreaterThanOrEqual(0);
+    expect(historial[0]!.fecha).toBeDefined();
+    expect(historial[0]!.tiempo_ms).toBeGreaterThanOrEqual(0);
   });
 
   it("maneja timeouts y reintentos", async () => {
