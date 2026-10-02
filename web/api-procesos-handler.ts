@@ -1,5 +1,7 @@
 /**
  * Handler API para MotorGeneradorProcesos
+ * @deprecated: Este handler es de Fase 5 y usa interfaz diferente a Capa 0.2
+ * Los endpoints de Capa 0 están en query-handler.ts
  */
 
 import type { AppRuntime } from "./runtime.js";
