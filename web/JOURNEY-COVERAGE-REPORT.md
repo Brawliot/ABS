@@ -1,7 +1,7 @@
 # JOURNEY-COVERAGE-REPORT — caminos felices multirol (Playwright)
 
-**Generado:** 2026-10-01T14:24:06.949Z
-**Duración suite journeys:** 39 ms (0.0 s)
+**Generado:** 2026-10-02T15:15:16.854Z
+**Duración suite journeys:** 54 ms (0.1 s)
 
 ## Por escenario
 
