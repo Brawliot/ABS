@@ -393,7 +393,7 @@ describe("Lead Management - Pipeline", () => {
     const proyecciones = motorPipeline.proyectarCrecimiento(leads, 0.1);
 
     expect(proyecciones.length).toBe(12);
-    expect(proyecciones[0].mes).toBe(0);
+    expect(proyecciones[0]!.mes).toBe(0);
   });
 });
 
@@ -575,7 +575,7 @@ describe("CMS - SEO", () => {
     const keywords = motor.extraerPalabrasClave(contenido);
 
     expect(keywords.length).toBeGreaterThan(0);
-    expect(keywords[0].length).toBeGreaterThan(2);
+    expect((keywords[0] ?? "").length).toBeGreaterThan(2);
   });
 
   it("validar SEO de página", () => {
