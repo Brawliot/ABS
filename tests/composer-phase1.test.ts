@@ -33,7 +33,7 @@ import {
   normalizeACredito,
   describeNormalization,
 } from "../composer/normalizers.js";
-import { validateBusinessProfile, known, unknownField } from "../contracts/business-profile/index.js";
+import { validateBusinessProfile, known, unknownField, notApplicable } from "../contracts/business-profile/index.js";
 
 /**
  * Helper: crear profile base mínimo para tests
@@ -49,8 +49,8 @@ function baseProfile(overrides: Record<string, unknown> = {}) {
     },
     processes: known([{ id: "lc.venta", archetypeId: "venta", label: "Venta" }]),
     channels: known(["presencial"]),
-    resourceSubtypes: known(["capacidad_temporal"]),
-    naturalezaBienes: known(["propios_por_cantidad"]),
+    resourceSubtypes: notApplicable(),
+    naturalezaBienes: known(["propios_unitarios"]),
     location: known({ countryCode: "ES" }),
     capabilities: {
       hasPartes: known(false),
@@ -64,7 +64,7 @@ function baseProfile(overrides: Record<string, unknown> = {}) {
     permissions: known([]),
     permissionFallback: known({ roleId: "admin" }),
     compliance: known([]),
-    catalogFields: known([]),
+    catalogFields: known(["producto"]),
     organization: unknownField(),
     businessPolicies: known([]),
     pipelineStateIds: known(["abierta"]),
@@ -222,9 +222,8 @@ describe("Fase 1 Compositor — Validación Coherencia Financiera (EC3)", () => 
     if (!result.ok) return;
 
     // No debe haber financiera (prohibida por cuenta_parte)
-    const hasFinanciera = result.composition?.secondaries.some(
-      (s) => s.secondaryArchetypeId === "financiera",
-    );
+    const hasFinanciera =
+      result.composition?.secondaries.some((s) => s.secondaryArchetypeId === "financiera") ?? false;
     expect(hasFinanciera).toBe(false);
 
     // Pero sí debe haber políticas de crédito
@@ -278,8 +277,8 @@ describe("Fase 1 Compositor — Validación Coherencia Financiera (EC3)", () => 
     const profile = baseProfile({
       paymentMode: known("inmediato"),
       cobros: {
-        aPlazos: known({ enabled: true }), // Contradictorio: deferred=false pero aPlazos=true
-        aCredito: known(true), // Financiero
+        aPlazos: known({ enabled: true }), // Contradictorio: inmediato pero aPlazos=true
+        aCredito: known(false),
         fianzas: known(false),
         cuotasRecurrentes: known(false),
         pagosPorHitos: known(false),
@@ -370,9 +369,8 @@ describe("Fase 1 Compositor — Casos Especiales", () => {
     if (!result.ok) return;
 
     // No debe haber secundaria financiera
-    const hasFinanciera = result.composition?.secondaries.some(
-      (s) => s.secondaryArchetypeId === "financiera",
-    );
+    const hasFinanciera =
+      result.composition?.secondaries.some((s) => s.secondaryArchetypeId === "financiera") ?? false;
     expect(hasFinanciera).toBe(false);
   });
 
@@ -404,7 +402,7 @@ describe("Fase 1 Compositor — Casos Especiales", () => {
       paymentMode: known("diferido"),
       cobros: {
         aPlazos: unknownField(),
-        aCredito: known(true),
+        aCredito: known(false),
         fianzas: known(false),
         cuotasRecurrentes: known(false),
         pagosPorHitos: known(false),

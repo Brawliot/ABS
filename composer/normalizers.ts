@@ -183,35 +183,57 @@ export function normalizeACredito(
 
 /**
  * Normalizar cobros: si es null/undefined, crear objeto con campos unknown.
+ * Si ya existe pero tiene campos unknown, normalizarlos.
  * Esto resuelve EC1 (cobros=null no dispara preguntas).
  */
 export function normalizeCobrosModel(profile: Partial<BusinessProfile>): {
   cobros: CobrosModel;
   traces: readonly NormalizationTrace[];
 } {
-  if (profile.cobros) {
-    // Ya existe, retornar como está
+  const traces: NormalizationTrace[] = [];
+
+  if (!profile.cobros) {
+    // cobros=null → crear modelo normalizado
+    const aPlazosNorm = normalizeAPlazos(profile);
+    const aCreditoNorm = normalizeACredito(profile);
+
+    const cobros: CobrosModel = {
+      aPlazos: aPlazosNorm.field,
+      aCredito: aCreditoNorm.field,
+      fianzas: unknownField(),
+      cuotasRecurrentes: unknownField(),
+      pagosPorHitos: unknownField(),
+    };
+
     return {
-      cobros: profile.cobros,
-      traces: [],
+      cobros,
+      traces: [aPlazosNorm.trace, aCreditoNorm.trace],
     };
   }
 
-  // cobros=null → crear modelo normalizado
+  // cobros existe: normalizar campos individuales si son unknown
   const aPlazosNorm = normalizeAPlazos(profile);
   const aCreditoNorm = normalizeACredito(profile);
+
+  // Si alguno fue normalizado, agregar a traces
+  if (aPlazosNorm.trace.source !== "present") {
+    traces.push(aPlazosNorm.trace);
+  }
+  if (aCreditoNorm.trace.source !== "present") {
+    traces.push(aCreditoNorm.trace);
+  }
 
   const cobros: CobrosModel = {
     aPlazos: aPlazosNorm.field,
     aCredito: aCreditoNorm.field,
-    fianzas: unknownField(),
-    cuotasRecurrentes: unknownField(),
-    pagosPorHitos: unknownField(),
+    fianzas: profile.cobros.fianzas ?? unknownField(),
+    cuotasRecurrentes: profile.cobros.cuotasRecurrentes ?? unknownField(),
+    pagosPorHitos: profile.cobros.pagosPorHitos ?? unknownField(),
   };
 
   return {
     cobros,
-    traces: [aPlazosNorm.trace, aCreditoNorm.trace],
+    traces,
   };
 }
 
