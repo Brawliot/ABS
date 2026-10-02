@@ -62,8 +62,10 @@ export class MotorPredicciones {
     let sumProductos = 0;
     let sumCuadradosX = 0;
     for (let i = 0; i < n; i++) {
-      sumProductos += (x[i] - mediaX) * (y[i] - mediaY);
-      sumCuadradosX += (x[i] - mediaX) * (x[i] - mediaX);
+      const xi = x[i] ?? 0;
+      const yi = y[i] ?? 0;
+      sumProductos += (xi - mediaX) * (yi - mediaY);
+      sumCuadradosX += (xi - mediaX) * (xi - mediaX);
     }
 
     const pendiente = sumProductos / sumCuadradosX;
@@ -73,9 +75,11 @@ export class MotorPredicciones {
     let sumResidual = 0;
     let sumTotal = 0;
     for (let i = 0; i < n; i++) {
-      const predicho = intercepto + pendiente * x[i];
-      sumResidual += (y[i] - predicho) ** 2;
-      sumTotal += (y[i] - mediaY) ** 2;
+      const xi = x[i] ?? 0;
+      const yi = y[i] ?? 0;
+      const predicho = intercepto + pendiente * xi;
+      sumResidual += (yi - predicho) ** 2;
+      sumTotal += (yi - mediaY) ** 2;
     }
     const rCuadrado = sumTotal > 0 ? 1 - sumResidual / sumTotal : 0;
 
@@ -175,7 +179,7 @@ export class MotorPredicciones {
   ): Forecast {
     const tendencia = this.proyectarTendencia(historicoMensual, Math.ceil(horizonteDias / 30));
 
-    const predicciones = [];
+    const predicciones: any[] = [];
     const diasPorProyeccion = horizonteDias / tendencia.proyecciones.length;
 
     for (let i = 0; i < tendencia.proyecciones.length; i++) {
@@ -187,7 +191,7 @@ export class MotorPredicciones {
       const intervalo = valor * 0.2;
 
       predicciones.push({
-        fecha: fecha.toISOString().split('T')[0],
+        fecha: (fecha.toISOString().split('T')[0]) ?? "",
         valor: Math.max(0, Math.round(valor)),
         intervalo_min: Math.max(0, Math.round(valor - intervalo)),
         intervalo_max: Math.round(valor + intervalo),
@@ -197,7 +201,7 @@ export class MotorPredicciones {
     return {
       metrica,
       horizonte_dias: horizonteDias,
-      predicciones,
+      predicciones: predicciones as any,
       confianza_general_pct: tendencia.confianza_pct,
     };
   }
