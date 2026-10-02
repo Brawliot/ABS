@@ -1981,7 +1981,7 @@ export class AppRuntime {
         producto_id: l.ofertaId || "desconocido",
         cantidad: l.cantidadMilesimas / 1000,
         precio_unitario: l.precioCentimos / 100,
-        saldo_anterior: 100, // Valor simulado; en producción sería del stock real
+        saldo_anterior: 999999, // Valor simulado; en producción sería del stock real
       }));
 
       const total = calcularTotales(tx.datos.lineas).total / 100; // Convertir a euros
