@@ -181,7 +181,7 @@ export class SqliteCMSStore {
       fechaProgramada: row.fecha_programada
         ? new Date(row.fecha_programada)
         : undefined,
-    }));
+    })) as PáginaCMS[];
   }
 
   saveVersión(versión: VorisiónPágina): void {
