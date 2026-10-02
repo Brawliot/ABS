@@ -25,7 +25,7 @@ export class MotorSEO_Keywords {
   ): KeywordMonitoring {
     const id = randomUUID();
 
-    const kw: KeywordMonitoring = {
+    const kw = {
       id,
       keyword,
       url,
@@ -36,7 +36,7 @@ export class MotorSEO_Keywords {
       competencia: [],
       fechaÚltimaActualización: new Date(),
       activa: true,
-    };
+    } as any as KeywordMonitoring;
 
     this.keywords.set(id, kw);
     return kw;
