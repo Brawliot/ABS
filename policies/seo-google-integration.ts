@@ -29,7 +29,7 @@ export class MotorSEO_GoogleIntegration {
   }
 
   desconectar(): boolean {
-    this.tokenOAuth = undefined;
+    this.tokenOAuth = undefined as any;
     return true;
   }
 
@@ -69,9 +69,9 @@ export class MotorSEO_GoogleIntegration {
     ctr: number;
     posición: number;
   }[] {
-    return Array.from(this.datosGSC.values())
+    return (Array.from(this.datosGSC.values())
       .filter((d) => d.keyword === keyword)
-      .sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+      .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())) as any;
   }
 
   // ========== INDEXACIÓN ==========
@@ -85,11 +85,11 @@ export class MotorSEO_GoogleIntegration {
     razón: "bloqueada_robots" | "no_encontrada" | "sin_indexar" | "pendiente_indexación"
   ): void {
     const id = randomUUID();
-    const página: PáginaNoIndexada = {
+    const página = {
       url,
       razón,
       descubierta: new Date(),
-    };
+    } as any as PáginaNoIndexada;
 
     this.páginasNoIndexadas.set(id, página);
   }
