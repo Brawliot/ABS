@@ -127,3 +127,94 @@ export function requirePgOrThrow(): string {
   }
   return u;
 }
+
+/**
+ * Helpers de verificación de estado para walks.
+ * Estos helpers verifican invariantes y precondiciones/postcondiciones en cada paso.
+ */
+
+export interface WalkStep {
+  /** Evento que inicia este paso */
+  event: DomainEvent;
+  /** Estado derivado después de este evento */
+  state: ReturnType<typeof import("../../../core/derivation.js").deriveState>;
+  /** Índice en la secuencia de eventos (0-based) */
+  stepIndex: number;
+}
+
+/**
+ * Verifica que eventCount incremente exactamente en 1 respecto al paso anterior.
+ */
+export function expectEventCountIncrement(
+  previous: WalkStep | null,
+  current: WalkStep,
+): void {
+  if (previous === null) {
+    // Primer evento
+    expect(current.state.eventCount).toBe(1);
+  } else {
+    expect(current.state.eventCount).toBe(previous.state.eventCount + 1);
+  }
+}
+
+/**
+ * Verifica que el estado actual es alcanzable desde el anterior.
+ * (No hay "saltos" mágicos en la máquina.)
+ */
+export function expectStateIsReachable(
+  lifecycle: import("../../../core/lifecycle.js").Lifecycle,
+  fromState: string,
+  toState: string,
+): void {
+  const available = lifecycle.transitions.filter((t) => t.from === fromState);
+  const hasTransition = available.some((t) => t.to === toState);
+  expect(hasTransition).toBe(true);
+}
+
+/**
+ * Verifica que los compromisos son monótonos crecientes
+ * (una vez cumplido, nunca se vuelve pendiente).
+ */
+export function expectCommitmentsMonotonic(
+  previous: WalkStep | null,
+  current: WalkStep,
+): void {
+  if (previous === null) {
+    return; // Primer paso no tiene restricción
+  }
+
+  // Cada compromiso cumplido en el paso anterior debe seguir cumplido
+  for (const commitId of previous.state.fulfilledCommitmentIds) {
+    expect(current.state.fulfilledCommitmentIds.has(commitId)).toBe(true);
+  }
+}
+
+/**
+ * Documenta el tipo de walk realizado para verificación de invariantes.
+ */
+export type WalkType =
+  | "happy-path"
+  | "partial-delivery"
+  | "renegotiation"
+  | "return-after-close"
+  | "multi-party-split"
+  | "subscription-pause-resume"
+  | "marketplace-dispute"
+  | "temporal-loan"
+  | "temporal-return"
+  | "intermediation-commission"
+  | "intermediation-third-party"
+  | "error-close-nonzero-balance"
+  | "error-invalid-transition"
+  | "error-fork-path";
+
+/**
+ * Metadatos de un walk para documentación de qué se verifica.
+ */
+export interface WalkMetadata {
+  readonly archetype: string;
+  readonly walkType: WalkType;
+  readonly description: string;
+  readonly expectedTerminal: boolean;
+  readonly invariantsChecked: readonly string[];
+}
