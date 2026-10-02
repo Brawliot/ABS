@@ -51,7 +51,7 @@ export class MotorDisponibilidad {
   ): Recurso {
     const id = `recurso-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const recurso: Recurso = {
+    const recurso = {
       id,
       nombre,
       tipo,
@@ -59,7 +59,7 @@ export class MotorDisponibilidad {
       capacidad,
       ubicación,
       disponible: true,
-    };
+    } as Recurso;
 
     this.recursos.set(id, recurso);
     return recurso;
@@ -99,7 +99,7 @@ export class MotorDisponibilidad {
       disponible: recurso.disponible && !proximaReserva,
       proximaReserva: proximaReserva?.fechaInicio,
       porcentajeOcupado,
-    };
+    } as any;
   }
 
   verificarConflicto(
@@ -141,7 +141,7 @@ export class MotorDisponibilidad {
 
     const id = `reserva-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const reserva: Reserva = {
+    const reserva = {
       id,
       recursoId,
       clienteId,
@@ -152,7 +152,7 @@ export class MotorDisponibilidad {
       descripcion,
       contacto,
       createdAt: new Date(),
-    };
+    } as Reserva;
 
     this.reservas.set(id, reserva);
     return { exito: true, reserva };
