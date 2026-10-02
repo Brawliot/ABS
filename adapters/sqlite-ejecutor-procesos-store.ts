@@ -14,7 +14,7 @@ import type {
   ResultadoEjecuciónPaso,
   ResultadoWebhook,
   EventoDisparo,
-} from "../elements/ejecutor-procesos";
+} from "../elements/ejecutor-procesos.js";
 
 export class SqliteEjecutorProcesosStore {
   private readonly db: Database.Database;
@@ -345,7 +345,7 @@ export class SqliteEjecutorProcesosStore {
   /**
    * Mapear registro de paso a tipo
    */
-  private mapearResultadoPaso = (row: any): ResultadoEjecuciónPaso => ({
+  private mapearResultadoPaso = (row: Record<string, any>): ResultadoEjecuciónPaso => ({
     id: row.id,
     paso_id: row.paso_id,
     ejecución_id: row.ejecución_id,
@@ -364,7 +364,7 @@ export class SqliteEjecutorProcesosStore {
   /**
    * Mapear registro de webhook a tipo
    */
-  private mapearWebhook = (row: any): ResultadoWebhook => ({
+  private mapearWebhook = (row: Record<string, any>): ResultadoWebhook => ({
     id: row.id,
     ejecución_id: row.ejecución_id,
     url: row.url,
@@ -383,7 +383,7 @@ export class SqliteEjecutorProcesosStore {
   /**
    * Mapear registro de evento a tipo
    */
-  private mapearEvento = (row: any): EventoDisparo => ({
+  private mapearEvento = (row: Record<string, any>): EventoDisparo => ({
     id: row.id,
     ejecución_id: row.ejecución_id,
     tipo: row.tipo,

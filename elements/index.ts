@@ -376,3 +376,26 @@ export {
   PlantillaContrato,
   FactoryPlantillas,
 } from "./plantillas-documentos.js";
+
+// Fase 5: CORE Operativo - MotorEjecutorProcesos (SEGUNDO CORE)
+export type {
+  EstadoEjecución,
+  ResultadoPaso,
+  PrioridadEjecución,
+  ModoEjecución,
+  PasoEjecución,
+  ResultadoEjecuciónPaso,
+  EventoDisparo,
+  ResultadoWebhook,
+  EjecuciónProceso,
+  ConfiguraciónEjecución,
+  ContextoEjecución,
+  HistorialEjecución,
+  IMotorEjecutorProcesos,
+  ResultadoEjecuciónCompleto,
+} from "./ejecutor-procesos.js";
+export {
+  crearConfiguraciónEjecuciónPorDefecto,
+  crearPasoEjecución,
+  crearEjecuciónProceso,
+} from "./ejecutor-procesos.js";

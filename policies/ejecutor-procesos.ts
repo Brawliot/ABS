@@ -23,12 +23,12 @@ import type {
   HistorialEjecución,
   ResultadoPaso,
   ModoEjecución,
-} from "../elements/ejecutor-procesos";
+} from "../elements/ejecutor-procesos.js";
 import {
   crearConfiguraciónEjecuciónPorDefecto,
   crearEjecuciónProceso,
-} from "../elements/ejecutor-procesos";
-import type { ProcesoGenerado } from "../elements/generador-procesos";
+} from "../elements/ejecutor-procesos.js";
+import type { ProcesoGenerado } from "../elements/generador-procesos.js";
 
 /**
  * MotorEjecutorProcesos: Ejecuta procesos generados de forma automática
@@ -181,7 +181,7 @@ export class MotorEjecutorProcesos {
       pasos_ejecutados.push(resultado);
 
       // Disparar webhook por paso si está configurado
-      if (config.webhooks_en_cada_paso && config.webhooks_globales.length > 0) {
+      if (config.webhooks_en_cada_paso && config.webhooks_globales && config.webhooks_globales.length > 0) {
         for (const url of config.webhooks_globales) {
           const webhookResultado = await this.dispararWebhook(url, {
             ejecución_id,
@@ -483,8 +483,8 @@ export class MotorEjecutorProcesos {
       fecha_inicio: e.fecha_inicio,
       fecha_fin: e.fecha_fin,
       total_pasos: e.pasos_ejecutados.length,
-      pasos_exitosos: e.pasos_ejecutados.filter(p => p.estado === "éxito").length,
-      pasos_fallidos: e.pasos_ejecutados.filter(p => p.estado.includes("error")).length,
+      pasos_exitosos: e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado === "éxito").length,
+      pasos_fallidos: e.pasos_ejecutados.filter((p: ResultadoEjecuciónPaso) => p.estado.includes("error")).length,
       tiempo_total_ms: e.fecha_fin
         ? e.fecha_fin.getTime() - e.fecha_inicio.getTime()
         : Date.now() - e.fecha_inicio.getTime(),

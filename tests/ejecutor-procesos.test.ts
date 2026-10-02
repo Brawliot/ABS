@@ -4,18 +4,18 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { MotorEjecutorProcesos } from "../policies/ejecutor-procesos";
-import { SqliteEjecutorProcesosStore } from "../adapters/sqlite-ejecutor-procesos-store";
-import { MotorGeneradorProcesos } from "../elements/generador-procesos";
+import { MotorEjecutorProcesos } from "../policies/ejecutor-procesos.js";
+import { SqliteEjecutorProcesosStore } from "../adapters/sqlite-ejecutor-procesos-store.js";
+import { MotorGeneradorProcesos } from "../elements/generador-procesos.js";
 import type {
   ProcesoGenerado,
   TipoProceso,
-} from "../elements/generador-procesos";
+} from "../elements/generador-procesos.js";
 import type {
   ConfiguraciónEjecución,
   PasoEjecución,
-} from "../elements/ejecutor-procesos";
-import { crearConfiguraciónEjecuciónPorDefecto, crearPasoEjecución } from "../elements/ejecutor-procesos";
+} from "../elements/ejecutor-procesos.js";
+import { crearConfiguraciónEjecuciónPorDefecto, crearPasoEjecución } from "../elements/ejecutor-procesos.js";
 
 describe("MotorEjecutorProcesos", () => {
   let motor: MotorEjecutorProcesos;
