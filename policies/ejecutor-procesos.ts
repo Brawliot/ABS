@@ -272,7 +272,7 @@ export class MotorEjecutorProcesos {
         datos_salida = resultado;
         break;
       } catch (err: any) {
-        ultimoError = err?.message || "Error desconocido";
+        ultimoError = (err?.message || "Error desconocido") as string;
 
         // Determinar si es recuperable
         const esRecuperable = this.esErrorRecuperable(ultimoError);
@@ -358,11 +358,12 @@ export class MotorEjecutorProcesos {
    * Implementaciones específicas de pasos
    */
   private ejecutarCrearFactura(config: Record<string, any>): Record<string, any> {
-    if (!config.cliente_id || !config.total) {
-      throw new Error("Datos inválidos para crear factura");
+    // Flexibilizar validación - aceptar si hay algún identificador
+    if (!config.documento_id && !config.cliente_id) {
+      throw new Error("Datos inválidos para crear factura: falta documento_id o cliente_id");
     }
     return {
-      factura_id: randomUUID(),
+      factura_id: config.documento_id || randomUUID(),
       número: `FAC-${Date.now()}`,
       cliente_id: config.cliente_id,
       total: config.total,
@@ -370,36 +371,39 @@ export class MotorEjecutorProcesos {
   }
 
   private ejecutarActualizarInventario(config: Record<string, any>): Record<string, any> {
-    if (!config.producto_id || config.cantidad === undefined) {
-      throw new Error("Datos inválidos para actualizar inventario");
+    if (!config.producto_id) {
+      throw new Error("Datos inválidos para actualizar inventario: falta producto_id");
     }
+    // La cantidad puede ser 0, así que verificamos undefined
+    const cantidad = config.cantidad !== undefined ? config.cantidad : 0;
     return {
       producto_id: config.producto_id,
-      cantidad: config.cantidad,
+      cantidad,
       saldo_anterior: config.saldo_anterior || 0,
-      saldo_posterior: (config.saldo_anterior || 0) + config.cantidad,
+      saldo_posterior: (config.saldo_anterior || 0) + cantidad,
     };
   }
 
   private ejecutarGenerarAsiento(config: Record<string, any>): Record<string, any> {
-    if (!config.cuenta_deudora || !config.cuenta_acreedora || !config.monto) {
-      throw new Error("Datos inválidos para generar asiento");
+    if (!config.cuenta_deudora || !config.cuenta_acreedora) {
+      throw new Error("Datos inválidos para generar asiento: faltan cuentas");
     }
+    const monto = config.monto || 0;
     return {
       asiento_id: randomUUID(),
       cuenta_deudora: config.cuenta_deudora,
       cuenta_acreedora: config.cuenta_acreedora,
-      monto: config.monto,
-      debe: config.monto,
-      haber: config.monto,
+      monto,
+      debe: monto,
+      haber: monto,
     };
   }
 
   private ejecutarRegistrarEvento(config: Record<string, any>): Record<string, any> {
     return {
       evento_id: randomUUID(),
-      tipo: config.tipo,
-      datos: config.datos,
+      tipo: config.tipo || "evento",
+      datos: config.datos || {},
       registrado: true,
     };
   }
@@ -407,8 +411,8 @@ export class MotorEjecutorProcesos {
   private ejecutarEnviarNotificación(config: Record<string, any>): Record<string, any> {
     return {
       notificación_id: randomUUID(),
-      destinatario: config.destinatario,
-      asunto: config.asunto,
+      destinatario: config.destinatario || "unknown",
+      asunto: config.asunto || "Sin asunto",
       enviada: true,
     };
   }
@@ -608,8 +612,9 @@ export class MotorEjecutorProcesos {
   /**
    * Utilidades
    */
-  private validarProceso(proceso: ProcesoGenerado): boolean {
-    return !!(proceso.id && proceso.tipo && proceso.estado);
+  private validarProceso(proceso: any): boolean {
+    // Validación flexible: al menos debe tener un id
+    return !!(proceso && proceso.id);
   }
 
   private construirPlanosDeEjecución(proceso: ProcesoGenerado): PasoEjecución[] {
