@@ -244,6 +244,9 @@ export * from "./empleado.js";
 export * from "./vacaciones.js";
 export * from "./activo-fijo.js";
 export * from "./email-marketing.js";
+export * from "./lead-management.js";
+export * from "./cms.js";
+export * from "./seo.js";
 
 // Fase 3: Contabilidad, Estadísticas, Transporte
 export type { AsientoRegistro } from "../adapters/sqlite-asientos-store.js";
