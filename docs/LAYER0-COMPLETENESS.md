@@ -231,3 +231,80 @@ Es la diferencia entre:
 - ✅ "¿Puedo abrir→aceptar→pagar→entregar→cerrar y terminar sin errores?" (operational)
 
 Sin walks, los arquetipos podrían tener máquinas formalmente válidas pero operacionalmente imposibles de usar.
+
+---
+
+## ✅ Implementación Completa
+
+Los 4 items faltantes han sido implementados en:
+
+### 1. E2E Happy Path + Exception por Arquetipo
+**Archivo:** `tests/maturity/capa0/08-e2e-archetypes.test.ts`
+
+- ✅ Happy path: cada arquetipo puede completar propuesta → terminal
+- ✅ Exception: transiciones inválidas son rechazadas explícitamente
+- ✅ Todos los arquetipos tienen al menos un camino terminal
+- **Arquetipos cubiertos:** venta, servicio, financiera, suscripcion, uso-temporal, intermediacion
+
+### 2. Las 7 Rupturas del Audit
+**Archivo:** `tests/maturity/capa0/09-rupture-scenarios.test.ts`
+
+Walk completo (ejecución real, no solo structural checks) para:
+- ✅ Entregas parciales (t_entrega_parcial)
+- ✅ Renegociación de precio (oferta_version + t_aceptar_nueva_version)
+- ✅ Devolución después del cierre (TX nueva vinculada, terminal no reabre)
+- ✅ Pago dividido entre 3 partes (Movimiento.parte_id, saldo 0 por parte)
+- ✅ Suscripción pausada (en_espera + t_pausar/t_reanudar)
+- ✅ Marketplace con disputa (en_disputa, retención liberable)
+- ✅ Negocio sin arquetipo (escape valve en modificacion)
+
+### 3. Forzado del Núcleo — Invariante Garantizado
+**Archivo:** `tests/maturity/capa0/10-core-force-invariant.test.ts`
+
+- ✅ Derivación es 100% determinista (múltiples replays → mismo estado)
+- ✅ Máquina no tiene transiciones colgantes (validación estructural)
+- ✅ Ciclos triviales documentados pero permitidos
+- ✅ Terminal nunca reabre (no tiene transiciones salientes)
+- ✅ Toda transición requiere evidencia (no hay bypasses)
+- ✅ Si se intenta forzar, derivación rechaza explícitamente
+
+### 4. Walk de Flujos Reales por Escenario
+**Definido en:** `docs/LAYER0-COMPLETENESS.md`
+
+**¿Qué es un walk?**
+Un walk = Evento1 → Derivación → Evento2 → Derivación → ... → Terminal
+
+No es solo: "¿Existe la transición?" (structural check)
+Es: "¿Puedo ejecutar la transición completa de verdad?" (operational execution)
+
+**Diferencia crítica:**
+- ❌ Structural: "¿Existe t_entrega_parcial?" → STRING SEARCH
+- ✅ Walk: "¿Puedo abrir → aceptar → entregar (parcial) → entregar (parcial) → cerrar?" → EJECUCIÓN
+
+**Ejemplo concreto:** Pago dividido entre 3 partes
+```
+FASE 1: Crear venta (1000€)
+FASE 2: Aceptar venta
+FASE 3: Registrar movimientos (parte-A: 333.33€, parte-B: 333.33€, parte-C: 333.34€)
+FASE 4: Verificar saldo por parte = 0
+FASE 5: Cerrar venta
+
+Resultado: Terminal alcanzado exitosamente
+```
+
+---
+
+## Verificación
+
+Para compilar y verificar:
+```bash
+npm run typecheck
+```
+
+Para ejecutar tests (nota: tests/maturity excluido de suite principal):
+```bash
+npm run test:maturity:capa0
+```
+
+Los archivos compilan sin errores TypeScript.
+Los walks verifican operacionalmente que la máquina es usable de verdad.
