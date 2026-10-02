@@ -474,15 +474,10 @@ async function executeUiActionLocked(
     };
   }
 
-  const priorFields = reconstructFieldsFromEvents(
-    runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
-    { parte_id: body.parteId },
-  );
   const hitosFields = runtime.camposHitosPagados?.(body.subjectId) ?? {};
 
   const fields: Record<string, unknown> = {
     ...txDataForValidation,
-    ...priorFields,
     parte_id: body.parteId,
     ...enrichedForm,
     ...request.fields,
