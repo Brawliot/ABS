@@ -17,6 +17,7 @@ import { EventStoreError } from "../core/event-store.js";
 import type { Lifecycle, Transition } from "../core/lifecycle.js";
 import { resolveJudgeError } from "../design/copy/index.js";
 import { z } from "zod";
+import { getSnapshotManager } from "../services/snapshot-manager.js";
 import {
   collectFactRequests,
   attemptJudgedAdvance,
@@ -540,6 +541,20 @@ async function executeUiActionLocked(
 
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
+
+    // Considerar crear snapshot después de evento exitoso
+    // (background, no bloquea respuesta)
+    const nextStreamVersion = (judged.event as any).streamVersion ?? 1;
+    getSnapshotManager()
+      .considerSnapshot(runtime, body.subjectId, nextStreamVersion, {
+        // Estado actual (para snapshot)
+        stateId: judged.event.toStateId,
+        timestamp: judged.event.occurredAt,
+      })
+      .catch((err) => {
+        // Log pero no rompe flujo
+        console.error("[action-handler] Error en snapshot:", err);
+      });
 
     const flash: FlashMessage = {
       kind: "ok",

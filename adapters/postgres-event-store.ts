@@ -9,6 +9,7 @@ import {
   EventStoreError,
   type EventStoreListener,
 } from "../core/event-store.js";
+import { SnapshotStore } from "./snapshot-store.js";
 
 export interface PostgresEventStoreOptions {
   readonly pool: Pool;
@@ -26,10 +27,12 @@ export class PostgresEventStore {
    * Nunca es la fuente de verdad: cada append escribe en la BD antes de resolver.
    */
   private readonly knownIds = new Set<string>();
+  private readonly snapshotStore: SnapshotStore;
 
   constructor(opts: PostgresEventStoreOptions) {
     this.pool = opts.pool;
     this.companyId = opts.companyId;
+    this.snapshotStore = new SnapshotStore(opts.pool, opts.companyId);
   }
 
   private async withClient<T>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
@@ -302,6 +305,53 @@ export class PostgresEventStore {
     throw new EventStoreError(
       "Invariante violada: los eventos son inmutables; no se pueden borrar",
     );
+  }
+
+  // ────── SNAPSHOT SUPPORT ──────
+
+  /**
+   * Guardar snapshot de estado.
+   * Llamado por SnapshotManager cada N eventos.
+   */
+  async saveSnapshot(
+    subjectId: string,
+    streamVersion: number,
+    stateJson: unknown
+  ): Promise<void> {
+    return this.snapshotStore.save(subjectId, streamVersion, stateJson);
+  }
+
+  /**
+   * Obtener el snapshot más reciente para replayar desde ahí.
+   * Fast-path: si hay snapshot en v500, solo procesar eventos desde v501.
+   */
+  async getLatestSnapshot(
+    subjectId: string,
+    beforeStreamVersion: number
+  ): Promise<{
+    state: unknown;
+    fromVersion: number;
+  } | null> {
+    const snap = await this.snapshotStore.getLatestBefore(
+      subjectId,
+      beforeStreamVersion
+    );
+    if (!snap) return null;
+    return {
+      state: snap.stateJson,
+      fromVersion: snap.fromVersion,
+    };
+  }
+
+  /**
+   * Limpiar snapshots antiguos (mantener solo últimos N).
+   * Llamado periódicamente para evitar tabla infinita.
+   */
+  async pruneSnapshots(
+    subjectId: string,
+    keepCount: number = 5
+  ): Promise<number> {
+    return this.snapshotStore.pruneOldSnapshots(subjectId, keepCount);
   }
 }
 
