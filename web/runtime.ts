@@ -94,6 +94,10 @@ import { MotorEscenarios } from "../policies/simulador-escenarios.js";
 import { MotorSensibilidad } from "../policies/simulador-sensibilidad.js";
 import { MotorValidaciónSimulador } from "../policies/simulador-validacion.js";
 import { SqliteSimuladorStore } from "../adapters/sqlite-simulador-store.js";
+import { MotorProyectosIyD } from "../policies/iyad-motor-proyectos.js";
+import { MotorExperimentos } from "../policies/iyad-experimentos.js";
+import { MotorIntegración } from "../policies/iyad-integracion-produccion.js";
+import { SqliteIyDStore } from "../adapters/sqlite-iyad-store.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -231,6 +235,12 @@ export class AppRuntime {
   readonly motorValidaciónSimulador: MotorValidaciónSimulador;
   readonly storeSimulador: SqliteSimuladorStore;
 
+  // I+D (Fase 4B)
+  readonly motorProyectosIyD: MotorProyectosIyD;
+  readonly motorExperimentos: MotorExperimentos;
+  readonly motorIntegración: MotorIntegración;
+  readonly storeIyD: SqliteIyDStore;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -312,6 +322,12 @@ export class AppRuntime {
     this.motorSensibilidad = new MotorSensibilidad();
     this.motorValidaciónSimulador = new MotorValidaciónSimulador();
     this.storeSimulador = new SqliteSimuladorStore();
+
+    // Inicializar I+D (Fase 4B)
+    this.motorProyectosIyD = new MotorProyectosIyD();
+    this.motorExperimentos = new MotorExperimentos();
+    this.motorIntegración = new MotorIntegración();
+    this.storeIyD = new SqliteIyDStore();
   }
 
   static open(

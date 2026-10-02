@@ -257,7 +257,7 @@ export type { Ruta, Parada, ResultadoOptimizacion } from "../policies/rutas-tran
 export type { TarifaProveedor, CostoRuta, ComparativaProveedores, Margen } from "../policies/costos-transporte.js";
 export type { Paquete, Vehiculo, PlanificacionDia, Conflicto } from "../policies/planificador-entregas.js";
 
-// Fase 4B: Simulador
+// Fase 4B: Simulador + I+D
 export type {
   ModeloProyeccion,
   Tendencia as TendenciaProyección,
@@ -279,3 +279,20 @@ export type {
   AccuracyPorModelo,
   RecomendaciónModelo,
 } from "./simulador.js";
+export type {
+  EstadoProyecto,
+  TipoProyecto,
+  TipoExperimento,
+  EstadoRollout,
+  Hito,
+  RegistroTiempoTrabajo,
+  RegistroGasto,
+  ResumenPresupuesto,
+  ResultadoProyecto,
+  ProyectoIyD,
+  ReporteProyecto,
+  Experimento,
+  ResultadoExperimento,
+  PortfolioExperimentos,
+  IntegracióProducción,
+} from "./proyecto-iyd.js";
