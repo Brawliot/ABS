@@ -2002,14 +2002,23 @@ export class AppRuntime {
       };
 
       // Generar proceso con el motor
+      console.log("[MotorGenerador] Datos para generar:", {
+        cliente_id: datosVenta.cliente_id,
+        líneas: datosVenta.líneas.length,
+        total: datosVenta.total,
+      });
+
       const proceso = this.motorGeneradorProcesos.generarProcesoVenta(
         this.motorGeneradorProcesos.crearProceso("venta", datosVenta),
         datosVenta,
       );
 
+      console.log("[MotorGenerador] Proceso generado - Estado:", proceso.estado);
       if (proceso.estado === "anulado") {
-        return { ok: false, error: "No se pudo generar el proceso de venta" };
+        console.log("[MotorGenerador] ❌ Proceso anulado. Probablemente error de validación");
+        return { ok: false, error: `No se pudo generar el proceso: validación fallida` };
       }
+      console.log("[MotorGenerador] ✅ Proceso exitoso");
 
       // Persistir proceso en la BD (append-only)
       this.storeGeneradorProcesos.guardarProceso(
