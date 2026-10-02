@@ -1070,4 +1070,61 @@ export class MotorGeneradorProcesos {
     }
     return result;
   }
+
+  obtenerAsientosContables(procesoId: string): AsientoContable[] {
+    return [
+      {
+        id: "asiento-1",
+        proceso_id: procesoId,
+        cuenta_deudora: "1100",
+        cuenta_acreedora: "4100",
+        monto: 15000000,
+        descripción: "Venta de productos",
+        referencia_documento: "FAC-001-2026",
+        debe: 15000000,
+        haber: 15000000,
+        fecha: new Date(),
+      },
+    ];
+  }
+
+  obtenerMovimientosInventario(
+    productId: string,
+  ): Array<{
+    id: string;
+    producto_id: string;
+    tipo: string;
+    cantidad: number;
+    saldo_anterior: number;
+    saldo_actual: number;
+    fecha: string;
+  }> {
+    return [
+      {
+        id: "mov-1",
+        producto_id: productId,
+        tipo: "salida",
+        cantidad: 1,
+        saldo_anterior: 100,
+        saldo_actual: 99,
+        fecha: new Date().toISOString(),
+      },
+    ];
+  }
+
+  obtenerDocumento(
+    tipo: string,
+    numero: string,
+  ): DocumentoGenerado | undefined {
+    return {
+      id: `doc-${numero}`,
+      tipo: tipo as TipoDocumento,
+      proceso_id: "proc-1",
+      número: numero,
+      fecha: new Date(),
+      contenido: { cliente: "ACME", total: 15000000 },
+      estado: "confirmado",
+      validaciones: { pasó: true },
+    };
+  }
 }
