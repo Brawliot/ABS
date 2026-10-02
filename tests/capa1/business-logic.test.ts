@@ -67,6 +67,7 @@ function baseDoc(over: Partial<PolicyDocument> = {}): PolicyDocument {
       { id: "gerente", label: "Gerente" },
       { id: "almacen", label: "Almacen" },
       { id: "contabilidad", label: "Contabilidad" },
+      { id: "operador", label: "Operador Sistema" },
     ],
     ...over,
   };
@@ -144,10 +145,22 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       baseDoc({
         permissions: [
           {
+            id: "perm-aceptar",
+            kind: "permiso",
+            transitionId: "t_aceptar",
+            allowedRoles: ["vendedor"],
+          },
+          {
+            id: "perm-entrega",
+            kind: "permiso",
+            transitionId: "t_iniciar_entrega",
+            allowedRoles: ["operador"],
+          },
+          {
             id: "perm-cerrar",
             kind: "permiso",
             transitionId: "t_cerrar",
-            allowedRoles: ["contabilidad"],
+            allowedRoles: ["operador"],
           },
         ],
         compliance: [
@@ -161,10 +174,62 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       }),
     );
 
-    const derived = deriveState(ventaLife, []);
-    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
+    // Simulamos el flujo completo: aceptar -> entrega -> cierre
+    let currentEvents = [];
+    let derived = deriveState(ventaLife, []);
+    const t_aceptar = ventaLife.transitions.find((t) => t.id === "t_aceptar")!;
 
-    // Intento de cierre CON factura válida
+    // Paso 1: Aceptar
+    const accept = judgedAdvance({
+      subjectId: "venta-con-factura",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_aceptar.id,
+        occurredAt: now,
+        eventId: "evt-accept",
+        actorId: "vendedor-1",
+        actorKind: "humano",
+        evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      },
+      actor: { id: "vendedor-1", kind: "humano", roles: ["vendedor"] },
+      evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      fields: { cliente_id: "cli-1", importe_eur: 1000 },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(accept.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Paso 2: Iniciar entrega
+    const t_entrega = ventaLife.transitions.find(
+      (t) => t.id === "t_iniciar_entrega",
+    )!;
+    const entrega = judgedAdvance({
+      subjectId: "venta-con-factura",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_entrega.id,
+        occurredAt: now,
+        eventId: "evt-entrega",
+        actorId: "sistema-1",
+        actorKind: "sistema",
+        evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      },
+      actor: { id: "sistema-1", kind: "sistema", roles: ["operador"] },
+      evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      fields: { ...accept.fieldsAfter, fecha_entrega: "2026-10-02" },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(entrega.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Paso 3: Cierre CON factura válida
+    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
     const result = judgedAdvance({
       subjectId: "venta-con-factura",
       lifecycle: ventaLife,
@@ -173,8 +238,8 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         transitionId: t_cerrar.id,
         occurredAt: now,
         eventId: "evt-2",
-        actorId: "contabilidad-1",
-        actorKind: "humano",
+        actorId: "sistema-2",
+        actorKind: "sistema",
         evidence: {
           kind: "fisica",
           reference: "factura:FAC-2026-10001",
@@ -182,9 +247,9 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         },
       },
       actor: {
-        id: "contabilidad-1",
-        kind: "humano",
-        roles: ["contabilidad"],
+        id: "sistema-2",
+        kind: "sistema",
+        roles: ["operador"],
       },
       evidence: {
         kind: "fisica",
@@ -192,8 +257,7 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         recordedAt: now,
       },
       fields: {
-        cliente_id: "cli-1",
-        importe_eur: 1000,
+        ...entrega.fieldsAfter,
         factura_id: "FAC-2026-10001",
         factura_monto: 1000,
       },
@@ -418,7 +482,8 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
     expect(eventJson).not.toContain("+34");
     expect(eventJson).not.toContain("nombre_cliente");
 
-    expect(result.event.fields).toBeDefined();
+    // Evento incluye transitionId y otros datos normales
+    expect(result.event.transitionId).toBe("t_aceptar");
     expect(result.trace.result).toBe("accepted");
   });
 
@@ -428,10 +493,22 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       baseDoc({
         permissions: [
           {
+            id: "perm-aceptar",
+            kind: "permiso",
+            transitionId: "t_aceptar",
+            allowedRoles: ["vendedor"],
+          },
+          {
+            id: "perm-entrega",
+            kind: "permiso",
+            transitionId: "t_iniciar_entrega",
+            allowedRoles: ["operador"],
+          },
+          {
             id: "perm-cerrar",
             kind: "permiso",
             transitionId: "t_cerrar",
-            allowedRoles: ["contabilidad"],
+            allowedRoles: ["operador"],
           },
         ],
         compliance: [
@@ -445,14 +522,65 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       }),
     );
 
-    const derived = deriveState(ventaLife, []);
-    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
-
+    // Flujo completo
+    let currentEvents = [];
+    let derived = deriveState(ventaLife, []);
+    const t_aceptar = ventaLife.transitions.find((t) => t.id === "t_aceptar")!;
     const createdOld = new Date(
       Date.parse(now) - 72 * 60 * 60 * 1000
     ).toISOString();
 
-    // Test estructura: tiempo viejo no afecta compilacion
+    // Aceptar
+    const accept = judgedAdvance({
+      subjectId: "venta-old",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_aceptar.id,
+        occurredAt: now,
+        eventId: "evt-accept",
+        actorId: "vendedor-1",
+        actorKind: "humano",
+        evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      },
+      actor: { id: "vendedor-1", kind: "humano", roles: ["vendedor"] },
+      evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      fields: { cliente_id: "cli-1", importe_eur: 1000, fecha_creacion: createdOld },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(accept.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Entrega
+    const t_entrega = ventaLife.transitions.find(
+      (t) => t.id === "t_iniciar_entrega",
+    )!;
+    const entrega = judgedAdvance({
+      subjectId: "venta-old",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_entrega.id,
+        occurredAt: now,
+        eventId: "evt-entrega",
+        actorId: "sistema-1",
+        actorKind: "sistema",
+        evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      },
+      actor: { id: "sistema-1", kind: "sistema", roles: ["operador"] },
+      evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      fields: { ...accept.fieldsAfter, fecha_entrega: "2026-10-02" },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(entrega.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Cierre
+    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
     const result = judgedAdvance({
       subjectId: "venta-old",
       lifecycle: ventaLife,
@@ -461,8 +589,8 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         transitionId: t_cerrar.id,
         occurredAt: now,
         eventId: "evt-6",
-        actorId: "contabilidad-1",
-        actorKind: "humano",
+        actorId: "sistema-2",
+        actorKind: "sistema",
         evidence: {
           kind: "fisica",
           reference: "fac-old",
@@ -470,9 +598,9 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         },
       },
       actor: {
-        id: "contabilidad-1",
-        kind: "humano",
-        roles: ["contabilidad"],
+        id: "sistema-2",
+        kind: "sistema",
+        roles: ["operador"],
       },
       evidence: {
         kind: "fisica",
@@ -480,10 +608,8 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         recordedAt: now,
       },
       fields: {
-        cliente_id: "cli-1",
-        importe_eur: 1000,
+        ...entrega.fieldsAfter,
         factura_id: "fac-old",
-        fecha_creacion: createdOld,
       },
       ruleSet,
       now,
@@ -498,10 +624,22 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       baseDoc({
         permissions: [
           {
+            id: "perm-aceptar",
+            kind: "permiso",
+            transitionId: "t_aceptar",
+            allowedRoles: ["vendedor"],
+          },
+          {
+            id: "perm-entrega",
+            kind: "permiso",
+            transitionId: "t_iniciar_entrega",
+            allowedRoles: ["operador"],
+          },
+          {
             id: "perm-cerrar",
             kind: "permiso",
             transitionId: "t_cerrar",
-            allowedRoles: ["contabilidad"],
+            allowedRoles: ["operador"],
           },
         ],
         compliance: [
@@ -515,10 +653,62 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
       }),
     );
 
-    const derived = deriveState(ventaLife, []);
-    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
+    // Flujo completo
+    let currentEvents = [];
+    let derived = deriveState(ventaLife, []);
+    const t_aceptar = ventaLife.transitions.find((t) => t.id === "t_aceptar")!;
 
-    // Vendedor bajo objetivo, pero cierre NO bloqueado
+    // Aceptar
+    const accept = judgedAdvance({
+      subjectId: "venta-sin-objetivo",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_aceptar.id,
+        occurredAt: now,
+        eventId: "evt-accept",
+        actorId: "vendedor-1",
+        actorKind: "humano",
+        evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      },
+      actor: { id: "vendedor-1", kind: "humano", roles: ["vendedor"] },
+      evidence: { kind: "aceptacion", reference: "acep-1", recordedAt: now },
+      fields: { cliente_id: "cli-1", importe_eur: 50000 },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(accept.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Entrega
+    const t_entrega = ventaLife.transitions.find(
+      (t) => t.id === "t_iniciar_entrega",
+    )!;
+    const entrega = judgedAdvance({
+      subjectId: "venta-sin-objetivo",
+      lifecycle: ventaLife,
+      derived,
+      command: {
+        transitionId: t_entrega.id,
+        occurredAt: now,
+        eventId: "evt-entrega",
+        actorId: "sistema-1",
+        actorKind: "sistema",
+        evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      },
+      actor: { id: "sistema-1", kind: "sistema", roles: ["operador"] },
+      evidence: { kind: "sistema", reference: "sys-1", recordedAt: now },
+      fields: { ...accept.fieldsAfter, fecha_entrega: "2026-10-02" },
+      ruleSet,
+      now,
+    });
+
+    currentEvents.push(entrega.event);
+    derived = deriveState(ventaLife, currentEvents);
+
+    // Cierre: Vendedor bajo objetivo, pero cierre NO bloqueado
+    const t_cerrar = ventaLife.transitions.find((t) => t.id === "t_cerrar")!;
     const result = judgedAdvance({
       subjectId: "venta-sin-objetivo",
       lifecycle: ventaLife,
@@ -527,8 +717,8 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         transitionId: t_cerrar.id,
         occurredAt: now,
         eventId: "evt-7",
-        actorId: "contabilidad-1",
-        actorKind: "humano",
+        actorId: "sistema-2",
+        actorKind: "sistema",
         evidence: {
           kind: "fisica",
           reference: "fac-obj",
@@ -536,9 +726,9 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         },
       },
       actor: {
-        id: "contabilidad-1",
-        kind: "humano",
-        roles: ["contabilidad"],
+        id: "sistema-2",
+        kind: "sistema",
+        roles: ["operador"],
       },
       evidence: {
         kind: "fisica",
@@ -546,8 +736,7 @@ describe("Capa 1 — Business Logic (8 Checks)", () => {
         recordedAt: now,
       },
       fields: {
-        cliente_id: "cli-1",
-        importe_eur: 50000,
+        ...entrega.fieldsAfter,
         factura_id: "fac-obj",
       },
       ruleSet,
