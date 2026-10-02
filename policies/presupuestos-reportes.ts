@@ -28,7 +28,7 @@ export class MotorReportesPresupuesto {
       html,
       // En producción, aquí se generaría un PDF real
       pdf: undefined,
-    };
+    } as any;
   }
 
   generarDetallePartidas(presupuesto: Presupuesto): DetallePartida[] {
