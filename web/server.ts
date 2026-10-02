@@ -27,6 +27,12 @@ import { renderAppHtml, resolveSession } from "./render-app.js";
 import { AppRuntime } from "./runtime.js";
 import type { AppBootResult, DevSession } from "./types.js";
 import {
+  queryDocumentos,
+  queryCalculos,
+  queryNotificaciones,
+  queryAudits,
+} from "./query-handler.js";
+import {
   acceptInvite,
   completePasswordReset,
   createAuthRuntime,
@@ -708,6 +714,66 @@ export function startWebServer(
         return send(res, 303, "", "text/plain", {
           Location: `/?${loc.toString()}`,
         });
+      }
+
+      // GET /api/transacciones/{id}/documentos
+      if (path.startsWith("/api/transacciones/") && path.endsWith("/documentos") && method === "GET") {
+        const match = path.match(/^\/api\/transacciones\/([^/]+)\/documentos$/);
+        if (match) {
+          const transactionId = decodeURIComponent(match[1]!);
+          const result = queryDocumentos(runtime.store, transactionId);
+          return send(
+            res,
+            result.ok ? 200 : 404,
+            JSON.stringify(result),
+            "application/json; charset=utf-8",
+          );
+        }
+      }
+
+      // GET /api/transacciones/{id}/calculos
+      if (path.startsWith("/api/transacciones/") && path.endsWith("/calculos") && method === "GET") {
+        const match = path.match(/^\/api\/transacciones\/([^/]+)\/calculos$/);
+        if (match) {
+          const transactionId = decodeURIComponent(match[1]!);
+          const result = queryCalculos(runtime.store, transactionId);
+          return send(
+            res,
+            result.ok ? 200 : 404,
+            JSON.stringify(result),
+            "application/json; charset=utf-8",
+          );
+        }
+      }
+
+      // GET /api/transacciones/{id}/notificaciones
+      if (path.startsWith("/api/transacciones/") && path.endsWith("/notificaciones") && method === "GET") {
+        const match = path.match(/^\/api\/transacciones\/([^/]+)\/notificaciones$/);
+        if (match) {
+          const transactionId = decodeURIComponent(match[1]!);
+          const result = queryNotificaciones(runtime.store, transactionId);
+          return send(
+            res,
+            result.ok ? 200 : 404,
+            JSON.stringify(result),
+            "application/json; charset=utf-8",
+          );
+        }
+      }
+
+      // GET /api/transacciones/{id}/audits
+      if (path.startsWith("/api/transacciones/") && path.endsWith("/audits") && method === "GET") {
+        const match = path.match(/^\/api\/transacciones\/([^/]+)\/audits$/);
+        if (match) {
+          const transactionId = decodeURIComponent(match[1]!);
+          const result = queryAudits(runtime.store, transactionId);
+          return send(
+            res,
+            result.ok ? 200 : 404,
+            JSON.stringify(result),
+            "application/json; charset=utf-8",
+          );
+        }
       }
 
       if (path === "/action" && method === "POST") {
