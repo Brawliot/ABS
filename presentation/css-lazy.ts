@@ -6,6 +6,7 @@
  * - Responsive breakpoints (sm, md, lg, xl)
  * - Dark mode (si no es crítico)
  * - Utilidades avanzadas
+ * - Microinteractions (fase 2)
  */
 
 /**
@@ -15,21 +16,72 @@ export function generateLazyCss(): string {
   return `
 /* CSS LAZY - Cargado en background */
 
-/* Component States */
+/* ============================================================================
+   COMPONENT STATES - MICROINTERACTIONS
+   ============================================================================ */
+
+/* Button states - Fase 2: Enhanced microinteractions */
+button {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
 button:hover:not(:disabled) {
   opacity: 0.9;
-  transform: translateY(-1px);
-  transition: all 300ms ease;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 button:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Input/Select/Textarea focus states with glow */
+input,
+select,
+textarea {
+  padding: var(--spacing-s) var(--spacing-m);
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 44px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), inset 0 0 0 1px rgba(37, 99, 235, 0.05);
+}
+
+input:hover:not(:disabled),
+select:hover:not(:disabled),
+textarea:hover:not(:disabled) {
+  border-color: var(--color-primary-light);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
 }
 
 input,

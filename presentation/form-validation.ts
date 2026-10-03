@@ -15,7 +15,8 @@ export type ValidationRule =
   | { type: "min"; value: number }
   | { type: "max"; value: number }
   | { type: "pattern"; pattern: RegExp; message: string }
-  | { type: "custom"; validate: (value: string) => boolean | Promise<boolean>; message: string };
+  | { type: "custom"; validate: (value: string) => boolean | Promise<boolean>; message: string }
+  | { type: "async"; validator: (value: string) => Promise<boolean | string>; message: string };
 
 export interface FormFieldValidation {
   readonly fieldName: string;
@@ -100,6 +101,10 @@ export class FormValidator {
       case "custom":
         return await rule.validate(value);
 
+      case "async":
+        const result = await rule.validator(value);
+        return typeof result === "boolean" ? result : true;
+
       default:
         return true;
     }
@@ -133,6 +138,7 @@ export class FormValidator {
 
       case "pattern":
       case "custom":
+      case "async":
         return rule.message;
 
       default:
