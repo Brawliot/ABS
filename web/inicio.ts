@@ -124,26 +124,55 @@ function renderContentColumn(
     return `
 <main class="column-content" role="main">
   <div class="empty-state">
-    <p>No hay procesos disponibles para tu rol.</p>
+    <h2>No hay procesos disponibles</h2>
+    <p>Tu rol actual no tiene acceso a ningún proceso en el sistema.</p>
   </div>
 </main>`;
   }
 
   const views = firstGroup.viewIds.concat(firstGroup.panelIds);
   const firstView = views[0];
-  const viewLabel = firstView ? labelOf(spec, firstView, "") : "Vista";
+  const groupLabel = labelOf(spec, firstGroup.id, firstGroup.labelKey);
+
+  // Get stats
+  const totalProcesses = groups.length;
+  const totalViews = groups.reduce((acc, g) => acc + g.viewIds.length + g.panelIds.length, 0);
 
   return `
 <main class="column-content" role="main">
   <div class="content-header">
-    <h1 class="content-title">${esc(viewLabel)}</h1>
-    <p class="content-meta">Proceso: <strong>${esc(firstGroup.id)}</strong></p>
+    <h1 class="content-title">Bienvenido</h1>
+    <p class="content-meta">Proceso sugerido: <strong>${esc(groupLabel)}</strong></p>
   </div>
 
   <section class="content-body">
-    <div class="placeholder-content">
-      <p>Contenido del proceso se renderizará aquí.</p>
-      <p class="meta">Rol: <strong>${esc(session.roleId)}</strong> • Parte: <strong>${esc(session.parteId)}</strong></p>
+    <div class="welcome-content">
+      <div class="stat-card">
+        <div class="stat-number">${totalProcesses}</div>
+        <div class="stat-label">Procesos Disponibles</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${totalViews}</div>
+        <div class="stat-label">Vistas/Paneles</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${esc(session.channel)}</div>
+        <div class="stat-label">Canal</div>
+      </div>
+    </div>
+
+    <div class="actions-section">
+      <h3>Acciones Rápidas</h3>
+      <ul class="quick-actions">
+        <li>
+          <a href="?role=${esc(session.roleId)}&parte=${esc(session.parteId)}&group=${esc(firstGroup.id)}&view=${esc(firstView ?? '')}" class="quick-action-btn">
+            Abrir ${esc(groupLabel)}
+          </a>
+        </li>
+        <li>
+          <button type="button" class="quick-action-btn secondary" title="Próximamente">Ver Documentación</button>
+        </li>
+      </ul>
     </div>
   </section>
 </main>`;
@@ -444,6 +473,88 @@ html, body {
 
 .placeholder-content p {
   margin: 0.5rem 0;
+}
+
+.welcome-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--espaciado-m, 1rem);
+  margin-bottom: var(--espaciado-l, 2rem);
+}
+
+.stat-card {
+  text-align: center;
+  padding: var(--espaciado-m, 1rem);
+  border-radius: var(--radio-md, 8px);
+  background: rgba(0, 102, 204, 0.05);
+  border: 1px solid var(--color-borde, #e0e0e0);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primario, #0066cc);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--color-texto-secundario, #666);
+  font-weight: 500;
+}
+
+.actions-section {
+  margin-top: var(--espaciado-l, 2rem);
+  padding-top: var(--espaciado-m, 1rem);
+  border-top: 1px solid var(--color-borde, #e0e0e0);
+}
+
+.actions-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-texto, #333);
+  margin: 0 0 var(--espaciado-m, 1rem) 0;
+}
+
+.quick-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-s, 0.5rem);
+}
+
+.quick-action-btn {
+  display: block;
+  padding: var(--espaciado-m, 1rem);
+  text-align: center;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.2s;
+  min-height: var(--tactil-minimo, 44px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primario, #0066cc);
+  background: var(--color-primario, #0066cc);
+  color: white;
+}
+
+.quick-action-btn:hover {
+  background: #0052a3;
+  border-color: #0052a3;
+}
+
+.quick-action-btn.secondary {
+  background: transparent;
+  color: var(--color-primario, #0066cc);
+  border: 1px solid var(--color-primario, #0066cc);
+}
+
+.quick-action-btn.secondary:hover {
+  background: rgba(0, 102, 204, 0.1);
 }
 
 /* Columna 3: Ficha Usuario */
