@@ -1109,23 +1109,34 @@ export function startWebServer(
           const userId = ident.session?.accountId ?? "guest";
           const userName = ident.session?.displayName ?? "Usuario";
 
+          // Extraer roles disponibles del spec (desde processGroups)
+          const rolesFromSpec = new Set<string>();
+          if (boot.input?.processGroups) {
+            for (const group of boot.input.processGroups) {
+              for (const rid of group.roleIds) {
+                rolesFromSpec.add(rid);
+              }
+            }
+          }
+
+          // Si no hay roles en spec, usar roles de boot
+          const validRoles = rolesFromSpec.size > 0
+            ? Array.from(rolesFromSpec)
+            : boot.roles.map(r => r.id);
+
           // Intentar obtener rol de: URL query > sesión dev > first available role
           const query = parseQuery(url);
-          const validRoles = boot.roles.map(r => r.id);
           const requestedRole = query.role ?? ident.dev.roleId;
 
           // Validar y asegurar que el rol existe
-          let roleId = requestedRole;
-          if (!validRoles.includes(roleId)) {
-            roleId = boot.roles[0]?.id;
-            if (!roleId) {
-              // Si no hay roles en boot, mostrar error descriptivo
-              return send(res, 500, `
-                <h1>Error: No hay roles disponibles</h1>
-                <p>boot.roles está vacío. Roles disponibles: ${JSON.stringify(validRoles)}</p>
-                <p>Intenta acceder a: <a href="/inicio?role=${validRoles[0]}">/inicio?role=${validRoles[0]}</a></p>
-              `, "text/html; charset=utf-8");
-            }
+          let roleId = validRoles.includes(requestedRole) ? requestedRole : validRoles[0];
+
+          if (!roleId) {
+            return send(res, 500, `
+              <h1>Error: No hay roles disponibles</h1>
+              <p>boot.input.processGroups y boot.roles están vacíos.</p>
+              <p>Roles encontrados: ${JSON.stringify(validRoles)}</p>
+            `, "text/html; charset=utf-8");
           }
 
           // Renderizar con datos dinámicos
