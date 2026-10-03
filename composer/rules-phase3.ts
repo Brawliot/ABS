@@ -27,7 +27,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
       {
         type: "add_policy",
         plantilla: "tpl.descuento_maximo_sin_aprobacion",
-        parametros: { descuento_maximo_pct: 15 },
+        parametros: { porcentaje: 15 },
         idSuffix: "descuento-venta",
       },
     ],
