@@ -737,7 +737,7 @@ export function mapSampleToV12(p: SampleProfile): {
     cobros,
     resourceSubtypes: hasCitas
       ? pf("known", ["capacidad_temporal"])
-      : pf("known", []),
+      : pf("not_applicable"),
     capacityMode: capacityFromSample(p),
     naturalezaBienes: mapNaturaleza(p.naturalezaBienes),
     location: mapLocation(p.calendario.festivosRegion),
