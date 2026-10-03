@@ -196,12 +196,17 @@ export function bootHubDashboard(
 ): HubDashboardSpec {
   // Validar que el rol existe y está disponible
   const availableRoles = generateAvailableRoles(spec);
-  const currentRole = availableRoles.find((r) => r.roleId === roleId);
+  let currentRole = availableRoles.find((r) => r.roleId === roleId);
 
+  // Si el rol no está en availableRoles pero fue validado en el servidor,
+  // crear un rol genérico basado en los permisos conocidos
   if (!currentRole) {
-    throw new Error(
-      `Role "${roleId}" no disponible. Roles disponibles: ${availableRoles.map((r) => r.roleId).join(", ")}`
-    );
+    currentRole = {
+      roleId,
+      label: formatRoleLabel(roleId),
+      permissions: ROLE_PERMISSIONS[roleId] ?? [],
+      description: ROLE_DESCRIPTIONS[roleId] ?? undefined,
+    };
   }
 
   // Generar elementos del dashboard
