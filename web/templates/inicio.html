@@ -1,619 +1,865 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hub de Inicio</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABS Platform - Control Operacional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    :root {
-      --color-primary: #3b82f6;
-      --color-success: #10b981;
-      --color-warning: #f59e0b;
-      --color-danger: #ef4444;
-      --color-info: #0ea5e9;
-      --color-bg: #f8fafc;
-      --color-surface: #ffffff;
-      --color-border: #e2e8f0;
-      --color-text-primary: #1e293b;
-      --color-text-secondary: #64748b;
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      --transition: all 200ms ease;
-    }
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --accent: #2563eb;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --success: #059669;
+            --neutral-dark: #0f172a;
+            --neutral-bg: #1a202c;
+            --neutral-secondary: #2d3748;
+            --neutral-tertiary: #4a5568;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+            --border-light: #475569;
+        }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --color-bg: #0f172a;
-        --color-surface: #1e293b;
-        --color-border: #334155;
-        --color-text-primary: #f1f5f9;
-        --color-text-secondary: #cbd5e1;
-      }
-    }
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--neutral-dark) 0%, #0d1117 100%);
+            color: var(--text-primary);
+            letter-spacing: 0.3px;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: var(--color-bg);
-      color: var(--color-text-primary);
-      line-height: 1.5;
-    }
+        body {
+            overflow: hidden;
+        }
 
-    /* Header */
-    .hub-header {
-      background-color: var(--color-surface);
-      border-bottom: 1px solid var(--color-border);
-      padding: 1.5rem;
-      box-shadow: var(--shadow-sm);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+        /* ===== MAIN LAYOUT ===== */
+        .workspace {
+            display: grid;
+            grid-template-columns: 220px 1fr 300px 240px;
+            grid-template-rows: 50px 1fr;
+            width: 100vw;
+            height: 100vh;
+            gap: 0;
+        }
 
-    .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 2rem;
-    }
+        /* ===== HEADER ===== */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, var(--neutral-dark), var(--neutral-bg));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.5rem;
+            z-index: 100;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
 
-    .header-welcome {
-      flex: 1;
-    }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            min-width: 0;
+        }
 
-    .header-welcome h1 {
-      font-size: 1.875rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
 
-    .header-welcome p {
-      font-size: 0.875rem;
-      color: var(--color-text-secondary);
-    }
+        .header-center {
+            flex: 1;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-    .role-selector {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            white-space: nowrap;
+        }
 
-    .role-selector label {
-      font-weight: 500;
-      font-size: 0.875rem;
-    }
+        .system-status {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
 
-    .role-selector select {
-      padding: 0.5rem 1rem;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      background-color: var(--color-surface);
-      color: var(--color-text-primary);
-      cursor: pointer;
-      font-size: 0.875rem;
-      min-width: 150px;
-      transition: var(--transition);
-    }
+        .status-indicator {
+            width: 5px;
+            height: 5px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
 
-    .role-selector select:hover {
-      border-color: var(--color-primary);
-      box-shadow: var(--shadow-sm);
-    }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.75rem;
+            background: rgba(20, 184, 166, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+        }
 
-    /* Main Container */
-    .hub-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
+        .avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: white;
+            flex-shrink: 0;
+        }
 
-    /* Section Title */
-    .section-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--color-text-primary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+        .user-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
 
-    /* Acciones Rápidas */
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
+        /* ===== SIDEBAR LEFT ===== */
+        .sidebar-left {
+            background: var(--neutral-bg);
+            border-right: 1px solid var(--border);
+            padding: 0.75rem 0.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
 
-    .quick-action {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      padding: 1.5rem;
-      background-color: var(--color-surface);
-      border: 2px solid var(--color-border);
-      border-radius: var(--radius-md);
-      text-decoration: none;
-      color: var(--color-text-primary);
-      cursor: pointer;
-      transition: var(--transition);
-      text-align: center;
-      font-weight: 500;
-      font-size: 0.875rem;
-    }
+        .sidebar-left::-webkit-scrollbar {
+            width: 3px;
+        }
 
-    .quick-action:hover {
-      border-color: var(--color-primary);
-      background-color: var(--color-bg);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
+        .sidebar-left::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
 
-    .quick-action-icon {
-      font-size: 2rem;
-    }
+        .module-btn {
+            padding: 0.6rem 0.5rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 0.375rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-align: left;
+            white-space: nowrap;
+        }
 
-    /* Widgets de Resumen */
-    .summary-widgets {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
+        .module-btn:hover {
+            background: rgba(20, 184, 166, 0.1);
+            color: var(--text-primary);
+        }
 
-    .summary-widget {
-      padding: 1.5rem;
-      background-color: var(--color-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      border-left: 4px solid var(--color-primary);
-      transition: var(--transition);
-    }
+        .module-btn.active {
+            background: linear-gradient(90deg, rgba(20, 184, 166, 0.2), transparent);
+            color: var(--primary-light);
+            border-left: 2px solid var(--primary-light);
+            padding-left: calc(0.5rem - 2px);
+        }
 
-    .summary-widget.success {
-      border-left-color: var(--color-success);
-    }
+        .module-icon {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            border-radius: 0.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            flex-shrink: 0;
+            font-weight: 700;
+            color: white;
+        }
 
-    .summary-widget.warning {
-      border-left-color: var(--color-warning);
-    }
+        /* ===== CENTER PANEL ===== */
+        .center-panel {
+            background: var(--neutral-dark);
+            border-right: 1px solid var(--border);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem 1.75rem;
+            gap: 1.25rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
 
-    .summary-widget.danger {
-      border-left-color: var(--color-danger);
-    }
+        .center-panel::-webkit-scrollbar {
+            width: 3px;
+        }
 
-    .summary-widget.info {
-      border-left-color: var(--color-info);
-    }
+        .center-panel::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
 
-    .summary-widget:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
 
-    .widget-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
+        /* ===== TODAY SECTION ===== */
+        .today-container {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.15), rgba(37, 99, 235, 0.08));
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            padding: 1.2rem;
+        }
 
-    .widget-label {
-      font-size: 0.875rem;
-      color: var(--color-text-secondary);
-      font-weight: 500;
-    }
+        .today-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border-light);
+        }
 
-    .widget-icon {
-      font-size: 1.5rem;
-    }
+        .today-date-display {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
 
-    .widget-value {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: var(--color-text-primary);
-      margin-bottom: 0.5rem;
-    }
+        .today-date-num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            line-height: 1;
+            font-family: 'Courier New', monospace;
+        }
 
-    .widget-trend {
-      font-size: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      color: var(--color-text-secondary);
-    }
+        .today-date-day {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
 
-    .trend-up {
-      color: var(--color-success);
-    }
+        .today-meta {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-align: right;
+            line-height: 1.3;
+        }
 
-    .trend-down {
-      color: var(--color-danger);
-    }
+        .today-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
 
-    /* Procesos Grid */
-    .process-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
+        .today-stat {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-light);
+            border-radius: 0.4rem;
+            padding: 0.75rem;
+            text-align: center;
+        }
 
-    .process-card {
-      display: flex;
-      flex-direction: column;
-      padding: 1.5rem;
-      background-color: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      text-decoration: none;
-      color: var(--color-text-primary);
-      transition: var(--transition);
-      cursor: pointer;
-    }
+        .today-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 0.3rem;
+            font-family: 'Courier New', monospace;
+        }
 
-    .process-card:hover {
-      box-shadow: var(--shadow-lg);
-      border-color: var(--color-primary);
-      transform: translateY(-4px);
-    }
+        .today-stat-label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
 
-    .process-card.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
+        /* ===== ACTIONS GRID ===== */
+        .actions-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
 
-    .process-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
+        .action-card {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(15, 118, 110, 0.08));
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            text-align: left;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
 
-    .process-icon {
-      font-size: 2.5rem;
-      line-height: 1;
-    }
+        .action-card:hover {
+            border-color: var(--primary-light);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(15, 118, 110, 0.12));
+            transform: translateY(-1px);
+        }
 
-    .process-info {
-      flex: 1;
-    }
+        .action-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
 
-    .process-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
+        .action-hint {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.3;
+        }
 
-    .process-desc {
-      font-size: 0.875rem;
-      color: var(--color-text-secondary);
-    }
+        .action-icon-box {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            border-radius: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
 
-    .process-count {
-      display: inline-block;
-      background-color: var(--color-primary);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 0.5rem;
-    }
+        /* ===== SIDEBAR RIGHT - ALERTS ===== */
+        .sidebar-right {
+            background: var(--neutral-bg);
+            border-left: 1px solid var(--border);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
 
-    .process-action {
-      align-self: flex-start;
-      margin-top: auto;
-      padding: 0.5rem 1rem;
-      background-color: var(--color-primary);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: var(--transition);
-    }
+        .sidebar-right::-webkit-scrollbar {
+            width: 3px;
+        }
 
-    .process-action:hover {
-      background-color: #2563eb;
-      box-shadow: var(--shadow-md);
-    }
+        .sidebar-right::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+        .alerts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-      .role-selector {
-        width: 100%;
-        justify-content: space-between;
-      }
+        .alert-item {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 2px solid var(--warning);
+            border-radius: 0.4rem;
+            padding: 0.65rem 0.75rem;
+            font-size: 0.7rem;
+            animation: slideIn 0.3s ease-out;
+            line-height: 1.4;
+        }
 
-      .role-selector select {
-        flex: 1;
-        max-width: none;
-      }
+        .alert-item.critical {
+            border-left-color: var(--danger);
+            background: rgba(220, 38, 38, 0.12);
+        }
 
-      .hub-container {
-        padding: 1rem;
-      }
+        .alert-item.success {
+            border-left-color: var(--success);
+            background: rgba(5, 150, 105, 0.12);
+        }
 
-      .quick-actions {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.75rem;
-      }
+        .alert-item.info {
+            border-left-color: var(--accent);
+            background: rgba(37, 99, 235, 0.12);
+        }
 
-      .quick-action {
-        padding: 1rem;
-      }
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
 
-      .summary-widgets {
-        grid-template-columns: 1fr;
-      }
+        .alert-time {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+            font-weight: 500;
+        }
 
-      .process-grid {
-        grid-template-columns: 1fr;
-      }
+        /* ===== SIDEBAR CHAT ===== */
+        .sidebar-chat {
+            background: var(--neutral-bg);
+            border-left: 1px solid var(--border);
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-      .header-welcome h1 {
-        font-size: 1.5rem;
-      }
-    }
+        .chat-header {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--neutral-secondary);
+            flex-shrink: 0;
+        }
 
-    @media (max-width: 480px) {
-      .header-content {
-        gap: 1rem;
-      }
+        .chat-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
 
-      .quick-actions {
-        grid-template-columns: repeat(2, 1fr);
-      }
+        .online-indicator {
+            width: 5px;
+            height: 5px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
 
-      .process-grid {
-        grid-template-columns: 1fr;
-      }
+        .chat-messages {
+            flex: 1;
+            padding: 0.75rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-      .process-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
+        .chat-messages::-webkit-scrollbar {
+            width: 3px;
+        }
 
-    /* Auxiliar Links */
-    .auxiliary-links {
-      display: flex;
-      gap: 1rem;
-      margin-top: 2rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--color-border);
-      flex-wrap: wrap;
-    }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
 
-    .auxiliary-link {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      text-decoration: none;
-      color: var(--color-primary);
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: var(--transition);
-    }
+        .message {
+            font-size: 0.7rem;
+            line-height: 1.35;
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.3rem;
+            max-width: 90%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
 
-    .auxiliary-link:hover {
-      color: #2563eb;
-    }
+        .message.other {
+            background: var(--neutral-secondary);
+            color: var(--text-secondary);
+            align-self: flex-start;
+        }
 
-    /* Accesibilidad */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border-width: 0;
-    }
-  </style>
+        .message.self {
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            color: white;
+            align-self: flex-end;
+            border-radius: 0.3rem 0 0.3rem 0.3rem;
+        }
+
+        .chat-input {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--neutral-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.3rem;
+            color: var(--text-primary);
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .chat-input input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .chat-input input:focus {
+            border-color: var(--primary-light);
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            border: none;
+            border-radius: 0.3rem;
+            color: white;
+            cursor: pointer;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* ===== SCROLLBAR GENERAL ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1400px) {
+            .workspace {
+                grid-template-columns: 200px 1fr 280px 0;
+            }
+
+            .sidebar-chat {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .workspace {
+                grid-template-columns: 180px 1fr 280px;
+            }
+
+            .sidebar-right {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .workspace {
+                grid-template-columns: 160px 1fr;
+            }
+
+            .sidebar-right,
+            .sidebar-chat {
+                display: none;
+            }
+
+            .center-panel {
+                border: none;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header class="hub-header" role="banner">
-    <div class="header-content">
-      <div class="header-welcome">
-        <h1>Bienvenido, {{ userName }}</h1>
-        <p>Tu panel de control personalizado</p>
-      </div>
-      <div class="role-selector">
-        <label for="role-select" id="role-label">Tu rol actual:</label>
-        <select
-          id="role-select"
-          aria-labelledby="role-label"
-          onchange="cambiarRol(this.value)"
-        >
-          {{#availableRoles}}
-          <option
-            value="{{ roleId }}"
-            {{ #isCurrentRole }}selected{{ /isCurrentRole }}
-            title="{{ description }}"
-          >
-            {{ label }}
-          </option>
-          {{/availableRoles}}
-        </select>
-      </div>
-    </div>
-  </header>
-
-  <main class="hub-container">
-    <!-- Acciones Rápidas -->
-    {{#quickActions}}
-    <section aria-labelledby="quick-actions-title">
-      <h2 id="quick-actions-title" class="section-title">
-        ⚡ Acciones Rápidas
-      </h2>
-      <div class="quick-actions" role="toolbar" aria-label="Acciones rápidas">
-        {{#quickActions}}
-        <a
-          href="{{ href }}"
-          class="quick-action"
-          role="button"
-          data-action-id="{{ id }}"
-          title="{{ label }}"
-        >
-          <span class="quick-action-icon">{{ icon }}</span>
-          <span>{{ label }}</span>
-        </a>
-        {{/quickActions}}
-      </div>
-    </section>
-    {{/quickActions}}
-
-    <!-- Widgets de Resumen -->
-    {{#summary}}
-    <section aria-labelledby="summary-title">
-      <h2 id="summary-title" class="section-title">
-        📊 Resumen del Negocio
-      </h2>
-      <div class="summary-widgets" role="region" aria-label="Widgets de resumen">
-        {{#summary}}
-        <div
-          class="summary-widget {{ colorSemantic }}"
-          data-widget-id="{{ id }}"
-          role="article"
-        >
-          <div class="widget-header">
-            <span class="widget-label">{{ label }}</span>
-            <span class="widget-icon">{{ icon }}</span>
-          </div>
-          <div class="widget-value">{{ value }}</div>
-          <div class="widget-trend trend-{{ trend }}">
-            <span>
-              {{#if trend == 'up'}}↑{{/if}}
-              {{#if trend == 'down'}}↓{{/if}}
-              {{#if trend == 'stable'}}→{{/if}}
-              {{ trend }}
-            </span>
-          </div>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">ABS</div>
         </div>
-        {{/summary}}
-      </div>
-    </section>
-    {{/summary}}
-
-    <!-- Procesos Principales -->
-    <section aria-labelledby="processes-title">
-      <h2 id="processes-title" class="section-title">
-        🔄 Procesos Disponibles
-      </h2>
-      <div class="process-grid" role="grid" aria-label="Procesos disponibles">
-        {{#processCards}}
-        <a
-          href="{{ href }}"
-          class="process-card {{ #isEnabled }}{{ /isEnabled }}{{ ^isEnabled }}disabled{{ /isEnabled }}"
-          role="gridcell"
-          data-process-id="{{ lifecycleId }}"
-          {{ #isEnabled }}aria-label="{{ label }}: {{ description }}"{{ /isEnabled }}
-          {{ ^isEnabled }}aria-disabled="true"{{ /isEnabled }}
-        >
-          <div class="process-header">
-            <span class="process-icon">{{ icon }}</span>
-            <div class="process-info">
-              <h3 class="process-title">{{ label }}</h3>
-              <p class="process-desc">{{ description }}</p>
+        <div class="header-center">
+            Viernes, 3 de Octubre 2026 | 14:32 UTC
+        </div>
+        <div class="header-right">
+            <div class="system-status">
+                <div class="status-indicator"></div>
+                Sistema Operativo
             </div>
-          </div>
+            <div class="user-profile">
+                <div class="avatar">JD</div>
+                <div class="user-name">J. Díaz</div>
+            </div>
+        </div>
+    </header>
 
-          {{#count}}
-          <span class="process-count">{{ count }} items</span>
-          {{/count}}
+    <!-- MAIN WORKSPACE -->
+    <div class="workspace">
+        <!-- SIDEBAR LEFT -->
+        <aside class="sidebar-left">
+            <div class="module-btn active">
+                <div class="module-icon">H</div>
+                <span>Inicio</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">C</div>
+                <span>Contabilidad</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">S</div>
+                <span>Stock</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">D</div>
+                <span>Dinero</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">V</div>
+                <span>Clientes</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">R</div>
+                <span>RRHH</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">A</div>
+                <span>Reportes</span>
+            </div>
+            <div class="module-btn">
+                <div class="module-icon">G</div>
+                <span>Config</span>
+            </div>
+        </aside>
 
-          <button class="process-action" type="button" onclick="event.preventDefault(); window.location.href='{{ href }}'">
-            Acceder →
-          </button>
-        </a>
-        {{/processCards}}
-      </div>
-    </section>
+        <!-- CENTER PANEL -->
+        <main class="center-panel">
+            <!-- TODAY SECTION -->
+            <div>
+                <div class="section-label">Resumen del Dia</div>
+                <div class="today-container">
+                    <div class="today-header">
+                        <div class="today-date-display">
+                            <div class="today-date-num">03</div>
+                            <div class="today-date-day">Viernes</div>
+                        </div>
+                        <div class="today-meta">
+                            <div>Octubre 2026</div>
+                            <div>Semana 40</div>
+                        </div>
+                    </div>
+                    <div class="today-stats">
+                        <div class="today-stat">
+                            <div class="today-stat-value">12</div>
+                            <div class="today-stat-label">Movimientos</div>
+                        </div>
+                        <div class="today-stat">
+                            <div class="today-stat-value">45K</div>
+                            <div class="today-stat-label">Ingresos</div>
+                        </div>
+                        <div class="today-stat">
+                            <div class="today-stat-value">7</div>
+                            <div class="today-stat-label">Tareas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Enlaces Auxiliares -->
-    {{#auxiliaryLinks}}
-    <nav class="auxiliary-links" aria-label="Enlaces auxiliares">
-      {{#auxiliaryLinks}}
-      <a
-        href="{{ href }}"
-        class="auxiliary-link"
-        data-link-id="{{ id }}"
-      >
-        {{#icon}}<span>{{ icon }}</span>{{/icon}}
-        <span>{{ label }}</span>
-      </a>
-      {{/auxiliaryLinks}}
-    </nav>
-    {{/auxiliaryLinks}}
-  </main>
+            <!-- ACTIONS SECTION -->
+            <div>
+                <div class="section-label">Acciones Disponibles</div>
+                <div class="actions-container">
+                    <div class="action-card">
+                        <div class="action-icon-box">+</div>
+                        <div class="action-label">Nueva Factura</div>
+                        <div class="action-hint">Registra una transaccion</div>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon-box">M</div>
+                        <div class="action-label">Movimiento</div>
+                        <div class="action-hint">Entrada/salida de caja</div>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon-box">A</div>
+                        <div class="action-label">Ajuste Stock</div>
+                        <div class="action-hint">Modifica inventario</div>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon-box">P</div>
+                        <div class="action-label">Nuevo Contacto</div>
+                        <div class="action-hint">Agrega cliente</div>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-  <script>
-    /**
-     * Script de interactividad del Hub
-     * - Cambio de rol
-     * - Analytics básico
-     */
+        <!-- SIDEBAR RIGHT - ALERTS -->
+        <aside class="sidebar-right">
+            <div class="alerts-section">
+                <div class="section-label">Alertas</div>
 
-    function cambiarRol(nuevoRol) {
-      // Enviar cambio de rol al servidor
-      const params = new URLSearchParams({ role: nuevoRol });
-      window.location.href = `/api/user/role?${params.toString()}`;
-    }
+                <div class="alert-item critical">
+                    <div class="alert-title">Stock Minimo</div>
+                    <div>Papeleria alcanzó nivel minimo. Reorden requerida.</div>
+                    <div class="alert-time">Hace 5 min</div>
+                </div>
 
-    // Analytics: track process access
-    document.querySelectorAll('.process-card').forEach(card => {
-      card.addEventListener('click', function(e) {
-        if (this.classList.contains('disabled')) {
-          e.preventDefault();
-          return;
-        }
-        const processId = this.dataset.processId;
-        console.log(`Analytics: Acceso a proceso ${processId}`);
-      });
-    });
+                <div class="alert-item">
+                    <div class="alert-title">Vencimiento</div>
+                    <div>Factura #2847 vence hoy. Acciones recomendadas.</div>
+                    <div class="alert-time">Hace 12 min</div>
+                </div>
 
-    // Analytics: track quick actions
-    document.querySelectorAll('.quick-action').forEach(action => {
-      action.addEventListener('click', function() {
-        const actionId = this.dataset.actionId;
-        console.log(`Analytics: Acción rápida ${actionId}`);
-      });
-    });
+                <div class="alert-item success">
+                    <div class="alert-title">Completado</div>
+                    <div>Cierre de caja del 2/10 finalizado correctamente.</div>
+                    <div class="alert-time">Hace 1 hora</div>
+                </div>
 
-    // Accesibilidad: Keyboard navigation
-    document.querySelectorAll('.process-card, .quick-action').forEach(element => {
-      element.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.click();
-        }
-      });
-    });
-  </script>
+                <div class="alert-item info">
+                    <div class="alert-title">Pago Recibido</div>
+                    <div>Cliente ABC procesó 8,500 correctamente.</div>
+                    <div class="alert-time">Hace 2 horas</div>
+                </div>
+
+                <div class="alert-item critical">
+                    <div class="alert-title">Evento Programado</div>
+                    <div>Reunion directiva 16:00. Confirmacion requerida.</div>
+                    <div class="alert-time">Hace 30 min</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- SIDEBAR CHAT -->
+        <aside class="sidebar-chat">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <span>Soporte</span>
+                    <div class="online-indicator"></div>
+                </div>
+            </div>
+            <div class="chat-messages">
+                <div class="message other">
+                    Buenos dias. Disponibles para asistencia.
+                </div>
+                <div class="message self">
+                    Duda sobre modulo de reportes.
+                </div>
+                <div class="message other">
+                    Cuéntame cual es tu pregunta.
+                </div>
+                <div class="message self">
+                    Como incluir impuestos en reporte anual.
+                </div>
+                <div class="message other">
+                    Reportes > Config > Imposiciones > Selecciona.
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Consulta...">
+                <button>Enviar</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        document.querySelectorAll('.module-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', () => {
+                console.log('Acción:', card.querySelector('.action-label').textContent);
+            });
+        });
+
+        const chatInput = document.querySelector('.chat-input input');
+        const sendBtn = document.querySelector('.chat-input button');
+        const messages = document.querySelector('.chat-messages');
+
+        sendBtn.addEventListener('click', () => {
+            if (chatInput.value.trim()) {
+                const msg = document.createElement('div');
+                msg.className = 'message self';
+                msg.textContent = chatInput.value;
+                messages.appendChild(msg);
+                messages.scrollTop = messages.scrollHeight;
+                chatInput.value = '';
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+    </script>
 </body>
 </html>
