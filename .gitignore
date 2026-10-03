@@ -5,3 +5,4 @@ dist/
 coverage/
 *.sqlite
 presentation/_uispec-validator-perf.csv
+tsconfig.test.json
