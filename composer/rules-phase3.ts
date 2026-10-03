@@ -201,15 +201,15 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
   // ——————————————————————————————————————————————————————————————————
   {
     id: "R_APROBACION_IMPORTE",
-    description: "any archetype → política de aprobación de importes altos (100€+)",
-    when: "always",
+    description: "venta/servicio → política de aprobación de importes altos (100€+)",
+    when: "dominant:venta|dominant:servicio_proyecto|dominant:suscripcion",
     then: [
       {
         type: "add_policy",
         plantilla: "tpl.importe_requiere_aprobacion",
         parametros: {
           importe_eur: 100,
-          aprueba: "director_general",
+          aprueba: "director",
         },
         idSuffix: "aprobacion-importe",
       },
