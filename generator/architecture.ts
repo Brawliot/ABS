@@ -436,10 +436,12 @@ export class GeneratorArchitecture {
    */
   async execute(input: any, context: GeneratorContext): Promise<any> {
     let result = input;
+    let anyLayerExecuted = false;
 
     for (const layer of this.layers) {
       if (layer.canHandle(result)) {
         result = await layer.execute(result, context);
+        anyLayerExecuted = true;
 
         // Validar output
         if (!layer.validate(input, result)) {
@@ -448,6 +450,13 @@ export class GeneratorArchitecture {
           );
         }
       }
+    }
+
+    // Si no se ejecutó ninguna capa, significa que el input no pudo ser manejado
+    if (!anyLayerExecuted && this.layers.length > 0) {
+      throw new Error(
+        `Ninguna capa pudo manejar el input. Input inválido o vacio.`,
+      );
     }
 
     return result;
