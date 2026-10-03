@@ -359,9 +359,9 @@
         <main class="center-panel">
             <div>
                 <div class="section-label">Resumen del Dia</div>
-                <div class="today-box">
+                <div class="today-box" id="summaryContainer">
                     <div class="today-date">03</div>
-                    <div class="today-stats">
+                    <div class="today-stats" id="statsContainer">
                         <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">Movimientos</div></div>
                         <div class="stat-card"><div class="stat-value">45K</div><div class="stat-label">Ingresos</div></div>
                         <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">Tareas</div></div>
@@ -447,6 +447,27 @@
             });
         });
 
+        // Renderizar resumen dinámicamente
+        function renderSummary() {
+            const container = document.getElementById('statsContainer');
+            const data = window.DASHBOARD_DATA;
+
+            if (!data || !data.summary || data.summary.length === 0) {
+                return; // Mantener valores por defecto
+            }
+
+            container.innerHTML = '';
+            data.summary.forEach(widget => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.innerHTML = `
+                    <div class="stat-value">${widget.icon || ''} ${widget.value}</div>
+                    <div class="stat-label">${widget.label}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         // Renderizar acciones dinámicamente desde los datos inyectados
         function renderActions() {
             const container = document.getElementById('actionsContainer');
@@ -464,7 +485,7 @@
                 btn.onclick = () => window.location.href = action.href;
 
                 btn.innerHTML = `
-                    <div class="action-label">${action.label}</div>
+                    <div class="action-label">${action.icon || ''} ${action.label}</div>
                     <div class="action-hint">${action.requiredPermissions?.join(', ') || 'Acción disponible'}</div>
                 `;
 
@@ -472,11 +493,16 @@
             });
         }
 
-        // Inicializar acciones cuando el DOM esté listo
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', renderActions);
-        } else {
+        // Inicializar contenido dinámico cuando el DOM esté listo
+        function initDashboard() {
+            renderSummary();
             renderActions();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDashboard);
+        } else {
+            initDashboard();
         }
     </script>
 </body>
