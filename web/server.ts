@@ -1108,7 +1108,31 @@ export function startWebServer(
 
           // Datos del usuario
           const userId = ident.session?.accountId ?? "guest";
-          const roleId = ident.dev.roleId ?? boot.roles[0]?.id ?? "gerente";
+
+          // Validar que el roleId existe en boot.input
+          let roleId = ident.dev.roleId ?? parseQuery(url).role;
+          if (roleId && boot.input.processGroups) {
+            const validRoles = new Set<string>();
+            for (const group of boot.input.processGroups) {
+              for (const rid of group.roleIds) {
+                validRoles.add(rid);
+              }
+            }
+            if (!validRoles.has(roleId)) {
+              roleId = Array.from(validRoles)[0];
+            }
+          }
+          if (!roleId && boot.input.processGroups) {
+            const validRoles = new Set<string>();
+            for (const group of boot.input.processGroups) {
+              for (const rid of group.roleIds) {
+                validRoles.add(rid);
+              }
+            }
+            roleId = Array.from(validRoles)[0];
+          }
+          roleId = roleId ?? "gerente";
+
           const userName = ident.session?.displayName ?? "Usuario";
 
           // Renderizar con datos dinámicos
