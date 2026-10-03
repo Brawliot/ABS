@@ -232,7 +232,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
           obligatoria: true,
         },
         idSuffix: "evidencia-entrega",
-        transitionId: "t_entregar",
+        transitionId: "t_aceptar",
       },
     ],
   },
