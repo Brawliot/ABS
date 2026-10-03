@@ -1108,11 +1108,25 @@ export function startWebServer(
 
           const userId = ident.session?.accountId ?? "guest";
           const userName = ident.session?.displayName ?? "Usuario";
-          const requestedRole = ident.dev.roleId ?? parseQuery(url).role;
 
-          // Usar roles válidos del boot
+          // Intentar obtener rol de: URL query > sesión dev > first available role
+          const query = parseQuery(url);
           const validRoles = boot.roles.map(r => r.id);
-          const roleId = validRoles.includes(requestedRole) ? requestedRole : boot.roles[0]?.id ?? "gerente";
+          const requestedRole = query.role ?? ident.dev.roleId;
+
+          // Validar y asegurar que el rol existe
+          let roleId = requestedRole;
+          if (!validRoles.includes(roleId)) {
+            roleId = boot.roles[0]?.id;
+            if (!roleId) {
+              // Si no hay roles en boot, mostrar error descriptivo
+              return send(res, 500, `
+                <h1>Error: No hay roles disponibles</h1>
+                <p>boot.roles está vacío. Roles disponibles: ${JSON.stringify(validRoles)}</p>
+                <p>Intenta acceder a: <a href="/inicio?role=${validRoles[0]}">/inicio?role=${validRoles[0]}</a></p>
+              `, "text/html; charset=utf-8");
+            }
+          }
 
           // Renderizar con datos dinámicos
           const html = renderHubDashboardWithData(boot.input, userId, roleId, userName);
