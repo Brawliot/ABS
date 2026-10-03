@@ -23,6 +23,12 @@ export {
   parseAndValidateUiSpec,
   UiSpecValidationError,
   ValidationCache,
+  ValidatorObservability,
+  getValidatorMetrics,
+  exportValidatorMetricsJson,
+  exportValidatorMetricsCsv,
+  getValidatorLogs,
+  resetValidatorObservability,
 } from "./uispec-validator.js";
 export type {
   UiSpecValidationCode,

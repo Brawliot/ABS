@@ -135,6 +135,157 @@ function push(
 }
 
 /**
+ * Telemetría exhaustiva del Validador UiSpec.
+ * Singleton que colecta métricas de validaciones, caché, tiempo, y severity.
+ * Integrable con ELK, Prometheus, Datadog, etc.
+ *
+ * Métricas:
+ * - validationsAttempted: total de specs validados
+ * - validationsPassed: specs válidas
+ * - validationsFailed: specs inválidas
+ * - cacheHits: reuses de caché (hit rate = hits / attempted)
+ * - cacheMisses: revalidaciones
+ * - avgValidationTimeMs: tiempo promedio de validación
+ * - criticalIssuesCount: por código, severidad critica
+ */
+export class ValidatorObservability {
+  private static instance: ValidatorObservability | null = null;
+
+  private validationsAttempted = 0;
+  private validationsPassed = 0;
+  private validationsFailed = 0;
+  private cacheHits = 0;
+  private cacheMisses = 0;
+  private totalValidationTimeMs = 0;
+  private criticalIssuesByCode = new Map<string, number>();
+  private logs: Array<{ level: "debug" | "info" | "warn" | "error"; msg: string; timestamp: string }> = [];
+  private readonly maxLogs = 1000; // Evitar memory leak
+
+  private constructor() {}
+
+  static getInstance(): ValidatorObservability {
+    if (!ValidatorObservability.instance) {
+      ValidatorObservability.instance = new ValidatorObservability();
+    }
+    return ValidatorObservability.instance;
+  }
+
+  recordValidationAttempt(success: boolean, validationTimeMs: number, issues?: readonly UiSpecValidationIssue[]): void {
+    this.validationsAttempted++;
+    if (success) {
+      this.validationsPassed++;
+      this.log("info", `validación exitosa en ${validationTimeMs.toFixed(2)}ms`);
+    } else {
+      this.validationsFailed++;
+      if (issues) {
+        for (const issue of issues) {
+          if (issue.severity === "critica") {
+            const count = this.criticalIssuesByCode.get(issue.code) ?? 0;
+            this.criticalIssuesByCode.set(issue.code, count + 1);
+          }
+        }
+      }
+      this.log("warn", `validación fallida: ${issues?.length ?? 0} issues en ${validationTimeMs.toFixed(2)}ms`);
+    }
+    this.totalValidationTimeMs += validationTimeMs;
+  }
+
+  recordCacheHit(): void {
+    this.cacheHits++;
+    this.log("debug", "cache hit");
+  }
+
+  recordCacheMiss(): void {
+    this.cacheMisses++;
+    this.log("debug", "cache miss");
+  }
+
+  private log(level: "debug" | "info" | "warn" | "error", msg: string): void {
+    const entry = {
+      level,
+      msg,
+      timestamp: new Date().toISOString(),
+    };
+    this.logs.push(entry);
+    // LRU: mantener últimas maxLogs
+    if (this.logs.length > this.maxLogs) {
+      this.logs.shift();
+    }
+  }
+
+  getMetrics(): {
+    validationsAttempted: number;
+    validationsPassed: number;
+    validationsFailed: number;
+    cacheHits: number;
+    cacheMisses: number;
+    cacheHitRate: number;
+    avgValidationTimeMs: number;
+    criticalIssuesByCode: Record<string, number>;
+  } {
+    return {
+      validationsAttempted: this.validationsAttempted,
+      validationsPassed: this.validationsPassed,
+      validationsFailed: this.validationsFailed,
+      cacheHits: this.cacheHits,
+      cacheMisses: this.cacheMisses,
+      cacheHitRate:
+        this.validationsAttempted > 0 ? this.cacheHits / this.validationsAttempted : 0,
+      avgValidationTimeMs:
+        this.validationsAttempted > 0
+          ? this.totalValidationTimeMs / this.validationsAttempted
+          : 0,
+      criticalIssuesByCode: Object.fromEntries(this.criticalIssuesByCode),
+    };
+  }
+
+  getLogs(level?: "debug" | "info" | "warn" | "error"): Array<{ level: string; msg: string; timestamp: string }> {
+    if (!level) return this.logs;
+    return this.logs.filter((l) => l.level === level);
+  }
+
+  exportMetricsToJson(): string {
+    const metrics = this.getMetrics();
+    return JSON.stringify(
+      {
+        timestamp: new Date().toISOString(),
+        ...metrics,
+      },
+      null,
+      2,
+    );
+  }
+
+  exportMetricsToCsv(): string {
+    const metrics = this.getMetrics();
+    const rows: string[] = [];
+    rows.push("timestamp,metric_name,value");
+    rows.push(`${new Date().toISOString()},validations_attempted,${metrics.validationsAttempted}`);
+    rows.push(`${new Date().toISOString()},validations_passed,${metrics.validationsPassed}`);
+    rows.push(`${new Date().toISOString()},validations_failed,${metrics.validationsFailed}`);
+    rows.push(`${new Date().toISOString()},cache_hits,${metrics.cacheHits}`);
+    rows.push(`${new Date().toISOString()},cache_misses,${metrics.cacheMisses}`);
+    rows.push(`${new Date().toISOString()},cache_hit_rate,${metrics.cacheHitRate}`);
+    rows.push(`${new Date().toISOString()},avg_validation_time_ms,${metrics.avgValidationTimeMs.toFixed(2)}`);
+    for (const [code, count] of Object.entries(metrics.criticalIssuesByCode)) {
+      rows.push(`${new Date().toISOString()},critical_issues_${code},${count}`);
+    }
+    return rows.join("\n");
+  }
+
+  reset(): void {
+    this.validationsAttempted = 0;
+    this.validationsPassed = 0;
+    this.validationsFailed = 0;
+    this.cacheHits = 0;
+    this.cacheMisses = 0;
+    this.totalValidationTimeMs = 0;
+    this.criticalIssuesByCode.clear();
+    this.logs = [];
+  }
+}
+
+/**
  * Caché LRU para validaciones por contentHash.
  * Evita re-validar specs idénticas.
  */
@@ -1127,18 +1278,23 @@ const globalValidationCache = new ValidationCache();
 /**
  * Valida UiSpec contra GeneratorInput. Devuelve report completo (todos los fallos).
  * Usa caché por contentHash para evitar re-validación de specs idénticas.
+ * Fase 3: Integra telemetría exhaustiva.
  */
 export function validateUiSpecReport(
   raw: unknown,
   input: GeneratorInput,
   options?: { readonly validatedAt?: string; readonly cache?: ValidationCache },
 ): UiSpecValidationReport {
+  const startTime = performance.now();
+  const obs = ValidatorObservability.getInstance();
   const issues: UiSpecValidationIssue[] = [];
   const validatedAt = options?.validatedAt ?? new Date().toISOString();
   const cache = options?.cache ?? globalValidationCache;
 
   const spec = checkSchema(raw, issues);
   if (!spec) {
+    const elapsedMs = performance.now() - startTime;
+    obs.recordValidationAttempt(false, elapsedMs, issues);
     return {
       ok: false,
       issues,
@@ -1154,8 +1310,13 @@ export function validateUiSpecReport(
   const contentHashKey = spec.contentHash;
   const cachedReport = cache.get(contentHashKey);
   if (cachedReport) {
+    obs.recordCacheHit();
+    const elapsedMs = performance.now() - startTime;
+    obs.recordValidationAttempt(cachedReport.ok, elapsedMs, cachedReport.issues);
     return cachedReport;
   }
+
+  obs.recordCacheMiss();
 
   if (!SUPPORTED_PRESENTATION_SCHEMA_VERSIONS.has(spec.version)) {
     // ya añadido si venía version string; asegurar
@@ -1185,6 +1346,10 @@ export function validateUiSpecReport(
 
   // Guardar en caché
   cache.set(contentHashKey, report);
+
+  // Telemetría
+  const elapsedMs = performance.now() - startTime;
+  obs.recordValidationAttempt(report.ok, elapsedMs, report.issues);
 
   return report;
 }
@@ -1267,6 +1432,42 @@ export function parseAndValidateUiSpec(
     });
   }
   return validateUiSpec(raw, input);
+}
+
+/**
+ * Obtiene métricas de observability del validador.
+ * Devuelve contadores, hit rates, tiempos, y issues críticos por código.
+ */
+export function getValidatorMetrics() {
+  return ValidatorObservability.getInstance().getMetrics();
+}
+
+/**
+ * Exporta métricas en formato JSON (integrable con ELK/Prometheus).
+ */
+export function exportValidatorMetricsJson(): string {
+  return ValidatorObservability.getInstance().exportMetricsToJson();
+}
+
+/**
+ * Exporta métricas en formato CSV (integrable con Grafana/Splunk).
+ */
+export function exportValidatorMetricsCsv(): string {
+  return ValidatorObservability.getInstance().exportMetricsToCsv();
+}
+
+/**
+ * Obtiene logs del validador filtrados por nivel.
+ */
+export function getValidatorLogs(level?: "debug" | "info" | "warn" | "error") {
+  return ValidatorObservability.getInstance().getLogs(level);
+}
+
+/**
+ * Resetea métricas (útil para benchmarks/tests).
+ */
+export function resetValidatorObservability(): void {
+  ValidatorObservability.getInstance().reset();
 }
 
 export type { ViewSpec, ActionSpec };
