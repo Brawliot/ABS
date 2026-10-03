@@ -11,6 +11,8 @@ import {
 import type { ComposedArchetypeSpec } from "../archetypes/types.js";
 import { deriveState, type DerivedState } from "../core/derivation.js";
 import type { TransitionEvent } from "../core/events.js";
+import { calcularTotales } from "../elements/transaccion.js";
+import { direccionDe } from "../elements/movimientos.js";
 import type { ActorKind } from "../core/grammar.js";
 import { findState } from "../core/lifecycle.js";
 import type { Lifecycle, Transition } from "../core/lifecycle.js";
@@ -149,10 +151,13 @@ function processGroupForArchetype(
 function subSnapshots(
   runtime: AppRuntime,
   composition: ComposedArchetypeSpec | undefined,
+  principalId: string,
 ): SubTransactionSnapshot[] {
   if (!composition) return [];
   const out: SubTransactionSnapshot[] = [];
   for (const sub of runtime.subjects) {
+    // Solo los secundarios vinculados a este expediente principal
+    if (runtime.datosDe(sub.id)?.datos.vinculadoA !== principalId) continue;
     const slice = runtime.boot.input.lifecycles.find(
       (l) => l.id === sub.lifecycleId,
     );
@@ -182,6 +187,12 @@ export async function executeUiAction(
   runtime: AppRuntime,
   body: ActionRequestBody,
 ): Promise<ActionResult> {
+  console.log("[ExecuteUiAction] Acción recibida:", {
+    actionId: body.actionId,
+    subjectId: body.subjectId,
+    roleId: body.roleId,
+  });
+
   const action = runtime.actionById(body.actionId);
   if (!action) {
     const flash: FlashMessage = {
@@ -251,12 +262,9 @@ async function executeUiActionLocked(
 
   const transition = findLifeTransition(slice.lifecycle, action.transitionId);
   if (!transition) {
-    const availableActions = slice.lifecycle.transitions
-      .map(t => t.id)
-      .join(", ");
     const flash: FlashMessage = {
       kind: "error",
-      text: `La acción «${action.transitionId}» no existe en el ciclo de vida actual de este expediente. Acciones disponibles: ${availableActions || "ninguna (estado terminal)"}`,
+      text: `«${runtime.etiquetas.accion(slice.id, action.transitionId)}» no se puede hacer con este expediente. Recarga la página para ver las acciones disponibles.`,
     };
     runtime.setFlash(flash);
     return { ok: false, flash, idempotentReplay: false };
@@ -267,11 +275,25 @@ async function executeUiActionLocked(
     runtime.store.getBySubject(body.subjectId) as TransitionEvent[],
     { parte_id: body.parteId },
   );
+  // Calcular total a partir de las líneas de la transacción actual
+  const txCurrent = runtime.datosDe(body.subjectId);
+  const totalCentimos = txCurrent ? calcularTotales(txCurrent.datos.lineas).total : 0;
+  // Preparar datos para validación, incluyendo cliente_id/proveedor_id como fallback
+  const currentFields = txCurrent?.datos.campos ? { ...txCurrent.datos.campos } : {};
+  if (!currentFields.cliente_id && txCurrent?.datos.parteId) {
+    currentFields.cliente_id = txCurrent.datos.parteId;
+  }
+  if (!currentFields.proveedor_id && txCurrent?.datos.parteId) {
+    currentFields.proveedor_id = txCurrent.datos.parteId;
+  }
   const txDataForValidation = {
     ...priorFields,
     arquetipo_id: slice.archetypeId,
     parte_id: body.parteId,
     ...body.formValues,
+    ...(totalCentimos > 0 ? { total: totalCentimos / 100 } : { total: 0 }),
+    // Incluir campos de la transacción actual si existe
+    ...currentFields,
   };
   const validacion = runtime.motorValidacion.validarTransicion(
     txDataForValidation,
@@ -331,7 +353,7 @@ async function executeUiActionLocked(
     const blocks = evaluateBlocks(
       composition,
       transition.to,
-      subSnapshots(runtime, composition),
+      subSnapshots(runtime, composition, body.subjectId),
     ).filter((b) => b.blocksTransition);
     if (blocks.length > 0) {
       const b = blocks[0]!;
@@ -466,11 +488,14 @@ async function executeUiActionLocked(
     };
   }
 
+  const hitosFields = runtime.camposHitosPagados?.(body.subjectId) ?? {};
+
   const fields: Record<string, unknown> = {
     ...txDataForValidation,
     parte_id: body.parteId,
     ...enrichedForm,
     ...request.fields,
+    ...hitosFields,
   };
   // Coerción numérica / fechas ya en string
   for (const [k, v] of Object.entries(fields)) {
@@ -483,6 +508,30 @@ async function executeUiActionLocked(
   }
   if (fields.importe === "" || fields.importe === undefined) {
     delete fields.importe;
+  }
+  // Expediente con datos: su cliente y su total mandan (no la Parte de quien
+  // pulsa). Un importe escrito en el formulario (cobro parcial) se respeta.
+  fields.subject_id = body.subjectId;
+  const tx = runtime.datosDe(body.subjectId);
+  if (tx) {
+    // Datos adicionales del expediente; vacío = 0 / «no» (sin descuento, sin fianza…)
+    for (const c of runtime.camposDeProceso(slice.id)) {
+      if (fields[c.campo] !== undefined && fields[c.campo] !== "") continue;
+      const v = tx.datos.campos?.[c.campo];
+      if (v !== undefined) fields[c.campo] = v;
+      else if (c.tipo === "numero") fields[c.campo] = 0;
+      else if (c.tipo === "si_no") fields[c.campo] = false;
+    }
+    // Hechos del cliente que el negocio no tiene que teclear
+    const impagos = runtime.impagosDe(tx.datos.parteId);
+    if (fields.dias_impago === undefined) fields.dias_impago = impagos.dias;
+    if (fields.recibos_pendientes === undefined) fields.recibos_pendientes = impagos.recibos;
+    fields.parte_id = tx.datos.parteId;
+    fields.sentido = direccionDe(slice.exchangeDirection);
+    const typed = request.fields.importe ?? enrichedForm.importe;
+    if (typed === undefined || typed === "") {
+      fields.importe = calcularTotales(tx.datos.lineas).total / 100;
+    }
   }
 
   const factReqs = collectFactRequests(
@@ -588,12 +637,21 @@ async function executeUiActionLocked(
       fields,
       ruleSet,
       tenantId: runtime.tenantId,
+      lifecycleId: slice.id,
       ...(bag ? { facts: bag } : {}),
       ...(force ? { force } : {}),
     });
 
     runtime.store.append(judged.event);
     runtime.facts.applyEvent(runtime.tenantId, judged.event);
+
+    // Gestionar reservas de stock al cambiar estado
+    const toState = slice.lifecycle.states.find((s) => s.id === judged.event.toStateId);
+    if ((toState?.kind as any) === "terminal_exito") {
+      runtime.confirmarReservasDelExpediente?.(body.subjectId);
+    } else if ((toState?.kind as any) === "terminal_excepcion" || (toState?.kind as any) === "terminal_abandono") {
+      runtime.cancelarReservasDelExpediente?.(body.subjectId);
+    }
 
     // FASE 0D: EJECUTAR reversiones si es transición de cancelación (MotorReversiones)
     const reversionesResult = runtime.motorReversiones.revertir(
@@ -604,7 +662,6 @@ async function executeUiActionLocked(
       console.log(
         `↩️ Reversiones ejecutadas: ${reversionesResult.acciones_ejecutadas.map((a) => a.tipo).join(", ")}`,
       );
-      // Registrar acciones de reversión como parte del audit
       for (const accion of reversionesResult.acciones_ejecutadas) {
         console.log(
           `   → ${accion.tipo}: ${accion.entidad} (${accion.razon})`,
@@ -636,6 +693,7 @@ async function executeUiActionLocked(
     );
     await runtime.motorNotificaciones.enviarNotificaciones(
       notificacionesResult.notificaciones,
+      txDataForValidation,
     );
 
     // Construir mensaje con info completa
@@ -688,6 +746,20 @@ async function executeUiActionLocked(
     }
     if (err instanceof JudgeRejectionError) {
       let text: string;
+      // Regla que frena por un dato adicional del expediente: decir cuál
+      const rule = ruleSet.rules.find((r) => r.id === err.trace.appliedRuleId);
+      const campo =
+        rule?.kind === "condition"
+          ? runtime.camposDeProceso(slice.id).find((c) => c.campo === (rule.predicate as { field?: string }).field)
+          : undefined;
+      if (campo) {
+        const flash: FlashMessage = {
+          kind: "error",
+          text: `No se puede «${runtime.etiquetas.accion(slice.id, action.transitionId)}» con el valor actual de «${runtime.etiquetas.campo(campo.campo)}». Revísalo en «Editar datos» del expediente.`,
+        };
+        runtime.setFlash(flash);
+        return { ok: false, flash, idempotentReplay };
+      }
       try {
         const accionLabel =
           runtime.boot.spec.content[action.id]?.title ??
@@ -698,45 +770,12 @@ async function executeUiActionLocked(
           pedido: body.subjectId,
         });
       } catch {
-        // Fallback a LLM para explicación clara
-        try {
-          const llmResult = await runtime.llmClient.completeStructured({
-            componentId: "diagnosis",
-            callKind: "diagnosis.extract_answers",
-            system: "Eres un asistente que explica en lenguaje claro y profesional por qué se rechazó una transición comercial. Sé conciso (máximo 2 líneas).",
-            userPayload: {
-              razon: err.trace.reason || "Rechazado por política",
-              transicion: action.transitionId,
-              regla: err.trace.appliedRuleId,
-            },
-            schema: z.object({ explicacion: z.string() }),
-            schemaName: "rejection_explanation",  // ← AQUÍ
-            jsonSchema: {
-              type: "object",
-              properties: {
-                explicacion: { type: "string", description: "Explicación clara" },
-              },
-              required: ["explicacion"],
-            },
-            failureMode: "ask_clarification",
-          });
-          
-          if (llmResult.kind === "ok") {
-            text = llmResult.data.explicacion;
-          } else {
-            const reason = err.trace.reason || err.message;
-            text =
-              reason && !/Error|at Object|stack/i.test(reason)
-                ? reason
-                : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-          }
-        } catch {
-          const reason = err.trace.reason || err.message;
-          text =
-            reason && !/Error|at Object|stack/i.test(reason)
-              ? reason
-              : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
-        }
+        // Fallback: usar la razón del error directamente
+        const reason = err.trace.reason || err.message;
+        text =
+          reason && !/Error|at Object|stack/i.test(reason)
+            ? reason
+            : "No se pudo completar la acción con las reglas actuales. Revise permisos, documentos o saldos pendientes.";
       }
       const flash: FlashMessage = { kind: "error", text };
       runtime.setFlash(flash);

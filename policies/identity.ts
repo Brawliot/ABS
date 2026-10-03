@@ -6,6 +6,7 @@
  */
 
 import type { TenantId } from "../tenancy/index.js";
+import type { ParteSubtype } from "../elements/subtypes.js";
 
 /** Atributos personales (PII) — NUNCA van en DomainEvent. */
 export interface PartePersonalData {
@@ -20,6 +21,8 @@ export interface PartePersonalData {
 export interface ParteIdentityRecord {
   readonly parteId: string;
   readonly tenantId: TenantId;
+  /** Subtipo cerrado (cliente, proveedor…). No es PII. */
+  readonly subtype?: ParteSubtype;
   readonly personal: PartePersonalData | null;
   readonly erasedAt: string | null;
   readonly createdAt: string;
@@ -52,12 +55,15 @@ export class ParteIdentityStore {
     parteId: string,
     personal: PartePersonalData,
     at: string,
+    subtype?: ParteSubtype,
   ): ParteIdentityRecord {
     const map = this.mapFor(tenantId);
     const prev = map.get(parteId);
+    const effectiveSubtype = subtype ?? prev?.subtype;
     const rec: ParteIdentityRecord = {
       parteId,
       tenantId,
+      ...(effectiveSubtype ? { subtype: effectiveSubtype } : {}),
       personal: { ...personal },
       erasedAt: null,
       createdAt: prev?.createdAt ?? at,
@@ -91,6 +97,15 @@ export class ParteIdentityStore {
 
   get(tenantId: TenantId, parteId: string): ParteIdentityRecord | undefined {
     return this.byTenant.get(tenantId)?.get(parteId);
+  }
+
+  /** Todas las Partes del tenant (incluidas las borradas), por fecha de alta. */
+  list(tenantId: TenantId): readonly ParteIdentityRecord[] {
+    return [...(this.byTenant.get(tenantId)?.values() ?? [])].sort((a, b) =>
+      a.createdAt === b.createdAt
+        ? a.parteId.localeCompare(b.parteId)
+        : a.createdAt.localeCompare(b.createdAt),
+    );
   }
 
   /**

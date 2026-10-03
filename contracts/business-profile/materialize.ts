@@ -406,6 +406,9 @@ export function materializeBusinessProfileDetailed(
       archetypeId: p.archetypeId,
       lifecycle: arch.lifecycle,
       ...(p.label !== undefined ? { label: p.label } : {}),
+      ...(p.exchangeDirection !== undefined
+        ? { exchangeDirection: p.exchangeDirection }
+        : {}),
     };
   });
 
@@ -563,6 +566,9 @@ export function materializeBusinessProfileDetailed(
       hasFiscalCompliance,
       hasCalendar,
       ...(pipeline !== undefined ? { pipelineStateIds: pipeline } : {}),
+      ...(profile.vocabulario !== undefined
+        ? { vocabulario: profile.vocabulario }
+        : {}),
     };
 
     return {

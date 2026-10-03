@@ -30,6 +30,7 @@ export const FACT_IDS = {
   PARTE_ANTIGUEDAD_MS: "parte.antiguedad_ms",
   RECURSO_CAPACIDAD_COMPROMETIDA: "recurso.capacidad_comprometida",
   PARTE_TX_EN_ESTADO: "parte.tx_en_estado",
+  PARTE_IMPORTE_IMPAGADO: "parte.importe_impagado",
   /** 1 si actor/recurso está en turno abierto; 0 si no. */
   CALENDARIO_TURNO_DISPONIBLE: "calendario.turno_disponible",
   /** Progreso de meta de volumen (agregado; informativo). */
@@ -44,9 +45,13 @@ export const FACT_CATALOG: readonly FactDefinition[] = [
     label: "Saldo pendiente de una Parte",
     resultType: "number",
     element: "parte",
-    params: [{ name: "parteId", type: "string", required: true }],
+    params: [
+      { name: "parteId", type: "string", required: true },
+      // La transacción que se evalúa no cuenta como deuda previa de sí misma.
+      { name: "excludeSubjectId", type: "string", required: false },
+    ],
     derivation:
-      "Suma de importes de transacciones abiertas (no terminal) vinculadas a la Parte, por tenant",
+      "Suma de importes de transacciones abiertas (no terminal) vinculadas a la Parte, por tenant; excluye excludeSubjectId si se indica",
   },
   {
     id: FACT_IDS.PARTE_ANTIGUEDAD_MS,
@@ -81,6 +86,18 @@ export const FACT_CATALOG: readonly FactDefinition[] = [
     ],
     derivation:
       "Conteo de transacciones abiertas de la Parte cuyo estado actual es stateId",
+  },
+  {
+    id: FACT_IDS.PARTE_IMPORTE_IMPAGADO,
+    label: "Importe impagado de una Parte",
+    resultType: "number",
+    element: "parte",
+    params: [
+      { name: "parteId", type: "string", required: true },
+      { name: "excludeSubjectId", type: "string", required: false },
+    ],
+    derivation:
+      "Suma de importes de transacciones de la Parte en estado de impago (impagada, no_devuelta), por tenant",
   },
   {
     id: FACT_IDS.CALENDARIO_TURNO_DISPONIBLE,

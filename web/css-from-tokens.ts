@@ -321,6 +321,10 @@ textarea:focus-visible {
   font-weight: 700;
 }
 
+.nav-process ul + h2 {
+  margin-top: var(--espaciado-xl);
+}
+
 .nav-process ul {
   list-style: none;
   margin: 0;

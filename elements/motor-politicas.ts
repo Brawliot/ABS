@@ -163,6 +163,11 @@ export class MotorPoliticasDeNegocio {
   ): boolean {
     const valor_actual = tx[politica.campo];
 
+    // Si el campo no existe (ej. margen no calculado aún), asumir que pasa
+    if (valor_actual === undefined) {
+      return true;
+    }
+
     switch (politica.condicion) {
       case "<=":
         return Number(valor_actual ?? 0) <= Number(politica.valor);

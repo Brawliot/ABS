@@ -171,7 +171,7 @@ describe("Web app — preguntas compositor visibles", () => {
     });
     if (boot.questions.length > 0) {
       expect(html).toContain("data-composer-questions=");
-      expect(html).toContain("Preguntas pendientes del compositor");
+      expect(html).toContain("Pendiente de confirmar");
       for (const q of boot.questions) {
         expect(html).toContain(`data-question-id="${q.id}"`);
       }

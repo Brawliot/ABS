@@ -4,6 +4,7 @@
  */
 
 import type { GeneratorInput, ModuleMatch, ModuleRule } from "../types.js";
+import { derivePresentationPanels } from "../presentation-rules.js";
 
 function rolesByHint(
   ctx: GeneratorInput,
@@ -212,4 +213,109 @@ export function deduceModules(ctx: GeneratorInput): ModuleMatch[] {
     if (m) out.push(m);
   }
   return out.sort((a, b) => a.moduleId.localeCompare(b.moduleId));
+}
+
+// ─── Decisor de módulos ─────────────────────────────────────────────────
+//
+// Decide qué partes lleva la app de cada negocio y por qué, a partir del
+// GeneratorInput (perfil materializado). A diferencia de las etiquetas mod.*
+// de arriba, estas decisiones SÍ encienden y apagan partes: lo no decidido
+// no aparece (menú, pantallas y rutas).
+
+export type ModuloId =
+  | "clientes"
+  | "catalogo"
+  | "dinero"
+  | "facturas"
+  | "stock"
+  | "agenda"
+  | "cuotas"
+  | "fianzas"
+  | "credito"
+  | "portal";
+
+export interface DecisionModulo {
+  readonly id: ModuloId;
+  readonly nombre: string;
+  readonly activo: boolean;
+  /** Por qué sí o por qué no, en castellano, con los datos del perfil. */
+  readonly motivo: string;
+}
+
+const ARQUETIPOS_CON_MERCANCIA = new Set(["venta", "servicio_proyecto"]);
+
+export function decidirModulos(input: GeneratorInput): DecisionModulo[] {
+  // Los paneles los decide el generador con sus reglas: se reutilizan tal cual.
+  const paneles = new Set(derivePresentationPanels(input).map((p) => p.kind));
+  const arquetipos = new Set(input.lifecycles.map((l) => l.archetypeId));
+  const d = (id: ModuloId, nombre: string, activo: boolean, si: string, no: string): DecisionModulo => ({
+    id,
+    nombre,
+    activo,
+    motivo: activo ? si : no,
+  });
+
+  const vendePorCantidad = input.naturalezaBienes.includes("propios_por_cantidad");
+  const mueveMercancia = [...arquetipos].some((a) => ARQUETIPOS_CON_MERCANCIA.has(a));
+
+  return [
+    d("clientes", "Clientes y proveedores", true, "Todo negocio intercambia con alguien.", ""),
+    d("catalogo", "Catálogo", true, "Todo negocio ofrece algo con un precio.", ""),
+    d("dinero", "Dinero", true, "Todo negocio cobra y paga.", ""),
+    d(
+      "facturas",
+      "Facturas",
+      input.hasFiscalCompliance || input.hasFormalDocuments,
+      "Tiene obligaciones fiscales o documentos formales.",
+      "El perfil no declara obligaciones fiscales ni documentos formales.",
+    ),
+    d(
+      "stock",
+      "Stock",
+      vendePorCantidad && mueveMercancia,
+      "Vende o usa productos propios que se cuentan.",
+      !vendePorCantidad
+        ? "No trabaja con productos propios que se cuenten."
+        : "Sus procesos no entregan mercancía (alquiler, suscripción, intermediación).",
+    ),
+    d(
+      "agenda",
+      "Agenda",
+      paneles.has("panel_agenda"),
+      "Trabaja con citas o capacidad por horas.",
+      "No trabaja con citas ni capacidad por horas.",
+    ),
+    d(
+      "cuotas",
+      "Cuotas",
+      paneles.has("panel_periodos"),
+      "Cobra suscripciones o cuotas periódicas.",
+      "No cobra cuotas periódicas.",
+    ),
+    d(
+      "fianzas",
+      "Fianzas",
+      paneles.has("panel_retencion"),
+      "Retiene fianzas o dinero de terceros (alquiler o intermediación).",
+      "No retiene fianzas.",
+    ),
+    d(
+      "credito",
+      "Crédito a clientes",
+      paneles.has("panel_credito") || input.paymentMode === "diferido",
+      paneles.has("panel_credito") ? "Vende a crédito o a plazos." : "Vende a cuenta: sus clientes pagan más tarde.",
+      "Cobra al momento.",
+    ),
+    d(
+      "portal",
+      "Portal del cliente",
+      paneles.has("portal_filtro"),
+      "Sus clientes consultan sus pedidos por su cuenta.",
+      "Sus clientes no tienen acceso propio.",
+    ),
+  ];
+}
+
+export function moduloActivo(input: GeneratorInput, id: ModuloId): boolean {
+  return decidirModulos(input).some((m) => m.id === id && m.activo);
 }

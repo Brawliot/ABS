@@ -240,6 +240,165 @@ export * from "./projection.js";
 export * from "./factory.js";
 export * from "./exchange-direction.js";
 export * from "./retention-settlement.js";
+export * from "./empleado.js";
+export * from "./vacaciones.js";
+export * from "./activo-fijo.js";
+export * from "./email-marketing.js";
+export * from "./lead-management.js";
+export * from "./cms.js";
+export * from "./seo.js";
+
+// Fase 3: Contabilidad, Estadísticas, Transporte
+export type { AsientoRegistro } from "../adapters/sqlite-asientos-store.js";
+export type { AsientoAutomatico } from "../policies/contabilidad-automatica.js";
+export type { PeriodoCerrado, CuadraturaPeriodo } from "../policies/cierre-periodo.js";
+export type { BalanceGeneral, PerdidayGanancia, FlujoEfectivo } from "../web/reportes-contables.js";
+export type { KPI, KPIPeriodo, ComparativaPeriodos, Alerta } from "../policies/kpi-engine.js";
+export type { Tendencia, PrediccionDemanda, Anomalia, Forecast } from "../policies/predicciones.js";
+export type { Dashboard } from "../web/dashboard-estadisticas.js";
+export type { Ruta, Parada, ResultadoOptimizacion } from "../policies/rutas-transporte.js";
+export type { TarifaProveedor, CostoRuta, ComparativaProveedores, Margen } from "../policies/costos-transporte.js";
+export type { Paquete, Vehiculo, PlanificacionDia, Conflicto } from "../policies/planificador-entregas.js";
+
+// Fase 4B: Simulador + I+D
+export type {
+  ModeloProyeccion,
+  Tendencia as TendenciaProyección,
+  EscenarioTipo,
+  DatoPunto,
+  ProyeccionLineal,
+  ProyeccionExponencial,
+  ProyeccionEstacional,
+  ProyeccionPolinómica,
+  Proyección,
+  Escenario,
+  ComparativaEscenarios,
+  AnálisisSensibilidad,
+  Elasticidad,
+  PuntoEquilibrio,
+  GráficoTornadoSensibilidad,
+  GuardadoSimulación,
+  ValidacionSimulación,
+  AccuracyPorModelo,
+  RecomendaciónModelo,
+} from "./simulador.js";
+export type {
+  EstadoProyecto,
+  TipoProyecto,
+  TipoExperimento,
+  EstadoRollout,
+  Hito,
+  RegistroTiempoTrabajo,
+  RegistroGasto,
+  ResumenPresupuesto,
+  ResultadoProyecto,
+  ProyectoIyD,
+  ReporteProyecto,
+  Experimento,
+  ResultadoExperimento,
+  PortfolioExperimentos,
+  IntegracióProducción,
+} from "./proyecto-iyd.js";
+
+// Fase Futuro: Integraciones Externas
+export type {
+  TipoConector,
+  Conector,
+  MapeoDatos,
+  ResultadoSincronización,
+  EstadoConector,
+} from "../policies/integraciones-connectors.js";
+export type {
+  TipoTrigger,
+  TipoPaso,
+  FlujoIntegración,
+  PasoFlujo,
+  RegistroEjecuciónFlujo,
+  ErrorFrecuente,
+} from "../policies/integraciones-flujos.js";
+
+// Fase Futuro: Documentos Compartidos
+export type {
+  NivelAcceso,
+  Documento,
+  Permiso,
+  LinkPublico,
+} from "../policies/documentos-acceso.js";
+export type { Versión, CambioDetectado } from "../policies/documentos-versionado.js";
+export type { Comentario, ResultadoBúsqueda } from "../policies/documentos-busqueda.js";
+
+// Fase Futuro: Presupuestos
+export type {
+  EstadoPresupuesto,
+  TipoPartida,
+  Presupuesto,
+  PartidaPresupuestaria,
+  EjecuciónPresupuesto,
+} from "../policies/presupuestos-motor.js";
+export type {
+  ConfiguraciónAlerta,
+  Escenario as EscenarioPresupuesto,
+  ComparativaEscenario,
+} from "../policies/presupuestos-alertas.js";
+export type {
+  DetallePartida,
+  TendenciaPresupuesto,
+  ReporteEjecución,
+} from "../policies/presupuestos-reportes.js";
+
+// Fase 5: CORE Operativo - MotorGeneradorProcesos
+export type {
+  TipoProceso,
+  EstadoProceso,
+  EstadoDocumento,
+  TipoDocumento,
+  TipoTarea,
+  TipoNotificación,
+  DocumentoGenerado,
+  EventoProceso,
+  MovimientoInventario,
+  AsientoContable,
+  TareaGenerada,
+  NotificaciónGenerada,
+  ProcesoGenerado,
+} from "./generador-procesos.js";
+export type {
+  PlantillaDocumento,
+} from "./plantillas-documentos.js";
+export {
+  PlantillaOrdenVenta,
+  PlantillaFactura,
+  PlantillaRemisión,
+  PlantillaRecibo,
+  PlantillaNotaCrédito,
+  PlantillaOC,
+  PlantillaContrato,
+  FactoryPlantillas,
+} from "./plantillas-documentos.js";
+
+// Fase 5: CORE Operativo - MotorEjecutorProcesos (SEGUNDO CORE)
+export type {
+  EstadoEjecución,
+  ResultadoPaso,
+  PrioridadEjecución,
+  ModoEjecución,
+  PasoEjecución,
+  ResultadoEjecuciónPaso,
+  EventoDisparo,
+  ResultadoWebhook,
+  EjecuciónProceso,
+  ConfiguraciónEjecución,
+  ContextoEjecución,
+  HistorialEjecución,
+  IMotorEjecutorProcesos,
+  ResultadoEjecuciónCompleto,
+} from "./ejecutor-procesos.js";
+export {
+  crearConfiguraciónEjecuciónPorDefecto,
+  crearPasoEjecución,
+  crearEjecuciónProceso,
+} from "./ejecutor-procesos.js";
+
 // Motores de Capa 0.2 - Generación
 export { MotorGeneradorProcesos } from "./motor-generador-procesos.js";
 // Motores de Capa 0.3 - Orquestación

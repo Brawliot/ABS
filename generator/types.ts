@@ -31,6 +31,11 @@ export interface LifecycleSlice {
    * Si hay `composition`, se infiere; si no, independiente.
    */
   readonly compositionRole?: "dominant" | "secondary" | "standalone";
+  /**
+   * Sentido del dinero: la empresa vende (entra) o compra (sale).
+   * Sin declarar se asume venta.
+   */
+  readonly exchangeDirection?: "empresa_vende" | "empresa_compra";
 }
 
 /**
@@ -61,6 +66,8 @@ export interface GeneratorInput {
   readonly hasFiscalCompliance: boolean;
   readonly hasCalendar: boolean;
   readonly pipelineStateIds?: readonly string[];
+  /** Vocabulario del negocio para las etiquetas visibles. */
+  readonly vocabulario?: Readonly<Record<string, string>>;
 }
 
 export interface ModuleMatch {

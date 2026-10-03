@@ -25,6 +25,8 @@ export const EventKinds = [
   "excepcion",
   "modificacion",
   "vencimiento",
+  "alta",
+  "datos",
 ] as const;
 export type EventKind = (typeof EventKinds)[number];
 

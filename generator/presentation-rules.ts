@@ -46,6 +46,23 @@ function primaryChannel(
 /**
  * Deriva paneles a partir de señales tipadas del núcleo / composición.
  */
+/** Campos que usan las reglas del negocio (recorre condiciones y restricciones). */
+function camposDeReglas(x: unknown, out = new Set<string>()): Set<string> {
+  if (Array.isArray(x)) for (const v of x) camposDeReglas(v, out);
+  else if (x && typeof x === "object") {
+    for (const [k, v] of Object.entries(x)) {
+      if (k === "field" && typeof v === "string") out.add(v);
+      else camposDeReglas(v, out);
+    }
+  }
+  return out;
+}
+
+/** El negocio cobra fianza: alguna regla pide el campo de fianza. */
+export function pideFianza(input: GeneratorInput): boolean {
+  return camposDeReglas(input.ruleSet).has("fianza_eur");
+}
+
 export function derivePresentationPanels(
   input: GeneratorInput,
 ): PresentationPanelDecl[] {
@@ -83,9 +100,11 @@ export function derivePresentationPanels(
     });
   }
 
+  // Intermediación siempre guarda dinero de terceros; un uso temporal solo si
+  // el negocio pide fianza (una agenda de citas no retiene nada).
   const hasRetencion =
     input.lifecycles.some((l) => l.archetypeId === "intermediacion") ||
-    input.lifecycles.some((l) => l.archetypeId === "uso_temporal");
+    (input.lifecycles.some((l) => l.archetypeId === "uso_temporal") && pideFianza(input));
   if (hasRetencion) {
     const lc =
       input.lifecycles.find(

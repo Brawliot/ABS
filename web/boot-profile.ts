@@ -1,3 +1,4 @@
+import type { SenalesNegocio } from "../design/generative.js";
 /**
  * Arranque: BusinessProfile / sample / concesionaria
  * → compositor → Generador → UiSpec sellada + DesignSystem.
@@ -29,25 +30,42 @@ import type { CompiledRuleSet } from "../policies/types.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { buildSampleRows, DEFAULT_SAMPLE_PARTES } from "./sample-data.js";
 import type { AppBootResult } from "./types.js";
+import { validarPasos, construirCiclo, reglasParaPasos } from "../elements/pasos.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SAMPLES_PATH = join(
-  ROOT,
-  "contracts/business-profile/samples/business-profiles-10.json",
-);
+const SAMPLE_FILES = [
+  join(ROOT, "contracts/business-profile/samples/business-profiles-10.json"),
+  join(ROOT, "contracts/business-profile/samples/negocios-nuevos.json"),
+];
+
+/** Lee los perfiles de un JSON: `{perfiles: [...]}`, una lista o un perfil suelto. */
+export function readSampleFile(path: string): SampleProfile[] {
+  const raw = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (Array.isArray(raw)) return raw as SampleProfile[];
+  const obj = raw as { perfiles?: SampleProfile[] };
+  return obj.perfiles ?? [raw as SampleProfile];
+}
+
+/** Perfiles cargados desde archivos sueltos (`--archivo`), por id. */
+const extraSamples = new Map<string, SampleProfile>();
+
+/** Registra los perfiles de un archivo externo y devuelve sus ids. */
+export function registerSampleFile(path: string): string[] {
+  const perfiles = readSampleFile(path);
+  for (const p of perfiles) extraSamples.set(p.id, p);
+  return perfiles.map((p) => p.id);
+}
+
+function allSamples(): SampleProfile[] {
+  return [...SAMPLE_FILES.flatMap(readSampleFile), ...extraSamples.values()];
+}
 
 export function listSampleProfileIds(): readonly string[] {
-  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
-    perfiles: SampleProfile[];
-  };
-  return raw.perfiles.map((p) => p.id);
+  return [...new Set(allSamples().map((p) => p.id))];
 }
 
 export function loadSampleProfile(id: string): SampleProfile {
-  const raw = JSON.parse(readFileSync(SAMPLES_PATH, "utf8")) as {
-    perfiles: SampleProfile[];
-  };
-  const p = raw.perfiles.find((x) => x.id === id);
+  const p = extraSamples.get(id) ?? allSamples().find((x) => x.id === id);
   if (!p) {
     throw new Error(
       `Perfil desconocido: ${id}. Disponibles: ${listSampleProfileIds().join(", ")}, concesionaria`,
@@ -102,6 +120,16 @@ function unrenderedNotes(spec: AppBootResult["spec"]): string[] {
 /**
  * Arranca un perfil sample (p01…p10) hasta UiSpec sellada.
  */
+/** Señales del perfil que ajustan el diseño (densidad, tamaño táctil). */
+function senalesDe(input: GeneratorInput, sedes: number): SenalesNegocio {
+  return {
+    sedes,
+    roles: input.roles.length,
+    autoservicio: input.channels.includes("autoservicio") || input.channels.includes("web"),
+    tactil: input.channels.includes("taller") || input.channels.includes("presencial"),
+  };
+}
+
 export function bootSampleProfile(profileId: string): AppBootResult {
   const sample = loadSampleProfile(profileId);
   const { profile, scheduleQuestions } = mapSampleToV12(sample);
@@ -135,15 +163,70 @@ export function bootSampleProfile(profileId: string): AppBootResult {
     },
   });
 
+  // Aplicar pasos personalizados si están presentes en el sample
+  if (sample.pasos && sample.pasos.length > 0) {
+    const lifecyclesArray = [...pipe.input.lifecycles];
+    const vocabularioNuevo = { ...pipe.input.vocabulario };
+    let ruleSet = pipe.input.ruleSet;
+
+    for (const paso of sample.pasos) {
+      const lcSlice = lifecyclesArray.find((l) => l.id === paso.proceso);
+      if (!lcSlice) {
+        throw new Error(
+          `Proceso "${paso.proceso}" con pasos personalizados no encontrado`,
+        );
+      }
+
+      const erroresValidacion = validarPasos([paso], lcSlice.lifecycle);
+      if (erroresValidacion.length > 0) {
+        const msgs = erroresValidacion
+          .map((e) => `${e.tipo}: ${e.mensaje}`)
+          .join("; ");
+        throw new Error(`Validación de pasos fallida: ${msgs}`);
+      }
+
+      const { lifecycle: cicloNuevo } = construirCiclo(
+        [paso],
+        lcSlice.lifecycle,
+      );
+
+      // Reemplazar el lifecycle
+      const sliceIdx = lifecyclesArray.findIndex((l) => l.id === paso.proceso);
+      lifecyclesArray[sliceIdx] = {
+        ...lcSlice,
+        lifecycle: cicloNuevo,
+      };
+
+      // Reglas para las acciones propias (copias; las originales no se tocan)
+      ruleSet = reglasParaPasos(ruleSet, lcSlice.lifecycle, paso);
+
+      // Agregar al vocabulario para etiquetas
+      for (const estado of paso.estados) {
+        vocabularioNuevo[`estado:${estado.id}`] = estado.nombre;
+      }
+      for (const accion of paso.acciones) {
+        vocabularioNuevo[`accion:${paso.proceso}:${accion.id}`] =
+          accion.nombre;
+      }
+    }
+
+    // Reemplazar los arrays en el input
+    (pipe.input as any).lifecycles = lifecyclesArray;
+    (pipe.input as any).vocabulario = vocabularioNuevo;
+    (pipe.input as any).ruleSet = ruleSet;
+  }
+
   const spec = generateUiSpec(pipe.input);
   if (!isValidatedUiSpec(spec)) {
     throw new Error("generateUiSpec no devolvió UiSpec sellada");
   }
 
+  const sedesField = sample.organizacion.sedes;
   const ds = proposeDesignSystems({
     companyId: profileId,
     businessDescription: sample.descripcion,
     identity: { brandName: sample.nombre },
+    senales: senalesDe(pipe.input, Array.isArray(sedesField.valor) ? sedesField.valor.length : 1),
   }).proposals[0]!;
 
   const roles = pipe.input.roles.map((r) => ({
@@ -182,6 +265,7 @@ export function bootConcesionaria(): AppBootResult {
     businessDescription:
       "Concesionario de vehículos: venta, financiación y taller",
     identity: { brandName: "Concesionaria ABS" },
+    senales: senalesDe(input, 1),
   }).proposals[0]!;
 
   const roles = input.roles.map((r) => ({ id: r.id, label: r.label }));
@@ -274,6 +358,7 @@ export function bootMarketplaceIntermediacion(): AppBootResult {
     companyId: "marketplace-intermediacion",
     businessDescription: "Marketplace de intermediación entre partes",
     identity: { brandName: "ABS Marketplace" },
+    senales: senalesDe(input, 1),
   }).proposals[0]!;
   return {
     profileId: "marketplace-intermediacion",

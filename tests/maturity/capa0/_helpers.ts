@@ -4,6 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { expect } from "vitest";
 import type { Lifecycle, Transition } from "../../../core/lifecycle.js";
 import type { DomainEvent, TransitionEvent } from "../../../core/events.js";
 import { ventaArchetype } from "../../../archetypes/venta.js";
@@ -126,4 +127,105 @@ export function requirePgOrThrow(): string {
     );
   }
   return u;
+}
+
+/**
+ * Helpers de verificación de estado para walks.
+ * Estos helpers verifican invariantes y precondiciones/postcondiciones en cada paso.
+ */
+
+export type DerivedStateType = ReturnType<typeof import("../../../core/derivation.js").deriveState>;
+
+export interface WalkStep {
+  /** Evento que inicia este paso */
+  event: DomainEvent;
+  /** Estado derivado después de este evento */
+  state: DerivedStateType;
+  /** Índice en la secuencia de eventos (0-based) */
+  stepIndex: number;
+}
+
+/**
+ * Verifica que eventCount incremente exactamente en 1 respecto al paso anterior.
+ * Acepta DerivedState o WalkStep.
+ */
+export function expectEventCountIncrement(
+  previous: DerivedStateType | WalkStep | null,
+  current: DerivedStateType | WalkStep,
+): void {
+  const prevState = previous === null ? null : ("state" in previous ? previous.state : previous);
+  const currState = "state" in current ? current.state : current;
+
+  if (prevState === null) {
+    // Primer evento
+    expect(currState.eventCount).toBe(1);
+  } else {
+    expect(currState.eventCount).toBe(prevState.eventCount + 1);
+  }
+}
+
+/**
+ * Verifica que el estado actual es alcanzable desde el anterior.
+ * (No hay "saltos" mágicos en la máquina.)
+ */
+export function expectStateIsReachable(
+  lifecycle: import("../../../core/lifecycle.js").Lifecycle,
+  fromState: string,
+  toState: string,
+): void {
+  const available = lifecycle.transitions.filter((t) => t.from === fromState);
+  const hasTransition = available.some((t) => t.to === toState);
+  expect(hasTransition).toBe(true);
+}
+
+/**
+ * Verifica que los compromisos son monótonos crecientes
+ * (una vez cumplido, nunca se vuelve pendiente).
+ * Acepta DerivedState o WalkStep.
+ */
+export function expectCommitmentsMonotonic(
+  previous: DerivedStateType | WalkStep | null,
+  current: DerivedStateType | WalkStep,
+): void {
+  if (previous === null) {
+    return; // Primer paso no tiene restricción
+  }
+
+  const prevState = "state" in previous ? previous.state : previous;
+  const currState = "state" in current ? current.state : current;
+
+  // Cada compromiso cumplido en el paso anterior debe seguir cumplido
+  for (const commitId of prevState.fulfilledCommitmentIds) {
+    expect(currState.fulfilledCommitmentIds.has(commitId)).toBe(true);
+  }
+}
+
+/**
+ * Documenta el tipo de walk realizado para verificación de invariantes.
+ */
+export type WalkType =
+  | "happy-path"
+  | "partial-delivery"
+  | "renegotiation"
+  | "return-after-close"
+  | "multi-party-split"
+  | "subscription-pause-resume"
+  | "marketplace-dispute"
+  | "temporal-loan"
+  | "temporal-return"
+  | "intermediation-commission"
+  | "intermediation-third-party"
+  | "error-close-nonzero-balance"
+  | "error-invalid-transition"
+  | "error-fork-path";
+
+/**
+ * Metadatos de un walk para documentación de qué se verifica.
+ */
+export interface WalkMetadata {
+  readonly archetype: string;
+  readonly walkType: WalkType;
+  readonly description: string;
+  readonly expectedTerminal: boolean;
+  readonly invariantsChecked: readonly string[];
 }

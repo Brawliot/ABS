@@ -439,7 +439,8 @@ describe("Activación real tpl.* (Juez)", () => {
     expect(blocking).toHaveLength(0);
   });
 
-  it("tpl.restriccion_saldo_antes_de bloquea cierre con deuda", () => {
+  // Deuda = impagos del cliente; otro trabajo en curso no bloquea el cierre.
+  it("tpl.restriccion_saldo_antes_de bloquea cierre con deuda (impagos)", () => {
     const life = servicioArchetype.lifecycle;
     const ruleSet = compileTplDoc(
       {
@@ -483,12 +484,8 @@ describe("Activación real tpl.* (Juez)", () => {
       mkServicioEvent("t_ejecutar"),
       mkServicioEvent("t_presentar"),
     ];
-    const fields = { parte_id: "cli-taller" };
-    const bag = provider.prepare(
-      tenantId,
-      collectFactRequests(ruleSet, "t_cerrar", fields),
-    );
-    expect(() =>
+    const fields = { parte_id: "cli-taller", subject_id: "tx-svc" };
+    const cerrar = () =>
       attemptJudgedAdvance({
         subjectId: "tx-svc",
         lifecycle: life,
@@ -514,9 +511,38 @@ describe("Activación real tpl.* (Juez)", () => {
         fields,
         ruleSet,
         tenantId,
-        facts: bag,
-      }),
-    ).toThrow(JudgeRejectionError);
+        facts: provider.prepare(
+          tenantId,
+          collectFactRequests(ruleSet, "t_cerrar", fields),
+        ),
+      });
+    // «tx-deuda» sigue en curso (acordado): no es deuda, se puede cerrar
+    expect(cerrar).not.toThrow();
+
+    // Impago registrado del cliente: bloquea
+    provider.applyEvent(
+      tenantId,
+      withFactPayload(
+        {
+          id: "ev-impago",
+          kind: "transicion",
+          subjectId: "tx-cuota",
+          transitionId: "t_impago",
+          fromStateId: "en_renovacion",
+          toStateId: "impagada",
+          occurredAt: "2026-01-01T00:00:00.000Z",
+          actorId: "u1",
+          actorKind: "humano",
+          evidence: {
+            kind: "sistema",
+            reference: "r",
+            recordedAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        { parteId: "cli-taller", importe: 60 },
+      ),
+    );
+    expect(cerrar).toThrow(JudgeRejectionError);
   });
 
   it("tpl.evidencia_requerida exige referenceType en cumplimiento", () => {

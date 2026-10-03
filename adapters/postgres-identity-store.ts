@@ -3,7 +3,6 @@
  * Clave: ABS_IDENTITY_KEY (32 bytes hex o base64).
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { Pool } from "pg";
 import type { TenantId } from "../tenancy/index.js";
 import {
@@ -13,42 +12,10 @@ import {
   type PartePersonalData,
 } from "../policies/identity.js";
 import { withCompanyContext } from "../db/migrate.js";
-
-function loadKey(): Buffer {
-  const raw = process.env.ABS_IDENTITY_KEY;
-  if (!raw || raw.length < 32) {
-    if (process.env.ABS_ENV === "production" || process.env.NODE_ENV === "production") {
-      throw new Error("ABS_IDENTITY_KEY (≥32 chars) obligatorio en producción");
-    }
-    return Buffer.from("dev-only-identity-key-32bytes!!");
-  }
-  if (/^[0-9a-fA-F]{64}$/.test(raw)) return Buffer.from(raw, "hex");
-  return Buffer.from(raw.slice(0, 32), "utf8");
-}
-
-function seal(plain: PartePersonalData): { ciphertext: Buffer; nonce: Buffer } {
-  const key = loadKey();
-  const nonce = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", key, nonce);
-  const enc = Buffer.concat([
-    cipher.update(JSON.stringify(plain), "utf8"),
-    cipher.final(),
-  ]);
-  const tag = cipher.getAuthTag();
-  return { ciphertext: Buffer.concat([enc, tag]), nonce };
-}
-
-function open(ciphertext: Buffer, nonce: Buffer): PartePersonalData {
-  const key = loadKey();
-  const tag = ciphertext.subarray(ciphertext.length - 16);
-  const data = ciphertext.subarray(0, ciphertext.length - 16);
-  const decipher = createDecipheriv("aes-256-gcm", key, nonce);
-  decipher.setAuthTag(tag);
-  const plain = Buffer.concat([decipher.update(data), decipher.final()]).toString(
-    "utf8",
-  );
-  return JSON.parse(plain) as PartePersonalData;
-}
+import {
+  openPersonal as open,
+  sealPersonal as seal,
+} from "./identity-crypto.js";
 
 export class PostgresParteIdentityStore {
   constructor(

@@ -218,6 +218,8 @@ export type CompiledRuleKind =
 interface CompiledRuleBase {
   readonly binding: RuleBinding;
   readonly requiredFacts?: readonly FactRequirement[];
+  /** Limita esta regla a un proceso específico. */
+  readonly lifecycleId?: string;
 }
 
 export interface CompiledCondition extends CompiledRuleBase {

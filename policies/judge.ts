@@ -87,6 +87,8 @@ export interface GuardContext {
   readonly tenantId?: TenantId;
   /** Instantánea ISO para plazos legales. */
   readonly now: string;
+  /** Proceso actual del expediente (lifecycleId). */
+  readonly lifecycleId?: string;
 }
 
 export type GuardVerdict =
@@ -221,6 +223,8 @@ export interface JudgedAdvanceInput {
   readonly creationClassification?: ClassificationSnapshot;
   /** Temporada forzada (si no, se deriva del calendario + now). */
   readonly seasonId?: string;
+  /** Proceso actual del expediente (para filtrar reglas por lifecycleId). */
+  readonly lifecycleId?: string;
 }
 
 export interface JudgedAdvanceResult {
@@ -799,7 +803,8 @@ export function evaluatePolicyGuards(
       (r) =>
         r.kind !== "calculation" &&
         r.kind !== "visibility" &&
-        r.kind !== "force_grant",
+        r.kind !== "force_grant" &&
+        (!("lifecycleId" in r) || !r.lifecycleId || r.lifecycleId === ctx.lifecycleId),
     )
     .sort((a, b) => {
       const pa = PHASE_ORDER.indexOf(phaseOf(a));
@@ -872,6 +877,20 @@ export function evaluatePolicyGuards(
 }
 
 /**
+ * Función principal del puente Judge: aplica 4 fases en orden:
+ * 1. Cumplimiento (nunca forzable)
+ * 2. Permiso (puede forzarse con autorización)
+ * 3. Política (puede forzarse con autorización)
+ * 4. Núcleo (nunca forzable)
+ *
+ * Determinista: mismos inputs → mismo resultado.
+ * Retorna JudgedAdvanceResult con trace completo.
+ */
+export function judgedAdvance(input: JudgedAdvanceInput): JudgedAdvanceResult {
+  return attemptJudgedAdvance(input);
+}
+
+/**
  * Pipeline juzgado: políticas primero, luego assertCanAdvance (núcleo).
  * Emite evento con cálculos y versión del RuleSet para reconstrucción.
  * Vía de forzado: solo Permiso/Política, con permiso explícito y motivo.
@@ -913,6 +932,7 @@ export function attemptJudgedAdvance(
     ...(input.segment !== undefined ? { segment: input.segment } : {}),
     ...(input.facts !== undefined ? { facts: input.facts } : {}),
     ...(input.tenantId !== undefined ? { tenantId: input.tenantId } : {}),
+    ...(input.lifecycleId !== undefined ? { lifecycleId: input.lifecycleId } : {}),
   };
   const ctx = sealAgainstEventStore(ctxRaw);
   const factsMeta = input.facts
@@ -1143,6 +1163,24 @@ export function reconstructFieldsFromEvents(
   initial: TransactionFields = {},
 ): Record<string, unknown> {
   let fields: Record<string, unknown> = { ...initial };
+
+  // Procesar evento "alta" primero - contiene campos iniciales
+  const altaEvent = events.find((e: any) => e.kind === "alta") as any;
+  if (altaEvent?.datos?.campos && typeof altaEvent.datos.campos === "object") {
+    fields = { ...fields, ...altaEvent.datos.campos };
+  }
+
+  // Procesar eventos "datos" - cambios posteriores a campos
+  for (const ev of events) {
+    if ((ev as any).kind === "datos") {
+      const datosEv = ev as any;
+      if (datosEv.cambios?.campos && typeof datosEv.cambios.campos === "object") {
+        fields = { ...fields, ...datosEv.cambios.campos };
+      }
+    }
+  }
+
+  // Procesar eventos "transicion" - cambios de políticas y cálculos
   for (const ev of events) {
     if (ev.kind !== "transicion" || !ev.data) continue;
     const d = ev.data as Partial<PolicyEventData>;

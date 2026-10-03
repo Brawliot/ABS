@@ -81,6 +81,8 @@ export const EventoSubtypes = [
   "excepcion",
   "modificacion",
   "vencimiento",
+  "alta",
+  "datos",
 ] as const;
 export type EventoSubtype = (typeof EventoSubtypes)[number];
 

@@ -131,7 +131,10 @@ describe("Taller p04 — restricción saldo + Juez", () => {
     expect(inv.transitionId ?? inv.parametros.transitionId).toBe("t_cerrar");
   });
 
-  it("Juez rechaza t_cerrar con saldo pendiente (plantilla)", () => {
+  // Deuda = impagos del cliente, no otros trabajos en curso (en los arquetipos
+  // el cobro va con el cierre; contar trabajos abiertos bloqueaba entre sí dos
+  // trabajos del mismo cliente).
+  it("Juez rechaza t_cerrar si el cliente tiene impagos; otro trabajo abierto no bloquea (plantilla)", () => {
     const life = servicioArchetype.lifecycle;
     const catalog = catalogFromLifecycle(
       life.transitions.map((t) => t.id),
@@ -169,27 +172,38 @@ describe("Taller p04 — restricción saldo + Juez", () => {
 
     const provider = new FactProvider();
     const tenantId = "taller-1";
-    // Deuda abierta del cliente
-    const prev = withFactPayload(
-      {
-        id: "e-deuda",
-        kind: "transicion",
-        subjectId: "tx-deuda",
-        occurredAt: "2026-01-01T00:00:00.000Z",
-        actorId: "a",
-        actorKind: "humano",
-        evidence: {
-          kind: "aceptacion",
-          reference: "r",
-          recordedAt: "2026-01-01T00:00:00.000Z",
+    const factEvent = (
+      id: string,
+      subjectId: string,
+      transitionId: string,
+      fromStateId: string,
+      toStateId: string,
+      importe: number,
+    ) =>
+      withFactPayload(
+        {
+          id,
+          kind: "transicion",
+          subjectId,
+          occurredAt: "2026-01-01T00:00:00.000Z",
+          actorId: "a",
+          actorKind: "humano",
+          evidence: {
+            kind: "aceptacion",
+            reference: "r",
+            recordedAt: "2026-01-01T00:00:00.000Z",
+          },
+          transitionId,
+          fromStateId,
+          toStateId,
         },
-        transitionId: "t_acordar",
-        fromStateId: "propuesta",
-        toStateId: "acordado",
-      },
-      { parteId: "cli-auto", importe: 850 },
+        { parteId: "cli-auto", importe },
+      );
+    // Otro trabajo del mismo cliente en curso: no es deuda
+    provider.applyEvent(
+      tenantId,
+      factEvent("e-abierta", "tx-abierta", "t_acordar", "propuesta", "acordado", 850),
     );
-    provider.applyEvent(tenantId, prev);
 
     // Cadena hasta en_espera (evidencia/actor según lifecycle)
     function ev(
@@ -225,14 +239,8 @@ describe("Taller p04 — restricción saldo + Juez", () => {
     const derived = deriveState(life, history);
     expect(derived.currentStateId).toBe("en_espera");
 
-    const fields = { parte_id: "cli-auto", importe: 850 };
-    const requests = collectFactRequests(ruleSet, "t_cerrar", fields);
-    const bag = provider.prepare(tenantId, requests);
-    expect(
-      bag.get(FACT_IDS.PARTE_SALDO_PENDIENTE, { parteId: "cli-auto" }),
-    ).toBeGreaterThan(0);
-
-    expect(() =>
+    const fields = { parte_id: "cli-auto", importe: 850, subject_id: "tx-rep" };
+    const cerrar = (bag: ReturnType<FactProvider["prepare"]>) =>
       attemptJudgedAdvance({
         subjectId: "tx-rep",
         lifecycle: life,
@@ -259,8 +267,26 @@ describe("Taller p04 — restricción saldo + Juez", () => {
         ruleSet,
         tenantId,
         facts: bag,
-      }),
-    ).toThrow(JudgeRejectionError);
+      });
+    const params = { parteId: "cli-auto", excludeSubjectId: "tx-rep" };
+
+    const sinImpagos = provider.prepare(tenantId, collectFactRequests(ruleSet, "t_cerrar", fields));
+    // Tiene 850 € en curso (saldo abierto), pero eso no es deuda
+    const saldo = provider.prepare(tenantId, [
+      { factId: FACT_IDS.PARTE_SALDO_PENDIENTE, params: { parteId: "cli-auto" } },
+    ]);
+    expect(saldo.get(FACT_IDS.PARTE_SALDO_PENDIENTE, { parteId: "cli-auto" })).toBe(850);
+    expect(sinImpagos.get(FACT_IDS.PARTE_IMPORTE_IMPAGADO, params)).toBe(0);
+    expect(() => cerrar(sinImpagos)).not.toThrow();
+
+    // Impago registrado del cliente (p. ej. una cuota): ahora sí bloquea
+    provider.applyEvent(
+      tenantId,
+      factEvent("e-impago", "tx-cuota", "t_impago", "en_renovacion", "impagada", 60),
+    );
+    const conImpago = provider.prepare(tenantId, collectFactRequests(ruleSet, "t_cerrar", fields));
+    expect(conImpago.get(FACT_IDS.PARTE_IMPORTE_IMPAGADO, params)).toBe(60);
+    expect(() => cerrar(conImpago)).toThrow(JudgeRejectionError);
   });
 });
 

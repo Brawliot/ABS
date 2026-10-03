@@ -1,0 +1,928 @@
+{
+  "_meta": {
+    "proposito": "Negocios NUEVOS escritos desde cero para comprobar que el generador acierta con negocios que no ha visto. Descritos como lo contaria el dueno, sin adaptar las palabras al generador.",
+    "convencion": "Mismo formato que business-profiles-10.json. modulosEsperados/modulosNoEsperados/bloqueos/necesidadesNoExpresables/queEstresa son la respuesta esperada, no entrada."
+  },
+  "perfiles": [
+    {
+      "id": "n01-fisioterapia",
+      "nombre": "Fisioterapia Ribera",
+      "descripcion": "Somos una clinica de fisioterapia. El paciente pide cita, en la primera sesion lo valoramos y le proponemos un plan de sesiones. Muchos compran bonos de 5 o 10 sesiones y los van gastando. Algunos vienen por mutua.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "directora",
+              "n": 1
+            },
+            {
+              "rol": "fisioterapeuta",
+              "n": 3
+            },
+            {
+              "rol": "recepcion",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ],
+        "confianza": 0.6
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": true
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 8:00-14:00 y 16:00-21:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-VC"
+        }
+      },
+      "procesos": [
+        "cita",
+        "valoracion inicial",
+        "plan de tratamiento",
+        "sesiones",
+        "venta de bonos",
+        "cobro",
+        "venta de producto (cremas, vendas)"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "pedir y anular citas, ver sesiones que le quedan del bono"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "fisioterapeutas atienden y anotan sesiones; recepcion da citas y cobra; la directora el resto"
+      },
+      "excepcionesPermiso": [
+        "solo la directora hace descuentos de mas del 10%"
+      ],
+      "politicas": [
+        {
+          "plantilla": "descuento_maximo_sin_aprobacion",
+          "parametros": {
+            "porcentaje": 10
+          }
+        }
+      ],
+      "cumplimiento": [
+        "consentimiento informado",
+        "historia clinica",
+        "proteccion de datos de salud",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "salud"
+        ]
+      },
+      "modulosEsperados": [
+        "agenda",
+        "pacientes",
+        "bonos de sesiones",
+        "cobros",
+        "facturas",
+        "portal cliente"
+      ],
+      "modulosNoEsperados": [
+        "credito",
+        "fianzas",
+        "cuotas"
+      ],
+      "bloqueos": [
+        "no se trata sin consentimiento firmado",
+        "no se usa una sesion si el bono esta agotado"
+      ],
+      "necesidadesNoExpresables": [
+        "bono como saldo de sesiones que se consume",
+        "mutua como tercero que paga"
+      ],
+      "queEstresa": [
+        "bonos prepago",
+        "datos de salud",
+        "cita + servicio en la misma clinica"
+      ]
+    },
+    {
+      "id": "n02-panaderia",
+      "nombre": "Horno San Anton",
+      "descripcion": "Panaderia y pasteleria de barrio con obrador propio. Vendemos en el mostrador al momento, con efectivo o tarjeta. Tambien hacemos tartas por encargo, que se pagan con una senal. Servimos pan cada manana a tres bares que nos pagan a fin de mes.",
+      "organizacion": {
+        "sedes": {
+          "estado": "known",
+          "valor": [
+            "Obrador y tienda",
+            "Tienda Plaza"
+          ]
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "dueno",
+              "n": 1
+            },
+            {
+              "rol": "obrador",
+              "n": 2
+            },
+            {
+              "rol": "dependienta",
+              "n": 3
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": false
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-S 7:00-14:30 y 17:00-20:30, D 8:00-14:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-AN"
+        }
+      },
+      "procesos": [
+        "venta en mostrador",
+        "encargo de tartas",
+        "reparto a bares",
+        "compra de harina y materia prima al proveedor",
+        "produccion en el obrador"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": "cuenta mensual para los bares"
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "known",
+          "valor": "senal del 30% en encargos"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": false
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "dependientas venden y toman encargos; obrador produce; el dueno el resto"
+      },
+      "excepcionesPermiso": [],
+      "politicas": [
+        {
+          "plantilla": "bloqueo_por_impago",
+          "parametros": {
+            "dias": 30
+          }
+        }
+      ],
+      "cumplimiento": [
+        "registro sanitario",
+        "alergenos",
+        "factura a los bares"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "tpv mostrador",
+        "encargos",
+        "clientes con cuenta",
+        "stock de materia prima",
+        "compras a proveedor",
+        "facturas"
+      ],
+      "modulosNoEsperados": [
+        "agenda",
+        "cuotas",
+        "portal cliente"
+      ],
+      "bloqueos": [
+        "no se sirve a un bar con mas de 30 dias sin pagar",
+        "no se empieza una tarta sin senal"
+      ],
+      "necesidadesNoExpresables": [
+        "produccion: la harina se convierte en pan (receta/escandallo)",
+        "caducidad diaria del producto"
+      ],
+      "queEstresa": [
+        "dos sedes",
+        "venta rapida + encargo + cuenta a credito en el mismo negocio",
+        "senal"
+      ]
+    },
+    {
+      "id": "n03-autoescuela",
+      "nombre": "Autoescuela Via Verde",
+      "descripcion": "Autoescuela. El alumno se matricula, paga la matricula, hace el teorico con clases y test, y luego practicas de conducir por horas. Le presentamos a examen en Trafico y si suspende se vuelve a presentar pagando otra tasa.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "gerente",
+              "n": 1
+            },
+            {
+              "rol": "profesor",
+              "n": 4
+            },
+            {
+              "rol": "secretaria",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": []
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "practicas de conducir por horas con profesor y coche"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 9:00-14:00 y 16:00-21:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-CL"
+        }
+      },
+      "procesos": [
+        "matricula",
+        "clases teoricas",
+        "practicas de conducir",
+        "presentacion a examen",
+        "cobro de practicas y tasas"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": "pagar el carnet en varios meses"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "reservar practicas y ver cuantas lleva"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "profesores dan clases y practicas; secretaria matricula y cobra; el gerente el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el gerente anula matriculas"
+      ],
+      "politicas": [
+        {
+          "plantilla": "bloqueo_por_impago",
+          "parametros": {
+            "recibos_pendientes": 1
+          }
+        }
+      ],
+      "cumplimiento": [
+        "contrato por escrito",
+        "documentacion completa del alumno para Trafico",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "dni"
+        ]
+      },
+      "modulosEsperados": [
+        "alumnos",
+        "agenda de practicas",
+        "matriculas",
+        "cobros a plazos",
+        "portal alumno",
+        "facturas"
+      ],
+      "modulosNoEsperados": [
+        "stock",
+        "compras a proveedor"
+      ],
+      "bloqueos": [
+        "no se presenta a examen sin documentacion completa",
+        "no se dan practicas con recibos pendientes"
+      ],
+      "necesidadesNoExpresables": [
+        "coche y profesor como recursos a la vez",
+        "examen con resultado apto/no apto que reabre el ciclo"
+      ],
+      "queEstresa": [
+        "servicio sin bienes",
+        "plazos",
+        "recurso doble en agenda"
+      ],
+      "pasos": [
+        {
+          "proceso": "lc.servicio_proyecto",
+          "estados": [
+            {
+              "id": "propuesta",
+              "nombre": "Propuesta",
+              "equivale": "propuesta"
+            },
+            {
+              "id": "matriculado",
+              "nombre": "Matriculado",
+              "equivale": "acordado"
+            },
+            {
+              "id": "practicas",
+              "nombre": "Prácticas",
+              "equivale": "en_ejecucion"
+            },
+            {
+              "id": "examen",
+              "nombre": "Examen",
+              "equivale": "en_espera"
+            },
+            {
+              "id": "apto",
+              "nombre": "Apto",
+              "equivale": "cerrada"
+            },
+            {
+              "id": "baja",
+              "nombre": "Baja",
+              "equivale": "cancelada"
+            }
+          ],
+          "acciones": [
+            {
+              "id": "acordar",
+              "nombre": "Acordar",
+              "de": "propuesta",
+              "a": "matriculado"
+            },
+            {
+              "id": "iniciar_practicas",
+              "nombre": "Iniciar prácticas",
+              "de": "matriculado",
+              "a": "practicas"
+            },
+            {
+              "id": "presentar_examen",
+              "nombre": "Presentar a examen",
+              "de": "practicas",
+              "a": "examen"
+            },
+            {
+              "id": "aprobar_examen",
+              "nombre": "Aprobar examen",
+              "de": "examen",
+              "a": "apto"
+            },
+            {
+              "id": "dar_baja",
+              "nombre": "Dar de baja",
+              "de": "matriculado",
+              "a": "baja"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n04-inmobiliaria",
+      "nombre": "Casas del Puerto",
+      "descripcion": "Agencia inmobiliaria. Los propietarios nos dejan su piso en exclusiva para vender o alquilar, lo publicamos y ensenamos a compradores. Cuando hay acuerdo se firma arras y cobramos comision al propietario, un 3% de la venta o un mes de alquiler.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "socio",
+              "n": 2
+            },
+            {
+              "rol": "agente",
+              "n": 3
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "del_cliente"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "visitas a pisos"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 9:30-13:30 y 16:30-20:00, S 10:00-13:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-CT"
+        }
+      },
+      "procesos": [
+        "captacion de inmueble",
+        "encargo de venta en exclusiva",
+        "publicacion",
+        "visitas",
+        "oferta y negociacion",
+        "arras",
+        "firma en notaria",
+        "cobro de comision"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "known",
+          "valor": "arras del comprador que guardamos hasta notaria"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "not_applicable"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "el propietario ve visitas y ofertas de su piso"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "agentes captan y ensenan; los socios firman y cobran"
+      },
+      "excepcionesPermiso": [
+        "solo un socio acepta bajar la comision"
+      ],
+      "politicas": [
+        {
+          "plantilla": "descuento_maximo_sin_aprobacion",
+          "parametros": {
+            "porcentaje": 0
+          }
+        }
+      ],
+      "cumplimiento": [
+        "contrato firmado de encargo",
+        "prevencion de blanqueo",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "dni",
+          "datos bancarios"
+        ]
+      },
+      "modulosEsperados": [
+        "inmuebles",
+        "propietarios y compradores",
+        "agenda de visitas",
+        "operaciones",
+        "comisiones",
+        "arras retenidas",
+        "facturas"
+      ],
+      "modulosNoEsperados": [
+        "stock",
+        "cuotas"
+      ],
+      "bloqueos": [
+        "no se publica sin encargo firmado",
+        "la comision se cobra al firmar en notaria"
+      ],
+      "necesidadesNoExpresables": [
+        "intermediacion entre propietario y comprador: la agencia no vende nada suyo",
+        "el mismo inmueble tiene muchas visitas y ofertas"
+      ],
+      "queEstresa": [
+        "intermediacion (arquetipo poco usado)",
+        "bienes del cliente sin stock",
+        "dinero de terceros retenido"
+      ],
+      "pasos": [
+        {
+          "proceso": "lc.intermediacion",
+          "estados": [
+            {
+              "id": "captado",
+              "nombre": "Captado",
+              "equivale": "propuesta"
+            },
+            {
+              "id": "publicado",
+              "nombre": "Publicado",
+              "equivale": "emparejada"
+            },
+            {
+              "id": "en_transaccion",
+              "nombre": "En transacción",
+              "equivale": "en_curso"
+            },
+            {
+              "id": "vendido",
+              "nombre": "Vendido",
+              "equivale": "cerrada"
+            },
+            {
+              "id": "cancelado",
+              "nombre": "Cancelado",
+              "equivale": "cancelada"
+            }
+          ],
+          "acciones": [
+            {
+              "id": "publicar",
+              "nombre": "Publicar",
+              "de": "captado",
+              "a": "publicado"
+            },
+            {
+              "id": "iniciar_transaccion",
+              "nombre": "Iniciar transacción",
+              "de": "publicado",
+              "a": "en_transaccion"
+            },
+            {
+              "id": "vender",
+              "nombre": "Vender",
+              "de": "en_transaccion",
+              "a": "vendido"
+            },
+            {
+              "id": "cancelar_publicacion",
+              "nombre": "Cancelar publicación",
+              "de": "publicado",
+              "a": "cancelado"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n05-agencia-viajes",
+      "nombre": "Viajes Brujula",
+      "descripcion": "Agencia de viajes. El cliente nos pide un viaje, le preparamos un presupuesto con vuelos, hotel y actividades de varios proveedores. Si acepta paga una reserva y el resto antes de salir. Nosotros pagamos a los proveedores y ganamos el margen.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "gerente",
+              "n": 1
+            },
+            {
+              "rol": "agente_de_viajes",
+              "n": 3
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": []
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": false
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 10:00-14:00 y 17:00-20:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-MD"
+        }
+      },
+      "procesos": [
+        "solicitud de viaje",
+        "presupuesto",
+        "reserva con pago a cuenta",
+        "pago del resto",
+        "reservas a proveedores (aerolinea, hotel)",
+        "emision de bonos y billetes",
+        "viaje",
+        "incidencias"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "known",
+          "valor": false
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "known",
+          "valor": "40% al reservar, 60% un mes antes de salir"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": "ver su viaje, documentos y lo que le queda por pagar"
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "agentes presupuestan, reservan y cobran; el gerente el resto"
+      },
+      "excepcionesPermiso": [
+        "solo el gerente anula viajes ya pagados"
+      ],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 6000,
+            "aprueba": "gerente"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "contrato de viaje combinado",
+        "facturacion en regimen especial de agencias"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": [
+          "pasaporte"
+        ]
+      },
+      "modulosEsperados": [
+        "viajes",
+        "presupuestos",
+        "pagos por hitos",
+        "proveedores",
+        "compras a proveedor",
+        "portal cliente",
+        "facturas"
+      ],
+      "modulosNoEsperados": [
+        "stock",
+        "agenda",
+        "cuotas"
+      ],
+      "bloqueos": [
+        "no se emiten billetes sin el pago completo"
+      ],
+      "necesidadesNoExpresables": [
+        "un viaje junta varias compras a proveedores distintos",
+        "IVA de margen (REAV)"
+      ],
+      "queEstresa": [
+        "hitos 40/60",
+        "compra y venta ligadas",
+        "servicio sin bienes"
+      ]
+    },
+    {
+      "id": "n06-carpinteria",
+      "nombre": "Carpinteria Hermanos Soto",
+      "descripcion": "Carpinteria a medida: cocinas, armarios y puertas. Vamos a medir a casa del cliente, hacemos presupuesto, si lo acepta paga la mitad, fabricamos en el taller y lo montamos. Compramos tablero y herrajes al almacen. Tenemos algo de material en stock.",
+      "organizacion": {
+        "sedes": {
+          "estado": "not_applicable"
+        },
+        "roles": {
+          "estado": "known",
+          "valor": [
+            {
+              "rol": "dueno",
+              "n": 2
+            },
+            {
+              "rol": "oficial",
+              "n": 3
+            },
+            {
+              "rol": "aprendiz",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "naturalezaBienes": {
+        "estado": "known",
+        "valor": [
+          "propios_por_cantidad"
+        ]
+      },
+      "calendario": {
+        "tieneCitas": {
+          "estado": "known",
+          "valor": "visitas para medir y montajes"
+        },
+        "horario": {
+          "estado": "known",
+          "valor": "L-V 8:00-13:30 y 15:00-18:00"
+        },
+        "festivosRegion": {
+          "estado": "known",
+          "valor": "ES-GA"
+        }
+      },
+      "procesos": [
+        "visita para medir",
+        "presupuesto",
+        "aceptacion",
+        "fabricacion en taller",
+        "montaje en casa del cliente",
+        "cobro final",
+        "compra de tablero y herrajes al proveedor"
+      ],
+      "cobros": {
+        "aCredito": {
+          "estado": "known",
+          "valor": false
+        },
+        "aPlazos": {
+          "estado": "unknown"
+        },
+        "fianzas": {
+          "estado": "not_applicable"
+        },
+        "cuotasRecurrentes": {
+          "estado": "known",
+          "valor": false
+        },
+        "pagosPorHitos": {
+          "estado": "known",
+          "valor": "50% al aceptar, 50% al montar"
+        }
+      },
+      "portalCliente": {
+        "autoservicio": {
+          "estado": "known",
+          "valor": false
+        }
+      },
+      "permissionFallback": {
+        "estado": "known",
+        "valor": "oficiales fabrican y montan; los duenos presupuestan, compran y cobran"
+      },
+      "excepcionesPermiso": [],
+      "politicas": [
+        {
+          "plantilla": "importe_requiere_aprobacion",
+          "parametros": {
+            "importe_eur": 1000,
+            "aprueba": "dueno",
+            "aplica_a": "compras de material"
+          }
+        }
+      ],
+      "cumplimiento": [
+        "presupuesto previo por escrito",
+        "garantia",
+        "facturacion"
+      ],
+      "datosSensibles": {
+        "estado": "known",
+        "valor": []
+      },
+      "modulosEsperados": [
+        "trabajos",
+        "presupuestos",
+        "pagos por hitos",
+        "stock de material",
+        "compras a proveedor",
+        "agenda de visitas",
+        "facturas"
+      ],
+      "modulosNoEsperados": [
+        "cuotas",
+        "credito",
+        "portal cliente"
+      ],
+      "bloqueos": [
+        "no se fabrica sin el 50% cobrado",
+        "no se monta sin cobrar lo pendiente"
+      ],
+      "necesidadesNoExpresables": [
+        "el material comprado se consume en cada trabajo"
+      ],
+      "queEstresa": [
+        "hitos 50/50",
+        "taller + stock + compras",
+        "aPlazos desconocido"
+      ]
+    }
+  ]
+}

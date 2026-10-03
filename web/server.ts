@@ -57,7 +57,18 @@ import {
   isProduction,
   securityHeaders,
 } from "../auth/index.js";
-import { ParteIdentityStore } from "../policies/identity.js";
+import type { ParteIdentityStore } from "../policies/identity.js";
+import { handleMaestros, isMaestrosPath } from "./maestros.js";
+import { handlePortal, isPortalPath } from "./portal.js";
+import { handleHoy, isHoyPath } from "./hoy.js";
+import { handleExpedientes, isExpedientesPath } from "./expedientes.js";
+import { handleDinero, isDineroPath } from "./dinero.js";
+import { handleFacturas, isFacturasPath, IMPRIMIR_JS } from "./facturas.js";
+import { handleStock, isStockPath } from "./stock.js";
+import { handleInicio, isInicioPath } from "./inicio.js";
+import { generarExportacion, type ExportTipo } from "./exportacion.js";
+import { verificarToken, verificarRateLimit, buscarExpedientes, obtenerExpediente, buscarClientes, buscarFacturas } from "./api-rest.js";
+import { calcularSaludNegocio } from "./salud-negocio.js";
 import {
   erasePartePersonal,
   exportPartePersonal,
@@ -72,6 +83,7 @@ import {
   getStoredWizardDraft,
   applyWizardDecisions,
 } from "./cli.js";
+import { handleApiProcesos } from "./api-procesos-handler.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 
@@ -480,7 +492,7 @@ export function startWebServer(
     (options?.enableAuth || isProduction()
       ? createAuthRuntime(options?.accountsDbPath)
       : undefined);
-  const identities = new ParteIdentityStore();
+  const identities: ParteIdentityStore = runtime.partes;
 
   const renderPage = (
     session: DevSession,
@@ -642,6 +654,7 @@ export function startWebServer(
           200,
           JSON.stringify({
             ok: true,
+            timestamp: new Date().toISOString(),
             profileId: boot.profileId,
             sealed: true,
             contentHash: boot.spec.contentHash,
@@ -651,6 +664,106 @@ export function startWebServer(
           }),
           "application/json; charset=utf-8",
         );
+      }
+
+      if (path === "/negocio/salud" && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede ver salud del negocio", "text/plain");
+        }
+
+        const hoy = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
+        const salud = calcularSaludNegocio(runtime, hoy);
+        return send(res, 200, JSON.stringify(salud), "application/json; charset=utf-8");
+      }
+
+      if (path === "/imprimir.js") {
+        return send(res, 200, IMPRIMIR_JS, "application/javascript; charset=utf-8");
+      }
+
+      // API de Procesos
+      if (path.startsWith("/api/procesos") || path.startsWith("/api/contabilidad") || path.startsWith("/api/inventario") || path.startsWith("/api/documentos")) {
+        const out = await handleApiProcesos(runtime, req, path, method, () => readBody(req));
+        return send(res, out.status, out.body, out.contentType);
+      }
+
+      if (isInicioPath(path)) {
+        const out = await handleInicio({ runtime, boot, auth }, req);
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isStockPath(path)) {
+        const out = await handleStock(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isFacturasPath(path)) {
+        const out = await handleFacturas(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isDineroPath(path)) {
+        const out = await handleDinero({ runtime, boot, auth }, req);
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isExpedientesPath(path)) {
+        const out = await handleExpedientes(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isMaestrosPath(path)) {
+        const out = await handleMaestros(
+          { runtime, boot, auth },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
+      }
+
+      if (isHoyPath(path) && method === "GET") {
+        const who = resolveRequestIdentity(auth, req, boot, {});
+        const hasAccess = who.session || (who.mode === "dev" && who.dev.roleId !== "cliente");
+        if (!hasAccess) {
+          return send(res, 403, "Prohibido", "text/plain");
+        }
+        const out = handleHoy(
+          { runtime, boot },
+          {
+            roleId: who.dev.roleId,
+            parteId: who.dev.parteId,
+            ...(who.session ? { csrfToken: who.session.csrfToken } : {}),
+            devMode: !who.session,
+          },
+        );
+        return send(res, out.status, out.body, out.contentType);
+      }
+
+      if (isPortalPath(path)) {
+        const out = await handlePortal(
+          { runtime, boot },
+          req,
+          async () => formToRecord(await readBody(req)),
+        );
+        return send(res, out.status, out.body, out.contentType, out.headers);
       }
 
       if (path === "/diagnosis") {
@@ -1264,6 +1377,89 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
         );
       }
 
+      if (path.startsWith("/api/v1/") && method === "GET") {
+        const token = verificarToken(req);
+        if (!token) {
+          return send(res, 401, JSON.stringify({ ok: false, error: "Token no proporcionado" }), "application/json; charset=utf-8");
+        }
+
+        if (!verificarRateLimit(token)) {
+          return send(res, 429, JSON.stringify({ ok: false, error: "Rate limit excedido (100 req/min)" }), "application/json; charset=utf-8");
+        }
+
+        const q = parseQuery(url);
+
+        if (path === "/api/v1/expedientes") {
+          const result = buscarExpedientes(runtime, { ...(q.estado ? { estado: q.estado } : {}), ...(q.cliente ? { cliente: q.cliente } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path.startsWith("/api/v1/expediente/")) {
+          const id = path.slice("/api/v1/expediente/".length);
+          const result = obtenerExpediente(runtime, id);
+          return send(res, result.ok ? 200 : 404, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/clientes") {
+          const result = buscarClientes(runtime, q.deuda ? { deuda: q.deuda } : undefined);
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        if (path === "/api/v1/facturas") {
+          const result = buscarFacturas(runtime, { ...(q.serie ? { serie: q.serie } : {}), ...(q.desde ? { desde: q.desde } : {}), ...(q.hasta ? { hasta: q.hasta } : {}) });
+          return send(res, result.ok ? 200 : 400, JSON.stringify(result), "application/json; charset=utf-8");
+        }
+
+        return send(res, 404, JSON.stringify({ ok: false, error: "Ruta no encontrada" }), "application/json; charset=utf-8");
+      }
+
+      if (path === "/api/v1/webhook/evento" && method === "POST") {
+        const body = await readBody(req);
+        try {
+          const evento = JSON.parse(body);
+          console.log("Webhook recibido:", evento);
+          return send(res, 200, JSON.stringify({ ok: true, message: "Evento recibido" }), "application/json; charset=utf-8");
+        } catch {
+          return send(res, 400, JSON.stringify({ ok: false, error: "JSON inválido" }), "application/json; charset=utf-8");
+        }
+      }
+
+      if (path.startsWith("/export/") && method === "GET") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+
+        if (!ident.session && !allowDevSession()) {
+          return send(res, 401, "No autorizado", "text/plain");
+        }
+
+        if (ident.dev.roleId !== "admin" && ident.dev.roleId !== "dueno" && ident.dev.roleId !== "gerente") {
+          return send(res, 403, "Solo admin puede exportar", "text/plain");
+        }
+
+        const tipoMatch = path.match(/^\/export\/([a-z_]+)$/);
+        if (!tipoMatch) {
+          return send(res, 400, "Tipo de exportación inválido", "text/plain");
+        }
+
+        const tipo = tipoMatch[1] as ExportTipo;
+        const formato = (q.formato || "csv") as "csv" | "xlsx";
+
+        if (!["csv", "xlsx"].includes(formato)) {
+          return send(res, 400, "Formato debe ser csv o xlsx", "text/plain");
+        }
+
+        try {
+          const result = generarExportacion(tipo, formato, runtime);
+          const headers = {
+            "Content-Disposition": `attachment; filename="${result.filename}"`,
+          };
+          return send(res, 200, result.data, result.contentType, headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Error en exportación";
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
       if (path !== "/" && path !== "/index.html") {
         return send(res, 404, "Not found", "text/plain");
       }
@@ -1296,6 +1492,8 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
               ...(ident.dev.tenantId
                 ? { tenantId: ident.dev.tenantId }
                 : {}),
+              // Modo técnico: solo en desarrollo, nunca con sesión real
+              ...(q.tecnico === "1" && allowDevSession() ? { tecnico: true } : {}),
             };
 
       try {
@@ -1307,7 +1505,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             `$1${csrf}`,
           );
         }
-        html = html.replace(
+        if (session.tecnico) html = html.replace(
           /(<form method="post" action="\/action"[^>]*>)/g,
           `$1<details data-force-panel><summary>Forzar (Observador)</summary>` +
             `<label>Motivo <input name="forceReason" data-force-reason /></label>` +
@@ -1315,7 +1513,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             `<label><input type="checkbox" name="forceEnabled" value="1" data-force-enabled /> Activar forzado</label>` +
             `</details>`,
         );
-        html = html.replace(
+        if (session.tecnico) html = html.replace(
           "<main class=\"main\" id=\"main\">",
           `<main class="main" id="main"><p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
             `<section data-link-devolucion><h3>Devolución vinculada</h3>` +
