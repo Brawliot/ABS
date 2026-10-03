@@ -341,7 +341,7 @@ export function bootMarketplaceIntermediacion(): AppBootResult {
     ruleSet: emptyRules,
     roles: [...roles],
     channels: ["backoffice", "web", "autoservicio"],
-    resourceSubtypes: [],
+    resourceSubtypes: ["not_applicable"],
     naturalezaBienes: ["propios_por_cantidad"],
     paymentMode: "inmediato",
     hasPartes: true,
