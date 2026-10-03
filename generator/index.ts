@@ -53,3 +53,26 @@ export type {
   GeneratorPlugin,
   GeneratorHooks,
 } from "./plugin-system.js";
+
+// Fase 3: Exportar sistemas de observabilidad, cacheo y arquitectura
+export { ObservabilityManager } from "./observability.js";
+export type {
+  GeneratorMetrics,
+  GeneratorTrace,
+  GeneratorPhase,
+  LogEntry,
+  LogLevel,
+} from "./observability.js";
+export { DeductionCache, CacheFactory } from "./caching.js";
+export type { CacheEntry, CacheStats } from "./caching.js";
+export {
+  GeneratorArchitecture,
+  NormalizationLayer,
+  ViewGenerationLayer,
+  ActionGenerationLayer,
+  FormGenerationLayer,
+  ModuleConstructionLayer,
+  PluginApplicationLayer,
+  ValidationLayer,
+} from "./architecture.js";
+export type { GeneratorLayer, GeneratorContext } from "./architecture.js";

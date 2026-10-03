@@ -37,6 +37,9 @@ import { LocalizationGenerator } from "./localization-generator.js";
 import { ViewActionIndex } from "./indexing.js";
 import { FormTemplateRegistry } from "./form-templates.js";
 import { PluginManager } from "./plugin-system.js";
+import { ObservabilityManager } from "./observability.js";
+import { DeductionCache } from "./caching.js";
+import { GeneratorArchitecture } from "./architecture.js";
 
 export interface GenerateOptions {
   readonly overlay?: PresentationOverlay;
