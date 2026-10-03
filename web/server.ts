@@ -24,6 +24,7 @@ import {
   runDiagnosis,
 } from "./diagnosis-page.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
+import { renderInicioHtml } from "./inicio.js";
 import { AppRuntime } from "./runtime.js";
 import type { AppBootResult, DevSession } from "./types.js";
 import {
@@ -500,6 +501,31 @@ export function startWebServer(
       });
     } catch (e) {
       console.error("ERROR en renderAppHtml:", e);
+      throw e;
+    };
+  };
+
+  const renderInicioPage = (
+    session: DevSession,
+    liveRows?: ReturnType<AppRuntime["projectRows"]>,
+    showDevSession = true,
+  ): string => {
+    try {
+      return renderInicioHtml({
+        boot,
+        session,
+        live: true,
+        liveRows:
+          liveRows ??
+          runtime.projectRows({
+            ...(session.sedeId ? { sedeId: session.sedeId } : {}),
+            sedeScoped: session.sedeScoped === true,
+          }),
+        activeBlocks: runtime.activeBlocks(),
+        showDevSession: showDevSession && allowDevSession(),
+      });
+    } catch (e) {
+      console.error("ERROR en renderInicioHtml:", e);
       throw e;
     };
   };
