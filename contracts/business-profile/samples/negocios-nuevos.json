@@ -26,6 +26,10 @@
             {
               "rol": "recepcion",
               "n": 1
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
@@ -166,6 +170,10 @@
             {
               "rol": "dependienta",
               "n": 3
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
@@ -295,6 +303,10 @@
             {
               "rol": "secretaria",
               "n": 1
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
@@ -489,6 +501,10 @@
             {
               "rol": "agente",
               "n": 3
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
@@ -680,6 +696,10 @@
             {
               "rol": "agente_de_viajes",
               "n": 3
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
@@ -814,6 +834,10 @@
             {
               "rol": "aprendiz",
               "n": 1
+            },
+            {
+              "rol": "cliente",
+              "n": 0
             }
           ]
         }
