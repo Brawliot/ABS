@@ -1259,7 +1259,8 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             };
 
       try {
-        let html = renderPage(session, liveRows, ident.mode !== "auth");
+        // Use renderInicioPage for the homepage layout
+        let html = renderInicioPage(session, liveRows, ident.mode !== "auth");
         if (ident.session) {
           const csrf = `<input type="hidden" name="csrfToken" value="${ident.session.csrfToken}" data-csrf />`;
           html = html.replace(
@@ -1267,27 +1268,6 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
             `$1${csrf}`,
           );
         }
-        html = html.replace(
-          /(<form method="post" action="\/action"[^>]*>)/g,
-          `$1<details data-force-panel><summary>Forzar (Observador)</summary>` +
-            `<label>Motivo <input name="forceReason" data-force-reason /></label>` +
-            `<label>Reglas <input name="forceRuleIds" data-force-rules placeholder="id-regla" /></label>` +
-            `<label><input type="checkbox" name="forceEnabled" value="1" data-force-enabled /> Activar forzado</label>` +
-            `</details>`,
-        );
-        html = html.replace(
-          "<main class=\"main\" id=\"main\">",
-          `<main class="main" id="main"><p><a href="/diagnosis" data-diagnosis-link>Diagnóstico</a></p>` +
-            `<section data-link-devolucion><h3>Devolución vinculada</h3>` +
-            `<form method="post" action="/link-devolucion" data-link-form>` +
-            (ident.session
-              ? `<input type="hidden" name="csrfToken" value="${ident.session.csrfToken}" />`
-              : "") +
-            `<input type="hidden" name="roleId" value="${session.roleId}" />` +
-            `<input type="hidden" name="parteId" value="${session.parteId}" />` +
-            `<label>Original <input name="originalSubjectId" data-original-subject /></label>` +
-            `<button type="submit">Crear devolución</button></form></section>`,
-        );
         return send(res, 200, html, "text/html; charset=utf-8");
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
