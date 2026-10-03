@@ -4,3 +4,4 @@ dist/
 .DS_Store
 coverage/
 *.sqlite
+presentation/_uispec-validator-perf.csv
