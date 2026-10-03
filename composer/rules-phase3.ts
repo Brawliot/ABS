@@ -208,8 +208,8 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
         type: "add_policy",
         plantilla: "tpl.importe_requiere_aprobacion",
         parametros: {
-          importe_minimo_eur: 100,
-          requiere_aprobacion: true,
+          importe_eur: 100,
+          aprueba: "gerente",
         },
         idSuffix: "aprobacion-importe",
       },
