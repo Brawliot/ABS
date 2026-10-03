@@ -138,6 +138,48 @@ export function getHubDashboardHTML(): string {
 }
 
 /**
+ * Inyecta datos dinámicos en el HTML del dashboard.
+ * Los datos se insertan como JSON en un script para que JavaScript los renderice.
+ *
+ * @param spec - UiSpec cargada
+ * @param userId - ID del usuario
+ * @param roleId - Rol del usuario
+ * @param userName - Nombre del usuario
+ * @returns HTML con datos inyectados
+ */
+export function renderHubDashboardWithData(
+  spec: UiSpec,
+  userId: string,
+  roleId: string,
+  userName: string
+): string {
+  // Generar datos dinámicos
+  const dashboardData = bootHubDashboard(spec, userId, roleId, `session-${Date.now()}`);
+
+  // Obtener HTML template
+  const html = getHubDashboardHTML();
+
+  // Inyectar datos como JSON en el HTML
+  const dataScript = `<script>
+    window.DASHBOARD_DATA = ${JSON.stringify({
+      user: {
+        id: userId,
+        name: userName,
+        roleId: roleId,
+        role: dashboardData.currentRole,
+      },
+      actions: dashboardData.quickActions,
+      summary: dashboardData.summary,
+      availableRoles: dashboardData.availableRoles,
+      processCards: dashboardData.processCards,
+    })};
+  </script>`;
+
+  // Insertar script antes del cierre del body
+  return html.replace("</body>", `${dataScript}</body>`);
+}
+
+/**
  * Función principal: genera el HubDashboardSpec completo.
  *
  * @param spec - UiSpec cargada

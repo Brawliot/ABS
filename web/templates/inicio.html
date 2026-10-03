@@ -371,11 +371,8 @@
 
             <div>
                 <div class="section-label">Acciones Disponibles</div>
-                <div class="actions-grid">
-                    <button class="action-card"><div class="action-label">Nueva Factura</div><div class="action-hint">Registra transaccion</div></button>
-                    <button class="action-card"><div class="action-label">Movimiento</div><div class="action-hint">Entrada/salida</div></button>
-                    <button class="action-card"><div class="action-label">Ajuste Stock</div><div class="action-hint">Modifica inventario</div></button>
-                    <button class="action-card"><div class="action-label">Nuevo Contacto</div><div class="action-hint">Agrega cliente</div></button>
+                <div class="actions-grid" id="actionsContainer">
+                    <!-- Renderizado dinámicamente -->
                 </div>
             </div>
         </main>
@@ -449,6 +446,38 @@
                 btn.classList.add('active');
             });
         });
+
+        // Renderizar acciones dinámicamente desde los datos inyectados
+        function renderActions() {
+            const container = document.getElementById('actionsContainer');
+            const data = window.DASHBOARD_DATA;
+
+            if (!data || !data.actions || data.actions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.75rem;">No hay acciones disponibles</p>';
+                return;
+            }
+
+            data.actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'action-card';
+                btn.href = action.href;
+                btn.onclick = () => window.location.href = action.href;
+
+                btn.innerHTML = `
+                    <div class="action-label">${action.label}</div>
+                    <div class="action-hint">${action.requiredPermissions?.join(', ') || 'Acción disponible'}</div>
+                `;
+
+                container.appendChild(btn);
+            });
+        }
+
+        // Inicializar acciones cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderActions);
+        } else {
+            renderActions();
+        }
     </script>
 </body>
 </html>
