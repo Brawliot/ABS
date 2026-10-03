@@ -10,8 +10,11 @@
  * - Generar acciones rápidas según permisos
  * - Generar widgets de resumen según rol
  * - Validar permisos en servidor (seguridad)
+ * - Servir HTML del dashboard
  */
 
+import { readFileSync } from "fs";
+import { join } from "path";
 import type {
   HubDashboardSpec,
   ProcessCardSpec,
@@ -117,6 +120,22 @@ const PROCESS_META: Record<
     requiredPermissions: ["reportes.ver"],
   },
 };
+
+/**
+ * Sirve el HTML del dashboard de inicio.
+ * Lee el archivo template y lo devuelve.
+ *
+ * @returns Contenido HTML del dashboard
+ */
+export function getHubDashboardHTML(): string {
+  try {
+    const templatePath = join(process.cwd(), "web", "templates", "inicio.html");
+    return readFileSync(templatePath, "utf-8");
+  } catch (error) {
+    console.error("Error reading inicio.html template:", error);
+    return "<h1>Error loading dashboard</h1>";
+  }
+}
 
 /**
  * Función principal: genera el HubDashboardSpec completo.

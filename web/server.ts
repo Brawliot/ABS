@@ -1101,6 +1101,17 @@ export function startWebServer(
         }
       }
 
+      if (path === "/inicio" && method === "GET") {
+        try {
+          const { getHubDashboardHTML } = await import("./handlers/inicio-handler.js");
+          const html = getHubDashboardHTML();
+          return send(res, 200, html, "text/html; charset=utf-8");
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return send(res, 500, `Error: ${msg}`, "text/plain; charset=utf-8");
+        }
+      }
+
       if (path === "/login" && method === "GET") {
         const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/><title>Acceso — ${boot.brandName}</title></head><body>
 <h1>Acceso</h1>
