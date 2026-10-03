@@ -4,7 +4,7 @@
  */
 
 import type { GeneratorInput } from "../generator/types.js";
-import type { UiSpec, ViewSpec, ActionSpec } from "./types.js";
+import type { UiSpec, ViewSpec, ActionSpec, RecorridoSpec } from "./types.js";
 import { PRESENTATION_SCHEMA_VERSION } from "./types.js";
 import {
   uiSpecZod,
@@ -13,7 +13,7 @@ import {
 } from "./uispec-schema.js";
 import { assertSpecHasNoLiteralDesignValues } from "../generator/validate-ui.js";
 import { DEFAULT_FIELD_RULES } from "../filter/types.js";
-import { hashCanonical } from "../policies/compiler.js";
+import { hashCanonical, canonicalStringify } from "../policies/compiler.js";
 import {
   isValidatedUiSpec,
   sealValidatedUiSpec,
@@ -30,6 +30,7 @@ export type UiSpecValidationCode =
   | "REF_PANEL"
   | "REF_INTERNAL"
   | "REF_DUPLICATE"
+  | "REF_ORPHAN_TRANSITIVE"
   | "COHERENCE_ROLE_ACTION"
   | "COHERENCE_UNKNOWN_TRANSITION"
   | "COHERENCE_MISSING_BLOCK"
@@ -37,6 +38,7 @@ export type UiSpecValidationCode =
   | "COHERENCE_CONTENT_HASH_MISMATCH"
   | "COHERENCE_UNPERMITTED_ROLE"
   | "COHERENCE_ENTITY_FIELD_MISMATCH"
+  | "COHERENCE_CYCLE_DETECTED"
   | "SECURITY_SENSITIVE_FIELD"
   | "SECURITY_PORTAL_FIELD"
   | "SECURITY_DESIGN_LITERAL"
@@ -130,6 +132,171 @@ function push(
   options?: { suggestion?: string; affectedIds?: string[]; severity?: ValidationSeverity },
 ): void {
   issues.push({ code, path, message, ...options });
+}
+
+/**
+ * Caché LRU para validaciones por contentHash.
+ * Evita re-validar specs idénticas.
+ */
+export class ValidationCache {
+  private readonly cache = new Map<string, UiSpecValidationReport>();
+  private readonly maxSize: number;
+
+  constructor(maxSize: number = 1000) {
+    this.maxSize = maxSize;
+  }
+
+  get(contentHash: string): UiSpecValidationReport | undefined {
+    return this.cache.get(contentHash);
+  }
+
+  set(contentHash: string, report: UiSpecValidationReport): void {
+    // LRU eviction: si alcanzamos maxSize, eliminar más antigua
+    if (this.cache.size >= this.maxSize && !this.cache.has(contentHash)) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    this.cache.set(contentHash, report);
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+
+  size(): number {
+    return this.cache.size;
+  }
+}
+
+/**
+ * Canonicalizar spec para hash determinista.
+ * Ordena todas las claves recursivamente.
+ */
+function canonicalizeSpec(spec: UiSpec): string {
+  // Solo los campos que afectan validación: views, actions, forms, recorridos
+  const artifact = {
+    views: spec.views,
+    actions: spec.actions,
+    forms: spec.forms,
+    recorridos: spec.recorridos,
+    processGroups: spec.processGroups,
+  };
+  return canonicalStringify(artifact);
+}
+
+/**
+ * Detectar ciclos en recorridos.
+ * Un ciclo existe si el mismo viewId aparece más de una vez en los steps.
+ * Ej: [view1, view2, view1] debe ser DETECTADO.
+ */
+function detectCyclesInJourneys(
+  spec: UiSpec,
+  issues: UiSpecValidationIssue[],
+): void {
+  for (const recorrido of spec.recorridos) {
+    if (recorrido.steps.length <= 1) continue;
+
+    const seen = new Set<string>();
+    for (let i = 0; i < recorrido.steps.length; i++) {
+      const viewId = recorrido.steps[i]!;
+      if (seen.has(viewId)) {
+        // Ciclo detectado: el viewId ya fue visto
+        const cyclePosition = recorrido.steps.indexOf(viewId);
+        const pathStr = recorrido.steps.slice(0, i + 1).join(" → ");
+        push(
+          issues,
+          "COHERENCE_CYCLE_DETECTED",
+          `recorridos[${recorrido.id}].steps`,
+          `ciclo detectado: vista "${viewId}" aparece en posiciones ${cyclePosition} y ${i}; ruta: ${pathStr}`,
+          {
+            suggestion: `Reordenar steps en recorrido "${recorrido.id}" para evitar repeticiones. Pasos actuales: [${recorrido.steps.join(", ")}]`,
+            affectedIds: [recorrido.id],
+            severity: "critica",
+          },
+        );
+        break; // Solo reportar una vez por recorrido
+      }
+      seen.add(viewId);
+    }
+  }
+}
+
+/**
+ * Construir dependency graph: action → form → fields → entity.
+ * Reporta orphans transitivos (ej: action referencia form que referencia field no-existente).
+ */
+function buildDependencyGraph(spec: UiSpec): Map<string, Set<string>> {
+  const graph = new Map<string, Set<string>>();
+
+  // Nodo por cada recurso
+  const resources = new Set<string>();
+  for (const v of spec.views) resources.add(`view:${v.id}`);
+  for (const a of spec.actions) resources.add(`action:${a.id}`);
+  for (const f of spec.forms) resources.add(`form:${f.id}`);
+  for (const r of spec.recorridos) resources.add(`recorrido:${r.id}`);
+
+  for (const res of resources) {
+    graph.set(res, new Set());
+  }
+
+  // Aristas: quién referencia a quién
+  for (const v of spec.views) {
+    const viewNode = `view:${v.id}`;
+    for (const aid of v.actionIds) {
+      graph.get(viewNode)?.add(`action:${aid}`);
+    }
+    if (v.formId) {
+      graph.get(viewNode)?.add(`form:${v.formId}`);
+    }
+  }
+
+  for (const a of spec.actions) {
+    const actionNode = `action:${a.id}`;
+    if (a.formId) {
+      graph.get(actionNode)?.add(`form:${a.formId}`);
+    }
+  }
+
+  for (const r of spec.recorridos) {
+    const recorridoNode = `recorrido:${r.id}`;
+    for (const step of r.steps) {
+      graph.get(recorridoNode)?.add(`view:${step}`);
+    }
+  }
+
+  return graph;
+}
+
+/**
+ * Encontrar orphans transitivos: refs que no existen en el grafo.
+ */
+function findTransitiveOrphans(
+  spec: UiSpec,
+  issues: UiSpecValidationIssue[],
+): void {
+  const graph = buildDependencyGraph(spec);
+  const allNodes = new Set(graph.keys());
+
+  // Validar todas las aristas
+  for (const [source, targets] of graph.entries()) {
+    for (const target of targets) {
+      if (!allNodes.has(target)) {
+        // target es orphan
+        const [targetType, targetId] = target.split(":") as [string, string];
+        push(
+          issues,
+          "REF_ORPHAN_TRANSITIVE",
+          source,
+          `referencia ${targetType} inexistente "${targetId}" (transitivo desde ${source})`,
+          {
+            suggestion: `Crear ${targetType} "${targetId}" o remover referencia desde ${source}`,
+            affectedIds: [source],
+            severity: "critica",
+          },
+        );
+      }
+    }
+  }
 }
 
 function collectTextBlobs(spec: UiSpec): { path: string; text: string }[] {
@@ -269,6 +436,9 @@ function checkReferential(
 
   // Tarea 1: Validar entityKind fields
   validateFormFieldsAgainstEntity(spec, issues);
+
+  // Tarea Fase 2: Validar orphans transitivos
+  findTransitiveOrphans(spec, issues);
 
   // Duplicados
   const idSets: [string, string[]][] = [
@@ -576,6 +746,9 @@ function checkCoherence(
 
   // Tarea 3: Validar role permissions
   validateRolePermissions(spec, input, issues);
+
+  // Tarea Fase 2: Detectar ciclos en recorridos
+  detectCyclesInJourneys(spec, issues);
 
   for (const a of spec.actions) {
     const slice = lc.get(a.lifecycleId);
@@ -948,16 +1121,21 @@ function checkSecurity(
   }
 }
 
+// Singleton cache instance
+const globalValidationCache = new ValidationCache();
+
 /**
  * Valida UiSpec contra GeneratorInput. Devuelve report completo (todos los fallos).
+ * Usa caché por contentHash para evitar re-validación de specs idénticas.
  */
 export function validateUiSpecReport(
   raw: unknown,
   input: GeneratorInput,
-  options?: { readonly validatedAt?: string },
+  options?: { readonly validatedAt?: string; readonly cache?: ValidationCache },
 ): UiSpecValidationReport {
   const issues: UiSpecValidationIssue[] = [];
   const validatedAt = options?.validatedAt ?? new Date().toISOString();
+  const cache = options?.cache ?? globalValidationCache;
 
   const spec = checkSchema(raw, issues);
   if (!spec) {
@@ -970,6 +1148,13 @@ export function validateUiSpecReport(
           ? (raw as { version: string }).version
           : "unknown",
     };
+  }
+
+  // Verificar caché por contentHash
+  const contentHashKey = spec.contentHash;
+  const cachedReport = cache.get(contentHashKey);
+  if (cachedReport) {
+    return cachedReport;
   }
 
   if (!SUPPORTED_PRESENTATION_SCHEMA_VERSIONS.has(spec.version)) {
@@ -991,12 +1176,17 @@ export function validateUiSpecReport(
   // Tarea 6: Portal scope deep validation
   validatePortalScopeAccess(spec, input, issues);
 
-  return {
+  const report: UiSpecValidationReport = {
     ok: issues.length === 0,
     issues,
     validatedAt,
     schemaVersion: spec.version,
   };
+
+  // Guardar en caché
+  cache.set(contentHashKey, report);
+
+  return report;
 }
 
 /**

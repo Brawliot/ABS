@@ -22,6 +22,7 @@ export {
   serializeValidatedUiSpec,
   parseAndValidateUiSpec,
   UiSpecValidationError,
+  ValidationCache,
 } from "./uispec-validator.js";
 export type {
   UiSpecValidationCode,
