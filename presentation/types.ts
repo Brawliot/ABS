@@ -237,4 +237,102 @@ export interface PresentationOverlay {
   };
 }
 
+/**
+ * ─────────────────────────────────────────────────────────────
+ * Hub de Inicio: Navegación centralizada después de login
+ * ─────────────────────────────────────────────────────────────
+ * Estructura de datos para el dashboard inicial con control de roles.
+ */
+
+/**
+ * Información de un rol específico.
+ * Define permisos y etiqueta del rol que se mostrará en UI.
+ */
+export interface RoleInfo {
+  readonly roleId: string;
+  readonly label: string;
+  readonly permissions: readonly string[];
+  /** Descripción del rol para tooltip/ayuda. */
+  readonly description?: string;
+}
+
+/**
+ * Tarjeta de proceso en el grid del hub.
+ * Representa un proceso (lifecycle) que el usuario puede acceder.
+ */
+export interface ProcessCardSpec {
+  readonly id: string;
+  readonly lifecycleId: string;
+  readonly label: string;
+  readonly icon: string;
+  readonly description: string;
+  readonly href: string;
+  readonly isVisible: boolean;
+  readonly isEnabled: boolean;
+  /** Contador opcional (ej: "8 pendientes"). */
+  readonly count?: number;
+  /** Permisos requeridos para ver esta tarjeta. */
+  readonly requiredPermissions: readonly string[];
+  /** Métrica de importancia (0-100) para ordenar. */
+  readonly priority?: number;
+}
+
+/**
+ * Acción rápida en el hub.
+ * Atajos a operaciones frecuentes según el rol.
+ */
+export interface QuickActionSpec {
+  readonly id: string;
+  readonly label: string;
+  readonly icon: string;
+  readonly href: string;
+  readonly requiredPermissions: readonly string[];
+  /** Orden de visualización. */
+  readonly order?: number;
+}
+
+/**
+ * Widget de resumen/métrica en el hub.
+ * Muestra KPIs importantes para el rol.
+ */
+export interface SummaryWidgetSpec {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  /** Tendencia: up, down, stable. */
+  readonly trend: "up" | "down" | "stable";
+  readonly icon: string;
+  /** Color semántico del widget. */
+  readonly colorSemantic?: "success" | "warning" | "danger" | "info";
+  readonly requiredPermissions: readonly string[];
+}
+
+/**
+ * Especificación completa del Hub Dashboard.
+ * Contiene todos los elementos visuales que ve un usuario después de login.
+ * Generado por bootHubDashboard() basado en UiSpec y rol actual.
+ */
+export interface HubDashboardSpec {
+  readonly userId: string;
+  readonly sessionId: string;
+  readonly generatedAt: string;
+  /** Rol actual seleccionado. */
+  readonly currentRole: RoleInfo;
+  /** Roles disponibles que el usuario puede cambiar. */
+  readonly availableRoles: readonly RoleInfo[];
+  /** Procesos principales del negocio. */
+  readonly processCards: readonly ProcessCardSpec[];
+  /** Acciones rápidas contextúales. */
+  readonly quickActions: readonly QuickActionSpec[];
+  /** Widgets de resumen de negocio. */
+  readonly summary: readonly SummaryWidgetSpec[];
+  /** Navegación auxiliar (enlaces adicionales). */
+  readonly auxiliaryLinks?: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly href: string;
+    readonly icon?: string;
+  }[];
+}
+
 export const PRESENTATION_SCHEMA_VERSION = "2.0.0-mvp";
