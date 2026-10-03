@@ -10,6 +10,7 @@ import { bindDesignToUiSpec } from "../presentation/bind-design.js";
 import { hashDesignSystem } from "../design/approve.js";
 import { isValidatedUiSpec } from "../presentation/validated.js";
 import { processGroupsForRole } from "./visibility.js";
+import { allowDevSession } from "../auth/env.js";
 
 function esc(s: string): string {
   return s
@@ -26,6 +27,43 @@ function t(spec: UiSpec, key: string): string {
 
 function labelOf(spec: UiSpec, id: string, key: string): string {
   return spec.content[id]?.title ?? t(spec, key);
+}
+
+function renderDevBar(
+  boot: RenderAppOptions["boot"],
+  session: DevSession,
+  enabled: boolean = true,
+): string {
+  if (!enabled || !allowDevSession()) {
+    return "";
+  }
+  const roleOpts = boot.roles
+    .map(
+      (r) =>
+        `<option value="${esc(r.id)}"${r.id === session.roleId ? " selected" : ""}>${esc(r.label)}</option>`,
+    )
+    .join("");
+  const parteOpts = boot.samplePartes
+    .map(
+      (p) =>
+        `<option value="${esc(p.id)}"${p.id === session.parteId ? " selected" : ""}>${esc(p.label)}</option>`,
+    )
+    .join("");
+  return `
+<aside class="dev-bar" data-dev-session="provisional" role="region" aria-label="Sesión de desarrollo provisional">
+  <strong>⚠ Sesión de desarrollo provisional</strong>
+  — no es el sistema de cuentas real. Selector de rol y Parte solo para pruebas.
+  <form method="get" action="/">
+    <label>Rol
+      <select name="role" aria-label="Rol de desarrollo">${roleOpts}</select>
+    </label>
+    <label>Parte
+      <select name="parte" aria-label="Parte de desarrollo">${parteOpts}</select>
+    </label>
+    <input type="hidden" name="group" value="${esc(session.processGroupId ?? "")}" />
+    <button type="submit">Aplicar</button>
+  </form>
+</aside>`;
 }
 
 /**
@@ -764,8 +802,10 @@ export function renderInicioHtml(options: RenderAppOptions): string {
     ${renderInicioStyles(binding.tokens)}
   </style>
 </head>
-<body data-profile="${esc(boot.profileId)}" data-role="${esc(session.roleId)}" data-parte="${esc(session.parteId)}" data-channel="${esc(session.channel)}" data-density="${esc(binding.tokens.density)}">
+<body class="${options.showDevSession !== false ? "dev-session" : ""}" data-profile="${esc(boot.profileId)}" data-role="${esc(session.roleId)}" data-parte="${esc(session.parteId)}" data-channel="${esc(session.channel)}" data-density="${esc(binding.tokens.density)}"${options.showDevSession !== false ? ' data-dev-session="provisional"' : ""}>
   <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  ${renderDevBar(boot, session, options.showDevSession !== false)}
 
   ${renderInicioHeader(boot, session)}
 
