@@ -49,7 +49,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
         type: "add_policy",
         plantilla: "tpl.plazo_devolucion",
         parametros: {
-          plazo_devolucion_dias: 7,
+          dias: 7,
           penalizacion_no_devolucion: 0,
         },
         idSuffix: "plazo-cita",
@@ -188,7 +188,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
         type: "add_policy",
         plantilla: "tpl.plazo_devolucion",
         parametros: {
-          plazo_devolucion_dias: 14,
+          dias: 14,
           penalizacion_no_devolucion: 0,
         },
         idSuffix: "plazo-devolucion-std",
