@@ -1103,8 +1103,19 @@ export function startWebServer(
 
       if (path === "/inicio" && method === "GET") {
         try {
-          const { getHubDashboardHTML } = await import("./handlers/inicio-handler.js");
-          const html = getHubDashboardHTML();
+          const { renderHubDashboardWithData } = await import("./handlers/inicio-handler.js");
+          const ident = resolveRequestIdentity(auth, req, boot, parseQuery(url));
+
+          const userId = ident.session?.accountId ?? "guest";
+          const userName = ident.session?.displayName ?? "Usuario";
+          const requestedRole = ident.dev.roleId ?? parseQuery(url).role;
+
+          // Usar roles válidos del boot
+          const validRoles = boot.roles.map(r => r.id);
+          const roleId = validRoles.includes(requestedRole) ? requestedRole : boot.roles[0]?.id ?? "gerente";
+
+          // Renderizar con datos dinámicos
+          const html = renderHubDashboardWithData(boot.input, userId, roleId, userName);
           return send(res, 200, html, "text/html; charset=utf-8");
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
