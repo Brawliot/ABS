@@ -141,6 +141,15 @@ const styleTokenRefsSchema = z.object({
   tactilMinimo: z.literal("tactil.minimo"),
 });
 
+// Registro de entityKind → campos conocidos (base mínima)
+// Los campos pueden variar según la implementación, pero todos deben tener al menos 'id'
+export const ENTITY_SCHEMAS: Record<string, Set<string>> = {
+  parte: new Set(["id", "parte_id", "nombre", "nombre_ref", "apellido", "apellido_materno", "edad", "email", "telefono", "documento", "tipo_documento", "domicilio"]),
+  oferta: new Set(["id", "numero", "monto", "tasa", "plazo", "estado", "fecha_creacion", "validez_hasta", "oferta_version", "oferta_version_aceptada", "descripcion"]),
+  recurso: new Set(["id", "recurso_id", "codigo", "descripcion", "cantidad", "tipo", "responsable"]),
+  evidence: new Set(["id", "tipo", "titulo", "descripcion", "archivo", "fecha", "validado"]),
+};
+
 export const uiSpecZod = z.object({
   id: z.string().min(1),
   version: z.string().min(1),
