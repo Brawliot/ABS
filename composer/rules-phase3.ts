@@ -133,7 +133,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
         type: "add_policy",
         plantilla: "tpl.limite_credito_por_cliente",
         parametros: {
-          limite_eur: 10000,
+          por_defecto_eur: 10000,
           bloqueo_impago_dias: 45,
         },
         idSuffix: "limite-credito-inter",
@@ -168,7 +168,7 @@ export const COMPOSITION_RULES_PHASE_3: readonly CompositionRule[] = [
         type: "add_policy",
         plantilla: "tpl.limite_credito_por_cliente",
         parametros: {
-          limite_eur: 5000,
+          por_defecto_eur: 5000,
           bloqueo_impago_dias: 30,
         },
         idSuffix: "limite-credito-inventario",
