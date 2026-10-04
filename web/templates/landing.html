@@ -400,6 +400,204 @@ form textarea {
   font-size: 14px;
 }
 
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #0f172a 0%, #1a0d2e 100%);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 16px;
+  padding: 0;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 32px 32px 24px 32px;
+  border-bottom: 1px solid rgba(20, 184, 166, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #14b8a6;
+}
+
+.toggle-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #14b8a6, #0891b2);
+  border-color: #14b8a6;
+  color: white;
+}
+
+.modal-body {
+  padding: 32px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(148, 163, 184, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #14b8a6;
+  background: rgba(20, 184, 166, 0.05);
+}
+
+.modal-form {
+  display: none;
+}
+
+.modal-form.active {
+  display: block;
+}
+
+.modal-footer {
+  padding: 0 32px 32px 32px;
+}
+
+.modal-submit {
+  width: 100%;
+  background: linear-gradient(135deg, #14b8a6, #0891b2);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.modal-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.2);
+}
+
+.modal-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.modal-link {
+  text-align: center;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.modal-link a {
+  color: #14b8a6;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .grid-3 {
     grid-template-columns: 1fr;
@@ -420,6 +618,11 @@ form textarea {
   .pricing-card.featured {
     transform: scale(1);
   }
+
+  .modal-content {
+    max-width: calc(100% - 32px);
+    margin: 16px;
+  }
 }
 </style>
 </head>
@@ -432,7 +635,7 @@ form textarea {
       <button onclick="document.querySelector('.features').scrollIntoView({behavior:'smooth'})">¿Cómo funciona?</button>
       <button onclick="document.querySelector('.pricing').scrollIntoView({behavior:'smooth'})">Precios</button>
       <button onclick="document.querySelector('.contact').scrollIntoView({behavior:'smooth'})">Contacto</button>
-      <button class="btn-secondary" onclick="window.location.href='/login'">Iniciar sesión</button>
+      <button class="btn-secondary" onclick="openAuthModal()">Iniciar sesión</button>
     </div>
   </div>
 
@@ -590,5 +793,124 @@ form textarea {
     </div>
   </div>
 </div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Iniciar sesión</h2>
+      <button class="modal-close" onclick="closeAuthModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="toggle-container">
+        <button class="toggle-btn active" id="loginToggle" onclick="switchToLogin()">Iniciar sesión</button>
+        <button class="toggle-btn" id="signupToggle" onclick="switchToSignup()">Registrarse</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form class="modal-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" placeholder="tu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" placeholder="••••••••" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="modal-submit">Entrar</button>
+          <div class="modal-link" style="margin-top: 16px;">
+            <a href="#" onclick="event.preventDefault(); alert('Recuperar contraseña')">¿Olvidaste tu contraseña?</a>
+          </div>
+        </div>
+      </form>
+
+      <!-- SIGNUP FORM -->
+      <form class="modal-form" id="signupForm" onsubmit="handleSignup(event)">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" placeholder="Tu nombre" required>
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" placeholder="tu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Empresa</label>
+          <input type="text" placeholder="Tu empresa" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label>Confirmar contraseña</label>
+          <input type="password" placeholder="••••••••" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="modal-submit">Crear cuenta</button>
+          <div class="modal-link" style="margin-top: 16px; font-size: 12px;">
+            Al registrarte, aceptas nuestros <a href="#">términos de servicio</a> y <a href="#">política de privacidad</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAuthModal() {
+  document.getElementById('authModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+function switchToLogin() {
+  document.getElementById('loginToggle').classList.add('active');
+  document.getElementById('signupToggle').classList.remove('active');
+  document.getElementById('loginForm').classList.add('active');
+  document.getElementById('signupForm').classList.remove('active');
+  document.getElementById('modalTitle').textContent = 'Iniciar sesión';
+}
+
+function switchToSignup() {
+  document.getElementById('loginToggle').classList.remove('active');
+  document.getElementById('signupToggle').classList.add('active');
+  document.getElementById('loginForm').classList.remove('active');
+  document.getElementById('signupForm').classList.add('active');
+  document.getElementById('modalTitle').textContent = 'Crear cuenta';
+}
+
+function handleLogin(event) {
+  event.preventDefault();
+  alert('Login enviado. En producción esto se conectaría con el servidor.');
+  closeAuthModal();
+}
+
+function handleSignup(event) {
+  event.preventDefault();
+  alert('Registro enviado. En producción esto se conectaría con el servidor.');
+  closeAuthModal();
+}
+
+// Cerrar modal al hacer click fuera
+document.getElementById('authModal').addEventListener('click', function(event) {
+  if (event.target === this) {
+    closeAuthModal();
+  }
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeAuthModal();
+  }
+});
+</script>
 </body>
 </html>
