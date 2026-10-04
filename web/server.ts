@@ -69,6 +69,10 @@ import {
 } from "./cli.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
+const LANDING_HTML = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "templates", "landing.html"),
+  "utf-8"
+);
 
 function parseQuery(url: string): Record<string, string> {
   const i = url.indexOf("?");
@@ -1271,60 +1275,66 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
         );
       }
 
-      if (path !== "/" && path !== "/index.html") {
-        return send(res, 404, "Not found", "text/plain");
-      }
+      // Serve landing page for unauthenticated users
+      if (path === "/" || path === "/index.html") {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
 
-      const q = parseQuery(url);
-      const ident = resolveRequestIdentity(auth, req, boot, q);
-      if (isProduction() && !ident.session) {
-        return send(res, 303, "", "text/plain", { Location: "/login" });
-      }
-      const liveRows = runtime.projectRows({
-        ...(ident.dev.sedeId ? { sedeId: ident.dev.sedeId } : {}),
-        sedeScoped: ident.dev.sedeScoped === true,
-      });
-      const session: DevSession =
-        ident.mode === "auth"
-          ? ident.dev
-          : {
-              ...resolveSession(
-                boot,
-                {
-                  ...(q.role !== undefined ? { role: q.role } : {}),
-                  ...(q.parte !== undefined ? { parte: q.parte } : {}),
-                  ...(q.group !== undefined ? { group: q.group } : {}),
-                  ...(q.view !== undefined ? { view: q.view } : {}),
-                },
-                { preferRows: liveRows },
-              ),
-              ...(ident.dev.sedeId ? { sedeId: ident.dev.sedeId } : {}),
-              sedeScoped: ident.dev.sedeScoped === true,
-              ...(ident.dev.tenantId
-                ? { tenantId: ident.dev.tenantId }
-                : {}),
-            };
+        // Unauthenticated user: serve landing page
+        if (!ident.session) {
+          return send(res, 200, LANDING_HTML, "text/html; charset=utf-8");
+        }
 
-      try {
-        // Use renderInicioPage for the homepage layout
-        let html = renderInicioPage(session, liveRows, ident.mode !== "auth");
-        if (ident.session) {
-          const csrf = `<input type="hidden" name="csrfToken" value="${ident.session.csrfToken}" data-csrf />`;
-          html = html.replace(
-            /(<form method="post"[^>]*>)/g,
-            `$1${csrf}`,
+        // Authenticated user continues to dashboard
+        const liveRows = runtime.projectRows({
+          ...(ident.dev.sedeId ? { sedeId: ident.dev.sedeId } : {}),
+          sedeScoped: ident.dev.sedeScoped === true,
+        });
+        const session: DevSession =
+          ident.mode === "auth"
+            ? ident.dev
+            : {
+                ...resolveSession(
+                  boot,
+                  {
+                    ...(q.role !== undefined ? { role: q.role } : {}),
+                    ...(q.parte !== undefined ? { parte: q.parte } : {}),
+                    ...(q.group !== undefined ? { group: q.group } : {}),
+                    ...(q.view !== undefined ? { view: q.view } : {}),
+                  },
+                  { preferRows: liveRows },
+                ),
+                ...(ident.dev.sedeId ? { sedeId: ident.dev.sedeId } : {}),
+                sedeScoped: ident.dev.sedeScoped === true,
+                ...(ident.dev.tenantId
+                  ? { tenantId: ident.dev.tenantId }
+                  : {}),
+              };
+
+        try {
+          // Use renderInicioPage for the homepage layout
+          let html = renderInicioPage(session, liveRows, ident.mode !== "auth");
+          if (ident.session) {
+            const csrf = `<input type="hidden" name="csrfToken" value="${ident.session.csrfToken}" data-csrf />`;
+            html = html.replace(
+              /(<form method="post"[^>]*>)/g,
+              `$1${csrf}`,
+            );
+          }
+          return send(res, 200, html, "text/html; charset=utf-8");
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return send(
+            res,
+            500,
+            `Error de render: ${msg}`,
+            "text/plain; charset=utf-8",
           );
         }
-        return send(res, 200, html, "text/html; charset=utf-8");
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return send(
-          res,
-          500,
-          `Error de render: ${msg}`,
-          "text/plain; charset=utf-8",
-        );
       }
+
+      // Default 404 for all other routes
+      return send(res, 404, "Not found", "text/plain");
     })().catch((err) => {
       const msg = err instanceof Error ? err.message : String(err);
       if (!res.headersSent) {
