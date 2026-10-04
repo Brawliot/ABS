@@ -344,15 +344,8 @@
         </header>
 
         <!-- SIDEBAR LEFT -->
-        <aside class="sidebar-left">
-            <button class="module-btn active"><div class="module-icon">H</div> Inicio</button>
-            <button class="module-btn"><div class="module-icon">C</div> Contabilidad</button>
-            <button class="module-btn"><div class="module-icon">S</div> Stock</button>
-            <button class="module-btn"><div class="module-icon">D</div> Dinero</button>
-            <button class="module-btn"><div class="module-icon">V</div> Clientes</button>
-            <button class="module-btn"><div class="module-icon">R</div> RRHH</button>
-            <button class="module-btn"><div class="module-icon">A</div> Reportes</button>
-            <button class="module-btn"><div class="module-icon">G</div> Config</button>
+        <aside class="sidebar-left" id="modulesContainer">
+            <!-- Renderizado dinámicamente -->
         </aside>
 
         <!-- CENTER PANEL -->
@@ -493,8 +486,38 @@
             });
         }
 
+        // Renderizar módulos dinámicamente desde datos inyectados
+        function renderModules() {
+            const container = document.getElementById('modulesContainer');
+            const data = window.DASHBOARD_DATA;
+
+            if (!data || !data.modules) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.75rem;">No hay módulos disponibles</p>';
+                return;
+            }
+
+            // Siempre agregar Inicio primero
+            const inicioBtn = document.createElement('button');
+            inicioBtn.className = 'module-btn active';
+            inicioBtn.innerHTML = '<div class="module-icon">I</div> Inicio';
+            container.appendChild(inicioBtn);
+
+            // Agregar módulos dinámicos
+            data.modules.forEach(module => {
+                const btn = document.createElement('button');
+                btn.className = 'module-btn';
+                btn.innerHTML = `
+                    <div class="module-icon">${module.icon}</div>
+                    ${module.label}
+                `;
+                btn.onclick = () => window.location.href = module.href;
+                container.appendChild(btn);
+            });
+        }
+
         // Inicializar contenido dinámico cuando el DOM esté listo
         function initDashboard() {
+            renderModules();
             renderSummary();
             renderActions();
         }

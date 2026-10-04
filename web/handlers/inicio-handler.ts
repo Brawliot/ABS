@@ -171,6 +171,7 @@ export function renderHubDashboardWithData(
         roleId: roleId,
         role: dashboardData.currentRole,
       },
+      modules: dashboardData.modules,
       actions: dashboardData.quickActions,
       summary: dashboardData.summary,
       availableRoles: dashboardData.availableRoles,
@@ -219,6 +220,15 @@ export function bootHubDashboard(
   const quickActions = generateQuickActions(spec, currentRole as RoleInfo, processCards);
   const summary = generateSummaryWidgets(currentRole as RoleInfo, processCards, runtime);
 
+  // Generar módulos dinámicos para el sidebar
+  const modules = processCards.map((card, idx) => ({
+    id: card.lifecycleId,
+    label: card.label,
+    icon: card.icon?.substring(0, 1) || "◆",
+    href: `/expedientes?lifecycleId=${card.lifecycleId}`,
+    order: idx,
+  }));
+
   return {
     userId,
     sessionId,
@@ -226,6 +236,7 @@ export function bootHubDashboard(
     currentRole,
     availableRoles,
     processCards,
+    modules,
     quickActions,
     summary,
     auxiliaryLinks: generateAuxiliaryLinks(spec),

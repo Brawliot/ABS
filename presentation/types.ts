@@ -322,6 +322,14 @@ export interface HubDashboardSpec {
   readonly availableRoles: readonly RoleInfo[];
   /** Procesos principales del negocio. */
   readonly processCards: readonly ProcessCardSpec[];
+  /** Módulos dinámicos para el sidebar. */
+  readonly modules: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly icon: string;
+    readonly href: string;
+    readonly order: number;
+  }[];
   /** Acciones rápidas contextúales. */
   readonly quickActions: readonly QuickActionSpec[];
   /** Widgets de resumen de negocio. */
