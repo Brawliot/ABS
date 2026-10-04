@@ -299,7 +299,7 @@ function generateProcessCards(
       cards.push({
         id: `process:${lifecycleId}`,
         lifecycleId,
-        label: formatProcessLabel(lifecycleId),
+        label: translateLabel(group.labelKey, lifecycleId, spec),
         icon: "⚙️",
         description: "Proceso del negocio",
         href: `/proceso/${lifecycleId}`,
@@ -319,7 +319,7 @@ function generateProcessCards(
         cards.push({
           id: `process:${lifecycleId}`,
           lifecycleId,
-          label: formatProcessLabel(lifecycleId),
+          label: translateLabel(group.labelKey, lifecycleId, spec),
           icon: meta.icon,
           description: meta.description,
           href: `/proceso/${lifecycleId}`,
@@ -615,6 +615,27 @@ function formatRoleLabel(roleId: string): string {
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+/**
+ * Traduce una clave de label buscando en spec.localization y spec.content.
+ * Fallback: formatea el lifecycleId si no hay traducción.
+ */
+function translateLabel(labelKey: string, lifecycleId: string, spec: UiSpec): string {
+  // 1. Buscar en content (personalizaciones de usuario)
+  if (spec.content[labelKey]?.title) {
+    return spec.content[labelKey].title!;
+  }
+
+  // 2. Buscar en localization.strings (diccionario del negocio)
+  for (const bundle of spec.localization) {
+    if (bundle.strings[labelKey]) {
+      return bundle.strings[labelKey];
+    }
+  }
+
+  // 3. Fallback: formatear el lifecycleId
+  return formatProcessLabel(lifecycleId);
 }
 
 /**
