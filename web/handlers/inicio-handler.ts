@@ -210,14 +210,14 @@ export function bootHubDashboard(
       roleId,
       label: formatRoleLabel(roleId),
       permissions: ROLE_PERMISSIONS[roleId] ?? [],
-      description: ROLE_DESCRIPTIONS[roleId] ?? undefined,
-    };
+      description: ROLE_DESCRIPTIONS[roleId],
+    } as RoleInfo;
   }
 
   // Generar elementos del dashboard
-  const processCards = generateProcessCards(spec, currentRole, availableRoles);
-  const quickActions = generateQuickActions(spec, currentRole, processCards);
-  const summary = generateSummaryWidgets(currentRole, processCards, runtime);
+  const processCards = generateProcessCards(spec, currentRole as RoleInfo, availableRoles);
+  const quickActions = generateQuickActions(spec, currentRole as RoleInfo, processCards);
+  const summary = generateSummaryWidgets(currentRole as RoleInfo, processCards, runtime);
 
   return {
     userId,

@@ -1107,12 +1107,12 @@ export function startWebServer(
           const ident = resolveRequestIdentity(auth, req, boot, parseQuery(url));
 
           const userId = ident.session?.accountId ?? "guest";
-          const userName = ident.session?.displayName ?? "Usuario";
+          const userName = (ident.session as any)?.displayName ?? "Usuario";
 
           // Extraer roles disponibles del spec (desde processGroups)
           const rolesFromSpec = new Set<string>();
-          if (boot.input?.processGroups) {
-            for (const group of boot.input.processGroups) {
+          if (boot.spec?.processGroups) {
+            for (const group of boot.spec.processGroups) {
               for (const rid of group.roleIds) {
                 rolesFromSpec.add(rid);
               }
@@ -1134,13 +1134,13 @@ export function startWebServer(
           if (!roleId) {
             return send(res, 500, `
               <h1>Error: No hay roles disponibles</h1>
-              <p>boot.input.processGroups y boot.roles están vacíos.</p>
+              <p>boot.spec.processGroups y boot.roles están vacíos.</p>
               <p>Roles encontrados: ${JSON.stringify(validRoles)}</p>
             `, "text/html; charset=utf-8");
           }
 
           // Renderizar con datos dinámicos
-          const html = renderHubDashboardWithData(boot.input, userId, roleId, userName, runtime);
+          const html = renderHubDashboardWithData(boot.spec, userId, roleId, userName, runtime);
           return send(res, 200, html, "text/html; charset=utf-8");
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
