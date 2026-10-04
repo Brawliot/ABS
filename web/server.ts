@@ -26,6 +26,38 @@ import {
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { AppRuntime } from "./runtime.js";
+import {
+  isExpedientesPath,
+  handleExpedientes,
+} from "./expedientes.js";
+import {
+  isFacturasPath,
+  handleFacturas,
+} from "./facturas.js";
+import {
+  isDineroPath,
+  handleDinero,
+} from "./dinero.js";
+import {
+  isContabilidadPath,
+  handleContabilidad,
+} from "./contabilidad.js";
+import {
+  isHoyPath,
+  handleHoy,
+  type HoyContext,
+  type HoyResponse,
+} from "./hoy.js";
+import {
+  isStockPath,
+  handleStock,
+} from "./stock.js";
+import {
+  isMaestrosPath,
+  handleMaestros,
+  type MaestrosContext,
+  type Viewer,
+} from "./maestros.js";
 import type { AppBootResult, DevSession } from "./types.js";
 import {
   acceptInvite,
@@ -1273,6 +1305,177 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
           ),
           "application/json; charset=utf-8",
         );
+      }
+
+      // ==================== MAESTROS PAGES ====================
+      if (isMaestrosPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const readForm = async () => formToRecord(await readBody(req));
+          const response = await handleMaestros(maestrosCtx, req, readForm);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== EXPEDIENTES ====================
+      if (isExpedientesPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const readForm = async () => formToRecord(await readBody(req));
+          const response = await handleExpedientes(maestrosCtx, req, readForm);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== FACTURAS ====================
+      if (isFacturasPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const readForm = async () => formToRecord(await readBody(req));
+          const response = await handleFacturas(maestrosCtx, req, readForm);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== DINERO ====================
+      if (isDineroPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const response = await handleDinero(maestrosCtx, req);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== CONTABILIDAD ====================
+      if (isContabilidadPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const response = await handleContabilidad(maestrosCtx, req);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== HOY ====================
+      if (isHoyPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const viewer: Viewer = {
+          roleId: ident.dev.roleId ?? "gerente",
+          parteId: ident.dev.parteId ?? "self",
+          csrfToken: ident.session?.csrfToken,
+          devMode: ident.mode !== "auth",
+        };
+
+        const hoyCtx: HoyContext = {
+          runtime,
+          boot,
+        };
+
+        try {
+          const response = handleHoy(hoyCtx, viewer);
+          return send(res, response.status, response.body, response.contentType);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
+      }
+
+      // ==================== STOCK ====================
+      if (isStockPath(path)) {
+        const q = parseQuery(url);
+        const ident = resolveRequestIdentity(auth, req, boot, q);
+        if (!ident.session && isProduction()) {
+          return send(res, 303, "", "text/plain", { Location: "/login" });
+        }
+
+        const maestrosCtx: MaestrosContext = {
+          runtime,
+          boot,
+          auth,
+        };
+
+        try {
+          const readForm = async () => formToRecord(await readBody(req));
+          const response = await handleStock(maestrosCtx, req, readForm);
+          return send(res, response.status, response.body, response.contentType, response.headers);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return send(res, 500, msg, "text/plain");
+        }
       }
 
       // Serve landing page for unauthenticated users
