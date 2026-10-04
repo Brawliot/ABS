@@ -24,6 +24,7 @@ import type {
   UiSpec,
 } from "../../presentation/types.js";
 import { processGroupsForRole } from "../visibility.js";
+import type { AppRuntime } from "../runtime.js";
 
 /**
  * Información de permisos por rol (mapeo simple para demostración).
@@ -145,16 +146,18 @@ export function getHubDashboardHTML(): string {
  * @param userId - ID del usuario
  * @param roleId - Rol del usuario
  * @param userName - Nombre del usuario
+ * @param runtime - AppRuntime para acceso a datos reales
  * @returns HTML con datos inyectados
  */
 export function renderHubDashboardWithData(
   spec: UiSpec,
   userId: string,
   roleId: string,
-  userName: string
+  userName: string,
+  runtime?: AppRuntime
 ): string {
   // Generar datos dinámicos
-  const dashboardData = bootHubDashboard(spec, userId, roleId, `session-${Date.now()}`);
+  const dashboardData = bootHubDashboard(spec, userId, roleId, `session-${Date.now()}`, runtime);
 
   // Obtener HTML template
   const html = getHubDashboardHTML();
@@ -186,13 +189,15 @@ export function renderHubDashboardWithData(
  * @param userId - ID del usuario actual
  * @param roleId - Rol actual seleccionado
  * @param sessionId - ID de sesión para auditoria
+ * @param runtime - AppRuntime para datos reales (opcional)
  * @returns HubDashboardSpec con todos los elementos del dashboard
  */
 export function bootHubDashboard(
   spec: UiSpec,
   userId: string,
   roleId: string,
-  sessionId: string
+  sessionId: string,
+  runtime?: AppRuntime
 ): HubDashboardSpec {
   // Validar que el rol existe y está disponible
   const availableRoles = generateAvailableRoles(spec);
@@ -212,7 +217,7 @@ export function bootHubDashboard(
   // Generar elementos del dashboard
   const processCards = generateProcessCards(spec, currentRole, availableRoles);
   const quickActions = generateQuickActions(spec, currentRole, processCards);
-  const summary = generateSummaryWidgets(currentRole, processCards);
+  const summary = generateSummaryWidgets(currentRole, processCards, runtime);
 
   return {
     userId,
@@ -407,21 +412,41 @@ function generateQuickActions(
  *
  * @param currentRole - Rol actual
  * @param processCards - Procesos disponibles
+ * @param runtime - AppRuntime para datos reales (opcional)
  * @returns Array de SummaryWidgetSpec
  */
 function generateSummaryWidgets(
   currentRole: RoleInfo,
-  processCards: readonly ProcessCardSpec[]
+  processCards: readonly ProcessCardSpec[],
+  runtime?: AppRuntime
 ): readonly SummaryWidgetSpec[] {
   const widgets: SummaryWidgetSpec[] = [];
   const userPermissions = new Set(currentRole.permissions);
 
   // Widget: Ventas del día (si tiene permiso)
   if (userPermissions.has("pedidos.ver") || userPermissions.has("facturas.ver")) {
+    let ventasHoy = "$2,450"; // default
+    if (runtime) {
+      try {
+        const expedientes = runtime.expedientesDinero();
+        const hoy = new Date();
+        const today = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+        const salesTotal = expedientes
+          .filter(e => {
+            const eDate = new Date((e as any).fecha || 0);
+            const eToday = new Date(eDate.getFullYear(), eDate.getMonth(), eDate.getDate());
+            return eToday.getTime() === today.getTime() && (e as any).estadoId !== "anulado";
+          })
+          .reduce((sum, e) => sum + ((e as any).totalCentimos || 0), 0);
+        ventasHoy = `$${(salesTotal / 100).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
+      } catch (e) {
+        console.error("Error calculating sales:", e);
+      }
+    }
     widgets.push({
       id: "widget:ventas-hoy",
       label: "Ventas Hoy",
-      value: "$2,450",
+      value: ventasHoy,
       trend: "up",
       icon: "💰",
       colorSemantic: "success",
@@ -431,12 +456,23 @@ function generateSummaryWidgets(
 
   // Widget: Pedidos Pendientes (si tiene permiso)
   if (userPermissions.has("pedidos.ver")) {
+    let pedidosPendientes = "8"; // default
+    if (runtime) {
+      try {
+        const expedientes = runtime.expedientesDinero();
+        const pending = expedientes.filter((e: any) =>
+          e.lifecycleId === "pedidos" &&
+          ["pendiente", "en_proceso"].includes(e.situacion)
+        ).length;
+        pedidosPendientes = pending.toString();
+      } catch (e) {
+        console.error("Error calculating pending orders:", e);
+      }
+    }
     widgets.push({
       id: "widget:pedidos-pendientes",
       label: "Pedidos Pendientes",
-      value: processCards
-        .find((p) => p.lifecycleId === "pedidos")
-        ?.count?.toString() ?? "8",
+      value: pedidosPendientes,
       trend: "stable",
       icon: "📦",
       colorSemantic: "warning",
@@ -459,10 +495,20 @@ function generateSummaryWidgets(
 
   // Widget: Clientes Activos (si tiene permiso)
   if (userPermissions.has("clientes.ver")) {
+    let clientesActivos = "156"; // default
+    if (runtime) {
+      try {
+        const expedientes = runtime.expedientesDinero();
+        const uniqueClients = new Set(expedientes.map((e: any) => e.parteId)).size;
+        clientesActivos = uniqueClients.toString();
+      } catch (e) {
+        console.error("Error calculating active clients:", e);
+      }
+    }
     widgets.push({
       id: "widget:clientes-activos",
       label: "Clientes Activos",
-      value: "156",
+      value: clientesActivos,
       trend: "up",
       icon: "👥",
       colorSemantic: "info",
@@ -472,10 +518,22 @@ function generateSummaryWidgets(
 
   // Widget: Facturas Pendientes (si tiene permiso)
   if (userPermissions.has("facturas.ver")) {
+    let factunasPendientes = "12"; // default
+    if (runtime) {
+      try {
+        const expedientes = runtime.expedientesDinero();
+        const unpaid = expedientes.filter((e: any) =>
+          e.lifecycleId === "facturas" && e.situacion === "impagada"
+        ).length;
+        factunasPendientes = unpaid.toString();
+      } catch (e) {
+        console.error("Error calculating pending invoices:", e);
+      }
+    }
     widgets.push({
       id: "widget:facturas-pendientes",
       label: "Facturas Pendientes",
-      value: "12",
+      value: factunasPendientes,
       trend: "stable",
       icon: "🧾",
       colorSemantic: "warning",

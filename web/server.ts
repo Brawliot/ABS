@@ -1140,7 +1140,7 @@ export function startWebServer(
           }
 
           // Renderizar con datos dinámicos
-          const html = renderHubDashboardWithData(boot.input, userId, roleId, userName);
+          const html = renderHubDashboardWithData(boot.input, userId, roleId, userName, runtime);
           return send(res, 200, html, "text/html; charset=utf-8");
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
