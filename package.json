@@ -5,7 +5,7 @@
   "description": "Núcleo operativo determinista basado en eventos — metaobjeto y gramática",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && mkdir -p dist/web/templates && cp web/templates/*.html dist/web/templates/",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run typecheck && vitest run",
     "test:unit": "vitest run",
