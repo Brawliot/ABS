@@ -95,6 +95,40 @@ function routeGet(
 ): MaestrosResponse {
   const { runtime } = ctx;
 
+  if (path === "/expedientes") {
+    const lifecycleId = query.lifecycleId;
+    const expedientes = runtime.expedientesDinero();
+    const filtered = lifecycleId
+      ? expedientes.filter((e) => e.lifecycleId === lifecycleId)
+      : expedientes;
+    const titulo = lifecycleId
+      ? procesoLabel(ctx, lifecycleId)
+      : "Todos los expedientes";
+
+    const listaHtml = filtered.length === 0
+      ? "<p>No hay expedientes.</p>"
+      : `<table style="width: 100%; border-collapse: collapse;">
+          <tr style="border-bottom: 2px solid #ddd; background: #f5f5f5;">
+            <th style="padding: 10px; text-align: left;">ID</th>
+            <th style="padding: 10px; text-align: left;">Referencia</th>
+            <th style="padding: 10px; text-align: left;">Parte</th>
+            <th style="padding: 10px; text-align: left;">Fecha</th>
+            <th style="padding: 10px; text-align: right;">Total</th>
+          </tr>
+          ${filtered.map((e) => `
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;"><a href="/expedientes/${esc(e.id)}">${esc(e.id)}</a></td>
+              <td style="padding: 10px;">${esc(e.referencia || "—")}</td>
+              <td style="padding: 10px;">${esc(e.parteId)}</td>
+              <td style="padding: 10px;">${esc(e.fecha)}</td>
+              <td style="padding: 10px; text-align: right;">€${formatCentimos(e.totalCentimos)}</td>
+            </tr>
+          `).join("")}
+        </table>`;
+
+    return html(200, page(ctx, viewer, titulo, listaHtml));
+  }
+
   if (path === "/expedientes/nuevo") {
     const slice = runtime.boot.input.lifecycles.find((l) => l.id === query.proceso);
     if (!slice) return notFound(ctx, viewer, "Ese proceso no existe.");
