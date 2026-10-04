@@ -363,6 +363,80 @@
             font-weight: 600;
         }
 
+        /* USER CARD */
+        .sidebar-user-card {
+            margin-top: auto;
+            padding: 1rem 0.75rem;
+            border-top: 1px solid var(--border);
+            background: rgba(45, 55, 72, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-user-card:hover {
+            background: rgba(45, 55, 72, 0.8);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-arrow {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-user-card:hover .user-arrow {
+            transform: translateY(-3px);
+            color: var(--primary-light);
+        }
+
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -384,6 +458,16 @@
             <!-- Módulos -->
             <div id="modulesContainer">
                 <!-- Renderizado dinámicamente -->
+            </div>
+
+            <!-- User Card -->
+            <div class="sidebar-user-card" id="userCard" title="Mi cuenta">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Usuario</div>
+                    <div class="user-role" id="userRole">Gerente</div>
+                </div>
+                <div class="user-arrow">↑</div>
             </div>
         </aside>
 
@@ -555,10 +639,32 @@
         }
 
         // Inicializar contenido dinámico cuando el DOM esté listo
+        function renderUserCard() {
+            const data = window.DASHBOARD_DATA;
+            if (!data || !data.user) return;
+
+            const userNameEl = document.getElementById('userName');
+            const userRoleEl = document.getElementById('userRole');
+            const userAvatarEl = document.getElementById('userAvatar');
+
+            if (userNameEl) userNameEl.textContent = data.user.name || 'Usuario';
+            if (userRoleEl) userRoleEl.textContent = data.user.role?.label || 'Rol';
+            if (userAvatarEl) {
+                const initials = (data.user.name || 'U')
+                    .split(' ')
+                    .map((word) => word[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2);
+                userAvatarEl.textContent = initials;
+            }
+        }
+
         function initDashboard() {
             renderModules();
             renderSummary();
             renderActions();
+            renderUserCard();
         }
 
         if (document.readyState === 'loading') {
