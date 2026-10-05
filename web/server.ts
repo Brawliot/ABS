@@ -111,6 +111,7 @@ import {
 } from "./cli.js";
 import { handleAuthRoute } from "./auth-routes.js";
 import { handleGdprRoute } from "./gdpr-routes.js";
+import { handleApiRoute } from "./api-routes.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 const LANDING_HTML = readFileSync(
@@ -536,67 +537,10 @@ export function startWebServer(
       const path = url.split("?")[0] ?? "/";
       const method = (req.method ?? "GET").toUpperCase();
 
-      // ✅ NUEVA RUTA: GET /api/wizard/draft
-      if (path === "/api/wizard/draft" && method === "GET") {
-        const draft = getStoredWizardDraft();
-        if (!draft) {
-          return send(
-            res,
-            404,
-            JSON.stringify({ error: "No draft found. Run wizard first." }),
-            "application/json; charset=utf-8"
-          );
-        }
-        return send(
-          res,
-          200,
-          JSON.stringify(draft),
-          "application/json; charset=utf-8"
-        );
-      }
-
-      // ✅ NUEVA RUTA: POST /api/wizard/decision
-      if (path === "/api/wizard/decision" && method === "POST") {
-        const draft = getStoredWizardDraft();
-        if (!draft) {
-          return send(
-            res,
-            404,
-            JSON.stringify({ error: "No draft found. Run wizard first." }),
-            "application/json; charset=utf-8"
-          );
-        }
-        
-        const body = await readBody(req);
-        let decisions: UserDecisions;
-        try {
-          decisions = JSON.parse(body);
-        } catch {
-          return send(
-            res,
-            400,
-            JSON.stringify({ error: "Invalid JSON" }),
-            "application/json; charset=utf-8"
-          );
-        }
-
-        try {
-          const result = applyWizardDecisions(draft, decisions);
-          return send(
-            res,
-            200,
-            JSON.stringify(result),
-            "application/json; charset=utf-8"
-          );
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : "Unknown error";
-          return send(
-            res,
-            500,
-            JSON.stringify({ error: msg }),
-            "application/json; charset=utf-8"
-          );
-        }
+      // Rutas de API
+      if (path.startsWith("/api/")) {
+        const handled = await handleApiRoute(path, method, req, res, {});
+        if (handled) return;
       }
 
       // ✅ NUEVA RUTA: GET /wizard/decision (página HTML)
