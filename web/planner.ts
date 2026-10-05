@@ -398,6 +398,7 @@ export function renderPlannerHtml(): string {
     let lastJevAnalysis = null;
     let currentPhase1 = null;
     let currentPhase2 = null;
+    let currentJevPhase2 = null;
     let currentQuestion = null;
     let currentMetric = null;
     let originalInput = null;
@@ -581,23 +582,29 @@ export function renderPlannerHtml(): string {
       document.getElementById('submit-resources-btn').addEventListener('click', handleResourcesSubmit);
     };
 
-    const addJevPhase2Results = (results) => {
-      const div = document.createElement('div');
-      div.className = 'analysis-message';
-      let html = '<div class="analysis-bubble">';
-      html += '<div class="analysis-header">📊 Análisis del Modelo de Negocio</div>';
-      html += '<div class="jev-phase2-metrics">';
-      html += '<div class="metric-item"><strong>Modelo de Negocio:</strong> ' + (results.modelo_negocio || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Cliente Objetivo:</strong> ' + (results.cliente_objetivo || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Presupuesto/Escala:</strong> ' + (results.presupuesto || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Dependencia de Terceros:</strong> ' + (results.dependencia || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Tu Experiencia:</strong> ' + (results.experiencia || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Estado de Validación:</strong> ' + (results.validacion || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Equipo/Recursos Humanos:</strong> ' + (results.equipo || 'N/A') + '</div>';
-      html += '<div class="metric-item"><strong>Regulación/Compliance:</strong> ' + (results.regulacion || 'N/A') + '</div>';
-      html += '</div></div></div>';
-      div.innerHTML = html;
-      content.appendChild(div);
+    const addJevPhase2ToAnalysis = (results) => {
+      const analysisBubble = document.querySelector('.analysis-bubble');
+      if (!analysisBubble) return;
+
+      const jevSection = document.createElement('div');
+      jevSection.id = 'jev-phase2-section';
+      jevSection.innerHTML = `
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+          <div style="font-size: 13px; font-weight: 600; color: #0284c7; margin-bottom: 12px;">📊 Modelo de Negocio</div>
+          <div class="jev-phase2-metrics">
+            <div class="metric-item"><strong>Modelo:</strong> ${results.modelo_negocio || 'N/A'}</div>
+            <div class="metric-item"><strong>Cliente Objetivo:</strong> ${results.cliente_objetivo || 'N/A'}</div>
+            <div class="metric-item"><strong>Presupuesto/Escala:</strong> ${results.presupuesto || 'N/A'}</div>
+            <div class="metric-item"><strong>Dependencia:</strong> ${results.dependencia || 'N/A'}</div>
+            <div class="metric-item"><strong>Tu Experiencia:</strong> ${results.experiencia || 'N/A'}</div>
+            <div class="metric-item"><strong>Validación:</strong> ${results.validacion || 'N/A'}</div>
+            <div class="metric-item"><strong>Equipo:</strong> ${results.equipo || 'N/A'}</div>
+            <div class="metric-item"><strong>Regulación:</strong> ${results.regulacion || 'N/A'}</div>
+          </div>
+        </div>
+      `;
+
+      analysisBubble.appendChild(jevSection);
       content.scrollTop = content.scrollHeight;
     };
 
@@ -657,7 +664,8 @@ export function renderPlannerHtml(): string {
         }
 
         const jevPhase2Results = await jevPhase2Response.json();
-        addJevPhase2Results(jevPhase2Results);
+        currentJevPhase2 = jevPhase2Results;
+        addJevPhase2ToAnalysis(jevPhase2Results);
 
         currentQuestion = null;
         currentMetric = null;
