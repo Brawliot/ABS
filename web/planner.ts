@@ -72,126 +72,94 @@ export function renderPlannerHtml(): string {
       border-radius: 12px 4px 12px 12px;
     }
 
-    .phase-section {
-      margin-top: 20px;
-      padding: 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border-left: 4px solid #3b82f6;
-    }
-
-    .phase-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #3b82f6;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .results-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    .analysis-message {
+      display: flex;
       gap: 12px;
-      margin-top: 12px;
+      margin-bottom: 12px;
+      justify-content: flex-start;
     }
 
-    .result-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
+    .analysis-bubble {
+      max-width: 85%;
+      padding: 16px;
+      background: #f3f4f6;
+      border-radius: 12px 12px 4px 12px;
+      border-left: 4px solid #10b981;
+      line-height: 1.6;
+    }
+
+    .analysis-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    .analysis-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .metric-item {
       padding: 12px;
-      font-size: 13px;
+      background: white;
+      border-radius: 6px;
+      border-left: 3px solid #10b981;
     }
 
-    .result-label {
+    .metric-label {
+      font-size: 13px;
       font-weight: 600;
       color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 6px;
-      text-transform: capitalize;
     }
 
-    .result-value {
-      color: #3b82f6;
-      font-weight: 500;
+    .metric-value {
+      font-size: 14px;
+      color: #1f2937;
       margin-bottom: 8px;
-      font-size: 13px;
     }
 
     .confidence-bar {
-      height: 6px;
+      height: 4px;
       background: #e5e7eb;
-      border-radius: 3px;
+      border-radius: 2px;
       overflow: hidden;
+      margin-bottom: 4px;
     }
 
     .confidence-fill {
       height: 100%;
-      background: linear-gradient(to right, #ef4444, #eab308, #22c55e);
+      background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e);
       transition: width 0.3s ease;
     }
 
     .confidence-text {
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 4px;
-    }
-
-    .phase2-card {
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 14px;
-      font-size: 13px;
-    }
-
-    .phase2-card .result-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .phase2-card .result-value {
-      font-size: 13px;
-      line-height: 1.4;
-      margin-bottom: 8px;
-      color: #374151;
-    }
-
-    .constraints-list {
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #f3f4f6;
-    }
-
-    .constraint-item {
       font-size: 12px;
       color: #6b7280;
-      margin: 4px 0;
-      padding-left: 12px;
-      position: relative;
     }
 
-    .constraint-item:before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: #d1d5db;
+    .question-message {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      justify-content: flex-start;
     }
 
-    .clarity-score {
-      font-size: 24px;
-      font-weight: 700;
-      color: #3b82f6;
-      margin: 8px 0;
+    .question-bubble {
+      max-width: 85%;
+      padding: 16px;
+      background: #fef3c7;
+      border-radius: 12px 12px 4px 12px;
+      border-left: 4px solid #f59e0b;
+      line-height: 1.6;
+      font-size: 14px;
+      color: #78350f;
     }
 
-    .clarity-reasoning {
-      font-size: 12px;
-      color: #6b7280;
-      font-style: italic;
-      margin-top: 4px;
-    }
 
     .loading {
       display: flex;
@@ -291,105 +259,6 @@ export function renderPlannerHtml(): string {
       color: #991b1b;
       margin-bottom: 12px;
     }
-
-    .follow-up-question {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .follow-up-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-
-    .follow-up-btn {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: 500;
-    }
-
-    .follow-up-btn:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
-      color: #1f2937;
-    }
-
-    .required-question {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 16px;
-      font-size: 13px;
-    }
-
-    .required-question-label {
-      font-weight: 600;
-      color: #92400e;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .required-question-label:before {
-      content: "⚠";
-      font-size: 14px;
-    }
-
-    .required-question-text {
-      color: #78350f;
-      margin-bottom: 10px;
-      font-style: italic;
-    }
-
-    .refine-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 13px;
-      margin-bottom: 8px;
-      font-family: inherit;
-    }
-
-    .refine-input:focus {
-      outline: none;
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-    }
-
-    .refine-btn {
-      background: #f59e0b;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .refine-btn:hover {
-      background: #d97706;
-    }
-
-    .refine-btn:disabled {
-      background: #d1d5db;
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
@@ -446,112 +315,74 @@ export function renderPlannerHtml(): string {
       if (loading) loading.remove();
     };
 
-    const addPhase1Results = (results) => {
+    const addAnalysisMessage = (phase1, phase2) => {
       const div = document.createElement('div');
-      div.className = 'phase-section';
+      div.className = 'analysis-message';
 
-      let html = '<div class="phase-title">Fase 1: Clasificación (Jev)</div><div class="results-container">';
+      let html = '<div class="analysis-bubble">';
+      html += '<div class="analysis-header">Análisis Completo</div>';
+      html += '<div class="analysis-metrics">';
 
-      if (results.answers) {
-        for (const [key, answer] of Object.entries(results.answers)) {
-          const value = answer.choice || answer.score || answer.noul || 'N/A';
-          html += '<div class="result-card"><div class="result-label">' + key + '</div><div class="result-value">' + value + '</div></div>';
-        }
-      }
-
+      html += '<div class="metric-item">';
+      html += '<div class="metric-label">Sector</div>';
+      html += '<div class="metric-value">' + (phase1.answers.sector.choice || 'N/A') + '</div>';
       html += '</div>';
+
+      html += '<div class="metric-item">';
+      html += '<div class="metric-label">Localización</div>';
+      html += '<div class="metric-value">' + (phase2.localizacion.value || 'N/A') + '</div>';
+      html += '</div>';
+
+      html += '<div class="metric-item">';
+      html += '<div class="metric-label">Subsector</div>';
+      html += '<div class="metric-value">' + (phase2.subsector.value || 'N/A') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.subsector.confidence || 0) + '%"></div></div>';
+      html += '<div class="confidence-text">' + (phase2.subsector.confidence || 0) + '% confianza</div>';
+      html += '</div>';
+
+      html += '<div class="metric-item">';
+      html += '<div class="metric-label">Claridad del Concepto</div>';
+      html += '<div class="metric-value">' + (phase2.claridad_concepto.score || 0) + '/10 - ' + (phase2.claridad_concepto.razonamiento || '') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.claridad_concepto.confidence || 0) + '%"></div></div>';
+      html += '<div class="confidence-text">' + (phase2.claridad_concepto.confidence || 0) + '% confianza</div>';
+      html += '</div>';
+
+      html += '</div></div>';
       div.innerHTML = html;
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
     };
 
-    const addPhase2Results = (results) => {
+    const selectQuestion = (phase2Results) => {
+      const metrics = [
+        { conf: phase2Results.subsector.confidence, q: phase2Results.subsector.follow_up_question },
+        { conf: phase2Results.localizacion.confidence, q: phase2Results.localizacion.follow_up_question },
+        { conf: phase2Results.flexibilidad_timeline.confidence, q: phase2Results.flexibilidad_timeline.follow_up_question },
+        { conf: phase2Results.constraints.confidence, q: phase2Results.constraints.follow_up_question },
+        { conf: phase2Results.claridad_concepto.confidence, q: phase2Results.claridad_concepto.follow_up_question }
+      ];
+
+      const sortedByConfidence = metrics.sort((a, b) => a.conf - b.conf);
+
+      if (sortedByConfidence[0].conf < 80 && sortedByConfidence[0].q) {
+        return sortedByConfidence[0].q;
+      }
+
+      if (phase2Results.claridad_concepto.score < 7 && phase2Results.claridad_concepto.follow_up_question) {
+        return phase2Results.claridad_concepto.follow_up_question;
+      }
+
+      return sortedByConfidence[0].q || null;
+    };
+
+    const addQuestionMessage = (question) => {
       const div = document.createElement('div');
-      div.className = 'phase-section';
-      div.style.borderLeftColor = '#10b981';
-
-      let html = '<div class="phase-title" style="color:#10b981;">Fase 2: Análisis Profundo (ChatGPT)</div><div class="results-container" style="grid-template-columns: 1fr;">';
-
-      html += '<div class="phase2-card">';
-      html += '<div class="result-label">Subsector Específico</div>';
-      html += '<div class="result-value">' + results.subsector.value + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.subsector.confidence + '%"></div></div>';
-      html += '<div class="confidence-text">' + results.subsector.confidence + '% confianza</div>';
-      if (results.subsector.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.subsector.follow_up_question.replace(/"/g, '&quot;') + '">' + results.subsector.follow_up_question + '</button></div>';
-      }
-      html += '</div>';
-
-      html += '<div class="phase2-card">';
-      html += '<div class="result-label">Localización Específica</div>';
-      html += '<div class="result-value">' + results.localizacion.value + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.localizacion.confidence + '%"></div></div>';
-      html += '<div class="confidence-text">' + results.localizacion.confidence + '% confianza</div>';
-      if (results.localizacion.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.localizacion.follow_up_question.replace(/"/g, '&quot;') + '">' + results.localizacion.follow_up_question + '</button></div>';
-      }
-      html += '</div>';
-
-      html += '<div class="phase2-card">';
-      html += '<div class="result-label">Flexibilidad de Timeline</div>';
-      html += '<div class="result-value">' + results.flexibilidad_timeline.value + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.flexibilidad_timeline.confidence + '%"></div></div>';
-      html += '<div class="confidence-text">' + results.flexibilidad_timeline.confidence + '% confianza</div>';
-      if (results.flexibilidad_timeline.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.flexibilidad_timeline.follow_up_question.replace(/"/g, '&quot;') + '">' + results.flexibilidad_timeline.follow_up_question + '</button></div>';
-      }
-      html += '</div>';
-
-      html += '<div class="phase2-card">';
-      html += '<div class="result-label">Constraints Principales</div>';
-      html += '<div class="result-value"><strong>Presupuesto:</strong> ' + results.constraints.dinero + '</div>';
-      html += '<div class="constraints-list">';
-      if (results.constraints.excluyentes.length > 0) {
-        html += '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:#374151;">Excluyentes:</strong>';
-        results.constraints.excluyentes.forEach(e => {
-          html += '<div class="constraint-item">' + e + '</div>';
-        });
-        html += '</div>';
-      }
-      if (results.constraints.otros.length > 0) {
-        html += '<div><strong style="font-size:12px;color:#374151;">Otros:</strong>';
-        results.constraints.otros.forEach(o => {
-          html += '<div class="constraint-item">' + o + '</div>';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.constraints.confidence + '%"></div></div>';
-      html += '<div class="confidence-text">' + results.constraints.confidence + '% confianza</div>';
-      if (results.constraints.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.constraints.follow_up_question.replace(/"/g, '&quot;') + '">' + results.constraints.follow_up_question + '</button></div>';
-      }
-      html += '</div>';
-
-      html += '<div class="phase2-card">';
-      html += '<div class="result-label">Claridad del Concepto</div>';
-      html += '<div class="clarity-score">' + results.claridad_concepto.score + '/10</div>';
-      html += '<div class="clarity-reasoning">' + results.claridad_concepto.razonamiento + '</div>';
-      html += '<div class="confidence-bar" style="margin-top:8px;"><div class="confidence-fill" style="width:' + results.claridad_concepto.confidence + '%"></div></div>';
-      html += '<div class="confidence-text">' + results.claridad_concepto.confidence + '% confianza</div>';
-      if (results.claridad_concepto.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.claridad_concepto.follow_up_question.replace(/"/g, '&quot;') + '">' + results.claridad_concepto.follow_up_question + '</button></div>';
-      }
-      html += '</div>';
-
-      html += '</div>';
-      div.innerHTML = html;
+      div.className = 'question-message';
+      div.innerHTML = '<div class="question-bubble">' + question + '</div>';
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
-
-      div.querySelectorAll('.follow-up-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const question = e.target.dataset.question;
-          addUserMessage(question);
-          handleSend();
-        });
-      });
     };
+
 
     const addErrorMessage = (error) => {
       const div = document.createElement('div');
@@ -586,7 +417,6 @@ export function renderPlannerHtml(): string {
         }
 
         const results = await response.json();
-        addPhase1Results(results);
         lastJevAnalysis = results.answers;
 
         const loadingId2 = addLoadingMessage(2);
@@ -612,7 +442,12 @@ export function renderPlannerHtml(): string {
         }
 
         const phase2Results = await response2.json();
-        addPhase2Results(phase2Results);
+        addAnalysisMessage(results, phase2Results);
+
+        const questionToAsk = selectQuestion(phase2Results);
+        if (questionToAsk) {
+          addQuestionMessage(questionToAsk);
+        }
       } catch (error) {
         removeLoadingMessage(loadingId1);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
