@@ -346,6 +346,25 @@ export function renderPlannerHtml(): string {
       color: #991b1b;
       margin-bottom: 12px;
     }
+
+    .jev-phase2-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .jev-phase2-metrics .metric-item {
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border-left: 3px solid #0284c7;
+      font-size: 13px;
+    }
+
+    .jev-phase2-metrics strong {
+      color: #1f2937;
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
@@ -562,6 +581,26 @@ export function renderPlannerHtml(): string {
       document.getElementById('submit-resources-btn').addEventListener('click', handleResourcesSubmit);
     };
 
+    const addJevPhase2Results = (results) => {
+      const div = document.createElement('div');
+      div.className = 'analysis-message';
+      let html = '<div class="analysis-bubble">';
+      html += '<div class="analysis-header">📊 Análisis del Modelo de Negocio</div>';
+      html += '<div class="jev-phase2-metrics">';
+      html += '<div class="metric-item"><strong>Modelo de Negocio:</strong> ' + (results.modelo_negocio || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Cliente Objetivo:</strong> ' + (results.cliente_objetivo || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Presupuesto/Escala:</strong> ' + (results.presupuesto || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Dependencia de Terceros:</strong> ' + (results.dependencia || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Tu Experiencia:</strong> ' + (results.experiencia || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Estado de Validación:</strong> ' + (results.validacion || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Equipo/Recursos Humanos:</strong> ' + (results.equipo || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Regulación/Compliance:</strong> ' + (results.regulacion || 'N/A') + '</div>';
+      html += '</div></div></div>';
+      div.innerHTML = html;
+      content.appendChild(div);
+      content.scrollTop = content.scrollHeight;
+    };
+
     const handleResourcesSubmit = async () => {
       const budget = parseInt(document.getElementById('budget-input').value);
       const hours = parseInt(document.getElementById('hours-input').value);
@@ -595,9 +634,33 @@ export function renderPlannerHtml(): string {
         currentPhase2 = enrichedResult;
         updateAnalysisMetrics(currentPhase2);
 
+        addQuestionMessage('✓ Análisis enriquecido con tu información. Analizando modelo de negocio...');
+
+        const loadingId2 = addLoadingMessage(2);
+
+        const jevPhase2Response = await fetch('/api/planner/jev-phase2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            originalInput: originalInput,
+            subsector: currentPhase2.subsector.value,
+            localizacion: currentPhase2.localizacion.value,
+            timeline: currentPhase2.flexibilidad_timeline.value
+          })
+        });
+
+        removeLoadingMessage(loadingId2);
+
+        if (!jevPhase2Response.ok) {
+          const error = await jevPhase2Response.json();
+          throw new Error(error.error || 'Error analizando modelo de negocio');
+        }
+
+        const jevPhase2Results = await jevPhase2Response.json();
+        addJevPhase2Results(jevPhase2Results);
+
         currentQuestion = null;
         currentMetric = null;
-        addQuestionMessage('✓ Análisis enriquecido con tu información. El presupuesto, equipo y experiencia han sido considerados.');
       } catch (error) {
         removeLoadingMessage(loadingId);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
