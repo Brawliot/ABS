@@ -1,5 +1,5 @@
 /**
- * Página Planner: Análisis de negocio con Jev
+ * Página Planner: Análisis de negocio con Jev + ChatGPT
  */
 
 export function renderPlannerHtml(): string {
@@ -72,6 +72,23 @@ export function renderPlannerHtml(): string {
       border-radius: 12px 4px 12px 12px;
     }
 
+    .phase-section {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .phase-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
     .results-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -80,7 +97,7 @@ export function renderPlannerHtml(): string {
     }
 
     .result-card {
-      background: #f9fafb;
+      background: white;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 12px;
@@ -97,6 +114,83 @@ export function renderPlannerHtml(): string {
     .result-value {
       color: #3b82f6;
       font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .confidence-bar {
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(to right, #ef4444, #eab308, #22c55e);
+      transition: width 0.3s ease;
+    }
+
+    .confidence-text {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .phase2-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 13px;
+    }
+
+    .phase2-card .result-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .phase2-card .result-value {
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .constraints-list {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .constraint-item {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 4px 0;
+      padding-left: 12px;
+      position: relative;
+    }
+
+    .constraint-item:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #d1d5db;
+    }
+
+    .clarity-score {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin: 8px 0;
+    }
+
+    .clarity-reasoning {
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+      margin-top: 4px;
     }
 
     .loading {
@@ -202,7 +296,7 @@ export function renderPlannerHtml(): string {
 <body>
   <div class="planner-header">
     <h1 class="planner-title">Planner</h1>
-    <p class="planner-subtitle">Analiza tu idea de negocio</p>
+    <p class="planner-subtitle">Análisis de tu idea de negocio en 2 fases</p>
   </div>
 
   <div class="planner-content" id="plannerContent">
@@ -227,6 +321,8 @@ export function renderPlannerHtml(): string {
     const sendBtn = document.getElementById('sendBtn');
     const content = document.getElementById('plannerContent');
 
+    let lastJevAnalysis = null;
+
     const addUserMessage = (text) => {
       const div = document.createElement('div');
       div.className = 'message user';
@@ -235,25 +331,27 @@ export function renderPlannerHtml(): string {
       content.scrollTop = content.scrollHeight;
     };
 
-    const addLoadingMessage = () => {
+    const addLoadingMessage = (phase) => {
       const div = document.createElement('div');
       div.className = 'message';
-      div.id = 'loadingMessage';
-      div.innerHTML = '<div class="message-bubble loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+      div.id = 'loadingMessage-' + phase;
+      const phaseText = phase === 1 ? 'Jev analiza' : 'ChatGPT profundiza';
+      div.innerHTML = '<div class="message-bubble loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div><div style="font-size:12px;color:#6b7280;margin-top:4px;">' + phaseText + '...</div>';
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
+      return div.id;
     };
 
-    const removeLoadingMessage = () => {
-      const loading = document.getElementById('loadingMessage');
+    const removeLoadingMessage = (id) => {
+      const loading = document.getElementById(id);
       if (loading) loading.remove();
     };
 
-    const addResultsMessage = (results) => {
+    const addPhase1Results = (results) => {
       const div = document.createElement('div');
-      div.className = 'message';
+      div.className = 'phase-section';
 
-      let html = '<div style="width: 100%;"><div class="results-container">';
+      let html = '<div class="phase-title">Fase 1: Clasificación (Jev)</div><div class="results-container">';
 
       if (results.answers) {
         for (const [key, answer] of Object.entries(results.answers)) {
@@ -262,7 +360,72 @@ export function renderPlannerHtml(): string {
         }
       }
 
-      html += '</div></div>';
+      html += '</div>';
+      div.innerHTML = html;
+      content.appendChild(div);
+      content.scrollTop = content.scrollHeight;
+    };
+
+    const addPhase2Results = (results) => {
+      const div = document.createElement('div');
+      div.className = 'phase-section';
+      div.style.borderLeftColor = '#10b981';
+
+      let html = '<div class="phase-title" style="color:#10b981;">Fase 2: Análisis Profundo (ChatGPT)</div><div class="results-container" style="grid-template-columns: 1fr;">';
+
+      html += '<div class="phase2-card">';
+      html += '<div class="result-label">Subsector Específico</div>';
+      html += '<div class="result-value">' + results.subsector.value + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.subsector.confidence + '%"></div></div>';
+      html += '<div class="confidence-text">' + results.subsector.confidence + '% confianza</div>';
+      html += '</div>';
+
+      html += '<div class="phase2-card">';
+      html += '<div class="result-label">Localización Específica</div>';
+      html += '<div class="result-value">' + results.localizacion.value + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.localizacion.confidence + '%"></div></div>';
+      html += '<div class="confidence-text">' + results.localizacion.confidence + '% confianza</div>';
+      html += '</div>';
+
+      html += '<div class="phase2-card">';
+      html += '<div class="result-label">Flexibilidad de Timeline</div>';
+      html += '<div class="result-value">' + results.flexibilidad_timeline.value + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.flexibilidad_timeline.confidence + '%"></div></div>';
+      html += '<div class="confidence-text">' + results.flexibilidad_timeline.confidence + '% confianza</div>';
+      html += '</div>';
+
+      html += '<div class="phase2-card">';
+      html += '<div class="result-label">Constraints Principales</div>';
+      html += '<div class="result-value"><strong>Presupuesto:</strong> ' + results.constraints.dinero + '</div>';
+      html += '<div class="constraints-list">';
+      if (results.constraints.excluyentes.length > 0) {
+        html += '<div style="margin-bottom:8px;"><strong style="font-size:12px;color:#374151;">Excluyentes:</strong>';
+        results.constraints.excluyentes.forEach(e => {
+          html += '<div class="constraint-item">' + e + '</div>';
+        });
+        html += '</div>';
+      }
+      if (results.constraints.otros.length > 0) {
+        html += '<div><strong style="font-size:12px;color:#374151;">Otros:</strong>';
+        results.constraints.otros.forEach(o => {
+          html += '<div class="constraint-item">' + o + '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.constraints.confidence + '%"></div></div>';
+      html += '<div class="confidence-text">' + results.constraints.confidence + '% confianza</div>';
+      html += '</div>';
+
+      html += '<div class="phase2-card">';
+      html += '<div class="result-label">Claridad del Concepto</div>';
+      html += '<div class="clarity-score">' + results.claridad_concepto.score + '/10</div>';
+      html += '<div class="clarity-reasoning">' + results.claridad_concepto.razonamiento + '</div>';
+      html += '<div class="confidence-bar" style="margin-top:8px;"><div class="confidence-fill" style="width:' + results.claridad_concepto.confidence + '%"></div></div>';
+      html += '<div class="confidence-text">' + results.claridad_concepto.confidence + '% confianza</div>';
+      html += '</div>';
+
+      html += '</div>';
       div.innerHTML = html;
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
@@ -284,7 +447,7 @@ export function renderPlannerHtml(): string {
       input.value = '';
       sendBtn.disabled = true;
 
-      addLoadingMessage();
+      const loadingId1 = addLoadingMessage(1);
 
       try {
         const response = await fetch('/api/planner', {
@@ -293,17 +456,43 @@ export function renderPlannerHtml(): string {
           body: JSON.stringify({ input: value })
         });
 
-        removeLoadingMessage();
+        removeLoadingMessage(loadingId1);
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || 'Error al analizar');
+          throw new Error(error.error || 'Error en Fase 1');
         }
 
         const results = await response.json();
-        addResultsMessage(results);
+        addPhase1Results(results);
+        lastJevAnalysis = results.answers;
+
+        const loadingId2 = addLoadingMessage(2);
+
+        const response2 = await fetch('/api/planner/phase2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: value,
+            jevAnalysis: {
+              sector: results.answers.sector.choice,
+              alcance_geografico: results.answers.alcance_geografico.choice,
+              timeline: results.answers.timeline.choice
+            }
+          })
+        });
+
+        removeLoadingMessage(loadingId2);
+
+        if (!response2.ok) {
+          const error = await response2.json();
+          throw new Error(error.error || 'Error en Fase 2');
+        }
+
+        const phase2Results = await response2.json();
+        addPhase2Results(phase2Results);
       } catch (error) {
-        removeLoadingMessage();
+        removeLoadingMessage(loadingId1);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
         addErrorMessage('Error: ' + msg);
       } finally {
