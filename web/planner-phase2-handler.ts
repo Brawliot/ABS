@@ -76,7 +76,7 @@ Analiza y proporciona en JSON:
     "excluyentes": ["qué NO se debe hacer", "otra exclusión"],
     "otros": ["otro constraint", "restricción técnica"],
     "confidence": número 0-100,
-    "follow_up_question": "¿Hay restricciones legales, técnicas o de recurso que debemos considerar?"
+    "follow_up_question": "¿Cuántos sois en el equipo, cuánto capital tenéis disponible y cuánto tiempo podéis dedicar?"
   },
   "claridad_concepto": {
     "score": número 1-10,
