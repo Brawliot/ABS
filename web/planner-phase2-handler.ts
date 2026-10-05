@@ -38,7 +38,7 @@ const PHASE2_SYSTEM_PROMPT = `Eres un experto en análisis de startups y modelos
 Tu tarea es profundizar en el análisis inicial realizado por Jev.
 Proporciona análisis estructurado con confianza (0-100%) para cada apartado.
 Sé específico y realista. Si no hay suficiente información, indica baja confianza (20-40%).
-Responde SIEMPRE en JSON válido, sin markdown o explicaciones adicionales.`;
+IMPORTANTE: Responde ÚNICAMENTE con JSON válido, sin código markdown (sin \`\`\`json), sin explicaciones, solo el objeto JSON puro.`;
 
 function buildPhase2Prompt(input: string, jevAnalysis: JevAnalysis): string {
   return `DESCRIPCIÓN DEL NEGOCIO:
@@ -126,9 +126,22 @@ export async function analyzeWithChatGPT(
   }
 
   try {
+    // Intenta parsear directamente
     const parsed = JSON.parse(content) as Phase2Response;
     return parsed;
   } catch (e) {
+    // Si falla, intenta extraer JSON de markdown
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1]) as Phase2Response;
+        return parsed;
+      } catch (e2) {
+        console.error("Failed to parse JSON from markdown:", jsonMatch[1]);
+        throw new Error("Invalid JSON response from ChatGPT");
+      }
+    }
+
     console.error("Failed to parse ChatGPT response:", content);
     throw new Error("Invalid JSON response from ChatGPT");
   }
