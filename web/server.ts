@@ -29,6 +29,7 @@ import { renderPlannerHtml } from "./planner.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 import { refinePhase2Metric } from "./planner-phase2-refine.js";
+import { refineAndSelectNextQuestion } from "./planner-refine-iterate.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
 import {
@@ -239,6 +240,24 @@ export function startWebServer(
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.error("Planner Phase 2 Refine error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
+      if (path === "/api/planner/refine-iterate" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const required = ["metric", "question", "userAnswer", "originalAnalysis", "originalInput", "currentAnalysis"];
+          const missing = required.filter(k => !data[k]);
+          if (missing.length > 0) {
+            return sendJson(res, 400, { error: `Missing fields: ${missing.join(", ")}` });
+          }
+          const result = await refineAndSelectNextQuestion(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner Refine Iterate error:", msg);
           return sendJson(res, 500, { error: msg });
         }
       }

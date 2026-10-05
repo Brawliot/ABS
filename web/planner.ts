@@ -290,6 +290,11 @@ export function renderPlannerHtml(): string {
     const content = document.getElementById('plannerContent');
 
     let lastJevAnalysis = null;
+    let currentPhase1 = null;
+    let currentPhase2 = null;
+    let currentQuestion = null;
+    let currentMetric = null;
+    let originalInput = null;
 
     const addUserMessage = (text) => {
       const div = document.createElement('div');
@@ -411,56 +416,105 @@ export function renderPlannerHtml(): string {
       input.value = '';
       sendBtn.disabled = true;
 
-      const loadingId1 = addLoadingMessage(1);
-
       try {
-        const response = await fetch('/api/planner', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: value })
-        });
+        if (currentQuestion && currentMetric && currentPhase2) {
+          const loadingId = addLoadingMessage(2);
 
-        removeLoadingMessage(loadingId1);
+          const refineResponse = await fetch('/api/planner/refine-iterate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metric: currentMetric,
+              question: currentQuestion,
+              userAnswer: value,
+              originalAnalysis: JSON.stringify(currentPhase2),
+              originalInput: originalInput,
+              currentAnalysis: currentPhase2
+            })
+          });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Error en Fase 1');
-        }
+          removeLoadingMessage(loadingId);
 
-        const results = await response.json();
-        lastJevAnalysis = results.answers;
+          if (!refineResponse.ok) {
+            const error = await refineResponse.json();
+            throw new Error(error.error || 'Error en refinamiento');
+          }
 
-        const loadingId2 = addLoadingMessage(2);
+          const refineResult = await refineResponse.json();
+          currentPhase2 = refineResult.updatedAnalysis;
 
-        const response2 = await fetch('/api/planner/phase2', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            input: value,
-            jevAnalysis: {
-              sector: results.answers.sector.choice,
-              alcance_geografico: results.answers.alcance_geografico.choice,
-              timeline: results.answers.timeline.choice
-            }
-          })
-        });
+          addAnalysisMessage(currentPhase1, currentPhase2);
 
-        removeLoadingMessage(loadingId2);
+          if (refineResult.allComplete) {
+            addQuestionMessage('✓ Análisis completado. Todos los aspectos tienen suficiente confianza (>80%)');
+            currentQuestion = null;
+            currentMetric = null;
+          } else {
+            currentQuestion = refineResult.nextQuestion;
+            addQuestionMessage(currentQuestion);
+          }
+        } else {
+          const loadingId1 = addLoadingMessage(1);
 
-        if (!response2.ok) {
-          const error = await response2.json();
-          throw new Error(error.error || 'Error en Fase 2');
-        }
+          const response = await fetch('/api/planner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input: value })
+          });
 
-        const phase2Results = await response2.json();
-        addAnalysisMessage(results, phase2Results);
+          removeLoadingMessage(loadingId1);
 
-        const questionToAsk = selectQuestion(phase2Results);
-        if (questionToAsk) {
-          addQuestionMessage(questionToAsk);
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error en Fase 1');
+          }
+
+          const results = await response.json();
+          currentPhase1 = results;
+          lastJevAnalysis = results.answers;
+          originalInput = value;
+
+          const loadingId2 = addLoadingMessage(2);
+
+          const response2 = await fetch('/api/planner/phase2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              input: value,
+              jevAnalysis: {
+                sector: results.answers.sector.choice,
+                alcance_geografico: results.answers.alcance_geografico.choice,
+                timeline: results.answers.timeline.choice
+              }
+            })
+          });
+
+          removeLoadingMessage(loadingId2);
+
+          if (!response2.ok) {
+            const error = await response2.json();
+            throw new Error(error.error || 'Error en Fase 2');
+          }
+
+          const phase2Results = await response2.json();
+          currentPhase2 = phase2Results;
+          addAnalysisMessage(results, phase2Results);
+
+          const questionToAsk = selectQuestion(phase2Results);
+          if (questionToAsk) {
+            currentQuestion = questionToAsk;
+            const metricMap = {
+              [phase2Results.subsector.follow_up_question]: 'subsector',
+              [phase2Results.localizacion.follow_up_question]: 'localizacion',
+              [phase2Results.flexibilidad_timeline.follow_up_question]: 'flexibilidad_timeline',
+              [phase2Results.constraints.follow_up_question]: 'constraints',
+              [phase2Results.claridad_concepto.follow_up_question]: 'claridad_concepto'
+            };
+            currentMetric = metricMap[questionToAsk] || 'subsector';
+            addQuestionMessage(questionToAsk);
+          }
         }
       } catch (error) {
-        removeLoadingMessage(loadingId1);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
         addErrorMessage('Error: ' + msg);
       } finally {
