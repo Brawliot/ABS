@@ -82,6 +82,7 @@ import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
 import { createStockFunctions, type StockRuntimeFunctions } from "./runtime-stock.js";
+import { createComprasFunctions, type ComprasRuntimeFunctions } from "./runtime-compras.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -307,6 +308,7 @@ export class AppRuntime {
 
   // Módulos especializados
   readonly stockFunctions!: StockRuntimeFunctions;
+  readonly comprasFunctions!: ComprasRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -378,6 +380,7 @@ export class AppRuntime {
 
     // Módulos especializados
     this.stockFunctions = createStockFunctions(this);
+    this.comprasFunctions = createComprasFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -522,47 +525,19 @@ export class AppRuntime {
     precioUnitarioCentimos: number,
     fechaPedido: string,
   ): { ok: true; id: string } | { ok: false; error: string } {
-    if (!proveedor || !productoId || cantidad <= 0 || precioUnitarioCentimos <= 0) {
-      return { ok: false, error: "Datos de compra inválidos" };
-    }
-    const id = `compra-${randomUUID()}`;
-    this.compras.crearCompra(
-      this.tenantId,
-      id,
-      proveedor,
-      productoId,
-      cantidad,
-      precioUnitarioCentimos,
-      fechaPedido,
-    );
-    return { ok: true, id };
+    return this.comprasFunctions.crearCompra(proveedor, productoId, cantidad, precioUnitarioCentimos, fechaPedido);
   }
 
   recibirCompra(compraId: string, cantidadRecibida: number): { ok: true } | { ok: false; error: string } {
-    if (cantidadRecibida <= 0) {
-      return { ok: false, error: "Cantidad inválida" };
-    }
-    const compra = this.compras.obtener(this.tenantId, compraId);
-    if (!compra) {
-      return { ok: false, error: "Compra no encontrada" };
-    }
-    if (cantidadRecibida > compra.cantidad) {
-      return { ok: false, error: "Cantidad recibida mayor que la pedida" };
-    }
-    this.compras.recibirCompra(this.tenantId, compraId, cantidadRecibida);
-
-    // Agregar stock
-    this.ajustarStock(compra.productoId, "entrada", cantidadRecibida * 1000, `Recepción compra ${compraId}`, "sistema");
-
-    return { ok: true };
+    return this.comprasFunctions.recibirCompra(compraId, cantidadRecibida);
   }
 
   listarCompras(filtros?: { proveedor?: string; estado?: "pendiente" | "recibida" | "cancelada" }) {
-    return this.compras.listar(this.tenantId, filtros);
+    return this.comprasFunctions.listarCompras(filtros);
   }
 
   deudaConProveedor(proveedor: string): number {
-    return this.compras.deudaConProveedor(this.tenantId, proveedor);
+    return this.comprasFunctions.deudaConProveedor(proveedor);
   }
 
   crearEnvio(expedienteId: string): void {
