@@ -87,6 +87,7 @@ import { createLogisticaFunctions, type LogisticaRuntimeFunctions } from "./runt
 import { createFacturasFunctions, type FacturasRuntimeFunctions } from "./runtime-facturas.js";
 import { createCobrosFunctions, type CobrosRuntimeFunctions } from "./runtime-cobros.js";
 import { createTransaccionesFunctions, type TransaccionesRuntimeFunctions } from "./runtime-transacciones.js";
+import { createCrmFunctions, type CrmRuntimeFunctions } from "./runtime-crm.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -317,6 +318,7 @@ export class AppRuntime {
   readonly facturasFunctions!: FacturasRuntimeFunctions;
   readonly cobrosFunctions!: CobrosRuntimeFunctions;
   readonly transaccionesFunctions!: TransaccionesRuntimeFunctions;
+  readonly crmFunctions!: CrmRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -393,6 +395,7 @@ export class AppRuntime {
     this.facturasFunctions = createFacturasFunctions(this);
     this.cobrosFunctions = createCobrosFunctions(this);
     this.transaccionesFunctions = createTransaccionesFunctions(this);
+    this.crmFunctions = createCrmFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -1294,128 +1297,52 @@ export class AppRuntime {
     return this.boot.spec.actions.find((a) => a.id === actionId);
   }
 
-  agregarNotaEnCliente(
-    clienteId: string,
-    texto: string,
-    autorRoleId: string,
-    esInterna: boolean,
-  ): { ok: true } | { ok: false; error: string } {
-    if (autorRoleId === "cliente") {
-      return { ok: false, error: "Los clientes no pueden registrar notas." };
-    }
-    try {
-      this.notas.registrarNota(this.tenantId, clienteId, texto, autorRoleId, esInterna);
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: (e as Error).message };
-    }
+  agregarNotaEnCliente(clienteId: string, texto: string, autorRoleId: string, esInterna: boolean): { ok: true } | { ok: false; error: string } {
+    return this.crmFunctions.agregarNotaEnCliente(clienteId, texto, autorRoleId, esInterna);
   }
 
   notasDelCliente(clienteId: string): readonly { readonly texto: string; readonly autor: string; readonly fecha: string; readonly esInterna: boolean }[] {
-    return this.notas.notasDelCliente(this.tenantId, clienteId).map((n) => ({
-      texto: n.texto,
-      autor: n.autor,
-      fecha: n.fecha,
-      esInterna: n.esInterna,
-    }));
+    return this.crmFunctions.notasDelCliente(clienteId);
   }
 
   contarNotasDelCliente(clienteId: string): number {
-    return this.notas.contarNotasDelCliente(this.tenantId, clienteId);
+    return this.crmFunctions.contarNotasDelCliente(clienteId);
   }
 
-  registrarContacto(
-    clienteId: string,
-    datos: {
-      readonly nombre: string;
-      readonly telefono?: string;
-      readonly email?: string;
-      readonly cargo?: string;
-      readonly esPrincipal?: boolean;
-    },
-  ): { ok: true; id: string } | { ok: false; error: string } {
-    try {
-      const id = this.contactos.registrarContacto(this.tenantId, clienteId, datos);
-      return { ok: true, id };
-    } catch (e) {
-      return { ok: false, error: (e as Error).message };
-    }
+  registrarContacto(clienteId: string, datos: { readonly nombre: string; readonly telefono?: string; readonly email?: string; readonly cargo?: string; readonly esPrincipal?: boolean }): { ok: true; id: string } | { ok: false; error: string } {
+    return this.crmFunctions.registrarContacto(clienteId, datos);
   }
 
   contactosDelCliente(clienteId: string): readonly { readonly id: string; readonly nombre: string; readonly telefono?: string; readonly email?: string; readonly cargo?: string; readonly esPrincipal: boolean }[] {
-    return this.contactos.contactosDelCliente(this.tenantId, clienteId).map((c) => ({
-      id: c.id ?? "",
-      nombre: c.nombre,
-      ...(c.telefono ? { telefono: c.telefono } : {}),
-      ...(c.email ? { email: c.email } : {}),
-      ...(c.cargo ? { cargo: c.cargo } : {}),
-      esPrincipal: c.esPrincipal,
-    }));
+    return this.crmFunctions.contactosDelCliente(clienteId);
   }
 
   establecerContactoPrincipal(clienteId: string, contactoId: string): void {
-    this.contactos.establecerPrincipal(this.tenantId, clienteId, contactoId);
+    this.crmFunctions.establecerContactoPrincipal(clienteId, contactoId);
   }
 
-  crearTarea(
-    clienteId: string,
-    datos: {
-      readonly texto: string;
-      readonly fechaVencimiento?: string;
-      readonly prioridad?: "baja" | "media" | "alta";
-      readonly asignadoA?: string;
-    },
-  ): { ok: true; id: string } | { ok: false; error: string } {
-    try {
-      const resultado = (this.tareas as any).crearTarea(this.tenantId, clienteId, {
-        ...datos,
-        prioridad: (datos.prioridad ?? "baja") as "baja" | "media" | "alta"
-      });
-      const id = typeof resultado === 'string' ? resultado : (resultado as any).id;
-      return { ok: true, id };
-    } catch (e) {
-      return { ok: false, error: (e as Error).message };
-    }
+  crearTarea(clienteId: string, datos: { readonly texto: string; readonly fechaVencimiento?: string; readonly prioridad?: "baja" | "media" | "alta"; readonly asignadoA?: string }): { ok: true; id: string } | { ok: false; error: string } {
+    return this.crmFunctions.crearTarea(clienteId, datos);
   }
 
   tareasDelCliente(clienteId: string, filtro?: "pendientes" | "todas"): readonly { readonly id: string; readonly texto: string; readonly fechaVencimiento?: string; readonly estado: "pendiente" | "completada"; readonly asignadoA?: string; readonly prioridad: "baja" | "media" | "alta" }[] {
-    const tareas = (this.tareas as any).tareasDelCliente?.(this.tenantId, clienteId, filtro) ?? [];
-    return tareas.map((t: any) => ({
-      id: t.id ?? "",
-      texto: t.texto,
-      ...(t.fechaVencimiento ? { fechaVencimiento: t.fechaVencimiento } : {}),
-      estado: t.estado,
-      ...(t.asignadoA ? { asignadoA: t.asignadoA } : {}),
-      prioridad: t.prioridad ?? "baja",
-    }));
+    return this.crmFunctions.tareasDelCliente(clienteId, filtro);
   }
 
   completarTarea(tareaId: string): void {
-    (this.tareas as any).completarTarea?.(this.tenantId, tareaId);
+    this.crmFunctions.completarTarea(tareaId);
   }
 
   contarTareas(clienteId: string, estado?: "pendiente" | "completada"): number {
-    return (this.tareas as any).contarTareas?.(this.tenantId, clienteId, estado) ?? 0;
+    return this.crmFunctions.contarTareas(clienteId, estado);
   }
 
-  registrarCambioAuditoria(
-    clienteId: string,
-    campo: string,
-    valorAnterior: string | undefined,
-    valorNuevo: string | undefined,
-    autor: string,
-  ): void {
-    this.auditoria.registrarCambio(this.tenantId, clienteId, campo, valorAnterior, valorNuevo, autor);
+  registrarCambioAuditoria(clienteId: string, campo: string, valorAnterior: string | undefined, valorNuevo: string | undefined, autor: string): void {
+    this.crmFunctions.registrarCambioAuditoria(clienteId, campo, valorAnterior, valorNuevo, autor);
   }
 
   auditoriaDe(clienteId: string): readonly { readonly campo: string; readonly valorAnterior?: string; readonly valorNuevo?: string; readonly autor: string; readonly fecha: string }[] {
-    return this.auditoria.auditoriaDe(this.tenantId, clienteId).map((r) => ({
-      campo: r.campo,
-      ...(r.valorAnterior ? { valorAnterior: r.valorAnterior } : {}),
-      ...(r.valorNuevo ? { valorNuevo: r.valorNuevo } : {}),
-      autor: r.autor,
-      fecha: r.fecha,
-    }));
+    return this.crmFunctions.auditoriaDe(clienteId);
   }
 
   generarReporte(tipo: "top-clientes" | "vencidos" | "inactivos"): string {
