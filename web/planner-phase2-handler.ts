@@ -31,12 +31,6 @@ interface Phase2Response {
     confidence: number;
     follow_up_question: string;
   };
-  claridad_concepto: {
-    score: number;
-    razonamiento: string;
-    confidence: number;
-    follow_up_question: string;
-  };
 }
 
 const PHASE2_SYSTEM_PROMPT = `Eres un experto en análisis de startups y modelos de negocio.
@@ -77,12 +71,6 @@ Analiza y proporciona en JSON:
     "otros": ["otro constraint", "restricción técnica"],
     "confidence": número 0-100,
     "follow_up_question": "¿Cuántos sois en el equipo, cuánto capital tenéis disponible y cuánto tiempo podéis dedicar?"
-  },
-  "claridad_concepto": {
-    "score": número 1-10,
-    "razonamiento": "por qué esa puntuación",
-    "confidence": número 0-100,
-    "follow_up_question": "pregunta para mejorar la claridad del concepto"
   }
 }`;
 }

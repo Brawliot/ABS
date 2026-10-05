@@ -25,8 +25,7 @@ function selectNextQuestion(analysis: Phase2Response): { question: string; metri
     { name: "subsector", conf: analysis.subsector.confidence, q: analysis.subsector.follow_up_question },
     { name: "localizacion", conf: analysis.localizacion.confidence, q: analysis.localizacion.follow_up_question },
     { name: "flexibilidad_timeline", conf: analysis.flexibilidad_timeline.confidence, q: analysis.flexibilidad_timeline.follow_up_question },
-    { name: "constraints", conf: analysis.constraints.confidence, q: analysis.constraints.follow_up_question },
-    { name: "claridad_concepto", conf: analysis.claridad_concepto.confidence, q: analysis.claridad_concepto.follow_up_question }
+    { name: "constraints", conf: analysis.constraints.confidence, q: analysis.constraints.follow_up_question }
   ];
 
   const sortedByConfidence = metrics.sort((a, b) => a.conf - b.conf);

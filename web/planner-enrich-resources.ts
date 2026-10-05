@@ -44,7 +44,6 @@ ANÁLISIS ANTERIOR:
 - Localización: ${req.analysis.localizacion.value} (${req.analysis.localizacion.confidence}%)
 - Timeline: ${req.analysis.flexibilidad_timeline.value} (${req.analysis.flexibilidad_timeline.confidence}%)
 - Constraints: ${req.analysis.constraints.dinero} (${req.analysis.constraints.confidence}%)
-- Claridad: ${req.analysis.claridad_concepto.score}/10 (${req.analysis.claridad_concepto.confidence}%)
 
 ${resourcesDescription}
 
@@ -69,12 +68,6 @@ Responde SOLO con JSON en este formato, sin markdown:
     "dinero": "presupuesto ajustado",
     "excluyentes": ["exclusión 1"],
     "otros": ["otro constraint"],
-    "confidence": número 0-100,
-    "follow_up_question": "pregunta siguiente"
-  },
-  "claridad_concepto": {
-    "score": número 1-10,
-    "razonamiento": "razonamiento",
     "confidence": número 0-100,
     "follow_up_question": "pregunta siguiente"
   }

@@ -443,14 +443,6 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-text">' + subConf + '% confianza</div>';
       html += '</div>';
 
-      const clarConf = normalizeConfidence(phase2.claridad_concepto.confidence);
-      html += '<div class="metric-item" id="metric-claridad_concepto">';
-      html += '<div class="metric-label">Claridad del Concepto</div>';
-      html += '<div class="metric-value">' + (phase2.claridad_concepto.score || 0) + '/10 - ' + (phase2.claridad_concepto.razonamiento || '') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + clarConf + '%"></div></div>';
-      html += '<div class="confidence-text">' + clarConf + '% confianza</div>';
-      html += '</div>';
-
       const flexConf = normalizeConfidence(phase2.flexibilidad_timeline.confidence);
       html += '<div class="metric-item" id="metric-flexibilidad_timeline">';
       html += '<div class="metric-label">Flexibilidad Timeline</div>';
@@ -478,8 +470,7 @@ export function renderPlannerHtml(): string {
         'localizacion': { conf: phase2.localizacion.confidence, value: phase2.localizacion.value },
         'subsector': { conf: phase2.subsector.confidence, value: phase2.subsector.value },
         'flexibilidad_timeline': { conf: phase2.flexibilidad_timeline.confidence, value: phase2.flexibilidad_timeline.value },
-        'constraints': { conf: phase2.constraints.confidence, value: phase2.constraints.dinero },
-        'claridad_concepto': { conf: phase2.claridad_concepto.confidence, value: phase2.claridad_concepto.score + '/10 - ' + phase2.claridad_concepto.razonamiento }
+        'constraints': { conf: phase2.constraints.confidence, value: phase2.constraints.dinero }
       };
 
       for (const [metric, data] of Object.entries(metricMap)) {
@@ -502,18 +493,13 @@ export function renderPlannerHtml(): string {
         { conf: phase2Results.subsector.confidence, q: phase2Results.subsector.follow_up_question },
         { conf: phase2Results.localizacion.confidence, q: phase2Results.localizacion.follow_up_question },
         { conf: phase2Results.flexibilidad_timeline.confidence, q: phase2Results.flexibilidad_timeline.follow_up_question },
-        { conf: phase2Results.constraints.confidence, q: phase2Results.constraints.follow_up_question },
-        { conf: phase2Results.claridad_concepto.confidence, q: phase2Results.claridad_concepto.follow_up_question }
+        { conf: phase2Results.constraints.confidence, q: phase2Results.constraints.follow_up_question }
       ];
 
       const sortedByConfidence = metrics.sort((a, b) => a.conf - b.conf);
 
       if (sortedByConfidence[0].conf < 80 && sortedByConfidence[0].q) {
         return sortedByConfidence[0].q;
-      }
-
-      if (phase2Results.claridad_concepto.score < 7 && phase2Results.claridad_concepto.follow_up_question) {
-        return phase2Results.claridad_concepto.follow_up_question;
       }
 
       return sortedByConfidence[0].q || null;
