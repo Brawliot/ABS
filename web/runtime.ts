@@ -81,6 +81,7 @@ import type { InterfaceCopyPack } from "../design/copy/types.js";
 import { FactProvider } from "../facts/index.js";
 import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
+import { createStockFunctions, type StockRuntimeFunctions } from "./runtime-stock.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -304,6 +305,9 @@ export class AppRuntime {
   get motorGeneradorProcesos() { return this.motorGenerador; }
   readonly storeGeneradorProcesos: SqliteGeneradorProcesosStore;
 
+  // Módulos especializados
+  readonly stockFunctions!: StockRuntimeFunctions;
+
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
     if (this.extraRules.length === 0) return base;
@@ -371,6 +375,9 @@ export class AppRuntime {
     this.motorNotificaciones = new MotorNotificaciones(store);
     this.motorReversiones = new MotorReversiones(store);
     this.motorCalculos = new MotorCalculos(store);
+
+    // Módulos especializados
+    this.stockFunctions = createStockFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -482,41 +489,30 @@ export class AppRuntime {
   }
 
   obtenerProductosControlados(): ReadonlyMap<string, { readonly minimo: number }> {
-    return this.stockStore.controlados(this.tenantId);
+    return this.stockFunctions.obtenerProductosControlados();
   }
 
   resumenStock(): ReadonlyMap<string, { readonly disponible: number; readonly reservado: number; readonly total: number }> {
-    const { productos } = this.stock();
-    return new Map(
-      productos.map((p) => [
-        p.ofertaId,
-        {
-          disponible: p.disponible,
-          reservado: (p as any).pendientes ?? 0,
-          total: p.disponible + ((p as any).pendientes ?? 0),
-        },
-      ]),
-    );
+    return this.stockFunctions.resumenStock();
   }
 
   movimientosStockRecientes(limit: number): readonly MovimientoStock[] {
-    const { movimientos } = this.stock();
-    return movimientos.slice(-limit).reverse();
+    return this.stockFunctions.movimientosStockRecientes(limit);
   }
 
   /** Obtiene reservas activas de un expediente. */
   reservasDelExpediente(expedienteId: string): readonly { readonly ofertaId: string; readonly cantidadMilesimas: number }[] {
-    return this.stockStore.reservasDelExpediente(this.tenantId, expedienteId);
+    return this.stockFunctions.reservasDelExpediente(expedienteId);
   }
 
   /** Confirma las reservas de un expediente (pasan de reservadas a confirmadas). */
   confirmarReservasDelExpediente(expedienteId: string): void {
-    this.stockStore.confirmarReservas(this.tenantId, expedienteId);
+    this.stockFunctions.confirmarReservasDelExpediente(expedienteId);
   }
 
   /** Cancela todas las reservas de un expediente. */
   cancelarReservasDelExpediente(expedienteId: string): void {
-    this.stockStore.cancelarReservas(this.tenantId, expedienteId);
+    this.stockFunctions.cancelarReservasDelExpediente(expedienteId);
   }
 
   crearCompra(
@@ -914,57 +910,17 @@ export class AppRuntime {
    * y todos los movimientos (ajustes + entregas / recepciones).
    */
   stock(): { readonly productos: readonly ResumenProducto[]; readonly movimientos: readonly MovimientoStock[] } {
-    const controlados = this.stockStore.controlados(this.tenantId);
-    const ids = new Set(controlados.keys());
-    const movimientos: MovimientoStock[] = [...this.stockStore.ajustes(this.tenantId)];
-    const pendientes: { direccion: Direccion; lineas: readonly LineaDatos[] }[] = [];
-    if (ids.size > 0) {
-      for (const e of this.expedientesDinero()) {
-        const slice = this.boot.input.lifecycles.find((l) => l.id === e.lifecycleId)!;
-        const events = this.store.getBySubject(e.id);
-        const lineas = proyectarTransaccion(events)!.datos.lineas;
-        movimientos.push(
-          ...movimientosStockDe({
-            expedienteId: e.id,
-            archetypeId: slice.archetypeId,
-            lifecycle: slice.lifecycle,
-            direccion: e.direccion,
-            lineas,
-            events,
-            controlados: ids,
-          }),
-        );
-        if (e.situacion === "pendiente" && ["venta", "servicio_proyecto"].includes(slice.archetypeId)) {
-          pendientes.push({ direccion: e.direccion, lineas });
-        }
-      }
-    }
-    movimientos.sort((a, b) => a.at.localeCompare(b.at));
-    return { productos: resumenStock({ controlados, movimientos, pendientes }), movimientos };
+    return this.stockFunctions.stock();
   }
 
-  /** Activa / desactiva el control de stock de un producto y fija su mínimo. */
   configurarStock(
     ofertaId: string,
     control: boolean,
     minimoMilesimas: number,
   ): { ok: true } | { ok: false; error: string } {
-    if (!this.ofertas.get(this.tenantId, ofertaId)) return { ok: false, error: "Ese producto no existe." };
-    if (!Number.isSafeInteger(minimoMilesimas) || minimoMilesimas < 0) {
-      return { ok: false, error: "El mínimo no es válido." };
-    }
-    this.stockStore.configurar(
-      this.tenantId,
-      { ofertaId, control, minimo: minimoMilesimas },
-      new Date().toISOString(),
-    );
-    return { ok: true };
+    return this.stockFunctions.configurarStock(ofertaId, control, minimoMilesimas);
   }
 
-  /**
-   * Ajuste manual: entrada o salida de una cantidad, o recuento (se indica la
-   * cantidad real y se registra la diferencia). Siempre con motivo.
-   */
   ajustarStock(
     ofertaId: string,
     tipo: "entrada" | "salida" | "recuento",
@@ -972,48 +928,11 @@ export class AppRuntime {
     motivo: string,
     actorId: string,
   ): { ok: true; delta: number } | { ok: false; error: string } {
-    if (!this.stockStore.controlados(this.tenantId).has(ofertaId)) {
-      return { ok: false, error: "Ese producto no tiene activado el control de stock." };
-    }
-    const m = motivo.trim();
-    if (!m) return { ok: false, error: "Indica el motivo del ajuste." };
-    if (m.length > 200) return { ok: false, error: "El motivo es demasiado largo." };
-    if (!Number.isSafeInteger(cantidadMilesimas) || cantidadMilesimas < 0 || (tipo !== "recuento" && cantidadMilesimas === 0)) {
-      return { ok: false, error: "La cantidad no es válida." };
-    }
-    const actual = this.stock().productos.find((p) => p.ofertaId === ofertaId)?.stock ?? 0;
-    const delta =
-      tipo === "entrada" ? cantidadMilesimas : tipo === "salida" ? -cantidadMilesimas : cantidadMilesimas - actual;
-    if (delta === 0) return { ok: true, delta: 0 };
-    this.stockStore.ajustar(this.tenantId, {
-      ofertaId,
-      delta,
-      motivo: m,
-      actorId,
-      at: new Date().toISOString(),
-    });
-    return { ok: true, delta };
+    return this.stockFunctions.ajustarStock(ofertaId, tipo, cantidadMilesimas, motivo, actorId);
   }
 
-  /**
-   * Productos de un expediente de venta que no hay disponibles en cantidad
-   * suficiente (aviso; no bloquea).
-   */
   faltasStock(expedienteId: string): { readonly ofertaId: string; readonly necesita: number; readonly disponible: number }[] {
-    const e = this.expedientesDinero().find((x) => x.id === expedienteId);
-    if (!e || e.direccion !== "entra" || (e.situacion !== "presupuesto" && e.situacion !== "pendiente")) return [];
-    const productos = this.stock().productos;
-    if (productos.length === 0) return [];
-    const lineas = this.datosDe(expedienteId)!.datos.lineas;
-    const ids = new Set(productos.map((p) => p.ofertaId));
-    const out: { ofertaId: string; necesita: number; disponible: number }[] = [];
-    for (const [ofertaId, q] of cantidadesPorOferta(lineas, ids)) {
-      const p = productos.find((x) => x.ofertaId === ofertaId)!;
-      // Si ya está aceptado, su propia reserva cuenta como disponible para él
-      const disponible = p.disponible + (e.situacion === "pendiente" ? q : 0);
-      if (q > disponible) out.push({ ofertaId, necesita: q, disponible });
-    }
-    return out;
+    return this.stockFunctions.faltasStock(expedienteId);
   }
 
   registrarCobro(
