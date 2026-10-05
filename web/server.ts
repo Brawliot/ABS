@@ -26,6 +26,7 @@ import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
+import { analyzeWithJev } from "./planner-handler.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
 import {
@@ -183,6 +184,24 @@ export function startWebServer(
       const url = req.url ?? "/";
       const path = url.split("?")[0] ?? "/";
       const method = (req.method ?? "GET").toUpperCase();
+
+      // Ruta Planner + Jev
+      if (path === "/api/planner" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const userInput = data.input?.trim();
+          if (!userInput) {
+            return sendJson(res, 400, { error: "Input is required" });
+          }
+          const result = await analyzeWithJev(userInput);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner Jev error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
 
       // Rutas de API
       if (path.startsWith("/api/")) {
