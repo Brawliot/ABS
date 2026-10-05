@@ -24,51 +24,55 @@ export async function enrichAnalysisWithResources(req: EnrichRequest): Promise<P
   }
 
   const resourcesDescription = `
-El usuario ha proporcionado estos recursos:
-- Presupuesto inicial: $${req.resources.budget} USD
-- Tiempo disponible: ${req.resources.hours} horas por semana
-- Tamaño del equipo: ${req.resources.teamSize}
-- Experiencia en el sector: ${req.resources.experience} años
+El usuario ha proporcionado estos DATOS VERIFICABLES:
+- Presupuesto: $${req.resources.budget} USD (dato real)
+- Tiempo disponible: ${req.resources.hours} horas/semana (dato real)
+- Equipo: ${req.resources.teamSize} (dato verificable)
+- Experiencia sector: ${req.resources.experience} años (dato verificable)
 
-Considerando estos recursos reales, por favor ajusta y enriquece el análisis anterior.
-Actualiza cada métrica si es necesario para que sea realista con estos limitantes.
-Mantén la estructura de respuesta igual pero con valores ajustados.
-Aumenta la confianza en los campos donde los recursos alinean bien con la idea.
+INSTRUCCIONES: Con esta información real y verificable, AUMENTA la confianza en todos los campos.
+No revises viabilidad. Solo usa estos datos para VALIDAR y REFORZAR el análisis anterior.
+Los datos que el usuario proporciona hacen que tus análisis anteriores sean más fiables y precisos.
+Aumenta confianza en TODOS los campos porque ahora tienes información real que respalda tus análisis.
 `;
 
   const enrichPrompt = `
 DESCRIPCIÓN ORIGINAL: ${req.originalInput}
 
 ANÁLISIS ANTERIOR:
-- Subsector: ${req.analysis.subsector.value} (${req.analysis.subsector.confidence}%)
-- Localización: ${req.analysis.localizacion.value} (${req.analysis.localizacion.confidence}%)
-- Timeline: ${req.analysis.flexibilidad_timeline.value} (${req.analysis.flexibilidad_timeline.confidence}%)
-- Constraints: ${req.analysis.constraints.dinero} (${req.analysis.constraints.confidence}%)
+- Subsector: ${req.analysis.subsector.value} (${req.analysis.subsector.confidence}% confianza)
+- Localización: ${req.analysis.localizacion.value} (${req.analysis.localizacion.confidence}% confianza)
+- Timeline: ${req.analysis.flexibilidad_timeline.value} (${req.analysis.flexibilidad_timeline.confidence}% confianza)
+- Constraints: ${req.analysis.constraints.dinero} (${req.analysis.constraints.confidence}% confianza)
 
 ${resourcesDescription}
+
+TAREA: Valida el análisis anterior con estos datos. Aumenta confianza en TODOS los campos.
+Mantén los valores igual si son correctos. Aumenta confianza porque ahora tienes datos reales.
+La confianza debe crecer con información verificable del usuario.
 
 Responde SOLO con JSON en este formato, sin markdown:
 {
   "subsector": {
-    "value": "subsector ajustado",
-    "confidence": número 0-100,
+    "value": "subsector (igual o confirmado)",
+    "confidence": número 0-100 (AUMENTADO),
     "follow_up_question": "pregunta siguiente"
   },
   "localizacion": {
-    "value": "ubicación ajustada",
-    "confidence": número 0-100,
+    "value": "ubicación (igual o confirmada)",
+    "confidence": número 0-100 (AUMENTADO),
     "follow_up_question": "pregunta siguiente"
   },
   "flexibilidad_timeline": {
-    "value": "timeline ajustado",
-    "confidence": número 0-100,
+    "value": "timeline (igual o confirmado)",
+    "confidence": número 0-100 (AUMENTADO),
     "follow_up_question": "pregunta siguiente"
   },
   "constraints": {
-    "dinero": "presupuesto ajustado",
+    "dinero": "presupuesto/recursos",
     "excluyentes": ["exclusión 1"],
     "otros": ["otro constraint"],
-    "confidence": número 0-100,
+    "confidence": número 0-100 (AUMENTADO),
     "follow_up_question": "pregunta siguiente"
   }
 }`;
@@ -84,7 +88,7 @@ Responde SOLO con JSON en este formato, sin markdown:
       messages: [
         {
           role: "system",
-          content: "Eres un experto en análisis de startups. Ajusta el análisis considerando los recursos reales del usuario.",
+          content: "Eres un experto en análisis de startups. El usuario ha proporcionado datos reales sobre su proyecto. Tu tarea es VALIDAR y REFORZAR el análisis anterior aumentando confianza en todos los campos porque ahora tienes información verificable.",
         },
         {
           role: "user",
