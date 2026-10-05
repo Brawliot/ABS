@@ -12,25 +12,30 @@ interface Phase2Response {
   subsector: {
     value: string;
     confidence: number;
+    follow_up_question: string;
   };
   localizacion: {
     value: string;
     confidence: number;
+    follow_up_question: string;
   };
   flexibilidad_timeline: {
     value: string;
     confidence: number;
+    follow_up_question: string;
   };
   constraints: {
     dinero: string;
     excluyentes: string[];
     otros: string[];
     confidence: number;
+    follow_up_question: string;
   };
   claridad_concepto: {
     score: number;
     razonamiento: string;
     confidence: number;
+    follow_up_question: string;
   };
 }
 
@@ -53,26 +58,31 @@ Analiza y proporciona en JSON:
 {
   "subsector": {
     "value": "subsector específico (ej: SaaS de gestión de inventario para retail de moda)",
-    "confidence": número 0-100
+    "confidence": número 0-100,
+    "follow_up_question": "pregunta para el usuario para clarificar este aspecto"
   },
   "localizacion": {
     "value": "ubicación específica con expansión (ej: CDMX, expandible a Tier 1)",
-    "confidence": número 0-100
+    "confidence": número 0-100,
+    "follow_up_question": "¿Tienes una zona específica pensada o es a nivel ciudad/país?"
   },
   "flexibilidad_timeline": {
     "value": "Alta/Media/Baja + explicación breve",
-    "confidence": número 0-100
+    "confidence": número 0-100,
+    "follow_up_question": "pregunta sobre si el timeline es flexible o crítico"
   },
   "constraints": {
     "dinero": "estimación presupuesto necesario (ej: $50k-150k USD)",
     "excluyentes": ["qué NO se debe hacer", "otra exclusión"],
     "otros": ["otro constraint", "restricción técnica"],
-    "confidence": número 0-100
+    "confidence": número 0-100,
+    "follow_up_question": "¿Hay restricciones legales, técnicas o de recurso que debemos considerar?"
   },
   "claridad_concepto": {
     "score": número 1-10,
     "razonamiento": "por qué esa puntuación",
-    "confidence": número 0-100
+    "confidence": número 0-100,
+    "follow_up_question": "pregunta para mejorar la claridad del concepto"
   }
 }`;
 }

@@ -291,6 +291,39 @@ export function renderPlannerHtml(): string {
       color: #991b1b;
       margin-bottom: 12px;
     }
+
+    .follow-up-question {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .follow-up-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .follow-up-btn {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .follow-up-btn:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      color: #1f2937;
+    }
   </style>
 </head>
 <body>
@@ -378,6 +411,9 @@ export function renderPlannerHtml(): string {
       html += '<div class="result-value">' + results.subsector.value + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.subsector.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.subsector.confidence + '% confianza</div>';
+      if (results.subsector.follow_up_question) {
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.subsector.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.subsector.follow_up_question + '</button></div>';
+      }
       html += '</div>';
 
       html += '<div class="phase2-card">';
@@ -385,6 +421,9 @@ export function renderPlannerHtml(): string {
       html += '<div class="result-value">' + results.localizacion.value + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.localizacion.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.localizacion.confidence + '% confianza</div>';
+      if (results.localizacion.follow_up_question) {
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.localizacion.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.localizacion.follow_up_question + '</button></div>';
+      }
       html += '</div>';
 
       html += '<div class="phase2-card">';
@@ -392,6 +431,9 @@ export function renderPlannerHtml(): string {
       html += '<div class="result-value">' + results.flexibilidad_timeline.value + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.flexibilidad_timeline.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.flexibilidad_timeline.confidence + '% confianza</div>';
+      if (results.flexibilidad_timeline.follow_up_question) {
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.flexibilidad_timeline.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.flexibilidad_timeline.follow_up_question + '</button></div>';
+      }
       html += '</div>';
 
       html += '<div class="phase2-card">';
@@ -415,6 +457,9 @@ export function renderPlannerHtml(): string {
       html += '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.constraints.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.constraints.confidence + '% confianza</div>';
+      if (results.constraints.follow_up_question) {
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.constraints.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.constraints.follow_up_question + '</button></div>';
+      }
       html += '</div>';
 
       html += '<div class="phase2-card">';
@@ -423,6 +468,9 @@ export function renderPlannerHtml(): string {
       html += '<div class="clarity-reasoning">' + results.claridad_concepto.razonamiento + '</div>';
       html += '<div class="confidence-bar" style="margin-top:8px;"><div class="confidence-fill" style="width:' + results.claridad_concepto.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.claridad_concepto.confidence + '% confianza</div>';
+      if (results.claridad_concepto.follow_up_question) {
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.claridad_concepto.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.claridad_concepto.follow_up_question + '</button></div>';
+      }
       html += '</div>';
 
       html += '</div>';
