@@ -326,11 +326,15 @@ export function renderPlannerHtml(): string {
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Sector</div>';
       html += '<div class="metric-value">' + (phase1.answers.sector.choice || 'N/A') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase1.answers.sector.confidence || 75) + '%"></div></div>';
+      html += '<div class="confidence-text">' + (phase1.answers.sector.confidence || 75) + '% confianza</div>';
       html += '</div>';
 
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Localización</div>';
       html += '<div class="metric-value">' + (phase2.localizacion.value || 'N/A') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.localizacion.confidence || 0) + '%"></div></div>';
+      html += '<div class="confidence-text">' + (phase2.localizacion.confidence || 0) + '% confianza</div>';
       html += '</div>';
 
       html += '<div class="metric-item">';
