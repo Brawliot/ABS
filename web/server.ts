@@ -110,6 +110,7 @@ import {
   applyWizardDecisions,
 } from "./cli.js";
 import { handleAuthRoute } from "./auth-routes.js";
+import { handleGdprRoute } from "./gdpr-routes.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 const LANDING_HTML = readFileSync(
@@ -867,112 +868,10 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
         return send(res, 200, html, "text/html; charset=utf-8");
       }
 
-      if (path === "/gdpr/export" && method === "GET" && auth) {
-        const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth?.parteId) {
-          return send(res, 401, "No autorizado", "text/plain");
-        }
-        const bundle = exportPartePersonal(
-          identities,
-          sessionAuth.companyId,
-          sessionAuth.parteId,
-          sessionAuth.accountId,
-        );
-        return send(
-          res,
-          200,
-          JSON.stringify(bundle, null, 2),
-          "application/json; charset=utf-8",
-        );
-      }
-
-      if (path === "/gdpr/erase" && method === "POST" && auth) {
-        const form = formToRecord(await readBody(req));
-        const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return sendText(res, 401, "No autorizado");
-        try {
-          requireCsrf(sessionAuth, form, req.headers);
-        } catch {
-          return sendText(res, 403, "CSRF");
-        }
-        const parteId = form.parteId ?? sessionAuth.parteId;
-        if (!parteId) return send(res, 400, "parteId requerido", "text/plain");
-        if (sessionAuth.kind === "portal_cliente" && sessionAuth.parteId !== parteId) {
-          return sendText(res, 403, "Prohibido");
-        }
-        try {
-          erasePartePersonal(identities, sessionAuth.companyId, parteId);
-        } catch (e) {
-          return send(
-            res,
-            404,
-            e instanceof Error ? e.message : "Error",
-            "text/plain",
-          );
-        }
-        return send(
-          res,
-          200,
-          JSON.stringify({ ok: true }),
-          "application/json; charset=utf-8",
-        );
-      }
-
-      if (path === "/gdpr/rectify" && method === "POST" && auth) {
-        const form = formToRecord(await readBody(req));
-        const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return sendText(res, 401, "No autorizado");
-        try {
-          requireCsrf(sessionAuth, form, req.headers);
-        } catch {
-          return sendText(res, 403, "CSRF");
-        }
-        const parteId = form.parteId ?? sessionAuth.parteId;
-        if (!parteId) return send(res, 400, "parteId requerido", "text/plain");
-        if (sessionAuth.kind === "portal_cliente" && sessionAuth.parteId !== parteId) {
-          return sendText(res, 403, "Prohibido");
-        }
-        rectifyPartePersonal(identities, sessionAuth.companyId, parteId, {
-          displayName: form.displayName ?? "",
-          ...(form.email ? { email: form.email } : {}),
-          ...(form.taxId ? { taxId: form.taxId } : {}),
-          ...(form.phone ? { phone: form.phone } : {}),
-          ...(form.address ? { address: form.address } : {}),
-        });
-        return send(
-          res,
-          200,
-          JSON.stringify({ ok: true }),
-          "application/json; charset=utf-8",
-        );
-      }
-
-      if (path === "/gdpr/rat" && method === "GET") {
-        return send(
-          res,
-          200,
-          JSON.stringify(draftRatFromConfig(boot.profileId), null, 2),
-          "application/json; charset=utf-8",
-        );
-      }
-
-      if (path === "/gdpr/legal-drafts" && method === "GET") {
-        return send(
-          res,
-          200,
-          JSON.stringify(
-            {
-              disclaimer: "PENDIENTE DE REVISIÓN POR ABOGADO",
-              privacyPolicy: PRIVACY_POLICY_DRAFT,
-              dpa: DPA_DRAFT,
-              hostingEu: HOSTING_EU_CHECKLIST,
-              breachProcedure: BREACH_PROCEDURE,
-            },
-            null,
-            2,
-          ),
-          "application/json; charset=utf-8",
-        );
+      // Rutas de GDPR
+      if (path.startsWith("/gdpr/")) {
+        const handled = await handleGdprRoute(path, method, req, res, { auth, boot, identities });
+        if (handled) return;
       }
 
       // ==================== MAESTROS PAGES ====================
