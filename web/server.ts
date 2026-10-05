@@ -25,6 +25,7 @@ import { resolveTokenMap } from "../presentation/resolve-tokens.js";
 import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
+import { renderPlannerHtml } from "./planner.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
 import {
@@ -240,6 +241,10 @@ export function startWebServer(
         });
       }
 
+      if (path === "/planner") {
+        const html = renderPlannerHtml();
+        return sendHtml(res, 200, html);
+      }
 
       // Rutas de autenticación
       if (path.startsWith("/auth/")) {
