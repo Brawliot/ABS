@@ -478,7 +478,7 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.subsector.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.subsector.confidence + '% confianza</div>';
       if (results.subsector.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.subsector.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.subsector.follow_up_question + '</button></div>';
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.subsector.follow_up_question.replace(/"/g, '&quot;') + '">' + results.subsector.follow_up_question + '</button></div>';
       }
       html += '</div>';
 
@@ -488,7 +488,7 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.localizacion.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.localizacion.confidence + '% confianza</div>';
       if (results.localizacion.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.localizacion.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.localizacion.follow_up_question + '</button></div>';
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.localizacion.follow_up_question.replace(/"/g, '&quot;') + '">' + results.localizacion.follow_up_question + '</button></div>';
       }
       html += '</div>';
 
@@ -498,7 +498,7 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.flexibilidad_timeline.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.flexibilidad_timeline.confidence + '% confianza</div>';
       if (results.flexibilidad_timeline.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.flexibilidad_timeline.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.flexibilidad_timeline.follow_up_question + '</button></div>';
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.flexibilidad_timeline.follow_up_question.replace(/"/g, '&quot;') + '">' + results.flexibilidad_timeline.follow_up_question + '</button></div>';
       }
       html += '</div>';
 
@@ -524,7 +524,7 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + results.constraints.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.constraints.confidence + '% confianza</div>';
       if (results.constraints.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.constraints.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.constraints.follow_up_question + '</button></div>';
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.constraints.follow_up_question.replace(/"/g, '&quot;') + '">' + results.constraints.follow_up_question + '</button></div>';
       }
       html += '</div>';
 
@@ -535,7 +535,7 @@ export function renderPlannerHtml(): string {
       html += '<div class="confidence-bar" style="margin-top:8px;"><div class="confidence-fill" style="width:' + results.claridad_concepto.confidence + '%"></div></div>';
       html += '<div class="confidence-text">' + results.claridad_concepto.confidence + '% confianza</div>';
       if (results.claridad_concepto.follow_up_question) {
-        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" onclick="addUserMessage(\'' + results.claridad_concepto.follow_up_question.replace(/'/g, "\\'") + '\'); handleSend();">' + results.claridad_concepto.follow_up_question + '</button></div>';
+        html += '<div class="follow-up-question"><div class="follow-up-label">Preguntar</div><button class="follow-up-btn" data-question="' + results.claridad_concepto.follow_up_question.replace(/"/g, '&quot;') + '">' + results.claridad_concepto.follow_up_question + '</button></div>';
       }
       html += '</div>';
 
@@ -543,6 +543,14 @@ export function renderPlannerHtml(): string {
       div.innerHTML = html;
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
+
+      div.querySelectorAll('.follow-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const question = e.target.dataset.question;
+          addUserMessage(question);
+          handleSend();
+        });
+      });
     };
 
     const addErrorMessage = (error) => {
