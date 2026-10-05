@@ -12,6 +12,16 @@ import {
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  parseQuery,
+  send,
+  readBody,
+  formToRecord,
+  sendJson,
+  sendError,
+  sendHtml,
+  sendText,
+} from "./http-utils.js";
 import { resolveTokenMap } from "../presentation/resolve-tokens.js";
 import { createDevolucionVinculada } from "../archetypes/linked-transaction.js";
 import { allowDevSession } from "../auth/env.js";
@@ -105,54 +115,6 @@ const LANDING_HTML = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), "templates", "landing.html"),
   "utf-8"
 );
-
-function parseQuery(url: string): Record<string, string> {
-  const i = url.indexOf("?");
-  if (i < 0) return {};
-  const out: Record<string, string> = {};
-  new URLSearchParams(url.slice(i + 1)).forEach((v, k) => {
-    out[k] = v;
-  });
-  return out;
-}
-
-function send(
-  res: ServerResponse,
-  status: number,
-  body: string | Buffer,
-  type: string,
-  headers?: Record<string, string | string[]>,
-): void {
-  const merged: Record<string, string | string[]> = {
-    "Content-Type": type,
-    "Cache-Control": "no-store",
-    ...securityHeaders(),
-    ...(headers ?? {}),
-  };
-  res.statusCode = status;
-  for (const [k, v] of Object.entries(merged)) {
-    if (k === "Set-Cookie" && Array.isArray(v)) {
-      for (const c of v) res.appendHeader("Set-Cookie", c);
-    } else if (typeof v === "string") {
-      res.setHeader(k, v);
-    }
-  }
-  res.end(body);
-}
-
-async function readBody(req: IncomingMessage): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const c of req) chunks.push(c as Buffer);
-  return Buffer.concat(chunks).toString("utf8");
-}
-
-function formToRecord(raw: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  new URLSearchParams(raw).forEach((v, k) => {
-    out[k] = v;
-  });
-  return out;
-}
 
 export interface WebServerHandle {
   readonly port: number;
@@ -693,40 +655,25 @@ export function startWebServer(
       }
 
       if (path === "/health") {
-        return send(
-          res,
-          200,
-          JSON.stringify({
-            ok: true,
-            profileId: boot.profileId,
-            sealed: true,
-            contentHash: boot.spec.contentHash,
-            dbPath: runtime.dbPath,
-            subjects: runtime.subjects.length,
-            events: runtime.store.all().length,
-          }),
-          "application/json; charset=utf-8",
-        );
+        return sendJson(res, 200, {
+          ok: true,
+          profileId: boot.profileId,
+          sealed: true,
+          contentHash: boot.spec.contentHash,
+          dbPath: runtime.dbPath,
+          subjects: runtime.subjects.length,
+          events: runtime.store.all().length,
+        });
       }
 
       if (path === "/diagnosis") {
         if (method === "GET") {
-          return send(
-            res,
-            200,
-            renderDiagnosisHtml(""),
-            "text/html; charset=utf-8",
-          );
+          return sendHtml(res, 200, renderDiagnosisHtml(""));
         }
         if (method === "POST") {
           const form = formToRecord(await readBody(req));
           const result = await runDiagnosis(answersFromForm(form));
-          return send(
-            res,
-            200,
-            renderDiagnosisHtml(result.htmlBody),
-            "text/html; charset=utf-8",
-          );
+          return sendHtml(res, 200, renderDiagnosisHtml(result.htmlBody));
         }
       }
 
@@ -864,44 +811,35 @@ export function startWebServer(
             ...(form.totpCode ? { totpCode: form.totpCode } : {}),
             ipKey: req.socket.remoteAddress ?? "local",
           });
-          return send(res, 200, JSON.stringify({ ok: true }), "application/json; charset=utf-8", {
-            "Set-Cookie": cookies,
-          });
+          return sendJson(res, 200, { ok: true }, { "Set-Cookie": cookies });
         } catch (e) {
           const msg = e instanceof Error ? e.message : "Error de login";
-          return send(
-            res,
-            401,
-            JSON.stringify({ ok: false, error: msg }),
-            "application/json; charset=utf-8",
-          );
+          return sendError(res, 401, msg);
         }
       }
 
       if (path === "/auth/logout" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
         if (sessionAuth) {
           try {
             requireCsrf(sessionAuth, form, req.headers);
           } catch {
-            return send(res, 403, "CSRF", "text/plain");
+            return sendText(res, 403, "CSRF");
           }
           const cookies = logoutSession(
             auth,
             sessionAuth,
             form.allDevices === "1",
           );
-          return send(res, 200, JSON.stringify({ ok: true }), "application/json; charset=utf-8", {
-            "Set-Cookie": cookies,
-          });
+          return sendJson(res, 200, { ok: true }, { "Set-Cookie": cookies });
         }
-        return send(res, 200, JSON.stringify({ ok: true }), "application/json; charset=utf-8");
+        return sendJson(res, 200, { ok: true });
       }
 
       if (path === "/auth/magic-request" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         try {
           const { token } = requestMagicLink(
@@ -933,7 +871,7 @@ export function startWebServer(
       }
 
       if (path === "/auth/magic" && method === "GET") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const q = parseQuery(url);
         try {
           const { cookies } = loginWithMagicToken(
@@ -956,7 +894,7 @@ export function startWebServer(
       }
 
       if (path === "/auth/reset-request" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         try {
           const { token } = requestPasswordReset(
@@ -987,7 +925,7 @@ export function startWebServer(
       }
 
       if (path === "/auth/reset" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         try {
           completePasswordReset(auth, form.token ?? "", form.password ?? "");
@@ -1011,10 +949,10 @@ export function startWebServer(
       }
 
       if (path === "/auth/invite" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return send(res, 401, "No autorizado", "text/plain");
+        if (!sessionAuth) return sendText(res, 401, "No autorizado");
         try {
           requireCsrf(sessionAuth, form, req.headers);
           const { token } = inviteEmployee(auth, sessionAuth, {
@@ -1051,7 +989,7 @@ export function startWebServer(
       }
 
       if (path === "/auth/invite/accept" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         try {
           const { cookies } = acceptInvite(auth, form.token ?? "", {
@@ -1079,10 +1017,10 @@ export function startWebServer(
       }
 
       if (path === "/auth/revoke" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return send(res, 401, "No autorizado", "text/plain");
+        if (!sessionAuth) return sendText(res, 401, "No autorizado");
         try {
           requireCsrf(sessionAuth, form, req.headers);
           revokeEmployeeAccess(auth, sessionAuth, form.accountId ?? "");
@@ -1106,10 +1044,10 @@ export function startWebServer(
       }
 
       if (path === "/auth/switch-company" && method === "POST") {
-        if (!auth) return send(res, 503, "Auth no habilitado", "text/plain");
+        if (!auth) return sendText(res, 503, "Auth no habilitado");
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return send(res, 401, "No autorizado", "text/plain");
+        if (!sessionAuth) return sendText(res, 401, "No autorizado");
         try {
           requireCsrf(sessionAuth, form, req.headers);
           const { cookies } = switchActiveCompany(
@@ -1221,16 +1159,16 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
       if (path === "/gdpr/erase" && method === "POST" && auth) {
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return send(res, 401, "No autorizado", "text/plain");
+        if (!sessionAuth) return sendText(res, 401, "No autorizado");
         try {
           requireCsrf(sessionAuth, form, req.headers);
         } catch {
-          return send(res, 403, "CSRF", "text/plain");
+          return sendText(res, 403, "CSRF");
         }
         const parteId = form.parteId ?? sessionAuth.parteId;
         if (!parteId) return send(res, 400, "parteId requerido", "text/plain");
         if (sessionAuth.kind === "portal_cliente" && sessionAuth.parteId !== parteId) {
-          return send(res, 403, "Prohibido", "text/plain");
+          return sendText(res, 403, "Prohibido");
         }
         try {
           erasePartePersonal(identities, sessionAuth.companyId, parteId);
@@ -1253,16 +1191,16 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
       if (path === "/gdpr/rectify" && method === "POST" && auth) {
         const form = formToRecord(await readBody(req));
         const sessionAuth = readAuthSession(auth, req);
-        if (!sessionAuth) return send(res, 401, "No autorizado", "text/plain");
+        if (!sessionAuth) return sendText(res, 401, "No autorizado");
         try {
           requireCsrf(sessionAuth, form, req.headers);
         } catch {
-          return send(res, 403, "CSRF", "text/plain");
+          return sendText(res, 403, "CSRF");
         }
         const parteId = form.parteId ?? sessionAuth.parteId;
         if (!parteId) return send(res, 400, "parteId requerido", "text/plain");
         if (sessionAuth.kind === "portal_cliente" && sessionAuth.parteId !== parteId) {
-          return send(res, 403, "Prohibido", "text/plain");
+          return sendText(res, 403, "Prohibido");
         }
         rectifyPartePersonal(identities, sessionAuth.companyId, parteId, {
           displayName: form.displayName ?? "",
@@ -1537,7 +1475,7 @@ ${allowDevSession() ? "<p data-dev-login-hint>Modo desarrollo: selector provisio
       }
 
       // Default 404 for all other routes
-      return send(res, 404, "Not found", "text/plain");
+      return sendText(res, 404, "Not found");
     })().catch((err) => {
       const msg = err instanceof Error ? err.message : String(err);
       if (!res.headersSent) {
