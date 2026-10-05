@@ -160,6 +160,93 @@ export function renderPlannerHtml(): string {
       color: #78350f;
     }
 
+    .resources-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      justify-content: flex-start;
+    }
+
+    .resources-bubble {
+      max-width: 85%;
+      padding: 16px;
+      background: #e0f2fe;
+      border-radius: 12px 12px 4px 12px;
+      border-left: 4px solid #0284c7;
+      line-height: 1.6;
+    }
+
+    .resource-field {
+      margin-bottom: 16px;
+    }
+
+    .resource-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .resource-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #0284c7;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .resource-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+    }
+
+    .resource-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #0284c7;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+      cursor: pointer;
+    }
+
+    .resource-range {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .range-value {
+      font-size: 12px;
+      color: #0284c7;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .submit-resources {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .submit-resources:hover {
+      background: #0369a1;
+    }
+
+    .submit-resources:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
 
     .loading {
       display: flex;
@@ -440,6 +527,97 @@ export function renderPlannerHtml(): string {
       content.scrollTop = content.scrollHeight;
     };
 
+    const addResourcesForm = () => {
+      const div = document.createElement('div');
+      div.className = 'resources-form';
+      div.id = 'resources-form-container';
+
+      let html = '<div class="resources-bubble">';
+      html += '<div style="margin-bottom: 16px; font-weight: 600; color: #0284c7;">Cuéntanos más sobre tu proyecto</div>';
+
+      html += '<div class="resource-field">';
+      html += '<label class="resource-label">¿Cuál es tu presupuesto inicial? (USD)</label>';
+      html += '<input type="range" id="budget-input" class="resource-range" min="0" max="100000" step="5000" value="20000">';
+      html += '<div class="range-value">$<span id="budget-display">20000</span></div>';
+      html += '</div>';
+
+      html += '<div class="resource-field">';
+      html += '<label class="resource-label">¿Cuántas horas por semana puedes dedicar?</label>';
+      html += '<input type="number" id="hours-input" class="resource-input" min="1" max="100" value="10" placeholder="Ej: 10">';
+      html += '</div>';
+
+      html += '<div class="resource-field">';
+      html += '<label class="resource-label">¿Tamaño del equipo?</label>';
+      html += '<select id="team-size-input" class="resource-select">';
+      html += '<option value="solo">Solo</option>';
+      html += '<option value="mini">Mini (2-3 personas)</option>';
+      html += '<option value="pequeño">Pequeño (4-6 personas)</option>';
+      html += '<option value="mediano">Mediano (7-15 personas)</option>';
+      html += '<option value="grande">Grande (16+ personas)</option>';
+      html += '</select>';
+      html += '</div>';
+
+      html += '<div class="resource-field">';
+      html += '<label class="resource-label">¿Experiencia en el sector? (años)</label>';
+      html += '<input type="number" id="experience-input" class="resource-input" min="0" max="50" value="0" placeholder="Ej: 5">';
+      html += '</div>';
+
+      html += '<button class="submit-resources" id="submit-resources-btn">Analizar con esta información</button>';
+      html += '</div>';
+
+      div.innerHTML = html;
+      content.appendChild(div);
+      content.scrollTop = content.scrollHeight;
+
+      document.getElementById('budget-input').addEventListener('input', (e) => {
+        document.getElementById('budget-display').textContent = e.target.value;
+      });
+
+      document.getElementById('submit-resources-btn').addEventListener('click', handleResourcesSubmit);
+    };
+
+    const handleResourcesSubmit = async () => {
+      const budget = parseInt(document.getElementById('budget-input').value);
+      const hours = parseInt(document.getElementById('hours-input').value);
+      const teamSize = document.getElementById('team-size-input').value;
+      const experience = parseInt(document.getElementById('experience-input').value);
+
+      const formContainer = document.getElementById('resources-form-container');
+      if (formContainer) formContainer.remove();
+
+      const loadingId = addLoadingMessage(2);
+
+      try {
+        const resourcesResponse = await fetch('/api/planner/enrich-with-resources', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            analysis: currentPhase2,
+            originalInput: originalInput,
+            resources: { budget, hours, teamSize, experience }
+          })
+        });
+
+        removeLoadingMessage(loadingId);
+
+        if (!resourcesResponse.ok) {
+          const error = await resourcesResponse.json();
+          throw new Error(error.error || 'Error enriqueciendo análisis');
+        }
+
+        const enrichedResult = await resourcesResponse.json();
+        currentPhase2 = enrichedResult;
+        updateAnalysisMetrics(currentPhase2);
+
+        currentQuestion = null;
+        currentMetric = null;
+        addQuestionMessage('✓ Análisis enriquecido con tu información. El presupuesto, equipo y experiencia han sido considerados.');
+      } catch (error) {
+        removeLoadingMessage(loadingId);
+        const msg = error instanceof Error ? error.message : 'Error desconocido';
+        addErrorMessage('Error: ' + msg);
+      }
+    };
 
     const addErrorMessage = (error) => {
       const div = document.createElement('div');
@@ -541,19 +719,7 @@ export function renderPlannerHtml(): string {
           currentPhase2 = phase2Results;
           addAnalysisMessage(results, phase2Results);
 
-          const questionToAsk = selectQuestion(phase2Results);
-          if (questionToAsk) {
-            currentQuestion = questionToAsk;
-            const metricMap = {
-              [phase2Results.subsector.follow_up_question]: 'subsector',
-              [phase2Results.localizacion.follow_up_question]: 'localizacion',
-              [phase2Results.flexibilidad_timeline.follow_up_question]: 'flexibilidad_timeline',
-              [phase2Results.constraints.follow_up_question]: 'constraints',
-              [phase2Results.claridad_concepto.follow_up_question]: 'claridad_concepto'
-            };
-            currentMetric = metricMap[questionToAsk] || 'subsector';
-            addQuestionMessage(questionToAsk);
-          }
+          addResourcesForm();
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'Error desconocido';
