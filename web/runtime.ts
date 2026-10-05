@@ -86,6 +86,7 @@ import { createComprasFunctions, type ComprasRuntimeFunctions } from "./runtime-
 import { createLogisticaFunctions, type LogisticaRuntimeFunctions } from "./runtime-logistica.js";
 import { createFacturasFunctions, type FacturasRuntimeFunctions } from "./runtime-facturas.js";
 import { createCobrosFunctions, type CobrosRuntimeFunctions } from "./runtime-cobros.js";
+import { createTransaccionesFunctions, type TransaccionesRuntimeFunctions } from "./runtime-transacciones.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -315,6 +316,7 @@ export class AppRuntime {
   readonly logisticaFunctions!: LogisticaRuntimeFunctions;
   readonly facturasFunctions!: FacturasRuntimeFunctions;
   readonly cobrosFunctions!: CobrosRuntimeFunctions;
+  readonly transaccionesFunctions!: TransaccionesRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -390,6 +392,7 @@ export class AppRuntime {
     this.logisticaFunctions = createLogisticaFunctions(this);
     this.facturasFunctions = createFacturasFunctions(this);
     this.cobrosFunctions = createCobrosFunctions(this);
+    this.transaccionesFunctions = createTransaccionesFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -1141,215 +1144,23 @@ export class AppRuntime {
 
   /** Datos de negocio actuales del expediente (cliente, líneas…). */
   datosDe(subjectId: string): TransaccionProyectada | undefined {
-    return proyectarTransaccion(this.store.getBySubject(subjectId));
+    return this.transaccionesFunctions.datosDe(subjectId);
   }
 
-  /** Estado actual del expediente, con su tipo (inicial, intermedio…). */
-  estadoDe(
-    subjectId: string,
-  ): { readonly id: string; readonly label: string; readonly kind: string } | undefined {
-    const slice = this.lifecycleForSubject(subjectId);
-    if (!slice) return undefined;
-    const derived = deriveState(
-      slice.lifecycle,
-      this.store.getBySubject(subjectId),
-    );
-    const st = findState(slice.lifecycle, derived.currentStateId);
-    return {
-      id: derived.currentStateId,
-      label: this.etiquetas.estado(slice.id, derived.currentStateId),
-      kind: st?.kind ?? "",
-    };
+  estadoDe(subjectId: string): { readonly id: string; readonly label: string; readonly kind: string } | undefined {
+    return this.transaccionesFunctions.estadoDe(subjectId);
   }
 
-  /** Los datos solo se editan en el estado inicial (presupuesto / propuesta). */
   puedeEditarDatos(subjectId: string): boolean {
-    return this.estadoDe(subjectId)?.kind === "inicial";
+    return this.transaccionesFunctions.puedeEditarDatos(subjectId);
   }
 
-  /**
-   * Alta de un expediente con sus datos. Resuelve las líneas del catálogo
-   * (copia precio y versión vigentes) y registra un evento `alta`.
-   */
-  crearTransaccion(
-    entrada: EntradaTransaccion,
-    actorId: string,
-  ): { ok: true; id: string } | { ok: false; errors: string[] } {
-    const slice = this.boot.input.lifecycles.find(
-      (l) => l.id === entrada.lifecycleId,
-    );
-    if (!slice) return { ok: false, errors: ["Ese proceso no existe."] };
-    const resolved = this.resolverDatos(entrada, undefined);
-    if (!resolved.ok) return resolved;
-
-    const id = `tx-${randomUUID()}`;
-    const at = new Date().toISOString();
-
-    // Intentar reservar stock para líneas con productos controlados
-    const controlados = this.stockStore.controlados(this.tenantId);
-    for (const linea of resolved.datos.lineas) {
-      if (linea.ofertaId && controlados.has(linea.ofertaId)) {
-        const res = this.stockStore.reservar(
-          this.tenantId,
-          linea.ofertaId,
-          id,
-          linea.cantidadMilesimas,
-        );
-        if (!res.ok) {
-          return { ok: false, errors: [res.error] };
-        }
-      }
-    }
-
-    const alta: AltaEvent = {
-      id: `alta-${id}`,
-      kind: "alta",
-      subjectId: id,
-      occurredAt: at,
-      actorId,
-      actorKind: "humano",
-      evidence: { kind: "sistema", reference: `alta:${id}`, recordedAt: at },
-      lifecycleId: slice.id,
-      ...(entrada.sedeId ? { sedeId: entrada.sedeId } : {}),
-      datos: resolved.datos,
-    };
-    assertNoPiiInEventData(alta.datos as unknown as Record<string, unknown>);
-    this.store.append(alta);
-    this.facts.applyEvent(this.tenantId, alta);
-    this.addSubject(subjectFromAlta(alta, this.boot, this.subjects.length + 1));
-    return { ok: true, id };
+  crearTransaccion(entrada: EntradaTransaccion, actorId: string): { ok: true; id: string } | { ok: false; errors: string[] } {
+    return this.transaccionesFunctions.crearTransaccion(entrada, actorId);
   }
 
-  /**
-   * Cambia los datos de un expediente en estado inicial. Solo registra los
-   * campos que cambian; si no cambia nada, no escribe ningún evento.
-   */
-  editarTransaccion(
-    subjectId: string,
-    entrada: EntradaTransaccion,
-    actorId: string,
-  ): { ok: true; changed: boolean } | { ok: false; errors: string[] } {
-    const actual = this.datosDe(subjectId);
-    if (!actual) return { ok: false, errors: ["Ese expediente no existe."] };
-    if (!this.puedeEditarDatos(subjectId)) {
-      return {
-        ok: false,
-        errors: [
-          "Este expediente ya no está en su estado inicial: sus datos no se pueden cambiar.",
-        ],
-      };
-    }
-    const resolved = this.resolverDatos(entrada, actual.datos);
-    if (!resolved.ok) return resolved;
-    const cambios = diferencias(actual.datos, resolved.datos);
-    if (Object.keys(cambios).length === 0) return { ok: true, changed: false };
-
-    const at = new Date().toISOString();
-    const ev: DatosEvent = {
-      id: `datos-${randomUUID()}`,
-      kind: "datos",
-      subjectId,
-      occurredAt: at,
-      actorId,
-      actorKind: "humano",
-      evidence: { kind: "sistema", reference: `datos:${subjectId}`, recordedAt: at },
-      cambios,
-    };
-    assertNoPiiInEventData(ev.cambios as unknown as Record<string, unknown>);
-    this.store.append(ev);
-    this.facts.applyEvent(this.tenantId, ev);
-    return { ok: true, changed: true };
-  }
-
-  /**
-   * Convierte la entrada del formulario en datos guardables:
-   * - la Parte debe existir y no estar borrada;
-   * - una línea de catálogo toma descripción, precio e IVA de la Oferta
-   *   (el precio se puede ajustar); una línea que ya estaba conserva su versión.
-   */
-  private resolverDatos(
-    entrada: EntradaTransaccion,
-    previos: TransaccionDatos | undefined,
-  ): { ok: true; datos: TransaccionDatos } | { ok: false; errors: string[] } {
-    const errors: string[] = [];
-    const parte = this.partes.get(this.tenantId, entrada.parteId);
-    if (entrada.parteId && (!parte || parte.erasedAt)) {
-      errors.push("El cliente o proveedor elegido no existe.");
-    }
-    const lineas: LineaDatos[] = [];
-    entrada.lineas.forEach((l, i) => {
-      const n = i + 1;
-      if (l.ofertaId) {
-        const previa = previos?.lineas.find((p) => p.ofertaId === l.ofertaId);
-        const oferta = previa?.ofertaVersion
-          ? this.ofertas.getVersion(this.tenantId, l.ofertaId, previa.ofertaVersion)
-          : this.ofertas.get(this.tenantId, l.ofertaId);
-        if (!oferta || (!previa && !oferta.activa)) {
-          errors.push(`Línea ${n}: esa oferta no está en el catálogo.`);
-          return;
-        }
-        lineas.push({
-          ofertaId: oferta.ofertaId,
-          ofertaVersion: oferta.version,
-          descripcion: l.descripcion?.trim() || oferta.nombre,
-          cantidadMilesimas: l.cantidadMilesimas,
-          precioCentimos: l.precioCentimos ?? oferta.precioCentimos,
-          ivaPct: oferta.ivaPct,
-        });
-        return;
-      }
-      if (l.precioCentimos === undefined) {
-        errors.push(`Línea ${n}: indica el precio.`);
-        return;
-      }
-      lineas.push({
-        descripcion: (l.descripcion ?? "").trim(),
-        cantidadMilesimas: l.cantidadMilesimas,
-        precioCentimos: l.precioCentimos,
-        ivaPct: l.ivaPct ?? 21,
-      });
-    });
-    const referencia = entrada.referencia?.trim();
-    const notas = entrada.notas?.trim();
-    const permitidos = new Set(this.camposDeProceso(entrada.lifecycleId).map((c) => c.campo));
-    // Agregar campos estándar de negocio que siempre son permitidos
-    const camposEstandar = new Set(["cliente_id", "proveedor_id"]);
-    const camposValidos = new Set([...permitidos, ...camposEstandar]);
-    const campos = Object.fromEntries(
-      Object.entries(entrada.campos ?? {}).filter(([k, v]) => camposValidos.has(k) && v !== ""),
-    );
-    // Si no hay cliente_id explícito, usar parteId como default para ventas/servicios (solo en creación)
-    const sliceActual = this.boot.input.lifecycles.find((l) => l.id === entrada.lifecycleId);
-    if (!previos && !campos.cliente_id && sliceActual && (sliceActual.archetypeId === "venta" || sliceActual.archetypeId === "servicio" || sliceActual.archetypeId === "servicio_proyecto")) {
-      campos.cliente_id = entrada.parteId;
-    }
-    // Si no hay proveedor_id explícito, usar parteId como default para compras (solo en creación)
-    if (!previos && !campos.proveedor_id && sliceActual && sliceActual.archetypeId === "compra") {
-      campos.proveedor_id = entrada.parteId;
-    }
-    // Al editar, preservar campos existentes que no se están cambiando explícitamente
-    if (previos && previos.campos) {
-      for (const [k, v] of Object.entries(previos.campos)) {
-        if (!campos.hasOwnProperty(k) && (camposValidos.has(k) || k === "cliente_id" || k === "proveedor_id")) {
-          campos[k] = v;
-        }
-      }
-    }
-    const vinculadoA = entrada.vinculadoA?.trim();
-    if (vinculadoA && !this.principalesAbiertos().some((s) => s.id === vinculadoA) && previos?.vinculadoA !== vinculadoA) {
-      errors.push("El expediente principal elegido no existe o ya está cerrado.");
-    }
-    const datos: TransaccionDatos = {
-      parteId: entrada.parteId,
-      fecha: entrada.fecha,
-      ...(referencia ? { referencia } : {}),
-      ...(notas ? { notas } : {}),
-      lineas,
-      ...(Object.keys(campos).length > 0 ? { campos } : {}),
-      ...(vinculadoA ? { vinculadoA } : {}),
-    };
-    errors.push(...validarDatos(datos));
-    return errors.length > 0 ? { ok: false, errors } : { ok: true, datos };
+  editarTransaccion(subjectId: string, entrada: EntradaTransaccion, actorId: string): { ok: true; changed: boolean } | { ok: false; errors: string[] } {
+    return this.transaccionesFunctions.editarTransaccion(subjectId, entrada, actorId);
   }
 
   /** Filas de UI derivadas solo de eventos (no estado local de cliente). */
