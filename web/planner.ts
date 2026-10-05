@@ -588,21 +588,19 @@ export function renderPlannerHtml(): string {
 
       const jevSection = document.createElement('div');
       jevSection.id = 'jev-phase2-section';
-      jevSection.innerHTML = `
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-          <div style="font-size: 13px; font-weight: 600; color: #0284c7; margin-bottom: 12px;">📊 Modelo de Negocio</div>
-          <div class="jev-phase2-metrics">
-            <div class="metric-item"><strong>Modelo:</strong> ${results.modelo_negocio || 'N/A'}</div>
-            <div class="metric-item"><strong>Cliente Objetivo:</strong> ${results.cliente_objetivo || 'N/A'}</div>
-            <div class="metric-item"><strong>Presupuesto/Escala:</strong> ${results.presupuesto || 'N/A'}</div>
-            <div class="metric-item"><strong>Dependencia:</strong> ${results.dependencia || 'N/A'}</div>
-            <div class="metric-item"><strong>Tu Experiencia:</strong> ${results.experiencia || 'N/A'}</div>
-            <div class="metric-item"><strong>Validación:</strong> ${results.validacion || 'N/A'}</div>
-            <div class="metric-item"><strong>Equipo:</strong> ${results.equipo || 'N/A'}</div>
-            <div class="metric-item"><strong>Regulación:</strong> ${results.regulacion || 'N/A'}</div>
-          </div>
-        </div>
-      `;
+      let html = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">';
+      html += '<div style="font-size: 13px; font-weight: 600; color: #0284c7; margin-bottom: 12px;">Modelo de Negocio</div>';
+      html += '<div class="jev-phase2-metrics">';
+      html += '<div class="metric-item"><strong>Modelo:</strong> ' + (results.modelo_negocio || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Cliente Objetivo:</strong> ' + (results.cliente_objetivo || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Presupuesto/Escala:</strong> ' + (results.presupuesto || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Dependencia:</strong> ' + (results.dependencia || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Tu Experiencia:</strong> ' + (results.experiencia || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Validación:</strong> ' + (results.validacion || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Equipo:</strong> ' + (results.equipo || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Regulación:</strong> ' + (results.regulacion || 'N/A') + '</div>';
+      html += '</div></div>';
+      jevSection.innerHTML = html;
 
       analysisBubble.appendChild(jevSection);
       content.scrollTop = content.scrollHeight;
