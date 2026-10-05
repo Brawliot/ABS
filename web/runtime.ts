@@ -83,6 +83,7 @@ import { IdempotencyLedger } from "../interpreter/index.js";
 import type { AppBootResult, SampleRow } from "./types.js";
 import { createStockFunctions, type StockRuntimeFunctions } from "./runtime-stock.js";
 import { createComprasFunctions, type ComprasRuntimeFunctions } from "./runtime-compras.js";
+import { createLogisticaFunctions, type LogisticaRuntimeFunctions } from "./runtime-logistica.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -309,6 +310,7 @@ export class AppRuntime {
   // Módulos especializados
   readonly stockFunctions!: StockRuntimeFunctions;
   readonly comprasFunctions!: ComprasRuntimeFunctions;
+  readonly logisticaFunctions!: LogisticaRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -381,6 +383,7 @@ export class AppRuntime {
     // Módulos especializados
     this.stockFunctions = createStockFunctions(this);
     this.comprasFunctions = createComprasFunctions(this);
+    this.logisticaFunctions = createLogisticaFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -541,7 +544,7 @@ export class AppRuntime {
   }
 
   crearEnvio(expedienteId: string): void {
-    this.logistica.crearEnvio(this.tenantId, expedienteId, "preparado");
+    this.logisticaFunctions.crearEnvio(expedienteId);
   }
 
   actualizarEnvio(
@@ -550,23 +553,23 @@ export class AppRuntime {
     proveedorLogistica?: string,
     numeroSeguimiento?: string,
   ): void {
-    this.logistica.actualizarEnvio(this.tenantId, expedienteId, estado, proveedorLogistica, numeroSeguimiento);
+    this.logisticaFunctions.actualizarEnvio(expedienteId, estado, proveedorLogistica, numeroSeguimiento);
   }
 
   marcarEntregado(expedienteId: string, firmaEntrega?: string): void {
-    this.logistica.marcarEntregado(this.tenantId, expedienteId, firmaEntrega);
+    this.logisticaFunctions.marcarEntregado(expedienteId, firmaEntrega);
   }
 
   obtenerEnvio(expedienteId: string) {
-    return this.logistica.obtenerUltimo(this.tenantId, expedienteId);
+    return this.logisticaFunctions.obtenerEnvio(expedienteId);
   }
 
   historialEnvio(expedienteId: string) {
-    return this.logistica.historialEnvio(this.tenantId, expedienteId);
+    return this.logisticaFunctions.historialEnvio(expedienteId);
   }
 
   pendientesDeEnviar() {
-    return this.logistica.pendientesDeEnviar(this.tenantId);
+    return this.logisticaFunctions.pendientesDeEnviar();
   }
 
   close(): void {
