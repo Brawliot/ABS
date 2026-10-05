@@ -329,6 +329,7 @@ export function renderPlannerHtml(): string {
     const addAnalysisMessage = (phase1, phase2) => {
       const div = document.createElement('div');
       div.className = 'analysis-message';
+      div.id = 'analysis-message';
 
       let html = '<div class="analysis-bubble">';
       html += '<div class="analysis-header">Análisis Completo</div>';
@@ -340,7 +341,7 @@ export function renderPlannerHtml(): string {
       html += '</div>';
 
       const locConf = normalizeConfidence(phase2.localizacion.confidence);
-      html += '<div class="metric-item">';
+      html += '<div class="metric-item" id="metric-localizacion">';
       html += '<div class="metric-label">Localización</div>';
       html += '<div class="metric-value">' + (phase2.localizacion.value || 'N/A') + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + locConf + '%"></div></div>';
@@ -348,7 +349,7 @@ export function renderPlannerHtml(): string {
       html += '</div>';
 
       const subConf = normalizeConfidence(phase2.subsector.confidence);
-      html += '<div class="metric-item">';
+      html += '<div class="metric-item" id="metric-subsector">';
       html += '<div class="metric-label">Subsector</div>';
       html += '<div class="metric-value">' + (phase2.subsector.value || 'N/A') + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + subConf + '%"></div></div>';
@@ -356,17 +357,57 @@ export function renderPlannerHtml(): string {
       html += '</div>';
 
       const clarConf = normalizeConfidence(phase2.claridad_concepto.confidence);
-      html += '<div class="metric-item">';
+      html += '<div class="metric-item" id="metric-claridad_concepto">';
       html += '<div class="metric-label">Claridad del Concepto</div>';
       html += '<div class="metric-value">' + (phase2.claridad_concepto.score || 0) + '/10 - ' + (phase2.claridad_concepto.razonamiento || '') + '</div>';
       html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + clarConf + '%"></div></div>';
       html += '<div class="confidence-text">' + clarConf + '% confianza</div>';
       html += '</div>';
 
+      const flexConf = normalizeConfidence(phase2.flexibilidad_timeline.confidence);
+      html += '<div class="metric-item" id="metric-flexibilidad_timeline">';
+      html += '<div class="metric-label">Flexibilidad Timeline</div>';
+      html += '<div class="metric-value">' + (phase2.flexibilidad_timeline.value || 'N/A') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + flexConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + flexConf + '% confianza</div>';
+      html += '</div>';
+
+      const consConf = normalizeConfidence(phase2.constraints.confidence);
+      html += '<div class="metric-item" id="metric-constraints">';
+      html += '<div class="metric-label">Constraints</div>';
+      html += '<div class="metric-value">' + (phase2.constraints.dinero || 'N/A') + '</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + consConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + consConf + '% confianza</div>';
+      html += '</div>';
+
       html += '</div></div>';
       div.innerHTML = html;
       content.appendChild(div);
       content.scrollTop = content.scrollHeight;
+    };
+
+    const updateAnalysisMetrics = (phase2) => {
+      const metricMap = {
+        'localizacion': { conf: phase2.localizacion.confidence, value: phase2.localizacion.value },
+        'subsector': { conf: phase2.subsector.confidence, value: phase2.subsector.value },
+        'flexibilidad_timeline': { conf: phase2.flexibilidad_timeline.confidence, value: phase2.flexibilidad_timeline.value },
+        'constraints': { conf: phase2.constraints.confidence, value: phase2.constraints.dinero },
+        'claridad_concepto': { conf: phase2.claridad_concepto.confidence, value: phase2.claridad_concepto.score + '/10 - ' + phase2.claridad_concepto.razonamiento }
+      };
+
+      for (const [metric, data] of Object.entries(metricMap)) {
+        const elem = document.getElementById('metric-' + metric);
+        if (elem) {
+          const conf = normalizeConfidence(data.conf);
+          const valueElem = elem.querySelector('.metric-value');
+          const fillElem = elem.querySelector('.confidence-fill');
+          const textElem = elem.querySelector('.confidence-text');
+
+          if (valueElem) valueElem.textContent = data.value || 'N/A';
+          if (fillElem) fillElem.style.width = conf + '%';
+          if (textElem) textElem.textContent = conf + '% confianza';
+        }
+      }
     };
 
     const selectQuestion = (phase2Results) => {
@@ -443,7 +484,7 @@ export function renderPlannerHtml(): string {
           const refineResult = await refineResponse.json();
           currentPhase2 = refineResult.updatedAnalysis;
 
-          addAnalysisMessage(currentPhase1, currentPhase2);
+          updateAnalysisMetrics(currentPhase2);
 
           if (refineResult.allComplete) {
             addQuestionMessage('✓ Análisis completado. Todos los aspectos tienen suficiente confianza (>80%)');
