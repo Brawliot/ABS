@@ -46,6 +46,7 @@
     "@noble/hashes": "^2.4.0",
     "bcrypt": "^5.1.0",
     "better-sqlite3": "^12.11.1",
+    "dotenv": "^18.0.5",
     "jsonwebtoken": "^9.0.0",
     "pg": "^8.23.0",
     "qrcode": "^1.5.3",

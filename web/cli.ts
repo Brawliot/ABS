@@ -5,6 +5,7 @@
  *   npx tsx web/cli.ts --wizard
  *   npx tsx web/cli.ts --list
  */
+import "dotenv/config.js";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { AppBootResult } from "./types.js";
