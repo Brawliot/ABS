@@ -28,6 +28,7 @@ import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
+import { refinePhase2Metric } from "./planner-phase2-refine.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
 import {
@@ -219,6 +220,25 @@ export function startWebServer(
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.error("Planner Phase 2 error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
+      // Ruta Planner Phase 2 Refine - Actualizar con feedback del usuario
+      if (path === "/api/planner/phase2/refine" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const required = ["metric", "question", "userAnswer", "originalAnalysis", "originalInput"];
+          const missing = required.filter(k => !data[k]);
+          if (missing.length > 0) {
+            return sendJson(res, 400, { error: `Missing fields: ${missing.join(", ")}` });
+          }
+          const result = await refinePhase2Metric(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner Phase 2 Refine error:", msg);
           return sendJson(res, 500, { error: msg });
         }
       }

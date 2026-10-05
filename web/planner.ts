@@ -324,6 +324,72 @@ export function renderPlannerHtml(): string {
       border-color: #9ca3af;
       color: #1f2937;
     }
+
+    .required-question {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+
+    .required-question-label {
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .required-question-label:before {
+      content: "⚠";
+      font-size: 14px;
+    }
+
+    .required-question-text {
+      color: #78350f;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .refine-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+
+    .refine-input:focus {
+      outline: none;
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    .refine-btn {
+      background: #f59e0b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .refine-btn:hover {
+      background: #d97706;
+    }
+
+    .refine-btn:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
