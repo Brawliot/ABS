@@ -315,6 +315,12 @@ export function renderPlannerHtml(): string {
       if (loading) loading.remove();
     };
 
+    const normalizeConfidence = (val) => {
+      if (!val && val !== 0) return 0;
+      if (val < 1) return Math.round(val * 100);
+      return Math.round(val);
+    };
+
     const addAnalysisMessage = (phase1, phase2) => {
       const div = document.createElement('div');
       div.className = 'analysis-message';
@@ -323,32 +329,36 @@ export function renderPlannerHtml(): string {
       html += '<div class="analysis-header">Análisis Completo</div>';
       html += '<div class="analysis-metrics">';
 
+      const sectorConf = normalizeConfidence(phase1.answers.sector.confidence);
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Sector</div>';
       html += '<div class="metric-value">' + (phase1.answers.sector.choice || 'N/A') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase1.answers.sector.confidence || 75) + '%"></div></div>';
-      html += '<div class="confidence-text">' + (phase1.answers.sector.confidence || 75) + '% confianza</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + sectorConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + sectorConf + '% confianza</div>';
       html += '</div>';
 
+      const locConf = normalizeConfidence(phase2.localizacion.confidence);
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Localización</div>';
       html += '<div class="metric-value">' + (phase2.localizacion.value || 'N/A') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.localizacion.confidence || 0) + '%"></div></div>';
-      html += '<div class="confidence-text">' + (phase2.localizacion.confidence || 0) + '% confianza</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + locConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + locConf + '% confianza</div>';
       html += '</div>';
 
+      const subConf = normalizeConfidence(phase2.subsector.confidence);
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Subsector</div>';
       html += '<div class="metric-value">' + (phase2.subsector.value || 'N/A') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.subsector.confidence || 0) + '%"></div></div>';
-      html += '<div class="confidence-text">' + (phase2.subsector.confidence || 0) + '% confianza</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + subConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + subConf + '% confianza</div>';
       html += '</div>';
 
+      const clarConf = normalizeConfidence(phase2.claridad_concepto.confidence);
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Claridad del Concepto</div>';
       html += '<div class="metric-value">' + (phase2.claridad_concepto.score || 0) + '/10 - ' + (phase2.claridad_concepto.razonamiento || '') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + (phase2.claridad_concepto.confidence || 0) + '%"></div></div>';
-      html += '<div class="confidence-text">' + (phase2.claridad_concepto.confidence || 0) + '% confianza</div>';
+      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + clarConf + '%"></div></div>';
+      html += '<div class="confidence-text">' + clarConf + '% confianza</div>';
       html += '</div>';
 
       html += '</div></div>';
