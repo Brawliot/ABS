@@ -196,6 +196,24 @@ export const rulePortalCliente: ModuleRule = {
   },
 };
 
+/** Dashboard: Inteligencia de negocio para todos. */
+export const ruleDashboard: ModuleRule = {
+  id: "rule.dashboard",
+  moduleId: "mod.dashboard",
+  labelKey: "module.dashboard",
+  match: () => true, // Todo negocio necesita visibility de operación + empresa
+  resolve: (ctx) => {
+    return {
+      ruleId: ruleDashboard.id,
+      moduleId: ruleDashboard.moduleId,
+      labelKey: ruleDashboard.labelKey,
+      channel: ctx.channels.includes("backoffice") ? "backoffice" : (ctx.channels[0] ?? "backoffice"),
+      roleIds: rolesByHint(ctx, ["gerente", "director", "admin", "analista"]),
+      lifecycleIds: lifecycleIds(ctx),
+    };
+  },
+};
+
 /** Catálogo ordenado: añadir módulo = push de una regla. */
 export const MODULE_RULES: readonly ModuleRule[] = [
   ruleTpv,
@@ -204,6 +222,7 @@ export const MODULE_RULES: readonly ModuleRule[] = [
   ruleAgenda,
   ruleFacturacion,
   rulePortalCliente,
+  ruleDashboard,
 ];
 
 export function deduceModules(ctx: GeneratorInput): ModuleMatch[] {
@@ -232,7 +251,8 @@ export type ModuloId =
   | "cuotas"
   | "fianzas"
   | "credito"
-  | "portal";
+  | "portal"
+  | "dashboard";
 
 export interface DecisionModulo {
   readonly id: ModuloId;
@@ -262,6 +282,7 @@ export function decidirModulos(input: GeneratorInput): DecisionModulo[] {
     d("clientes", "Clientes y proveedores", true, "Todo negocio intercambia con alguien.", ""),
     d("catalogo", "Catálogo", true, "Todo negocio ofrece algo con un precio.", ""),
     d("dinero", "Dinero", true, "Todo negocio cobra y paga.", ""),
+    d("dashboard", "Dashboard", true, "Inteligencia de operación y empresa.", ""),
     d(
       "facturas",
       "Facturas",
