@@ -84,6 +84,7 @@ import type { AppBootResult, SampleRow } from "./types.js";
 import { createStockFunctions, type StockRuntimeFunctions } from "./runtime-stock.js";
 import { createComprasFunctions, type ComprasRuntimeFunctions } from "./runtime-compras.js";
 import { createLogisticaFunctions, type LogisticaRuntimeFunctions } from "./runtime-logistica.js";
+import { createFacturasFunctions, type FacturasRuntimeFunctions } from "./runtime-facturas.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -311,6 +312,7 @@ export class AppRuntime {
   readonly stockFunctions!: StockRuntimeFunctions;
   readonly comprasFunctions!: ComprasRuntimeFunctions;
   readonly logisticaFunctions!: LogisticaRuntimeFunctions;
+  readonly facturasFunctions!: FacturasRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -384,6 +386,7 @@ export class AppRuntime {
     this.stockFunctions = createStockFunctions(this);
     this.comprasFunctions = createComprasFunctions(this);
     this.logisticaFunctions = createLogisticaFunctions(this);
+    this.facturasFunctions = createFacturasFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -678,133 +681,28 @@ export class AppRuntime {
     return out;
   }
 
-  /**
-   * Situación de facturación del expediente: su factura vigente (la última no
-   * rectificada) o si se puede expedir una y, si no, por qué.
-   */
   facturacionDe(
     expedienteId: string,
   ):
     | { readonly vigente: Factura; readonly historial: readonly Factura[] }
     | { readonly vigente?: undefined; readonly historial: readonly Factura[]; readonly puede: true; readonly tipo: "completa" | "simplificada" }
     | { readonly vigente?: undefined; readonly historial: readonly Factura[]; readonly puede: false; readonly motivo: string } {
-    const historial = this.facturas.porExpediente(this.tenantId, expedienteId);
-    const rectificadas = new Set(historial.filter((f) => f.rectificaA).map((f) => f.rectificaA));
-    const vigente = [...historial]
-      .reverse()
-      .find((f) => f.tipo !== "rectificativa" && !rectificadas.has(f.codigo));
-    if (vigente) return { vigente, historial };
-    const e = this.expedientesDinero().find((x) => x.id === expedienteId);
-    const no = (motivo: string) => ({ historial, puede: false as const, motivo });
-    if (!e) return no("Ese expediente no existe.");
-    if (e.direccion === "sale") return no("Es una compra: la factura la emite el proveedor.");
-    if (e.situacion === "presupuesto") return no("Todavía es un presupuesto: se factura cuando el cliente lo acepta.");
-    if (e.situacion === "sin_importe") return no("Está anulado: no hay nada que facturar.");
-    const emisorErr = validarEmisor(this.facturas.getEmisor(this.tenantId));
-    if (emisorErr.length > 0) return no(`Antes de facturar, completa los datos de la empresa: ${emisorErr.join(" ")}`);
-    const tipo = decidirTipo(this.receptorDe(e.parteId), e.totalCentimos);
-    if (!tipo.ok) return no(tipo.error);
-    return { historial, puede: true, tipo: tipo.tipo };
+    return this.facturasFunctions.facturacionDe(expedienteId);
   }
 
-  /** Datos fiscales del cliente, tal como están hoy en su ficha. */
-  private receptorDe(parteId: string): DatosReceptor | undefined {
-    const rec = this.partes.get(this.tenantId, parteId);
-    if (!rec || rec.erasedAt || !rec.personal) return undefined;
-    return {
-      nombre: rec.personal.displayName,
-      ...(rec.personal.taxId ? { nif: normalizarNif(rec.personal.taxId) } : {}),
-      ...(rec.personal.address ? { domicilio: rec.personal.address } : {}),
-    };
-  }
-
-  /** Expide la factura del expediente (completa o simplificada). */
   expedirFactura(
     expedienteId: string,
     actorId: string,
   ): { ok: true; factura: Factura } | { ok: false; error: string } {
-    const estado = this.facturacionDe(expedienteId);
-    if (estado.vigente) return { ok: false, error: `Ya tiene la factura ${estado.vigente.codigo}.` };
-    if (!estado.puede) return { ok: false, error: estado.motivo };
-    const tx = this.datosDe(expedienteId)!;
-    const e = this.expedientesDinero().find((x) => x.id === expedienteId)!;
-    const emisor = this.facturas.getEmisor(this.tenantId) as DatosEmisor;
-    const receptor = this.receptorDe(tx.datos.parteId);
-    const now = new Date().toISOString();
-    const fechaExpedicion = fechaMadrid(now);
-    const cobro = e.movimientos[0];
-    const fechaOperacion = cobro ? fechaMadrid(cobro.at) : undefined;
-    const d = desgloseIva(tx.datos.lineas);
-    const factura = this.facturas.expedir(this.tenantId, {
-      tenantId: this.tenantId,
-      serie: estado.tipo === "completa" ? "F" : "T",
-      tipo: estado.tipo,
-      expedienteId,
-      parteId: tx.datos.parteId,
-      fechaExpedicion,
-      ...(fechaOperacion && fechaOperacion !== fechaExpedicion ? { fechaOperacion } : {}),
-      emisor: {
-        razonSocial: emisor.razonSocial,
-        nif: normalizarNif(emisor.nif),
-        domicilio: emisor.domicilio,
-      },
-      // La simplificada solo lleva datos del cliente si los tiene completos
-      ...(estado.tipo === "completa" && receptor ? { receptor } : {}),
-      lineas: tx.datos.lineas,
-      desglose: d.desglose,
-      base: d.base,
-      iva: d.iva,
-      total: d.total,
-      expedidaEn: now,
-      expedidaPor: actorId,
-    });
-    return { ok: true, factura };
+    return this.facturasFunctions.expedirFactura(expedienteId, actorId);
   }
 
-  /**
-   * Rectificativa total: misma factura en negativo, con motivo. La original
-   * deja de estar vigente y el expediente se puede volver a facturar.
-   */
   rectificarFactura(
     facturaId: string,
     motivo: string,
     actorId: string,
   ): { ok: true; factura: Factura } | { ok: false; error: string } {
-    const original = this.facturas.get(this.tenantId, facturaId);
-    if (!original) return { ok: false, error: "Esa factura no existe." };
-    if (original.tipo === "rectificativa") {
-      return { ok: false, error: "Una rectificativa no se rectifica: expide una factura nueva." };
-    }
-    const todas = this.facturas.porExpediente(this.tenantId, original.expedienteId);
-    if (todas.some((f) => f.rectificaA === original.codigo)) {
-      return { ok: false, error: `La factura ${original.codigo} ya está rectificada.` };
-    }
-    const m = motivo.trim();
-    if (!m) return { ok: false, error: "Indica el motivo de la rectificación." };
-    if (m.length > 300) return { ok: false, error: "El motivo es demasiado largo." };
-    const now = new Date().toISOString();
-    const lineas = lineasRectificativas(original.lineas);
-    const d = desgloseIva(lineas);
-    const factura = this.facturas.expedir(this.tenantId, {
-      tenantId: this.tenantId,
-      serie: "R",
-      tipo: "rectificativa",
-      expedienteId: original.expedienteId,
-      parteId: original.parteId,
-      fechaExpedicion: fechaMadrid(now),
-      emisor: original.emisor,
-      ...(original.receptor ? { receptor: original.receptor } : {}),
-      lineas,
-      desglose: d.desglose,
-      base: d.base,
-      iva: d.iva,
-      total: d.total,
-      rectificaA: original.codigo,
-      motivo: m,
-      expedidaEn: now,
-      expedidaPor: actorId,
-    });
-    return { ok: true, factura };
+    return this.facturasFunctions.rectificarFactura(facturaId, motivo, actorId);
   }
 
   /**
