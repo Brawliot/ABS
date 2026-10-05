@@ -5,9 +5,7 @@
 interface JevPhase2Question {
   type: "choice";
   description: string;
-  properties: {
-    oneOf: string[];
-  };
+  criteria: Record<string, string>;
 }
 
 interface JevPhase2Request {
@@ -34,122 +32,106 @@ const JEV_PHASE2_QUESTIONS: Record<string, JevPhase2Question> = {
   modelo_negocio: {
     type: "choice",
     description: "¿Cuál es tu modelo de negocio?",
-    properties: {
-      oneOf: [
-        "B2C Directo (consumidor final)",
-        "B2B (empresa a empresa)",
-        "B2B2C",
-        "C2C / Marketplace",
-        "SaaS / Suscripción",
-        "Freemium",
-        "Híbrido",
-        "Otros",
-      ],
+    criteria: {
+      "B2C Directo": "Vendes directamente al consumidor final",
+      "B2B": "Vendes a otras empresas",
+      "B2B2C": "Vendes a empresas que venden al consumidor final",
+      "C2C": "Marketplace entre consumidores",
+      "SaaS": "Software como servicio con suscripción recurrente",
+      "Freemium": "Versión gratuita y versión de pago",
+      "Híbrido": "Combinación de varios modelos",
+      "Otros": "Modelo diferente a los anteriores",
     },
   },
   cliente_objetivo: {
     type: "choice",
     description: "¿Cuál es tu cliente objetivo?",
-    properties: {
-      oneOf: [
-        "Consumidor individual",
-        "Pequeñas empresas (1-50)",
-        "Medianas empresas (51-250)",
-        "Grandes empresas (250+)",
-        "Multinacionales",
-        "Sector público",
-        "ONGs",
-        "Mixto",
-      ],
+    criteria: {
+      "Individual": "Consumidor individual",
+      "Pequeño": "Pequeñas empresas (1-50 personas)",
+      "Mediano": "Medianas empresas (51-250 personas)",
+      "Grande": "Grandes empresas (250+ personas)",
+      "Multinacional": "Empresas multinacionales",
+      "Público": "Sector público o administración",
+      "ONG": "ONGs o organizaciones sin ánimo de lucro",
+      "Mixto": "Varios segmentos",
     },
   },
   presupuesto: {
     type: "choice",
     description: "¿Cuál es tu presupuesto/escala inicial?",
-    properties: {
-      oneOf: [
-        "Muy bajo (< €5k)",
-        "Bajo (€5k - €25k)",
-        "Medio (€25k - €100k)",
-        "Alto (€100k - €500k)",
-        "Muy alto (€500k - €1M)",
-        "Inversión importante (€1M+)",
-        "Bootstrap / Autofinanciado",
-      ],
+    criteria: {
+      "Muy bajo": "Menos de 5.000 euros",
+      "Bajo": "Entre 5.000 y 25.000 euros",
+      "Medio": "Entre 25.000 y 100.000 euros",
+      "Alto": "Entre 100.000 y 500.000 euros",
+      "Muy alto": "Entre 500.000 euros y 1 millón",
+      "Importante": "Más de 1 millón de euros",
+      "Bootstrap": "Autofinanciado sin inversión externa",
     },
   },
   dependencia: {
     type: "choice",
     description: "¿Cuál es tu dependencia de terceros?",
-    properties: {
-      oneOf: [
-        "Autónomo (0%)",
-        "Baja (1-2 partners clave)",
-        "Media (3-5 partners clave)",
-        "Alta (6+ partners clave)",
-        "Crítica (no funciona sin partners)",
-        "Ecosistema (modelo plataforma)",
-      ],
+    criteria: {
+      "Autónomo": "No depende de terceros (0%)",
+      "Baja": "Depende de 1-2 partners clave",
+      "Media": "Depende de 3-5 partners clave",
+      "Alta": "Depende de 6+ partners clave",
+      "Crítica": "No funciona sin partners críticos",
+      "Ecosistema": "Modelo de plataforma con múltiples actores",
     },
   },
   experiencia: {
     type: "choice",
     description: "¿Cuál es tu experiencia/expertise?",
-    properties: {
-      oneOf: [
-        "Sin experiencia",
-        "Experiencia técnica",
-        "Experiencia comercial",
-        "Experiencia directiva",
-        "Experiencia en el sector",
-        "Emprendedor serial",
-        "Expertise dual o múltiple",
-      ],
+    criteria: {
+      "Sin": "Sin experiencia relevante",
+      "Técnica": "Experiencia técnica o de producto",
+      "Comercial": "Experiencia en ventas o comercial",
+      "Directiva": "Experiencia en gestión o dirección",
+      "Sector": "Experiencia trabajando en este sector",
+      "Serial": "Emprendedor serial con múltiples negocios",
+      "Múltiple": "Expertise en varias áreas clave",
     },
   },
   validacion: {
     type: "choice",
     description: "¿Cuál es el estado de validación actual?",
-    properties: {
-      oneOf: [
-        "Idea sin validar",
-        "Problema validado",
-        "Solución prototipada",
-        "Solución validada",
-        "MVP en operación",
-        "Producto consolidado",
-        "Tracción probada",
-      ],
+    criteria: {
+      "Idea": "Idea sin validar con usuarios",
+      "Problema": "Problema validado con usuarios",
+      "Prototipo": "Solución prototipada",
+      "Validada": "Solución validada con usuarios reales",
+      "MVP": "MVP en operación con clientes",
+      "Producto": "Producto consolidado",
+      "Tracción": "Tracción probada con crecimiento",
     },
   },
   equipo: {
     type: "choice",
     description: "¿Cuál es tu equipo/recursos humanos disponibles?",
-    properties: {
-      oneOf: [
-        "Solo fundador",
-        "Fundador + 1 co-fundador",
-        "Fundador + equipo (2-3)",
-        "Equipo pequeño (4-6)",
-        "Equipo completo (7+)",
-        "Solo freelancers/contratistas",
-        "Acceso a talent pool",
-      ],
+    criteria: {
+      "Solo": "Solo fundador",
+      "CoFundador": "Fundador + 1 co-fundador",
+      "Pequeño": "Fundador + equipo de 2-3 personas",
+      "Reducido": "Equipo pequeño de 4-6 personas",
+      "Completo": "Equipo completo de 7+ personas",
+      "Freelance": "Solo con freelancers o contratistas",
+      "Pool": "Acceso a talent pool flexible",
     },
   },
   regulacion: {
     type: "choice",
     description: "¿Cuál es el nivel de regulación/compliance crítica?",
-    properties: {
-      oneOf: [
-        "Sin regulación relevante",
-        "Regulación light",
-        "Regulación moderada",
-        "Regulación fuerte",
-        "Regulación crítica",
-        "Multi-jurisdiccional",
-        "Riesgo muy alto",
-      ],
+    criteria: {
+      "Ninguna": "Sin regulación relevante",
+      "Light": "Regulación light o mínima",
+      "Moderada": "Regulación moderada",
+      "Fuerte": "Regulación fuerte",
+      "Crítica": "Regulación crítica para funcionar",
+      "Multi": "Multi-jurisdiccional con regulaciones diferentes",
+      "Riesgo": "Riesgo muy alto de cumplimiento",
     },
   },
 };
