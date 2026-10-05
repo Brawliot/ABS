@@ -85,6 +85,7 @@ import { createStockFunctions, type StockRuntimeFunctions } from "./runtime-stoc
 import { createComprasFunctions, type ComprasRuntimeFunctions } from "./runtime-compras.js";
 import { createLogisticaFunctions, type LogisticaRuntimeFunctions } from "./runtime-logistica.js";
 import { createFacturasFunctions, type FacturasRuntimeFunctions } from "./runtime-facturas.js";
+import { createCobrosFunctions, type CobrosRuntimeFunctions } from "./runtime-cobros.js";
 // Capa 0: Motores de Orquestación
 import {
   MotorGeneradorProcesos,
@@ -313,6 +314,7 @@ export class AppRuntime {
   readonly comprasFunctions!: ComprasRuntimeFunctions;
   readonly logisticaFunctions!: LogisticaRuntimeFunctions;
   readonly facturasFunctions!: FacturasRuntimeFunctions;
+  readonly cobrosFunctions!: CobrosRuntimeFunctions;
 
   effectiveRuleSet(): import("../policies/types.js").CompiledRuleSet {
     const base = this.boot.input.ruleSet;
@@ -387,6 +389,7 @@ export class AppRuntime {
     this.comprasFunctions = createComprasFunctions(this);
     this.logisticaFunctions = createLogisticaFunctions(this);
     this.facturasFunctions = createFacturasFunctions(this);
+    this.cobrosFunctions = createCobrosFunctions(this);
 
     // Inicializar motors de Activos Fijos
     this.motorDepreciación = new MotorDepreciación();
@@ -760,25 +763,7 @@ export class AppRuntime {
 
   /** Impagos de una Parte: días desde el más antiguo y número de recibos. */
   impagosDe(parteId: string, nowMs = Date.now()): { readonly dias: number; readonly recibos: number } {
-    let oldest: number | undefined;
-    let recibos = 0;
-    for (const sub of this.subjects) {
-      const events = this.store.getBySubject(sub.id);
-      const tx = proyectarTransaccion(events);
-      if (tx?.datos.parteId !== parteId) continue;
-      const estado = this.estadoDe(sub.id)?.id ?? "";
-      if (!ESTADOS_IMPAGO.has(estado)) continue;
-      recibos += 1;
-      const entrada = [...events]
-        .reverse()
-        .find((e) => e.kind !== "alta" && e.kind !== "datos" && "toStateId" in e && e.toStateId === estado);
-      const t = Date.parse(entrada?.occurredAt ?? tx.creadaEn);
-      if (oldest === undefined || t < oldest) oldest = t;
-    }
-    return {
-      dias: oldest === undefined ? 0 : Math.max(0, Math.floor((nowMs - oldest) / 86_400_000)),
-      recibos,
-    };
+    return this.cobrosFunctions.impagosDe(parteId, nowMs);
   }
 
   /**
@@ -813,41 +798,14 @@ export class AppRuntime {
 
   registrarCobro(
     expedienteId: string,
-    {
-      importeCentimos,
-      hitoId,
-      medio,
-    }: {
-      readonly importeCentimos: number;
-      readonly hitoId?: string;
-      readonly medio: string;
-    },
+    { importeCentimos, hitoId, medio }: { readonly importeCentimos: number; readonly hitoId?: string; readonly medio: string },
     actorId: string,
   ): { ok: true } | { ok: false; error: string } {
-    if (!Number.isSafeInteger(importeCentimos) || importeCentimos <= 0) {
-      return { ok: false, error: "El importe debe ser mayor que 0." };
-    }
-    const tx = this.datosDe(expedienteId);
-    if (!tx) return { ok: false, error: "El expediente no existe." };
-    const totalCobrado = this.cobros.totalParcial(this.tenantId, expedienteId);
-    const totalPendiente = (tx.datos.lineas.reduce((sum, l) => sum + l.precioCentimos * l.cantidadMilesimas / 1000, 0));
-    if (totalCobrado + importeCentimos > totalPendiente) {
-      return { ok: false, error: "El cobro supera el importe total del expediente." };
-    }
-    this.cobros.registrar(this.tenantId, {
-      expediente: expedienteId,
-      importeCentimos,
-      fecha: new Date().toISOString(),
-      ...(hitoId ? { hitoId } : {}),
-      medio,
-      actor: actorId,
-    });
-    return { ok: true };
+    return this.cobrosFunctions.registrarCobro(expedienteId, { importeCentimos, ...(hitoId ? { hitoId } : {}), medio }, actorId);
   }
 
-  /** Cobros parciales de un expediente. */
   cobrosDelExpediente(expedienteId: string): readonly { readonly importeCentimos: number; readonly fecha: string; readonly hitoId?: string; readonly medio: string; readonly actor: string }[] {
-    return this.cobros.deExpediente(this.tenantId, expedienteId);
+    return this.cobrosFunctions.cobrosDelExpediente(expedienteId);
   }
 
   /** Registra un asiento contable (doble entrada). */
@@ -1111,110 +1069,23 @@ export class AppRuntime {
     tasaInteres: number,
     actorId: string,
   ): { ok: true; financiadoId: string } | { ok: false; error: string } {
-    if (plazoMeses <= 0) return { ok: false, error: "El plazo debe ser mayor a 0 meses." };
-    if (importeCentimos <= 0) return { ok: false, error: "El importe debe ser mayor a 0." };
-    if (tasaInteres < 0) return { ok: false, error: "La tasa de interés no puede ser negativa." };
-
-    const financiadoId = `fin-${randomUUID()}`;
-    const now = new Date().toISOString();
-
-    let cuotaMensualCentimos: number;
-    if (tasaInteres <= 0) {
-      cuotaMensualCentimos = Math.ceil(importeCentimos / plazoMeses);
-    } else {
-      const tasaMensual = tasaInteres / 100 / 12;
-      const cuotaMensualNum = (importeCentimos / 100) * (
-        (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses)) /
-        (Math.pow(1 + tasaMensual, plazoMeses) - 1)
-      );
-      cuotaMensualCentimos = Math.round(cuotaMensualNum * 100);
-    }
-
-    this.financiados.crearFinanciado(this.tenantId, {
-      id: financiadoId,
-      expedienteOrigen: expedienteId,
-      plazoMeses,
-      tasaInteres,
-      cuotaMensualCentimos,
-      fecha: now,
-    });
-
-    for (let i = 1; i <= plazoMeses; i++) {
-      const vencimiento = new Date(now);
-      vencimiento.setMonth(vencimiento.getMonth() + i);
-      this.financiados.agregarCuota(this.tenantId, {
-        financiadoId,
-        numeroOrden: i,
-        vencimientoEn: vencimiento.toISOString(),
-        importeCentimos: cuotaMensualCentimos,
-      });
-    }
-
-    return { ok: true, financiadoId };
+    return this.cobrosFunctions.crearFinanciado(expedienteId, importeCentimos, plazoMeses, tasaInteres, actorId);
   }
 
-  /** Obtiene el financiado activo de un expediente. */
-  financiadoDe(expedienteId: string): { readonly id: string; readonly plazoMeses: number; readonly tasaInteres: number; readonly cuotaMensualCentimos: number; readonly cuotas: readonly { readonly numeroOrden: number; readonly vencimientoEn: string; readonly importeCentimos: number; readonly estado: "pendiente" | "pagada" | "cancelada"; }[] } | undefined {
-    const fin = this.financiados.deExpediente(this.tenantId, expedienteId);
-    if (!fin) return undefined;
-    const cuotas = this.financiados.cuotasDelFinanciado(this.tenantId, fin.id!).map((c) => ({
-      numeroOrden: c.numeroOrden,
-      vencimientoEn: c.vencimientoEn,
-      importeCentimos: c.importeCentimos,
-      estado: c.estado,
-    }));
-    return {
-      id: fin.id!,
-      plazoMeses: fin.plazoMeses,
-      tasaInteres: fin.tasaInteres,
-      cuotaMensualCentimos: fin.cuotaMensualCentimos,
-      cuotas,
-    };
+  financiadoDe(expedienteId: string): { readonly id: string; readonly plazoMeses: number; readonly tasaInteres: number; readonly cuotaMensualCentimos: number; readonly cuotas: readonly { readonly numeroOrden: number; readonly vencimientoEn: string; readonly importeCentimos: number; readonly estado: "pendiente" | "pagada" | "cancelada" }[] } | undefined {
+    return this.cobrosFunctions.financiadoDe(expedienteId);
   }
 
-  /** Paga una cuota de un financiado. */
-  pagarCuotaFinanciado(
-    expedienteId: string,
-    numeroOrden: number,
-    actorId: string,
-  ): { ok: true } | { ok: false; error: string } {
-    const fin = this.financiados.deExpediente(this.tenantId, expedienteId);
-    if (!fin) return { ok: false, error: "Este expediente no tiene un financiado." };
-
-    const cuotas = this.financiados.cuotasDelFinanciado(this.tenantId, fin.id!);
-    const cuota = cuotas.find((c) => c.numeroOrden === numeroOrden);
-    if (!cuota) return { ok: false, error: `No existe la cuota ${numeroOrden}.` };
-    if (cuota.estado !== "pendiente") return { ok: false, error: `La cuota ${numeroOrden} ya está pagada o cancelada.` };
-
-    const now = new Date().toISOString();
-    this.financiados.pagarCuota(this.tenantId, fin.id!, numeroOrden, now);
-
-    const todasPagadas = cuotas.every((c) => c.estado === "pagada" || c.numeroOrden === numeroOrden);
-    if (todasPagadas) {
-      this.financiados.actualizarEstadoFinanciado(this.tenantId, fin.id!, "pagado");
-    }
-
-    return { ok: true };
+  pagarCuotaFinanciado(expedienteId: string, numeroOrden: number, actorId: string): { ok: true } | { ok: false; error: string } {
+    return this.cobrosFunctions.pagarCuotaFinanciado(expedienteId, numeroOrden, actorId);
   }
 
-  /** Obtiene la situación de crédito del cliente. */
   creditoDelCliente(clienteId: string): { readonly activo: number; readonly limite: number; readonly disponible: number; readonly enBloqueo: boolean } {
-    const limite = this.creditoCliente.obtenerLimite(this.tenantId, clienteId);
-    const activo = this.expedientesDinero()
-      .filter((e) => e.parteId === clienteId && e.direccion === "entra" && e.situacion === "pendiente")
-      .reduce((sum, e) => sum + e.totalCentimos, 0);
-    const enBloqueo = this.impagosDe(clienteId).dias > 0 || this.impagosDe(clienteId).recibos > 0;
-    return {
-      activo,
-      limite,
-      disponible: Math.max(0, limite - activo),
-      enBloqueo,
-    };
+    return this.cobrosFunctions.creditoDelCliente(clienteId);
   }
 
-  /** Establece el límite de crédito para un cliente. */
   establecerLimiteCredito(clienteId: string, limiteCentimos: number): void {
-    this.creditoCliente.establecerLimite(this.tenantId, clienteId, limiteCentimos);
+    this.cobrosFunctions.establecerLimiteCredito(clienteId, limiteCentimos);
   }
 
   /** Reserva stock para un expediente. */
