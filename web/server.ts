@@ -18,24 +18,15 @@ import {
   readBody,
   formToRecord,
   sendJson,
-  sendError,
   sendHtml,
   sendText,
 } from "./http-utils.js";
 import { resolveTokenMap } from "../presentation/resolve-tokens.js";
-import { createDevolucionVinculada } from "../archetypes/linked-transaction.js";
 import { allowDevSession } from "../auth/env.js";
-import type { PresentationChannel } from "../presentation/types.js";
-import type { UserDecisions } from "./decision-screen-types.js";
-import { executeUiAction } from "./action-handler.js";
-import {
-  answersFromForm,
-  renderDiagnosisHtml,
-  runDiagnosis,
-} from "./diagnosis-page.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { AppRuntime } from "./runtime.js";
+import { ParteIdentityStore } from "../policies/identity.js";
 import {
   isExpedientesPath,
   handleExpedientes,
@@ -70,45 +61,15 @@ import {
 } from "./maestros.js";
 import type { AppBootResult, DevSession } from "./types.js";
 import {
-  acceptInvite,
-  completePasswordReset,
   createAuthRuntime,
-  identityForAction,
-  inviteEmployee,
-  loginWithMagicToken,
-  loginWithPassword,
-  logoutSession,
-  readAuthSession,
-  requestMagicLink,
-  requestPasswordReset,
-  requireCsrf,
   resolveRequestIdentity,
-  revokeEmployeeAccess,
-  switchActiveCompany,
   type AuthRuntime,
 } from "./auth-bridge.js";
-import { AccountsError } from "../accounts/index.js";
 import {
   assertProductionSecurityConfig,
-  CsrfError,
   isProduction,
-  securityHeaders,
 } from "../auth/index.js";
-import { ParteIdentityStore } from "../policies/identity.js";
-import {
-  erasePartePersonal,
-  exportPartePersonal,
-  draftRatFromConfig,
-  rectifyPartePersonal,
-  HOSTING_EU_CHECKLIST,
-  PRIVACY_POLICY_DRAFT,
-  DPA_DRAFT,
-  BREACH_PROCEDURE,
-} from "../gdpr/index.js";
-import {
-  getStoredWizardDraft,
-  applyWizardDecisions,
-} from "./cli.js";
+import type { ParteIdentityStore } from "../policies/identity.js";
 import { handleAuthRoute } from "./auth-routes.js";
 import { handleGdprRoute } from "./gdpr-routes.js";
 import { handleApiRoute } from "./api-routes.js";
