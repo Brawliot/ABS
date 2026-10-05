@@ -329,12 +329,9 @@ export function renderPlannerHtml(): string {
       html += '<div class="analysis-header">Análisis Completo</div>';
       html += '<div class="analysis-metrics">';
 
-      const sectorConf = normalizeConfidence(phase1.answers.sector.confidence) || 95;
       html += '<div class="metric-item">';
       html += '<div class="metric-label">Sector</div>';
       html += '<div class="metric-value">' + (phase1.answers.sector.choice || 'N/A') + '</div>';
-      html += '<div class="confidence-bar"><div class="confidence-fill" style="width:' + sectorConf + '%"></div></div>';
-      html += '<div class="confidence-text">' + sectorConf + '% confianza</div>';
       html += '</div>';
 
       const locConf = normalizeConfidence(phase2.localizacion.confidence);
