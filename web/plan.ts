@@ -1062,7 +1062,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
                 return `
               <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" onmouseover="!${isBloqueado} && (this.style.background = '${bgHoverStyle}')" onmouseout="this.style.background = '${isBloqueado ? '#f3f4f6' : 'transparent'}'">
+                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" ${!isBloqueado ? `onmouseover="this.style.background = '#f9fafb'" onmouseout="this.style.background = 'transparent'"` : ''}>
                   <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                     <span class="dept-toggle" style="font-size: 10px; color: #9ca3af;">▲</span>
                     <span style="font-size: 16px;">${isBloqueado ? '🔒' : dept.icono}</span>
