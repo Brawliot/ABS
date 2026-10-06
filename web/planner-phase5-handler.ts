@@ -33,15 +33,10 @@ const DEPARTMENTS = [
   "Finanzas",
   "RRHH",
   "Operativo",
-  "Ventas",
   "Marketing",
-  "Logística",
-  "Soporte/Success",
   "Tecnología",
   "Producto",
   "Sanidad",
-  "Compras/Proveedores",
-  "Marca",
   "Infraestructura",
 ];
 
