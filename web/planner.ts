@@ -893,6 +893,7 @@ export function renderPlannerHtml(): string {
     };
 
     const handleSend = async () => {
+      if (!input || !sendBtn) return;
       const value = input.value.trim();
       if (!value || sendBtn.disabled) return;
 
@@ -1029,13 +1030,15 @@ export function renderPlannerHtml(): string {
       }
     };
 
-    sendBtn.addEventListener('click', handleSend);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
-      }
-    });
+    if (sendBtn) sendBtn.addEventListener('click', handleSend);
+    if (input) {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+    }
   </script>
 </body>
 </html>`;
