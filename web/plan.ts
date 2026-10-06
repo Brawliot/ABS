@@ -865,8 +865,8 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                   </div>
                   <div style="font-weight: 700; color: ${dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div>
                 </div>
-                <div class="dept-content" style="display: none; padding: 12px 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
-                  <div style="display: grid; gap: 12px;">
+                <div class="dept-content" style="display: none; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
+                  <div style="display: grid; gap: 12px; margin-bottom: 16px;">
                     ${Object.entries(dept.detalles).map(([key, value]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 13px;">
                       <span style="color: #6b7280; font-weight: 500;">${key}:</span>
@@ -874,6 +874,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                     </div>
                     `).join('')}
                   </div>
+                  <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter='${dept.id}';" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${dept.nombre}</button>
                 </div>
               </div>
               `).join('')}
@@ -1004,6 +1005,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         <div class="section-title">
           <span class="icon"></span>
           Estructura de Subdepartamentos (Kanban)
+          <span id="dept-filter-tag" style="display: none; margin-left: 12px; font-size: 12px; padding: 4px 12px; background: #dbeafe; color: #1e40af; border-radius: 20px; font-weight: 500;"></span>
         </div>
 
         <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px;">
@@ -1011,77 +1013,35 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-          <!-- Backlog -->
-          <div style="background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;">
-            <div style="background: #f3f4f6; padding: 12px 16px; border-bottom: 2px solid #e5e7eb;">
-              <div style="font-weight: 600; color: #6b7280; font-size: 13px;">📚 Backlog</div>
-              <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">3 subdepartamentos</div>
-            </div>
-            <div style="padding: 12px; min-height: 300px;">
-              <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: move;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 1.1 - Análisis</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 1</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Backlog</span>
-                </div>
-              </div>
-              <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: move;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 2.1 - Operaciones</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 2</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Backlog</span>
-                </div>
-              </div>
-              <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; cursor: move;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 3.1 - Testing</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 3</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Backlog</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          ${['Pendiente', 'En Progreso', 'Completado', 'Bloqueado'].map(estado => {
+            const subsForState = projectData.subdepartamentos.filter(s => s.estado === estado);
+            const stateEmoji = { 'Pendiente': '📚', 'En Progreso': '🔄', 'Completado': '✅', 'Bloqueado': '🚫' }[estado];
+            const stateBg = { 'Pendiente': '#f3f4f6', 'En Progreso': '#dbeafe', 'Completado': '#d1fae5', 'Bloqueado': '#fee2e2' }[estado];
+            const stateColor = { 'Pendiente': '#6b7280', 'En Progreso': '#1e40af', 'Completado': '#065f46', 'Bloqueado': '#991b1b' }[estado];
 
-          <!-- En Progreso -->
-          <div style="background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;">
-            <div style="background: #f3f4f6; padding: 12px 16px; border-bottom: 2px solid #e5e7eb;">
-              <div style="font-weight: 600; color: #1f2937; font-size: 13px;">🔄 En Progreso</div>
-              <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">2 subdepartamentos</div>
-            </div>
-            <div style="padding: 12px; min-height: 300px;">
-              <div style="background: white; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: move; border-left: 4px solid #3b82f6;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 1.2 - Desarrollo</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 1</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px;">En Progreso</span>
-                </div>
+            return `
+            <div style="background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;">
+              <div style="background: #f3f4f6; padding: 12px 16px; border-bottom: 2px solid #e5e7eb;">
+                <div style="font-weight: 600; color: #1f2937; font-size: 13px;">${stateEmoji} ${estado}</div>
+                <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">${subsForState.length} subdepartamento${subsForState.length !== 1 ? 's' : ''}</div>
               </div>
-              <div style="background: white; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; cursor: move; border-left: 4px solid #3b82f6;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 2.2 - Calidad</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 2</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 11px;">En Progreso</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Completado -->
-          <div style="background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;">
-            <div style="background: #f3f4f6; padding: 12px 16px; border-bottom: 2px solid #e5e7eb;">
-              <div style="font-weight: 600; color: #10b981; font-size: 13px;"> Completado</div>
-              <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">1 subdepartamento</div>
-            </div>
-            <div style="padding: 12px; min-height: 300px;">
-              <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; opacity: 0.7;">
-                <div style="font-weight: 500; color: #1f2937; font-size: 13px;">Sub 3.2 - Reporting</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← Departamento 3</div>
-                <div style="margin-top: 8px;">
-                  <span style="display: inline-block; background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Completado</span>
-                </div>
+              <div style="padding: 12px; min-height: 300px;">
+                ${subsForState.map(sub => {
+                  const deptName = projectData.departamentos.find(d => d.id === sub.departamento_padre)?.nombre || 'Desconocido';
+                  return `
+                  <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: move;">
+                    <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${sub.nombre}</div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← ${deptName}</div>
+                    <div style="margin-top: 8px;">
+                      <span style="display: inline-block; background: ${stateBg}; color: ${stateColor}; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${estado}</span>
+                    </div>
+                  </div>
+                  `;
+                }).join('')}
               </div>
             </div>
-          </div>
+            `;
+          }).join('')}
         </div>
       </div>
 
@@ -1265,6 +1225,32 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         }
       });
     });
+
+    // Handle subdepartment filtering by department
+    const deptNav = document.querySelector('[data-view=subdepartment]');
+    if (deptNav) {
+      deptNav.addEventListener('click', () => {
+        setTimeout(() => {
+          const filterTag = document.getElementById('dept-filter-tag');
+          if (window.currentDeptFilter) {
+            const deptName = projectData.departamentos.find(d => d.id === window.currentDeptFilter)?.nombre || 'Departamento';
+            filterTag.textContent = 'Filtrado por: ' + deptName;
+            filterTag.style.display = 'inline-block';
+
+            // Hide/show subdepartments based on filter
+            const allSubDepts = document.querySelectorAll('[data-subdept-id]');
+            allSubDepts.forEach(el => {
+              const deptId = el.getAttribute('data-dept-parent');
+              el.style.display = deptId === window.currentDeptFilter ? 'block' : 'none';
+            });
+          } else {
+            filterTag.style.display = 'none';
+            const allSubDepts = document.querySelectorAll('[data-subdept-id]');
+            allSubDepts.forEach(el => el.style.display = 'block');
+          }
+        }, 0);
+      });
+    }
 
   </script>
 </body>
