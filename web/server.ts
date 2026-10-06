@@ -353,6 +353,34 @@ export function startWebServer(
         }
       }
 
+      if (path === "/api/planner/check-missing-departments" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const { checkMissingDepartments } = await import('./planner-jev-validate-departments.js');
+          const result = await checkMissingDepartments(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner check-missing-departments error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
+      if (path === "/api/planner/validate-departments" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const { validateDepartments } = await import('./planner-jev-validate-departments.js');
+          const result = await validateDepartments(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner validate-departments error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
       // Rutas de API
       if (path.startsWith("/api/")) {
         const handled = await handleApiRoute(path, method, req, res, {});

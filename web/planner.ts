@@ -823,21 +823,22 @@ export function renderPlannerHtml(): string {
         currentPhase5 = phase5Results;
         addPhase5ToAnalysis(phase5Results);
 
-        // Auto-suggest additional departments via Jev + ChatGPT
+        // Step 1: Check with Jev if departments are missing
         let loadingIdSuggest;
         try {
-          loadingIdSuggest = addLoadingMessage(3);
           const allDepts = [
             ...phase5Results.departamentos_criticos.map(d => d.nombre),
             ...phase5Results.departamentos_importantes.map(d => d.nombre),
             ...phase5Results.departamentos_secundarios.map(d => d.nombre)
           ];
 
-          const suggestResponse = await fetch('/api/planner/suggest-departments', {
+          loadingIdSuggest = addLoadingMessage(3);
+
+          const checkResponse = await fetch('/api/planner/check-missing-departments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              sector: currentPhase2?.subsector?.value || 'desconocido',
+              sector: currentPhase1?.answers.sector?.choice || 'desconocido',
               modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
               departamentos_actuales: allDepts,
               presupuesto: enrichedResources?.presupuesto || 'no especificado',
@@ -847,18 +848,73 @@ export function renderPlannerHtml(): string {
 
           removeLoadingMessage(loadingIdSuggest);
 
-          if (suggestResponse.ok) {
-            const suggestions = await suggestResponse.json();
-            suggestedSubdepartments = suggestions.subdepartamentos || {};
-            if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
-              const deptList = suggestions.departamentos_sugeridos.join(', ');
-              const msg = 'Basándome en tu negocio, sugiero agregar: ' + deptList + '. ' + suggestions.razon + '. ¿Agregarlos?';
-              addQuestionMessage(msg);
-              phase5State = 'validating_suggestions';
-            } else {
-              if (Object.keys(suggestedSubdepartments).length > 0) {
-                addQuestionMessage('✓ Estructura de departamentos optimizada basada en relaciones de subdepartamentos.');
+          if (!checkResponse.ok) {
+            throw new Error('Error checking missing departments');
+          }
+
+          const checkResult = await checkResponse.json();
+
+          if (checkResult.hay_faltantes) {
+            // Step 2: If missing, suggest with ChatGPT
+            loadingIdSuggest = addLoadingMessage(3);
+
+            const suggestResponse = await fetch('/api/planner/suggest-departments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sector: currentPhase2?.subsector?.value || 'desconocido',
+                modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
+                departamentos_actuales: allDepts,
+                presupuesto: enrichedResources?.presupuesto || 'no especificado',
+                equipo: enrichedResources?.equipo || 'no especificado'
+              })
+            });
+
+            removeLoadingMessage(loadingIdSuggest);
+
+            if (suggestResponse.ok) {
+              const suggestions = await suggestResponse.json();
+              suggestedSubdepartments = suggestions.subdepartamentos || {};
+
+              if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
+                // Step 3: Validate suggestions with Jev
+                loadingIdSuggest = addLoadingMessage(3);
+
+                const validateResponse = await fetch('/api/planner/validate-departments', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    sector: currentPhase1?.answers.sector?.choice || 'desconocido',
+                    modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
+                    departamentos_propuestos: suggestions.departamentos_sugeridos,
+                    departamentos_originales: allDepts,
+                    presupuesto: enrichedResources?.presupuesto || 'no especificado',
+                    equipo: enrichedResources?.equipo || 'no especificado'
+                  })
+                });
+
+                removeLoadingMessage(loadingIdSuggest);
+
+                if (validateResponse.ok) {
+                  const validateResult = await validateResponse.json();
+                  if (validateResult.departamentos_validos && validateResult.departamentos_validos.length > 0) {
+                    const deptList = validateResult.departamentos_validos.join(', ');
+                    const msg = 'Jev ha validado estos departamentos como críticos (confianza ' + Math.round(validateResult.confianza * 100) + '%): ' + deptList + '. ¿Agregarlos?';
+                    addQuestionMessage(msg);
+                    phase5State = 'validating_suggestions';
+                  } else {
+                    addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+                    phase5State = 'asking_custom';
+                  }
+                } else {
+                  addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+                  phase5State = 'asking_custom';
+                }
+              } else {
+                addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+                phase5State = 'asking_custom';
               }
+            } else {
               addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
               phase5State = 'asking_custom';
             }
@@ -867,6 +923,7 @@ export function renderPlannerHtml(): string {
             phase5State = 'asking_custom';
           }
         } catch (e) {
+          if (loadingIdSuggest) removeLoadingMessage(loadingIdSuggest);
           addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
           phase5State = 'asking_custom';
         }
