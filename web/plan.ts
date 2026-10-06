@@ -333,6 +333,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
       id: `dept-critico-${i}`,
       nombre: d.nombre,
       estado: 'CRÍTICO',
+      criticidad: 'CRÍTICO',
       porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
       icono: '[C]',
       colorPorcentaje: '#dc2626',
@@ -342,6 +343,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
       id: `dept-important-${i}`,
       nombre: d.nombre,
       estado: 'EN PROGRESO',
+      criticidad: 'IMPORTANTE',
       porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
       icono: '[I]',
       colorPorcentaje: '#f59e0b',
@@ -351,6 +353,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
       id: `dept-secondary-${i}`,
       nombre: d.nombre,
       estado: 'PENDIENTE',
+      criticidad: 'SECUNDARIO',
       porcentaje: null,
       icono: '[S]',
       colorPorcentaje: '#6b7280',
@@ -483,6 +486,7 @@ interface Departamento {
   id: string;
   nombre: string;
   estado: string;
+  criticidad: 'CRÍTICO' | 'IMPORTANTE' | 'SECUNDARIO';
   porcentaje: number | null;
   icono: string;
   colorPorcentaje: string;
@@ -1421,9 +1425,9 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
         console.log('Team size:', equipoSize, '| Max unlocked:', maxUnlocked);
 
-        // Get critical departments only
+        // Get critical departments only (using criticidad field which doesn't change)
         const criticalDepts = window.projectData.departamentos
-          .filter(d => d.estado === 'CRÍTICO')
+          .filter(d => d.criticidad === 'CRÍTICO')
           .sort((a, b) => (b.porcentaje || 0) - (a.porcentaje || 0));
 
         // Select top N critical departments to unlock (based on team size)
