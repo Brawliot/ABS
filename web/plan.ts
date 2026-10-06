@@ -1084,7 +1084,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                     </div>
                     `).join('')}
                   </div>
-                  <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter='${dept.id.replace(/'/g, "\\'")}'; return false;" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${dept.nombre.replace(/'/g, "&apos;")}</button>
+                  <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter=${JSON.stringify(dept.id)}; return false;" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${dept.nombre}</button>
                 </div>
               </div>
               `;
