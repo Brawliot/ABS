@@ -916,6 +916,7 @@ export function renderPlannerHtml(): string {
       input.value = '';
       sendBtn.disabled = true;
 
+      let loadingId;
       try {
         if (phase5State === 'validating_suggestions') {
           if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
@@ -946,7 +947,7 @@ export function renderPlannerHtml(): string {
             }, 1500);
           }
         } else if (currentQuestion && currentMetric && currentPhase2) {
-          const loadingId = addLoadingMessage(2);
+          loadingId = addLoadingMessage(2);
 
           const refineResponse = await fetch('/api/planner/refine-iterate', {
             method: 'POST',
