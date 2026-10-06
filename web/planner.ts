@@ -537,9 +537,8 @@ export function renderPlannerHtml(): string {
     };
 
     const addResourcesForm = () => {
-      // Limpiar análisis previo
-      const existingBubble = document.querySelector('.analysis-bubble');
-      if (existingBubble) existingBubble.remove();
+      // Limpiar todo el contenido previo
+      content.innerHTML = '';
 
       const div = document.createElement('div');
       div.className = 'message assistant';
