@@ -25,6 +25,134 @@ function getAnalysisFromSession(): PlannerAnalysis | null {
   }
 }
 
+export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectConfig {
+  // Map PlannerAnalysis -> ProjectConfig for all views
+  const criticalDepts = analysis.phase5?.departamentos_criticos || [];
+  const importantDepts = analysis.phase5?.departamentos_importantes || [];
+  const secondaryDepts = analysis.phase5?.departamentos_secundarios || [];
+
+  // Create departamentos array from phase5 data
+  const departamentos: Departamento[] = [
+    ...criticalDepts.map((d: any, i: number) => ({
+      id: `dept-critico-${i}`,
+      nombre: d.nombre,
+      estado: 'CRÍTICO',
+      porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
+      icono: '[C]',
+      colorPorcentaje: '#dc2626',
+      detalles: { estado: 'Crítico para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+    })),
+    ...importantDepts.map((d: any, i: number) => ({
+      id: `dept-important-${i}`,
+      nombre: d.nombre,
+      estado: 'EN PROGRESO',
+      porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
+      icono: '[I]',
+      colorPorcentaje: '#f59e0b',
+      detalles: { estado: 'Importante para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+    })),
+    ...secondaryDepts.map((d: any, i: number) => ({
+      id: `dept-secondary-${i}`,
+      nombre: d.nombre,
+      estado: 'PENDIENTE',
+      porcentaje: null,
+      icono: '[S]',
+      colorPorcentaje: '#6b7280',
+      detalles: { estado: 'Secundario en el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+    }))
+  ];
+
+  // Create subdepartamentos from suggestedSubdepartments
+  const subdepartamentos: Subdepartamento[] = Object.entries(
+    analysis.suggestedSubdepartments || {}
+  ).map(([parent, child], idx) => ({
+    id: `sub-${idx}`,
+    nombre: child as string,
+    departamento: parent,
+    estado: 'Backlog',
+    completitud: null
+  }));
+
+  // Extract project name from jevPhase2
+  const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
+
+  // Create ProjectConfig
+  return {
+    proyecto: {
+      nombre: nombreProyecto,
+      estado: analysis.jevPhase2?.estado || 'En desarrollo',
+      semana: '1',
+      totalSemanas: '24',
+      metricas: {
+        progreso: Math.round((criticalDepts.length / (criticalDepts.length + importantDepts.length + secondaryDepts.length || 1)) * 100),
+        desviacionTimeline: 0,
+        desviacionPresupuesto: `-€${analysis.resources?.presupuesto || 0}`,
+        riesgoGeneral: criticalDepts.length > 0 ? 'ROJO' : 'AMARILLO'
+      }
+    },
+    departamentos,
+    subdepartamentos,
+    fases: [
+      {
+        id: 'q1',
+        trimestre: 'Q1 2025',
+        periodo: 'Enero - Marzo',
+        nombre: 'Fase de Planificación',
+        tareas: ['Validación de concepto', 'Análisis de viabilidad', 'Setup inicial']
+      },
+      {
+        id: 'q2',
+        trimestre: 'Q2 2025',
+        periodo: 'Abril - Junio',
+        nombre: 'Desarrollo Activo',
+        tareas: ['Implementación', 'Integración', 'Testing']
+      },
+      {
+        id: 'q3',
+        trimestre: 'Q3 2025',
+        periodo: 'Julio - Septiembre',
+        nombre: 'Optimización',
+        tareas: ['Refinamiento', 'Capacitación', 'Ajustes']
+      },
+      {
+        id: 'q4',
+        trimestre: 'Q4 2025',
+        periodo: 'Octubre - Diciembre',
+        nombre: 'Lanzamiento',
+        tareas: ['Go live', 'Soporte', 'Evaluación']
+      }
+    ],
+    hitos: [
+      { fecha: '15 Mar 2025', nombre: 'Análisis completado', trimestre: 'Q1' },
+      { fecha: '30 Jun 2025', nombre: 'MVP completado', trimestre: 'Q2' },
+      { fecha: '30 Sep 2025', nombre: 'Beta testing terminado', trimestre: 'Q3' },
+      { fecha: '15 Dic 2025', nombre: 'Go Live', trimestre: 'Q4' }
+    ],
+    agenda: {
+      hoy: [
+        { hora: '10:00', titulo: 'Revisión del plan', participantes: ['Equipo'] },
+        { hora: '14:30', titulo: 'Alineación de recursos', ubicacion: 'Virtual' }
+      ],
+      manana: [
+        { hora: '09:00', titulo: 'Checkpoint de validación', participantes: ['Stakeholders'] }
+      ],
+      proximosHitos: [
+        { nombre: 'Validación de departamentos críticos', fecha: 'Semana 1' },
+        { nombre: 'Setup de infraestructura', fecha: 'Semana 2' }
+      ]
+    },
+    pasos: [
+      { id: 'inicio', nombre: 'INICIO', estado: 'completado', dependencias: [] },
+      { id: 'validacion', nombre: 'Validación', subtipo: 'Análisis', estado: 'activo', dependencias: ['inicio'] },
+      { id: 'planificacion', nombre: 'Planificación', subtipo: 'Setup', estado: 'activo', dependencias: ['validacion'] },
+      { id: 'desarrollo', nombre: 'Desarrollo', subtipo: 'Implementación', estado: 'pendiente', dependencias: ['planificacion'] },
+      { id: 'testing', nombre: 'Testing', subtipo: 'QA', estado: 'pendiente', dependencias: ['desarrollo'] },
+      { id: 'deploy', nombre: 'Deploy', subtipo: 'Release', estado: 'pendiente', dependencias: ['testing'] },
+      { id: 'fin', nombre: 'FIN', estado: 'pendiente', dependencias: ['deploy'] }
+    ]
+  };
+}
+
 type PlanView = 'dashboard' | 'department' | 'timeline' | 'subdepartment' | 'step-graph';
 
 // ============================================================================
@@ -135,7 +263,31 @@ const PLAN_VIEWS: Record<PlanView, { label: string; icon: string; description: s
   }
 };
 
-export function renderPlanHtml(projectData: ProjectConfig): string {
+/**
+ * Renders the plan page HTML
+ * If projectData is provided, uses it directly
+ * Otherwise, the browser will load from sessionStorage via JavaScript
+ */
+export function renderPlanHtml(projectData?: ProjectConfig | null): string {
+  // If no projectData provided, use a minimal version
+  if (!projectData) {
+    projectData = {
+      proyecto: {
+        nombre: 'Plan de Negocio',
+        estado: 'Sin datos',
+        semana: '-',
+        totalSemanas: '-',
+        metricas: { progreso: 0, desviacionTimeline: 0, desviacionPresupuesto: '-', riesgoGeneral: '-' }
+      },
+      departamentos: [],
+      subdepartamentos: [],
+      fases: [],
+      hitos: [],
+      agenda: { hoy: [], manana: [], proximosHitos: [] },
+      pasos: []
+    };
+  }
+
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -1063,6 +1215,7 @@ export function renderPlanHtml(projectData: ProjectConfig): string {
   </div>
 
   <script>
+    // Utility: Map PlannerAnalysis to visual data
     // Tab navigation
     document.querySelectorAll('.nav-button').forEach(button => {
       button.addEventListener('click', () => {
@@ -1110,6 +1263,7 @@ export function renderPlanHtml(projectData: ProjectConfig): string {
         }
       });
     });
+
   </script>
 </body>
 </html>`;

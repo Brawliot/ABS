@@ -411,7 +411,7 @@ export function renderPlannerHtml(): string {
     let enrichedResources = null;
     let suggestedSubdepartments = {};
 
-    const saveAnalysisToSession = () => {
+    const saveAnalysisToSession = async () => {
       const analysis = {
         phase1: currentPhase1,
         phase2: currentPhase2,
@@ -423,9 +423,33 @@ export function renderPlannerHtml(): string {
         timestamp: new Date().toISOString()
       };
       try {
-        sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+        // Save to API
+        const response = await fetch('/api/plan/analysis/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(analysis)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Analysis saved to server with ID:', result.id);
+          // Also save to sessionStorage as fallback
+          sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+          return result.id;
+        } else {
+          console.error('Failed to save analysis to server, using sessionStorage only');
+          sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+          return null;
+        }
       } catch (e) {
-        console.error('Error saving analysis to sessionStorage:', e);
+        console.error('Error saving analysis:', e);
+        // Fallback to sessionStorage
+        try {
+          sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+        } catch (e2) {
+          console.error('Error saving to sessionStorage:', e2);
+        }
+        return null;
       }
     };
 
@@ -878,9 +902,10 @@ export function renderPlannerHtml(): string {
             addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
             currentQuestion = null;
             currentMetric = null;
-            saveAnalysisToSession();
+            const analysisId = await saveAnalysisToSession();
             setTimeout(() => {
-              window.location.href = '/plan';
+              const url = analysisId ? `/plan?aid=${analysisId}` : '/plan';
+              window.location.href = url;
             }, 1500);
             return;
           }
@@ -913,9 +938,10 @@ export function renderPlannerHtml(): string {
             addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
             currentQuestion = null;
             currentMetric = null;
-            saveAnalysisToSession();
+            const analysisId = await saveAnalysisToSession();
             setTimeout(() => {
-              window.location.href = '/plan';
+              const url = analysisId ? `/plan?aid=${analysisId}` : '/plan';
+              window.location.href = url;
             }, 1500);
             return;
           }
@@ -961,9 +987,10 @@ export function renderPlannerHtml(): string {
           addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
           currentQuestion = null;
           currentMetric = null;
-          saveAnalysisToSession();
+          const analysisId = await saveAnalysisToSession();
           setTimeout(() => {
-            window.location.href = '/plan';
+            const url = analysisId ? `/plan?aid=${analysisId}` : '/plan';
+            window.location.href = url;
           }, 1500);
 
         } catch (e) {
@@ -972,9 +999,10 @@ export function renderPlannerHtml(): string {
           addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
           currentQuestion = null;
           currentMetric = null;
-          saveAnalysisToSession();
+          const analysisId = await saveAnalysisToSession();
           setTimeout(() => {
-            window.location.href = '/plan';
+            const url = analysisId ? `/plan?aid=${analysisId}` : '/plan';
+            window.location.href = url;
           }, 1500);
         }
       } catch (error) {

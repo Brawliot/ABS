@@ -247,6 +247,8 @@ export class AppRuntime {
   /** Unidades/plazas reservadas (concurrencia de recurso). */
   private readonly reservedUnits = new Map<string, string>();
   private readonly subjectLocks = new Set<string>();
+  /** Análisis del planner (temporal, en memoria). */
+  private readonly plannerAnalyses = new Map<string, any>();
   /** Force grants de prueba/Observador (RuleSet sellado no es extensible). */
   readonly observerForceGrants: {
     transitionId: string;
@@ -609,6 +611,21 @@ export class AppRuntime {
 
   setFlash(flash: FlashMessage | undefined): void {
     this.flash = flash;
+  }
+
+  /** Guarda análisis del planner y retorna ID único. */
+  savePlannerAnalysis(analysis: any): string {
+    const id = randomUUID();
+    this.plannerAnalyses.set(id, {
+      ...analysis,
+      savedAt: new Date().toISOString()
+    });
+    return id;
+  }
+
+  /** Recupera análisis del planner por ID. */
+  getPlannerAnalysis(id: string): any {
+    return this.plannerAnalyses.get(id);
   }
 
   /** Mutex por expediente: evita dos avances concurrentes. */

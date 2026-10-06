@@ -26,7 +26,7 @@ import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
-import { renderPlanHtml } from "./plan.js";
+import { renderPlanHtml, mapAnalysisToProjectConfig } from "./plan.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 import { refinePhase2Metric } from "./planner-phase2-refine.js";
@@ -84,6 +84,7 @@ import { handleAuthRoute } from "./auth-routes.js";
 import { handleGdprRoute } from "./gdpr-routes.js";
 import { handleApiRoute } from "./api-routes.js";
 import { handleBusinessRoute } from "./business-routes.js";
+import { handlePlanRoute } from "./plan-routes.js";
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), "public");
 const LANDING_HTML = readFileSync(
@@ -383,6 +384,11 @@ export function startWebServer(
 
       // Rutas de API
       if (path.startsWith("/api/")) {
+        // Rutas de plan
+        if (path.startsWith("/api/plan/")) {
+          const handled = await handlePlanRoute(path, method, req, res, { runtime });
+          if (handled) return;
+        }
         const handled = await handleApiRoute(path, method, req, res, {});
         if (handled) return;
       }
@@ -444,7 +450,34 @@ export function startWebServer(
       }
 
       if (path === "/plan") {
-        const html = renderPlanHtml();
+        const q = parseQuery(url);
+        const analysisId = q.aid as string | undefined;
+
+        let projectData: any = null;
+
+        // Try to load analysis from runtime if analysisId provided
+        if (analysisId) {
+          const analysis = runtime.getPlannerAnalysis(analysisId);
+          if (analysis) {
+            console.log('Rendering plan with analysis ID:', analysisId);
+            projectData = mapAnalysisToProjectConfig(analysis);
+          } else {
+            console.warn('Analysis not found for ID:', analysisId);
+          }
+        }
+
+        // Fallback to plan-config.json if no analysis loaded
+        if (!projectData) {
+          try {
+            const configPath = new URL('plan-config.json', import.meta.url);
+            const configContent = readFileSync(configPath, 'utf-8');
+            projectData = JSON.parse(configContent);
+          } catch (e) {
+            console.log('plan-config.json not found or invalid, using defaults');
+          }
+        }
+
+        const html = renderPlanHtml(projectData);
         return sendHtml(res, 200, html);
       }
 

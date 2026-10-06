@@ -1,0 +1,294 @@
+{
+  "proyecto": {
+    "nombre": "Restaurante Malasaña",
+    "estado": "Estado del proyecto",
+    "semana": "4",
+    "totalSemanas": "24",
+    "metricas": {
+      "progreso": 35,
+      "desviacionTimeline": -2,
+      "desviacionPresupuesto": "-€3k",
+      "riesgoGeneral": "AMARILLO"
+    }
+  },
+  "departamentos": [
+    {
+      "id": "legal",
+      "nombre": "Legal & Compliance",
+      "estado": "COMPLETADO",
+      "porcentaje": 100,
+      "icono": "[OK]",
+      "colorPorcentaje": "#10b981",
+      "detalles": {
+        "estado": "Completo",
+        "permisos": "Conseguidos"
+      }
+    },
+    {
+      "id": "infraestructura",
+      "nombre": "Infraestructura",
+      "estado": "EN PROGRESO",
+      "porcentaje": 60,
+      "icono": "[IP]",
+      "colorPorcentaje": "#f59e0b",
+      "detalles": {
+        "semanas": "6 de 10",
+        "riesgo": "AMARILLO (retraso 5 días)",
+        "blocker": "Contratista atrasado"
+      }
+    },
+    {
+      "id": "finanzas",
+      "nombre": "Finanzas",
+      "estado": "COMPLETADO",
+      "porcentaje": 100,
+      "icono": "[OK]",
+      "colorPorcentaje": "#10b981",
+      "detalles": {
+        "presupuesto": "€40k",
+        "gastado": "€0",
+        "estado": "Completo"
+      }
+    },
+    {
+      "id": "rrhh",
+      "nombre": "RRHH",
+      "estado": "PENDIENTE",
+      "porcentaje": null,
+      "icono": "[PND]",
+      "colorPorcentaje": "#6b7280",
+      "detalles": {
+        "estado": "Listo para iniciar",
+        "proximo": "Contratación chef"
+      }
+    },
+    {
+      "id": "operativo",
+      "nombre": "Operativo",
+      "estado": "BLOQUEADO",
+      "porcentaje": null,
+      "icono": "[PND]",
+      "colorPorcentaje": "#6b7280",
+      "detalles": {
+        "esperando": "Infraestructura (60%)"
+      }
+    },
+    {
+      "id": "sanidad",
+      "nombre": "Sanidad",
+      "estado": "PENDIENTE",
+      "porcentaje": null,
+      "icono": "[PND]",
+      "colorPorcentaje": "#6b7280",
+      "detalles": {
+        "estado": "Esperando aprobaciones iniciales"
+      }
+    }
+  ],
+  "subdepartamentos": [
+    {
+      "id": "sub-1-1",
+      "nombre": "Sub 1.1 - Análisis",
+      "departamento": "legal",
+      "estado": "Backlog",
+      "completitud": null
+    },
+    {
+      "id": "sub-1-2",
+      "nombre": "Sub 1.2 - Desarrollo",
+      "departamento": "legal",
+      "estado": "En Progreso",
+      "completitud": null
+    },
+    {
+      "id": "sub-2-1",
+      "nombre": "Sub 2.1 - Operaciones",
+      "departamento": "infraestructura",
+      "estado": "Backlog",
+      "completitud": null
+    },
+    {
+      "id": "sub-2-2",
+      "nombre": "Sub 2.2 - Calidad",
+      "departamento": "infraestructura",
+      "estado": "En Progreso",
+      "completitud": null
+    },
+    {
+      "id": "sub-3-1",
+      "nombre": "Sub 3.1 - Testing",
+      "departamento": "finanzas",
+      "estado": "Backlog",
+      "completitud": null
+    },
+    {
+      "id": "sub-3-2",
+      "nombre": "Sub 3.2 - Reporting",
+      "departamento": "finanzas",
+      "estado": "Completado",
+      "completitud": 100
+    }
+  ],
+  "fases": [
+    {
+      "id": "q1",
+      "trimestre": "Q1 2025",
+      "periodo": "Enero - Marzo",
+      "nombre": "Fase de Planificación",
+      "tareas": [
+        "Preparación de infraestructura",
+        "Setup de equipo base",
+        "Definición de procesos"
+      ]
+    },
+    {
+      "id": "q2",
+      "trimestre": "Q2 2025",
+      "periodo": "Abril - Junio",
+      "nombre": "Desarrollo Activo",
+      "tareas": [
+        "Implementación de módulos",
+        "Integración de sistemas",
+        "Testing y validación"
+      ]
+    },
+    {
+      "id": "q3",
+      "trimestre": "Q3 2025",
+      "periodo": "Julio - Septiembre",
+      "nombre": "Optimización",
+      "tareas": [
+        "Refinamiento de procesos",
+        "Capacitación del equipo",
+        "Ajustes finales"
+      ]
+    },
+    {
+      "id": "q4",
+      "trimestre": "Q4 2025",
+      "periodo": "Octubre - Diciembre",
+      "nombre": "Lanzamiento",
+      "tareas": [
+        "Lanzamiento completo",
+        "Soporte y operación",
+        "Evaluación de resultados"
+      ]
+    }
+  ],
+  "hitos": [
+    {
+      "fecha": "15 Mar 2025",
+      "nombre": "Infraestructura lista",
+      "trimestre": "Q1"
+    },
+    {
+      "fecha": "30 Jun 2025",
+      "nombre": "MVP completado",
+      "trimestre": "Q2"
+    },
+    {
+      "fecha": "30 Sep 2025",
+      "nombre": "Beta testing terminado",
+      "trimestre": "Q3"
+    },
+    {
+      "fecha": "15 Dic 2025",
+      "nombre": "Go Live",
+      "trimestre": "Q4"
+    }
+  ],
+  "agenda": {
+    "hoy": [
+      {
+        "hora": "10:00",
+        "titulo": "Revisión Infraestructura",
+        "participantes": ["Contratista", "RRHH"]
+      },
+      {
+        "hora": "14:30",
+        "titulo": "Reunión equipo Legal",
+        "ubicacion": "Sala 3"
+      }
+    ],
+    "manana": [
+      {
+        "hora": "09:00",
+        "titulo": "Checkpoint Desarrollo",
+        "participantes": ["Equipo Dev"]
+      }
+    ],
+    "proximosHitos": [
+      {
+        "nombre": "Finalizar obra",
+        "fecha": "Semana 6 (15 Mar)"
+      },
+      {
+        "nombre": "Beta testing",
+        "fecha": "Semana 10 (26 Apr)"
+      }
+    ]
+  },
+  "pasos": [
+    {
+      "id": "inicio",
+      "nombre": "INICIO",
+      "estado": "completado",
+      "dependencias": []
+    },
+    {
+      "id": "planificacion",
+      "nombre": "Planificación",
+      "subtipo": "Reqs & Scope",
+      "estado": "activo",
+      "dependencias": ["inicio"]
+    },
+    {
+      "id": "analisis",
+      "nombre": "Análisis",
+      "subtipo": "Detalles & Design",
+      "estado": "activo",
+      "dependencias": ["planificacion"]
+    },
+    {
+      "id": "diseno",
+      "nombre": "Diseño",
+      "subtipo": "UX & Arch",
+      "estado": "pendiente",
+      "dependencias": ["analisis"]
+    },
+    {
+      "id": "desarrollo",
+      "nombre": "Desarrollo",
+      "subtipo": "Código & Build",
+      "estado": "pendiente",
+      "dependencias": ["analisis"]
+    },
+    {
+      "id": "testing",
+      "nombre": "Testing",
+      "subtipo": "QA & Bugs",
+      "estado": "enProgreso",
+      "dependencias": ["diseno", "desarrollo"]
+    },
+    {
+      "id": "deploy",
+      "nombre": "Deploy",
+      "subtipo": "Staging & Prod",
+      "estado": "pendiente",
+      "dependencias": ["testing"]
+    },
+    {
+      "id": "release",
+      "nombre": "Release",
+      "subtipo": "Go Live",
+      "estado": "pendiente",
+      "dependencias": ["deploy"]
+    },
+    {
+      "id": "fin",
+      "nombre": "FIN",
+      "estado": "pendiente",
+      "dependencias": ["release"]
+    }
+  ]
+}
