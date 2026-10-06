@@ -599,6 +599,8 @@ export function renderPlannerHtml(): string {
       html += '<div class="metric-item"><strong>Validación:</strong> ' + (results.validacion || 'N/A') + '</div>';
       html += '<div class="metric-item"><strong>Equipo:</strong> ' + (results.equipo || 'N/A') + '</div>';
       html += '<div class="metric-item"><strong>Regulación:</strong> ' + (results.regulacion || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Capital/Financiamiento:</strong> ' + (results.capital || 'N/A') + '</div>';
+      html += '<div class="metric-item"><strong>Visión a Futuro:</strong> ' + (results.vision || 'N/A') + '</div>';
       html += '</div></div>';
       jevSection.innerHTML = html;
 
