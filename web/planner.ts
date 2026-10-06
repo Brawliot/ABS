@@ -395,6 +395,10 @@ export function renderPlannerHtml(): string {
     const sendBtn = document.getElementById('sendBtn');
     const content = document.getElementById('plannerContent');
 
+    if (!input || !sendBtn || !content) {
+      console.error('Missing required elements: input=' + !!input + ', sendBtn=' + !!sendBtn + ', content=' + !!content);
+    }
+
     let lastJevAnalysis = null;
     let currentPhase1 = null;
     let currentPhase2 = null;
@@ -893,9 +897,16 @@ export function renderPlannerHtml(): string {
     };
 
     const handleSend = async () => {
-      if (!input || !sendBtn) return;
+      console.log('handleSend called');
+      if (!input || !sendBtn) {
+        console.error('Missing input or sendBtn in handleSend');
+        return;
+      }
       const value = input.value.trim();
-      if (!value || sendBtn.disabled) return;
+      if (!value || sendBtn.disabled) {
+        console.log('Returning early: no value or sendBtn disabled');
+        return;
+      }
 
       addUserMessage(value);
       input.value = '';
@@ -1030,14 +1041,18 @@ export function renderPlannerHtml(): string {
       }
     };
 
-    if (sendBtn) sendBtn.addEventListener('click', handleSend);
-    if (input) {
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          handleSend();
-        }
-      });
+    try {
+      if (sendBtn) sendBtn.addEventListener('click', handleSend);
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error adding event listeners:', e);
     }
   </script>
 </body>
