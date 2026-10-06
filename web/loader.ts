@@ -243,14 +243,14 @@ export function renderLoaderHtml(): string {
 
           // Redirect to plan with analysisId
           setTimeout(() => {
-            window.location.href = `/plan?aid=${analysisId}`;
+            window.location.href = '/plan?aid=' + analysisId;
           }, 1500);
         })
         .catch(e => {
           clearInterval(interval);
           console.error('Error in loader:', e);
           const analysisId = sessionStorage.getItem('analysisId');
-          const redirectPath = analysisId ? `/plan?aid=${analysisId}` : '/plan';
+          const redirectPath = analysisId ? ('/plan?aid=' + analysisId) : '/plan';
           setTimeout(() => {
             window.location.href = redirectPath;
           }, 2000);
