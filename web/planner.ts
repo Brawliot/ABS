@@ -904,7 +904,7 @@ export function renderPlannerHtml(): string {
             currentMetric = null;
             const analysisId = await saveAnalysisToSession();
             setTimeout(() => {
-              const url = analysisId ? '/plan?aid=' + analysisId : '/plan';
+              const url = analysisId ? '/loader?aid=' + analysisId : '/loader';
               window.location.href = url;
             }, 1500);
             return;
@@ -940,7 +940,7 @@ export function renderPlannerHtml(): string {
             currentMetric = null;
             const analysisId = await saveAnalysisToSession();
             setTimeout(() => {
-              const url = analysisId ? '/plan?aid=' + analysisId : '/plan';
+              const url = analysisId ? '/loader?aid=' + analysisId : '/loader';
               window.location.href = url;
             }, 1500);
             return;
@@ -989,7 +989,7 @@ export function renderPlannerHtml(): string {
           currentMetric = null;
           const analysisId = await saveAnalysisToSession();
           setTimeout(() => {
-            const url = analysisId ? '/plan?aid=' + analysisId : '/plan';
+            const url = analysisId ? '/loader?aid=' + analysisId : '/loader';
             window.location.href = url;
           }, 1500);
 
@@ -1001,7 +1001,7 @@ export function renderPlannerHtml(): string {
           currentMetric = null;
           const analysisId = await saveAnalysisToSession();
           setTimeout(() => {
-            const url = analysisId ? '/plan?aid=' + analysisId : '/plan';
+            const url = analysisId ? '/loader?aid=' + analysisId : '/loader';
             window.location.href = url;
           }, 1500);
         }

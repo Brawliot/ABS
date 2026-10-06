@@ -26,7 +26,9 @@ import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
+import { renderLoaderHtml } from "./loader.js";
 import { renderPlanHtml, mapAnalysisToProjectConfig, poblarTareasSubdepartamentos } from "./plan.js";
+import { calculateFirstBlocker } from "./planner-first-blocker.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 import { refinePhase2Metric } from "./planner-phase2-refine.js";
@@ -382,6 +384,20 @@ export function startWebServer(
         }
       }
 
+      if (path === "/api/planner/calculate-first-blocker" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const analysis = JSON.parse(body);
+          const { calculateFirstBlocker } = await import('./planner-first-blocker.js');
+          const result = await calculateFirstBlocker(analysis);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner calculate-first-blocker error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
       // Rutas de API
       if (path.startsWith("/api/")) {
         // Rutas de plan
@@ -446,6 +462,11 @@ export function startWebServer(
 
       if (path === "/planner") {
         const html = renderPlannerHtml();
+        return sendHtml(res, 200, html);
+      }
+
+      if (path === "/loader") {
+        const html = renderLoaderHtml();
         return sendHtml(res, 200, html);
       }
 
