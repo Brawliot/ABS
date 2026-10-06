@@ -134,32 +134,6 @@ const JEV_PHASE2_QUESTIONS: Record<string, JevPhase2Question> = {
       "Riesgo": "Riesgo muy alto de cumplimiento",
     },
   },
-  capital: {
-    type: "choice",
-    description: "¿Cuál es tu estructura de capital/financiamiento?",
-    criteria: {
-      "Propio": "Capital propio / Autofinanciado",
-      "Amigos": "Amigos y familia (friends & family)",
-      "Angel": "Inversión ángel",
-      "Venture": "Capital de venture capital",
-      "Deuda": "Préstamos o líneas de crédito",
-      "Público": "Financiamiento público o subvenciones",
-      "Mixto": "Combinación de varias fuentes",
-    },
-  },
-  vision: {
-    type: "choice",
-    description: "¿Cuál es tu visión a futuro?",
-    criteria: {
-      "Vender": "Construir para vender/exit",
-      "Crecer": "Crecer como empresa/escala",
-      "Lifestyle": "Negocio lifestyle / ingresos recurrentes",
-      "Impacto": "Maximizar impacto social o ambiental",
-      "Mercado": "Dominar el mercado",
-      "Híbrida": "Combinación de crecimiento e impacto",
-      "Explorar": "Explorar oportunidades sin rumbo fijo",
-    },
-  },
 };
 
 interface AnalyzedPhase2Results {
@@ -171,8 +145,6 @@ interface AnalyzedPhase2Results {
   validacion: string;
   equipo: string;
   regulacion: string;
-  capital: string;
-  vision: string;
 }
 
 export async function analyzeWithJevPhase2(
@@ -228,8 +200,6 @@ Ahora analiza el modelo de negocio específico con estas preguntas.
     validacion: data.answers.validacion?.choice || "",
     equipo: data.answers.equipo?.choice || "",
     regulacion: data.answers.regulacion?.choice || "",
-    capital: data.answers.capital?.choice || "",
-    vision: data.answers.vision?.choice || "",
   };
 
   return results;
