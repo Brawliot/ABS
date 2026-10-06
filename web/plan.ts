@@ -762,7 +762,6 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
     <div class="plan-nav">
       <button class="nav-button active" data-view="dashboard"> Panel General</button>
-      <button class="nav-button" data-view="timeline"> Cronograma</button>
       <button class="nav-button" data-view="subdepartment"> Subdepartamentos</button>
       <button class="nav-button" data-view="step-graph"> Grafo de Pasos</button>
     </div>
@@ -784,6 +783,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
               <button class="metric-btn" data-metric="timeline" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Timeline: <strong>${projectData.proyecto.metricas.desviacionTimeline > 0 ? '+' : ''}${projectData.proyecto.metricas.desviacionTimeline}d</strong></button>
               <button class="metric-btn" data-metric="budget" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Presupuesto: <strong>${projectData.proyecto.metricas.desviacionPresupuesto}</strong></button>
               <button class="metric-btn" data-metric="risk" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Riesgo: <strong>${projectData.proyecto.metricas.riesgoGeneral}</strong></button>
+              <button onclick="document.getElementById('popup-cronograma').classList.add('active')" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;">📅 Cronograma</button>
             </div>
           </div>
         </div>
@@ -844,7 +844,57 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
           </div>
         </div>
 
+        <!-- Cronograma Popup -->
+        <div id="popup-cronograma" class="metric-popup" style="display: flex; z-index: 2000;">
+          <div class="metric-popup-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
+            <button class="metric-popup-close" onclick="this.closest('.metric-popup').classList.remove('active')">×</button>
+            <h3 class="metric-popup-title" style="margin-top: 0;">Cronograma del Proyecto</h3>
 
+            <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px;">
+              Línea de tiempo de hitos, fases y entregas principales
+            </p>
+
+            <div style="margin: 20px 0; position: relative;">
+              <!-- Timeline Line -->
+              <div style="position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #3b82f6 0%, #10b981 100%);"></div>
+
+              <!-- Timeline Items -->
+              <div style="position: relative; padding-left: 80px;">
+                ${projectData.fases.map((fase, idx) => {
+                  const isSecondHalf = idx >= projectData.fases.length / 2;
+                  const bgColor = isSecondHalf ? '#d1fae5' : (idx % 2 === 0 ? '#dbeafe' : '#bfdbfe');
+                  const borderColor = isSecondHalf ? '#10b981' : '#3b82f6';
+                  const numColor = isSecondHalf ? '#10b981' : '#3b82f6';
+                  return `
+                <div style="margin-bottom: ${idx < projectData.fases.length - 1 ? '40px' : '0'};">
+                  <div style="position: absolute; left: -30px; top: -6px; width: 32px; height: 32px; background: ${bgColor}; border: 3px solid ${borderColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: ${numColor}; font-size: 13px;">${idx + 1}</div>
+                  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
+                    <div style="font-weight: 600; color: #1f2937; font-size: 14px;">Q${idx + 1} 2025 - ${['Planificación', 'Desarrollo Activo', 'Optimización', 'Lanzamiento'][idx]}</div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">${['Enero - Marzo', 'Abril - Junio', 'Julio - Septiembre', 'Octubre - Diciembre'][idx]}</div>
+                    <div style="color: #6b7280; font-size: 13px; margin-top: 12px; line-height: 1.6;">
+                      ${fase.tareas ? fase.tareas.map(tarea => `&nbsp;&nbsp;${tarea}`).join('<br>') : ''}
+                    </div>
+                  </div>
+                </div>
+                `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Hitos Clave -->
+            <div style="margin-top: 40px; padding: 20px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <div style="font-weight: 600; color: #1f2937; margin-bottom: 12px; font-size: 14px;">🎯 Hitos Clave</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                ${projectData.hitos.map(hito => `
+                <div style="padding: 12px; background: white; border-left: 4px solid #3b82f6; border-radius: 6px;">
+                  <div style="font-weight: 600; color: #1f2937; font-size: 12px;">${hito.fecha}</div>
+                  <div style="color: #6b7280; font-size: 11px; margin-top: 4px;">${hito.nombre}</div>
+                </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Departments Status & Schedule - Two Columns -->
         <div style="display: grid; grid-template-columns: 1fr 0.5fr; gap: 24px; margin-bottom: 24px;">
