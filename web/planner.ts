@@ -651,6 +651,41 @@ export function renderPlannerHtml(): string {
       content.scrollTop = content.scrollHeight;
     };
 
+    const addPhase5ToAnalysis = (phase5Results) => {
+      const analysisBubble = document.querySelector('.analysis-bubble');
+      if (!analysisBubble) return;
+
+      const phase5Section = document.createElement('div');
+      phase5Section.id = 'phase5-section';
+      let html = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">';
+      html += '<div style="font-size: 13px; font-weight: 600; color: #059669; margin-bottom: 12px;">Estructura de Departamentos</div>';
+
+      if (phase5Results.departamentos_incluidos.length > 0) {
+        html += '<div style="margin-bottom: 12px;">';
+        html += '<div style="font-size: 12px; font-weight: 600; color: #166534; margin-bottom: 6px;">Críticos (automático):</div>';
+        html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
+        phase5Results.departamentos_incluidos.forEach((d) => {
+          html += '<span style="display: inline-block; background: #dcfce7; border-left: 3px solid #16a34a; padding: 6px 10px; border-radius: 3px; font-size: 12px;"><strong>' + d.nombre + '</strong> ' + d.probabilidad + '%</span>';
+        });
+        html += '</div></div>';
+      }
+
+      if (phase5Results.departamentos_preguntar.length > 0) {
+        html += '<div style="margin-bottom: 12px;">';
+        html += '<div style="font-size: 12px; font-weight: 600; color: #7c2d12; margin-bottom: 6px;">A validar (probabilidad media):</div>';
+        html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
+        phase5Results.departamentos_preguntar.forEach((d) => {
+          html += '<span style="display: inline-block; background: #fef3c7; border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 3px; font-size: 12px;"><strong>' + d.nombre + '</strong> ' + d.probabilidad + '%</span>';
+        });
+        html += '</div></div>';
+      }
+
+      html += '</div>';
+      phase5Section.innerHTML = html;
+      analysisBubble.appendChild(phase5Section);
+      content.scrollTop = content.scrollHeight;
+    };
+
     const handleResourcesSubmit = async () => {
       const budget = parseInt(document.getElementById('budget-input').value);
       const hours = parseInt(document.getElementById('hours-input').value);
@@ -738,6 +773,41 @@ export function renderPlannerHtml(): string {
 
         const phase4Results = await phase4Response.json();
         addPhase4ToAnalysis(phase4Results);
+
+        const loadingId4 = addLoadingMessage(1);
+
+        const phase5Response = await fetch('/api/planner/phase5', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sector: currentPhase1.answers.sector?.choice || '',
+            alcance_geografico: currentPhase1.answers.alcance_geografico?.choice || '',
+            regulacion: jevPhase2Results.regulacion || '',
+            modelo_negocio: jevPhase2Results.modelo_negocio || '',
+            equipo: jevPhase2Results.equipo || '',
+            validacion: jevPhase2Results.validacion || '',
+            dependencia: jevPhase2Results.dependencia || '',
+            cliente_objetivo: jevPhase2Results.cliente_objetivo || '',
+            presupuesto: jevPhase2Results.presupuesto || '',
+            experiencia: jevPhase2Results.experiencia || ''
+          })
+        });
+
+        removeLoadingMessage(loadingId4);
+
+        if (!phase5Response.ok) {
+          const error = await phase5Response.json();
+          throw new Error(error.error || 'Error calculando estructura');
+        }
+
+        const phase5Results = await phase5Response.json();
+        addPhase5ToAnalysis(phase5Results);
+
+        if (phase5Results.departamentos_preguntar.length > 0) {
+          addQuestionMessage('Algunos departamentos tienen probabilidad media. Valida si los necesitas respondiendo a continuación.');
+        } else {
+          addQuestionMessage('✓ Estructura de departamentos definida.');
+        }
 
         currentQuestion = null;
         currentMetric = null;
