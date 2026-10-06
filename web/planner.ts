@@ -870,6 +870,9 @@ export function renderPlannerHtml(): string {
         removeLoadingMessage(loadingId);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
         addErrorMessage('Error: ' + msg);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
       }
     };
 
