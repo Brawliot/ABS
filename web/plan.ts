@@ -169,6 +169,14 @@ function generarTareas(subDeptId: string, numTareas: number = 3): Tarea[] {
   }));
 }
 
+// Helper: Populate tareas for subdepartments that don't have them
+function poblarTareasSubdepartamentos(subdepts: SubDepartamento[]): SubDepartamento[] {
+  return subdepts.map(sub => ({
+    ...sub,
+    tareas: (sub.tareas && sub.tareas.length > 0) ? sub.tareas : generarTareas(sub.id, 3)
+  }));
+}
+
 // Helper: Generate SubDepartamentos from departamentos
 function generarSubDepartamentos(depts: Departamento[]): SubDepartamento[] {
   return depts.map((dept, idx) => ({
@@ -403,6 +411,8 @@ const PLAN_VIEWS: Record<PlanView, { label: string; icon: string; description: s
  * If projectData is provided, uses it directly
  * Otherwise, the browser will load from sessionStorage via JavaScript
  */
+export { poblarTareasSubdepartamentos };
+
 export function renderPlanHtml(projectData?: ProjectConfig | null): string {
   // If no projectData provided, use a minimal version
   if (!projectData) {
@@ -1319,27 +1329,16 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
     // Open subdepartment tasks popup
     window.openSubdeptPopup = function(subdeptId) {
-      console.log('1. openSubdeptPopup called with:', subdeptId);
-
       const popup = document.getElementById('popup-subdept');
-      console.log('2. popup element:', popup);
-
       const title = document.getElementById('subdept-popup-title');
       const content = document.getElementById('subdept-popup-content');
-      console.log('3. title:', title, 'content:', content);
 
       const subdept = window.projectData.subdepartamentos.find(s => s.id === subdeptId);
-      console.log('4. subdept:', subdept);
-      if (!subdept) {
-        console.log('5. subdept not found, returning');
-        return;
-      }
+      if (!subdept) return;
 
       title.textContent = 'Tareas de ' + subdept.nombre;
-      console.log('6. title updated');
 
       const tareas = subdept.tareas || [];
-      console.log('7. tareas count:', tareas.length);
 
       if (tareas.length === 0) {
         content.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 40px 20px;">No hay tareas asignadas</p>';
@@ -1380,11 +1379,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         content.innerHTML = html;
       }
 
-      console.log('8. About to add active class to popup');
-      console.log('9. popup classList before:', popup.classList);
       popup.classList.add('active');
-      console.log('10. popup classList after:', popup.classList);
-      console.log('11. popup display style:', window.getComputedStyle(popup).display);
     };
 
   </script>

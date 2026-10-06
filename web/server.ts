@@ -26,7 +26,7 @@ import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
-import { renderPlanHtml, mapAnalysisToProjectConfig } from "./plan.js";
+import { renderPlanHtml, mapAnalysisToProjectConfig, poblarTareasSubdepartamentos } from "./plan.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 import { refinePhase2Metric } from "./planner-phase2-refine.js";
@@ -472,6 +472,10 @@ export function startWebServer(
             const configPath = new URL('plan-config.json', import.meta.url);
             const configContent = readFileSync(configPath, 'utf-8');
             projectData = JSON.parse(configContent);
+            // Populate tareas for subdepartments
+            if (projectData.subdepartamentos) {
+              projectData.subdepartamentos = poblarTareasSubdepartamentos(projectData.subdepartamentos);
+            }
           } catch (e) {
             console.log('plan-config.json not found or invalid, using defaults');
           }
