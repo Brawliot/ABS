@@ -537,27 +537,36 @@ export function renderPlannerHtml(): string {
     };
 
     const addResourcesForm = () => {
+      // Limpiar análisis previo
+      const existingBubble = document.querySelector('.analysis-bubble');
+      if (existingBubble) existingBubble.remove();
+
       const div = document.createElement('div');
-      div.className = 'resources-form';
+      div.className = 'message assistant';
       div.id = 'resources-form-container';
 
-      let html = '<div class="resources-bubble">';
-      html += '<div style="margin-bottom: 16px; font-weight: 600; color: #0284c7;">Cuéntanos más sobre tu proyecto</div>';
-
-      html += '<div class="resource-field">';
-      html += '<label class="resource-label">¿Cuál es tu presupuesto inicial? (USD)</label>';
-      html += '<input type="range" id="budget-input" class="resource-range" min="0" max="100000" step="5000" value="20000">';
-      html += '<div class="range-value">$<span id="budget-display">20000</span></div>';
+      let html = '<div style="background: #f9fafb; border-radius: 12px; padding: 24px; max-width: 500px; margin: 0 auto; border: 1px solid #e5e7eb;">';
+      html += '<div style="text-align: center; margin-bottom: 24px;">';
+      html += '<div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 8px;">Cuéntanos más sobre tu proyecto</div>';
+      html += '<div style="font-size: 13px; color: #6b7280;">Esta información enriquecerá el análisis</div>';
       html += '</div>';
 
-      html += '<div class="resource-field">';
-      html += '<label class="resource-label">¿Cuántas horas por semana puedes dedicar?</label>';
-      html += '<input type="number" id="hours-input" class="resource-input" min="1" max="100" value="10" placeholder="Ej: 10">';
+      html += '<div style="display: flex; flex-direction: column; gap: 16px;">';
+
+      html += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+      html += '<label style="font-size: 13px; font-weight: 600; color: #374151;">¿Cuál es tu presupuesto inicial? (USD)</label>';
+      html += '<input type="range" id="budget-input" style="cursor: pointer;" min="0" max="100000" step="5000" value="20000">';
+      html += '<div style="text-align: center; font-size: 14px; font-weight: 600; color: #0284c7;">$<span id="budget-display">20000</span></div>';
       html += '</div>';
 
-      html += '<div class="resource-field">';
-      html += '<label class="resource-label">¿Tamaño del equipo?</label>';
-      html += '<select id="team-size-input" class="resource-select">';
+      html += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+      html += '<label style="font-size: 13px; font-weight: 600; color: #374151;">¿Cuántas horas por semana puedes dedicar?</label>';
+      html += '<input type="number" id="hours-input" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;" min="1" max="100" value="10" placeholder="Ej: 10">';
+      html += '</div>';
+
+      html += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+      html += '<label style="font-size: 13px; font-weight: 600; color: #374151;">¿Tamaño del equipo?</label>';
+      html += '<select id="team-size-input" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; cursor: pointer;">';
       html += '<option value="solo">Solo</option>';
       html += '<option value="mini">Mini (2-3 personas)</option>';
       html += '<option value="pequeño">Pequeño (4-6 personas)</option>';
@@ -566,12 +575,13 @@ export function renderPlannerHtml(): string {
       html += '</select>';
       html += '</div>';
 
-      html += '<div class="resource-field">';
-      html += '<label class="resource-label">¿Experiencia en el sector? (años)</label>';
-      html += '<input type="number" id="experience-input" class="resource-input" min="0" max="50" value="0" placeholder="Ej: 5">';
+      html += '<div style="display: flex; flex-direction: column; gap: 8px;">';
+      html += '<label style="font-size: 13px; font-weight: 600; color: #374151;">¿Experiencia en el sector? (años)</label>';
+      html += '<input type="number" id="experience-input" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;" min="0" max="50" value="0" placeholder="Ej: 5">';
       html += '</div>';
 
-      html += '<button class="submit-resources" id="submit-resources-btn">Analizar con esta información</button>';
+      html += '</div>';
+      html += '<button id="submit-resources-btn" style="margin-top: 16px; width: 100%; padding: 10px 16px; background: #0284c7; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">Analizar con esta información</button>';
       html += '</div>';
 
       div.innerHTML = html;
