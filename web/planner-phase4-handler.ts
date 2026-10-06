@@ -163,7 +163,35 @@ export function inferDimensions(input: Phase4Input): Phase4Output {
   findMapping(input.presupuesto).forEach(d => allDimensions.add(d));
   findMapping(input.experiencia).forEach(d => allDimensions.add(d));
 
-  const dimensiones_inferidas = Array.from(allDimensions).sort();
+  // Consolidate similar dimensions (e.g., Legal-Local, Legal-Regional → Legal)
+  const consolidated: Set<string> = new Set();
+  const primaryDimensions = new Set<string>();
+
+  allDimensions.forEach((d) => {
+    if (d.includes("-")) {
+      const primary = d.split("-")[0];
+      primaryDimensions.add(primary);
+    } else {
+      primaryDimensions.add(d);
+    }
+  });
+
+  // Keep only primary dimensions and non-prefixed variants
+  allDimensions.forEach((d) => {
+    if (!d.includes("-")) {
+      consolidated.add(d);
+    } else {
+      const primary = d.split("-")[0];
+      // Only add the suffixed version if primary doesn't exist
+      if (!allDimensions.has(primary)) {
+        consolidated.add(d);
+      } else {
+        consolidated.add(primary);
+      }
+    }
+  });
+
+  const dimensiones_inferidas = Array.from(consolidated).sort();
 
   const CRITICIDAD = {
     criticas: [
