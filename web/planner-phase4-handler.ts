@@ -152,16 +152,16 @@ function findMapping(value: string | undefined | null): string[] {
 export function inferDimensions(input: Phase4Input): Phase4Output {
   const allDimensions: Set<string> = new Set();
 
-  allDimensions.add(...findMapping(input.sector));
-  allDimensions.add(...findMapping(input.alcance_geografico));
-  allDimensions.add(...findMapping(input.regulacion));
-  allDimensions.add(...findMapping(input.modelo_negocio));
-  allDimensions.add(...findMapping(input.equipo));
-  allDimensions.add(...findMapping(input.validacion));
-  allDimensions.add(...findMapping(input.dependencia));
-  allDimensions.add(...findMapping(input.cliente_objetivo));
-  allDimensions.add(...findMapping(input.presupuesto));
-  allDimensions.add(...findMapping(input.experiencia));
+  findMapping(input.sector).forEach(d => allDimensions.add(d));
+  findMapping(input.alcance_geografico).forEach(d => allDimensions.add(d));
+  findMapping(input.regulacion).forEach(d => allDimensions.add(d));
+  findMapping(input.modelo_negocio).forEach(d => allDimensions.add(d));
+  findMapping(input.equipo).forEach(d => allDimensions.add(d));
+  findMapping(input.validacion).forEach(d => allDimensions.add(d));
+  findMapping(input.dependencia).forEach(d => allDimensions.add(d));
+  findMapping(input.cliente_objetivo).forEach(d => allDimensions.add(d));
+  findMapping(input.presupuesto).forEach(d => allDimensions.add(d));
+  findMapping(input.experiencia).forEach(d => allDimensions.add(d));
 
   const dimensiones_inferidas = Array.from(allDimensions).sort();
 
