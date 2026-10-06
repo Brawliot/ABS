@@ -409,6 +409,7 @@ export function renderPlannerHtml(): string {
     let originalInput = null;
     let phase5State = null;
     let enrichedResources = null;
+    let suggestedSubdepartments = {};
 
     const addUserMessage = (text) => {
       const div = document.createElement('div');
@@ -848,12 +849,16 @@ export function renderPlannerHtml(): string {
 
           if (suggestResponse.ok) {
             const suggestions = await suggestResponse.json();
+            suggestedSubdepartments = suggestions.subdepartamentos || {};
             if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
               const deptList = suggestions.departamentos_sugeridos.join(', ');
               const msg = 'Basándome en tu negocio, sugiero agregar: ' + deptList + '. ' + suggestions.razon + '. ¿Agregarlos?';
               addQuestionMessage(msg);
               phase5State = 'validating_suggestions';
             } else {
+              if (Object.keys(suggestedSubdepartments).length > 0) {
+                addQuestionMessage('✓ Estructura de departamentos optimizada basada en relaciones de subdepartamentos.');
+              }
               addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
               phase5State = 'asking_custom';
             }

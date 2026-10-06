@@ -12,13 +12,14 @@ interface SuggestDepartmentsInput {
 
 interface SuggestDepartmentsOutput {
   departamentos_sugeridos: string[];
+  subdepartamentos: Record<string, string>;
   razon: string;
 }
 
 export async function suggestDepartments(
   input: SuggestDepartmentsInput
 ): Promise<SuggestDepartmentsOutput> {
-  const prompt = `Basándote en este contexto de negocio, ¿hay departamentos CRÍTICOS e INDEPENDIENTES que falten en la lista?
+  const prompt = `Basándote en este contexto de negocio, ¿hay departamentos CRÍTICOS e INDEPENDIENTES que falten?
 
 Sector: ${input.sector}
 Modelo: ${input.modelo_negocio}
@@ -32,13 +33,17 @@ IMPORTANTE: Solo sugiere departamentos que sean:
 2. INDEPENDIENTES (no sub-función de otro)
 3. NO estén ya en la lista
 
+También INFIERE SUBDEPARTAMENTOS: si alguno de los departamentos actuales es subdepartamento de otro, indícalo.
+Ejemplo: "Logística" es subdepartamento de "Compras"
+
 Responde SOLO con JSON:
 {
   "departamentos_sugeridos": ["Dept1", "Dept2"],
+  "subdepartamentos": {"Logistica": "Compras", "Tecnologia": "Operativo"},
   "razon": "Explicación breve"
 }
 
-Si no hay departamentos faltantes, retorna array vacío.`;
+Si no hay departamentos faltantes, retorna array vacío. El campo subdepartamentos puede ser vacío si no hay relaciones detectadas.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -75,14 +80,24 @@ Si no hay departamentos faltantes, retorna array vacío.`;
 
   try {
     const parsed = JSON.parse(content);
-    return parsed;
+    return {
+      departamentos_sugeridos: parsed.departamentos_sugeridos || [],
+      subdepartamentos: parsed.subdepartamentos || {},
+      razon: parsed.razon || "Sugerencias procesadas"
+    };
   } catch (e) {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        departamentos_sugeridos: parsed.departamentos_sugeridos || [],
+        subdepartamentos: parsed.subdepartamentos || {},
+        razon: parsed.razon || "Sugerencias procesadas"
+      };
     }
     return {
       departamentos_sugeridos: [],
+      subdepartamentos: {},
       razon: "No se pudo procesar sugerencias",
     };
   }
