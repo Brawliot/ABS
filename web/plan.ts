@@ -313,15 +313,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
         { nombre: 'Setup de infraestructura', fecha: 'Semana 2' }
       ]
     },
-    pasos: [
-      { id: 'inicio', nombre: 'INICIO', estado: 'completado', dependencias: [] },
-      { id: 'validacion', nombre: 'Validación', subtipo: 'Análisis', estado: 'activo', dependencias: ['inicio'] },
-      { id: 'planificacion', nombre: 'Planificación', subtipo: 'Setup', estado: 'activo', dependencias: ['validacion'] },
-      { id: 'desarrollo', nombre: 'Desarrollo', subtipo: 'Implementación', estado: 'pendiente', dependencias: ['planificacion'] },
-      { id: 'testing', nombre: 'Testing', subtipo: 'QA', estado: 'pendiente', dependencias: ['desarrollo'] },
-      { id: 'deploy', nombre: 'Deploy', subtipo: 'Release', estado: 'pendiente', dependencias: ['testing'] },
-      { id: 'fin', nombre: 'FIN', estado: 'pendiente', dependencias: ['deploy'] }
-    ]
+    pasos: subdepartamentos.flatMap(sub => sub.tareas.flatMap(t => t.pasos))
   };
 }
 
