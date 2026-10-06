@@ -124,6 +124,31 @@ function getAnalysisFromSession(): PlannerAnalysis | null {
   }
 }
 
+function getFirstBlockerFromSession(): any {
+  try {
+    const stored = sessionStorage.getItem('firstBlocker');
+    if (!stored) return null;
+    return JSON.parse(stored);
+  } catch (e) {
+    console.error('Error reading firstBlocker from sessionStorage:', e);
+    return null;
+  }
+}
+
+function markDepartmentStates(departamentos: Departamento[]): Departamento[] {
+  const firstBlocker = getFirstBlockerFromSession();
+  if (!firstBlocker || !firstBlocker.primer_bloqueador) {
+    return departamentos;
+  }
+
+  const primeraBlockerName = firstBlocker.primer_bloqueador.departamento;
+  return departamentos.map(dept => ({
+    ...dept,
+    esPrimerBloqueador: dept.nombre === primeraBlockerName,
+    bloqueadoPor: dept.nombre === primeraBlockerName ? undefined : primeraBlockerName
+  }));
+}
+
 // Helper: Generate realistic Pasos for a Tarea
 function generarPasos(tareaId: string, numPasos: number = 3): Paso[] {
   return Array.from({ length: numPasos }, (_, i) => ({
@@ -291,7 +316,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
   const importantDepts = analysis.phase5?.departamentos_importantes || [];
   const secondaryDepts = analysis.phase5?.departamentos_secundarios || [];
 
-  const departamentos: Departamento[] = [
+  let departamentos: Departamento[] = [
     ...criticalDepts.map((d: any, i: number) => ({
       id: `dept-critico-${i}`,
       nombre: d.nombre,
@@ -348,6 +373,9 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
       dept.icono = '⚠';
     }
   });
+
+  // Mark department states (bloqueado/abierto)
+  departamentos = markDepartmentStates(departamentos);
 
   // Extract project name from jevPhase2
   const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
@@ -448,6 +476,8 @@ interface Departamento {
   icono: string;
   colorPorcentaje: string;
   detalles: Record<string, string>;
+  bloqueadoPor?: string;
+  esPrimerBloqueador?: boolean;
 }
 
 interface Hito {
@@ -1022,16 +1052,30 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
               <div style="font-size: 16px; font-weight: 600; color: #1f2937;">Departamentos</div>
             </div>
             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
-              ${projectData.departamentos.map((dept, idx) => `
+              ${projectData.departamentos.map((dept, idx) => {
+                const isBloqueado = dept.bloqueadoPor ? true : false;
+                const cursorStyle = isBloqueado ? 'not-allowed' : 'pointer';
+                const bgHoverStyle = isBloqueado ? 'transparent' : '#f9fafb';
+                const opacityStyle = isBloqueado ? '0.6' : '1';
+                const onclickHandler = isBloqueado
+                  ? 'event.preventDefault(); event.stopPropagation();'
+                  : 'this.parentElement.querySelector(".dept-content").style.display = this.parentElement.querySelector(".dept-content").style.display === "none" ? "block" : "none"; this.querySelector(".dept-toggle").textContent = this.parentElement.querySelector(".dept-content").style.display === "none" ? "▼" : "▲";';
+
+                return `
               <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-                <div class="dept-header" onclick="this.parentElement.querySelector('.dept-content').style.display = this.parentElement.querySelector('.dept-content').style.display === 'none' ? 'block' : 'none'; this.querySelector('.dept-toggle').textContent = this.parentElement.querySelector('.dept-content').style.display === 'none' ? '▼' : '▲';" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; transition: all 0.2s;">
+                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" onmouseover="!${isBloqueado} && (this.style.background = '${bgHoverStyle}')" onmouseout="this.style.background = '${isBloqueado ? '#f3f4f6' : 'transparent'}'">
                   <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                     <span class="dept-toggle" style="font-size: 10px; color: #9ca3af;">▲</span>
-                    <span style="font-size: 16px;">${dept.icono}</span>
-                    <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${dept.nombre}</div>
+                    <span style="font-size: 16px;">${isBloqueado ? '🔒' : dept.icono}</span>
+                    <div style="font-weight: 500; color: ${isBloqueado ? '#9ca3af' : '#1f2937'}; font-size: 13px;">${dept.nombre}</div>
                   </div>
-                  <div style="font-weight: 700; color: ${dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div>
+                  <div style="font-weight: 700; color: ${isBloqueado ? '#9ca3af' : dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div>
                 </div>
+                ${isBloqueado ? `
+                <div style="padding: 10px 16px; background: #fef3c7; border-top: 1px solid #fcd34d; display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; color: #92400e;">🔒 Desbloquearse cuando se complete: <strong>${dept.bloqueadoPor}</strong></span>
+                </div>
+                ` : ''}
                 <div class="dept-content" style="display: none; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
                   <div style="display: grid; gap: 12px; margin-bottom: 16px;">
                     ${Object.entries(dept.detalles).map(([key, value]) => `
@@ -1044,7 +1088,8 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                   <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter='${dept.id}';" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${dept.nombre}</button>
                 </div>
               </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           </div>
 
