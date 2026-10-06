@@ -28,6 +28,27 @@ export async function handlePlanRoute(
     try {
       const body = await readBody(req);
       const analysis = JSON.parse(body);
+
+      // Log departamentos from phase5
+      console.log("\n========== ANÁLISIS RECIBIDO ==========");
+      console.log("Timestamp:", analysis.timestamp);
+      console.log("Phase1 sector:", analysis.phase1?.answers?.sector?.choice);
+      console.log("Phase2 tipo:", analysis.phase2?.tipo_negocio);
+      console.log("\nPHASE5 DEPARTAMENTOS:");
+      if (analysis.phase5) {
+        console.log("  Críticos:", analysis.phase5.departamentos_criticos?.map((d: any) => d.nombre) || []);
+        console.log("  Importantes:", analysis.phase5.departamentos_importantes?.map((d: any) => d.nombre) || []);
+        console.log("  Secundarios:", analysis.phase5.departamentos_secundarios?.map((d: any) => d.nombre) || []);
+        console.log("  Total de departamentos:",
+          (analysis.phase5.departamentos_criticos?.length || 0) +
+          (analysis.phase5.departamentos_importantes?.length || 0) +
+          (analysis.phase5.departamentos_secundarios?.length || 0)
+        );
+      } else {
+        console.log("  ⚠️  PHASE5 NO EXISTE");
+      }
+      console.log("=====================================\n");
+
       const id = runtime.savePlannerAnalysis(analysis);
       sendJson(res, 200, { id });
       return true;

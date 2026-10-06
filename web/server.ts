@@ -459,8 +459,18 @@ export function startWebServer(
         if (analysisId) {
           const analysis = runtime.getPlannerAnalysis(analysisId);
           if (analysis) {
-            console.log('Rendering plan with analysis ID:', analysisId);
+            console.log('\n========== CARGANDO ANÁLISIS EN /plan ==========');
+            console.log('Analysis ID:', analysisId);
+            console.log('Análisis phase5 existe:', !!analysis.phase5);
+            if (analysis.phase5) {
+              console.log('  Críticos:', analysis.phase5.departamentos_criticos?.length || 0);
+              console.log('  Importantes:', analysis.phase5.departamentos_importantes?.length || 0);
+              console.log('  Secundarios:', analysis.phase5.departamentos_secundarios?.length || 0);
+            }
             projectData = mapAnalysisToProjectConfig(analysis);
+            console.log('Departamentos en ProjectConfig:', projectData.departamentos.length);
+            console.log('Subdepartamentos en ProjectConfig:', projectData.subdepartamentos.length);
+            console.log('================================================\n');
           } else {
             console.warn('Analysis not found for ID:', analysisId);
           }
