@@ -227,9 +227,29 @@ function calculateDepartmentProbability(dept: string, input: Phase5Input): numbe
 }
 
 function classifyDepartment(prob: number): "crítico" | "importante" | "secundario" {
-  if (prob >= 80) return "crítico";
-  if (prob >= 50) return "importante";
+  if (prob >= 70) return "crítico";
+  if (prob >= 45) return "importante";
   return "secundario";
+}
+
+function isSubdepartment(dept: string, input: Phase5Input): { isSubdept: boolean; absorbedBy: string } {
+  const isSmallBusiness = input.equipo.toLowerCase().includes("solo") ||
+    input.equipo.toLowerCase().includes("pequeño");
+
+  // Small businesses absorb some departments into others
+  if (isSmallBusiness) {
+    if (dept === "Logística" && !input.modelo_negocio.toLowerCase().includes("delivery")) {
+      return { isSubdept: true, absorbedBy: "Compras/Operativo" };
+    }
+    if (dept === "Tecnología" && !input.modelo_negocio.toLowerCase().includes("saas")) {
+      return { isSubdept: true, absorbedBy: "Operativo" };
+    }
+    if (dept === "Soporte/Success" && input.validacion.toLowerCase().includes("idea")) {
+      return { isSubdept: true, absorbedBy: "Operativo" };
+    }
+  }
+
+  return { isSubdept: false, absorbedBy: "" };
 }
 
 export function calculateDepartmentProbabilities(input: Phase5Input): Phase5Output {
@@ -243,7 +263,7 @@ export function calculateDepartmentProbabilities(input: Phase5Input): Phase5Outp
   DEPARTMENTS.forEach((dept) => {
     const probabilidad = calculateDepartmentProbability(dept, input);
     const clasificacion = classifyDepartment(probabilidad);
-    const origen = probabilidad > 80 ? "automático" : probabilidad >= 40 ? "preguntar" : "automático";
+    const origen = probabilidad > 70 ? "automático" : probabilidad >= 45 ? "preguntar" : "automático";
 
     departmentResults.push({
       nombre: dept,
@@ -253,9 +273,20 @@ export function calculateDepartmentProbabilities(input: Phase5Input): Phase5Outp
     });
   });
 
-  const departamentos_incluidos = departmentResults.filter((d) => d.probabilidad > 80);
-  const departamentos_preguntar = departmentResults.filter((d) => d.probabilidad >= 40 && d.probabilidad <= 80);
-  const departamentos_omitidos = departmentResults.filter((d) => d.probabilidad < 40);
+  const departamentos_incluidos = departmentResults.filter((d) => {
+    const subdept = isSubdepartment(d.nombre, input);
+    return d.probabilidad >= 70 && !subdept.isSubdept;
+  });
+
+  const departamentos_preguntar = departmentResults.filter((d) => {
+    const subdept = isSubdepartment(d.nombre, input);
+    return d.probabilidad >= 45 && d.probabilidad < 70 && !subdept.isSubdept;
+  });
+
+  const departamentos_omitidos = departmentResults.filter((d) => {
+    const subdept = isSubdepartment(d.nombre, input);
+    return d.probabilidad < 45 || subdept.isSubdept;
+  });
 
   return {
     departamentos_incluidos,
