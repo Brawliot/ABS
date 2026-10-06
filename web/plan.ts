@@ -1075,9 +1075,13 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                 const escapedNombre = escapeHtml(dept.nombre);
                 const escapedBloqueadoPor = escapeHtml(dept.bloqueadoPor || '');
 
+                const hoverAttrs = !isBloqueado ? 'onmouseover="this.style.background = \'#f9fafb\'" onmouseout="this.style.background = \'transparent\'"' : '';
+                const blockedMsg = isBloqueado ? '<div style="padding: 10px 16px; background: #fef3c7; border-top: 1px solid #fcd34d; display: flex; align-items: center; gap: 8px;"><span style="font-size: 12px; color: #92400e;">🔒 Desbloquearse cuando se complete: <strong>' + escapedBloqueadoPor + '</strong></span></div>' : '';
+                const detailsHtml = Object.entries(dept.detalles).map(([key, value]) => '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: #6b7280; font-weight: 500;">' + escapeHtml(key) + ':</span><span style="color: #1f2937; font-weight: 600;">' + escapeHtml(String(value)) + '</span></div>').join('');
+
                 return `
               <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" ${!isBloqueado ? `onmouseover="this.style.background = '#f9fafb'" onmouseout="this.style.background = 'transparent'"` : ''}>
+                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" ${hoverAttrs}>
                   <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                     <span class="dept-toggle" style="font-size: 10px; color: #9ca3af;">▲</span>
                     <span style="font-size: 16px;">${isBloqueado ? '🔒' : dept.icono}</span>
@@ -1085,19 +1089,10 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                   </div>
                   <div style="font-weight: 700; color: ${isBloqueado ? '#9ca3af' : dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div>
                 </div>
-                ${isBloqueado ? `
-                <div style="padding: 10px 16px; background: #fef3c7; border-top: 1px solid #fcd34d; display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 12px; color: #92400e;">🔒 Desbloquearse cuando se complete: <strong>${escapedBloqueadoPor}</strong></span>
-                </div>
-                ` : ''}
+                ${blockedMsg}
                 <div class="dept-content" style="display: none; padding: 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
                   <div style="display: grid; gap: 12px; margin-bottom: 16px;">
-                    ${Object.entries(dept.detalles).map(([key, value]) => `
-                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                      <span style="color: #6b7280; font-weight: 500;">${escapeHtml(key)}:</span>
-                      <span style="color: #1f2937; font-weight: 600;">${escapeHtml(String(value))}</span>
-                    </div>
-                    `).join('')}
+                    ${detailsHtml}
                   </div>
                   <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter=${JSON.stringify(dept.id)}; return false;" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${escapedNombre}</button>
                 </div>
