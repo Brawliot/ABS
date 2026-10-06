@@ -856,11 +856,17 @@ export function renderPlannerHtml(): string {
           } else {
             addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
             phase5State = null;
+            setTimeout(() => {
+              window.location.href = '/plan';
+            }, 1500);
           }
         } else if (phase5State === 'describing_custom') {
           const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
           addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
           phase5State = null;
+          setTimeout(() => {
+            window.location.href = '/plan';
+          }, 1500);
         } else if (currentQuestion && currentMetric && currentPhase2) {
           const loadingId = addLoadingMessage(2);
 

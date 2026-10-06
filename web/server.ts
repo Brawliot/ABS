@@ -26,6 +26,7 @@ import { allowDevSession } from "../auth/env.js";
 import { renderAppHtml, resolveSession } from "./render-app.js";
 import { renderInicioHtml } from "./inicio.js";
 import { renderPlannerHtml } from "./planner.js";
+import { renderPlanHtml } from "./plan.js";
 import { analyzeWithJev } from "./planner-handler.js";
 import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 import { refinePhase2Metric } from "./planner-phase2-refine.js";
@@ -397,6 +398,11 @@ export function startWebServer(
 
       if (path === "/planner") {
         const html = renderPlannerHtml();
+        return sendHtml(res, 200, html);
+      }
+
+      if (path === "/plan") {
+        const html = renderPlanHtml();
         return sendHtml(res, 200, html);
       }
 
