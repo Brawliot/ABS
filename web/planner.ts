@@ -606,6 +606,51 @@ export function renderPlannerHtml(): string {
       content.scrollTop = content.scrollHeight;
     };
 
+    const addPhase4ToAnalysis = (phase4Results) => {
+      const analysisBubble = document.querySelector('.analysis-bubble');
+      if (!analysisBubble) return;
+
+      const phase4Section = document.createElement('div');
+      phase4Section.id = 'phase4-section';
+      let html = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">';
+      html += '<div style="font-size: 13px; font-weight: 600; color: #7c3aed; margin-bottom: 12px;">Dimensiones Críticas</div>';
+
+      if (phase4Results.dimensiones_criticas.length > 0) {
+        html += '<div style="margin-bottom: 12px;">';
+        html += '<div style="font-size: 12px; font-weight: 600; color: #dc2626; margin-bottom: 6px;">Críticas:</div>';
+        html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
+        phase4Results.dimensiones_criticas.forEach((d) => {
+          html += '<span style="display: inline-block; background: #fee2e2; border-left: 3px solid #dc2626; padding: 4px 8px; border-radius: 3px; font-size: 12px;">' + d + '</span>';
+        });
+        html += '</div></div>';
+      }
+
+      if (phase4Results.dimensiones_importantes.length > 0) {
+        html += '<div style="margin-bottom: 12px;">';
+        html += '<div style="font-size: 12px; font-weight: 600; color: #ea580c; margin-bottom: 6px;">Importantes:</div>';
+        html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
+        phase4Results.dimensiones_importantes.forEach((d) => {
+          html += '<span style="display: inline-block; background: #fed7aa; border-left: 3px solid #ea580c; padding: 4px 8px; border-radius: 3px; font-size: 12px;">' + d + '</span>';
+        });
+        html += '</div></div>';
+      }
+
+      if (phase4Results.dimensiones_secundarias.length > 0) {
+        html += '<div>';
+        html += '<div style="font-size: 12px; font-weight: 600; color: #7c3aed; margin-bottom: 6px;">Secundarias:</div>';
+        html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
+        phase4Results.dimensiones_secundarias.forEach((d) => {
+          html += '<span style="display: inline-block; background: #ede9fe; border-left: 3px solid #7c3aed; padding: 4px 8px; border-radius: 3px; font-size: 12px;">' + d + '</span>';
+        });
+        html += '</div></div>';
+      }
+
+      html += '</div>';
+      phase4Section.innerHTML = html;
+      analysisBubble.appendChild(phase4Section);
+      content.scrollTop = content.scrollHeight;
+    };
+
     const handleResourcesSubmit = async () => {
       const budget = parseInt(document.getElementById('budget-input').value);
       const hours = parseInt(document.getElementById('hours-input').value);
@@ -664,6 +709,35 @@ export function renderPlannerHtml(): string {
         const jevPhase2Results = await jevPhase2Response.json();
         currentJevPhase2 = jevPhase2Results;
         addJevPhase2ToAnalysis(jevPhase2Results);
+
+        const loadingId3 = addLoadingMessage(1);
+
+        const phase4Response = await fetch('/api/planner/phase4', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sector: currentPhase1.answers.sector.choice,
+            alcance_geografico: currentPhase1.answers.alcance_geografico.choice,
+            regulacion: currentPhase2.constraints.confidence ? 'Regulación crítica' : currentPhase2.constraints.dinero,
+            modelo_negocio: jevPhase2Results.modelo_negocio,
+            equipo: jevPhase2Results.equipo,
+            validacion: jevPhase2Results.validacion,
+            dependencia: jevPhase2Results.dependencia,
+            cliente_objetivo: jevPhase2Results.cliente_objetivo,
+            presupuesto: jevPhase2Results.presupuesto,
+            experiencia: jevPhase2Results.experiencia
+          })
+        });
+
+        removeLoadingMessage(loadingId3);
+
+        if (!phase4Response.ok) {
+          const error = await phase4Response.json();
+          throw new Error(error.error || 'Error inferenciando dimensiones');
+        }
+
+        const phase4Results = await phase4Response.json();
+        addPhase4ToAnalysis(phase4Results);
 
         currentQuestion = null;
         currentMetric = null;
