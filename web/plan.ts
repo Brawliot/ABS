@@ -896,6 +896,18 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
           </div>
         </div>
 
+        <!-- Subdepartment Tasks Popup -->
+        <div id="popup-subdept" class="metric-popup" style="z-index: 2000;" onclick="if(event.target===this)this.classList.remove('active')">
+          <div class="metric-popup-content" style="max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto;">
+            <button class="metric-popup-close" onclick="this.closest('.metric-popup').classList.remove('active')">×</button>
+            <h3 class="metric-popup-title" id="subdept-popup-title" style="margin-top: 0;">Tareas del Subdepartamento</h3>
+
+            <div id="subdept-popup-content" style="margin-top: 20px;">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
         <!-- Departments Status & Schedule - Two Columns -->
         <div style="display: grid; grid-template-columns: 1fr 0.5fr; gap: 24px; margin-bottom: 24px;">
           <!-- Column 1: Departments - Expandable List -->
@@ -1079,7 +1091,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                 ${subsForState.map(sub => {
                   const deptName = projectData.departamentos.find(d => d.id === sub.departamento_padre)?.nombre || 'Desconocido';
                   return `
-                  <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: move;">
+                  <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer;" onclick="window.openSubdeptPopup('${sub.id}', '${sub.nombre.replace(/'/g, "\\'")}', ${JSON.stringify(sub.tareas || []).replace(/'/g, "&apos;")})">
                     <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${sub.nombre}</div>
                     <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← ${deptName}</div>
                     <div style="margin-top: 8px;">
@@ -1301,6 +1313,56 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         }, 0);
       });
     }
+
+    // Open subdepartment tasks popup
+    window.openSubdeptPopup = function(subdeptId, subdeptName, tareas) {
+      const popup = document.getElementById('popup-subdept');
+      const title = document.getElementById('subdept-popup-title');
+      const content = document.getElementById('subdept-popup-content');
+
+      title.textContent = 'Tareas de ' + subdeptName;
+
+      if (!tareas || tareas.length === 0) {
+        content.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 40px 20px;">No hay tareas asignadas</p>';
+      } else {
+        content.innerHTML = tareas.map((tarea, idx) => {
+          const estado = tarea.estado || 'Pendiente';
+          const estatoColors = {
+            'Completado': { bg: '#d1fae5', color: '#065f46' },
+            'En Progreso': { bg: '#dbeafe', color: '#1e40af' },
+            'Pendiente': { bg: '#f3f4f6', color: '#6b7280' },
+            'Bloqueado': { bg: '#fee2e2', color: '#991b1b' }
+          };
+          const colors = estatoColors[estado] || estatoColors['Pendiente'];
+
+          return `
+          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+              <div>
+                <div style="font-weight: 600; color: #1f2937; font-size: 13px;">${idx + 1}. ${tarea.nombre || 'Tarea sin nombre'}</div>
+                <div style="color: #6b7280; font-size: 12px; margin-top: 6px; line-height: 1.5;">${tarea.descripcion || ''}</div>
+              </div>
+              <span style="display: inline-block; background: ${colors.bg}; color: ${colors.color}; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap;">${estado}</span>
+            </div>
+            ${tarea.pasos ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+              <div style="font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 8px;">Pasos:</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+                ${tarea.pasos.map((paso, pidx) => `
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; font-size: 11px; color: #6b7280;">
+                  ${paso}
+                </div>
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
+          </div>
+          `;
+        }).join('');
+      }
+
+      popup.classList.add('active');
+    };
 
   </script>
 </body>
