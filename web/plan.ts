@@ -14,6 +14,105 @@ interface PlannerAnalysis {
   timestamp: string;
 }
 
+interface Paso {
+  id: string;
+  numero: number;
+  nombre: string;
+  descripcion: string;
+  tarea_padre: string;
+  estado: 'No iniciado' | 'En progreso' | 'Completado' | 'Bloqueado';
+  completitud_porcentaje: number;
+  duracion: { planeado_dias: number; real_dias: number };
+  requisitos: Array<{ tipo: string; descripcion: string; disponible: boolean }>;
+  acciones: Array<{ numero: number; descripcion: string; asignado_a: string }>;
+  resultado_esperado: string;
+  resultado_actual?: string;
+  validacion_completitud: boolean;
+  dependencias: { espera_paso: string[]; desbloquea_paso: string[] };
+  bloqueador?: string;
+}
+
+interface Tarea {
+  id: string;
+  numero: number;
+  nombre: string;
+  descripcion: string;
+  sub_departamento_padre: string;
+  estado: 'No iniciada' | 'En progreso' | 'Completada' | 'Bloqueada';
+  completitud_porcentaje: number;
+  duracion: { planeado_dias: number; real_dias: number; desviacion_dias: number };
+  presupuesto: { planeado: number; real: number };
+  informacion_requerida: Array<{ tipo: string; descripcion: string; de_quien: string; recibido: boolean; fecha_recibido?: string }>;
+  pasos: Paso[];
+  dependencias: { requiere_antes: string[]; habilita: string[] };
+  riesgo: { nivel: 'Bajo' | 'Medio' | 'Alto'; razon: string };
+  validacion: { requerida: boolean; tipo: string; validador: string };
+  responsable: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
+}
+
+interface SubDepartamento {
+  id: string;
+  nombre: string;
+  departamento_padre: string;
+  descripcion: string;
+  estado: 'Pendiente' | 'En Progreso' | 'Completado' | 'Bloqueado';
+  completitud_porcentaje: number;
+  timeline: {
+    planeado_semanas: number;
+    planeado_fecha_inicio: string;
+    planeado_fecha_fin: string;
+    real_semanas?: number;
+    real_fecha_inicio?: string;
+    real_fecha_fin?: string;
+    desviacion_dias: number;
+  };
+  presupuesto: {
+    planeado_euros: number;
+    real_euros: number;
+    desviacion_euros: number;
+    desviacion_porcentaje: number;
+  };
+  dependencias: {
+    bloquea_a: string[];
+    bloqueado_por: string[];
+    en_paralelo_con: string[];
+  };
+  bloqueadores: {
+    activos: string[];
+    potenciales: string[];
+  };
+  informacion_pendiente: Array<{ tipo: string; descripcion: string; de_quien: string; fecha_limite: string }>;
+  riesgo: { nivel: 'Verde' | 'Amarillo' | 'Rojo'; probabilidad: number; impacto: string; razon: string };
+  tareas: Tarea[];
+  validacion_requerida: boolean;
+  proxima_accion: string;
+  responsable: string;
+}
+
+interface Fase {
+  id: string;
+  numero: number;
+  nombre: string;
+  descripcion: string;
+  periodo: {
+    semana_inicio: number;
+    semana_fin: number;
+    fecha_inicio: string;
+    fecha_fin: string;
+  };
+  departamentos_activos: Array<{ departamento: string; estado: string; completitud: number }>;
+  sub_departamentos_activos: Array<{ sub_departamento: string; criticidad: 'Bloqueador' | 'Crítico' | 'Importante'; estado: string }>;
+  hitos_criticos: Array<{ nombre: string; fecha: string; departamento: string; bloqueador_para: string[] }>;
+  tareas_criticas: string[];
+  paralelismo: { tareas_simultaneas: string[]; capacidad: number };
+  presupuesto_fase: { planeado: number; real: number; porcentaje_total: number };
+  estado: 'Pendiente' | 'En progreso' | 'Completada';
+  salud: 'Verde' | 'Amarillo' | 'Rojo';
+}
+
 function getAnalysisFromSession(): PlannerAnalysis | null {
   try {
     const stored = sessionStorage.getItem('plannerAnalysis');
@@ -25,13 +124,95 @@ function getAnalysisFromSession(): PlannerAnalysis | null {
   }
 }
 
+// Helper: Generate realistic Pasos for a Tarea
+function generarPasos(tareaId: string, numPasos: number = 3): Paso[] {
+  return Array.from({ length: numPasos }, (_, i) => ({
+    id: `${tareaId}-paso-${i + 1}`,
+    numero: i + 1,
+    nombre: ['Planificación', 'Ejecución', 'Validación', 'Cierre'][i % 4],
+    descripcion: `Paso ${i + 1} del proceso`,
+    tarea_padre: tareaId,
+    estado: i === 0 ? 'En progreso' : i < 1 ? 'Completado' : 'No iniciado',
+    completitud_porcentaje: i === 0 ? 50 : i < 1 ? 100 : 0,
+    duracion: { planeado_dias: 5, real_dias: i < 1 ? 5 : 0 },
+    requisitos: [{ tipo: 'documento', descripcion: 'Documentación requerida', disponible: true }],
+    acciones: [{ numero: 1, descripcion: 'Ejecutar paso', asignado_a: 'Equipo' }],
+    resultado_esperado: 'Completar paso exitosamente',
+    resultado_actual: i < 1 ? 'En progreso' : undefined,
+    validacion_completitud: i < 1,
+    dependencias: { espera_paso: i > 0 ? [`${tareaId}-paso-${i}`] : [], desbloquea_paso: [] },
+    bloqueador: undefined
+  }));
+}
+
+// Helper: Generate realistic Tareas for a SubDepartamento
+function generarTareas(subDeptId: string, numTareas: number = 3): Tarea[] {
+  return Array.from({ length: numTareas }, (_, i) => ({
+    id: `${subDeptId}-tarea-${i + 1}`,
+    numero: i + 1,
+    nombre: `Tarea ${i + 1}: ${['Preparación', 'Implementación', 'Validación'][i % 3]}`,
+    descripcion: `Descripción de tarea ${i + 1}`,
+    sub_departamento_padre: subDeptId,
+    estado: i === 0 ? 'En progreso' : 'No iniciada',
+    completitud_porcentaje: i === 0 ? 40 : 0,
+    duracion: { planeado_dias: 10, real_dias: i === 0 ? 5 : 0, desviacion_dias: 0 },
+    presupuesto: { planeado: 5000, real: i === 0 ? 2000 : 0 },
+    informacion_requerida: [],
+    pasos: generarPasos(`${subDeptId}-tarea-${i + 1}`),
+    dependencias: { requiere_antes: i > 0 ? [`${subDeptId}-tarea-${i}`] : [], habilita: [] },
+    riesgo: { nivel: 'Bajo', razon: 'Tarea estándar' },
+    validacion: { requerida: false, tipo: 'revisión', validador: 'PM' },
+    responsable: 'Equipo',
+    fecha_inicio: new Date().toISOString().split('T')[0],
+    fecha_fin: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    prioridad: 'Media'
+  }));
+}
+
+// Helper: Generate SubDepartamentos from departamentos
+function generarSubDepartamentos(depts: Departamento[]): SubDepartamento[] {
+  return depts.map((dept, idx) => ({
+    id: `${dept.id}-sub`,
+    nombre: `${dept.nombre} - Subdepartamento`,
+    departamento_padre: dept.id,
+    descripcion: `Subdepartamento de ${dept.nombre}`,
+    estado: dept.estado === 'CRÍTICO' ? 'En Progreso' : 'Pendiente',
+    completitud_porcentaje: dept.porcentaje || 0,
+    timeline: {
+      planeado_semanas: 12,
+      planeado_fecha_inicio: new Date().toISOString().split('T')[0],
+      planeado_fecha_fin: new Date(Date.now() + 84 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      real_semanas: dept.estado === 'CRÍTICO' ? 4 : undefined,
+      real_fecha_inicio: dept.estado === 'CRÍTICO' ? new Date().toISOString().split('T')[0] : undefined,
+      desviacion_dias: 0
+    },
+    presupuesto: {
+      planeado_euros: 50000,
+      real_euros: dept.estado === 'CRÍTICO' ? 15000 : 0,
+      desviacion_euros: 0,
+      desviacion_porcentaje: 0
+    },
+    dependencias: { bloquea_a: [], bloqueado_por: [], en_paralelo_con: [] },
+    bloqueadores: { activos: [], potenciales: [] },
+    informacion_pendiente: [],
+    riesgo: {
+      nivel: dept.colorPorcentaje === '#dc2626' ? 'Rojo' : dept.colorPorcentaje === '#f59e0b' ? 'Amarillo' : 'Verde',
+      probabilidad: dept.porcentaje || 50,
+      impacto: 'Alto',
+      razon: `Estado: ${dept.estado}`
+    },
+    tareas: generarTareas(`${dept.id}-sub`, 3),
+    validacion_requerida: dept.estado === 'CRÍTICO',
+    proxima_accion: 'Comenzar tareas iniciales',
+    responsable: 'Project Manager'
+  }));
+}
+
 export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectConfig {
-  // Map PlannerAnalysis -> ProjectConfig for all views
   const criticalDepts = analysis.phase5?.departamentos_criticos || [];
   const importantDepts = analysis.phase5?.departamentos_importantes || [];
   const secondaryDepts = analysis.phase5?.departamentos_secundarios || [];
 
-  // Create departamentos array from phase5 data
   const departamentos: Departamento[] = [
     ...criticalDepts.map((d: any, i: number) => ({
       id: `dept-critico-${i}`,
@@ -62,16 +243,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
     }))
   ];
 
-  // Create subdepartamentos from suggestedSubdepartments
-  const subdepartamentos: Subdepartamento[] = Object.entries(
-    analysis.suggestedSubdepartments || {}
-  ).map(([parent, child], idx) => ({
-    id: `sub-${idx}`,
-    nombre: child as string,
-    departamento: parent,
-    estado: 'Backlog',
-    completitud: null
-  }));
+  const subdepartamentos = generarSubDepartamentos(departamentos);
 
   // Extract project name from jevPhase2
   const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
@@ -182,22 +354,6 @@ interface Departamento {
   detalles: Record<string, string>;
 }
 
-interface Subdepartamento {
-  id: string;
-  nombre: string;
-  departamento: string;
-  estado: string;
-  completitud: number | null;
-}
-
-interface Fase {
-  id: string;
-  trimestre: string;
-  periodo: string;
-  nombre: string;
-  tareas: string[];
-}
-
 interface Hito {
   fecha: string;
   nombre: string;
@@ -215,14 +371,6 @@ interface Agenda {
   hoy: AgendaItem[];
   manana: AgendaItem[];
   proximosHitos: Array<{ nombre: string; fecha: string }>;
-}
-
-interface Paso {
-  id: string;
-  nombre: string;
-  subtipo?: string;
-  estado: string;
-  dependencias: string[];
 }
 
 interface ProjectConfig {
