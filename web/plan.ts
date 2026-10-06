@@ -317,7 +317,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
   };
 }
 
-type PlanView = 'dashboard' | 'department' | 'timeline' | 'subdepartment' | 'step-graph';
+type PlanView = 'dashboard' | 'timeline' | 'subdepartment' | 'step-graph';
 
 // ============================================================================
 // TypeScript Interfaces for plan-config.json
@@ -380,11 +380,6 @@ const PLAN_VIEWS: Record<PlanView, { label: string; icon: string; description: s
     label: 'Panel General',
     icon: '',
     description: 'Resumen general del plan'
-  },
-  department: {
-    label: 'Departamentos',
-    icon: '',
-    description: 'Estructura de departamentos'
   },
   timeline: {
     label: 'Cronograma',
@@ -767,7 +762,6 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
     <div class="plan-nav">
       <button class="nav-button active" data-view="dashboard"> Panel General</button>
-      <button class="nav-button" data-view="department"> Departamentos</button>
       <button class="nav-button" data-view="timeline"> Cronograma</button>
       <button class="nav-button" data-view="subdepartment"> Subdepartamentos</button>
       <button class="nav-button" data-view="step-graph"> Grafo de Pasos</button>
@@ -927,154 +921,6 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
       </div>
 
       <!-- Department View - Health Matrix -->
-      <div id="department" class="view-section">
-        <div class="section-title">
-          <span class="icon"></span>
-          Matriz de Salud de Departamentos
-        </div>
-
-        <div style="margin: 20px 0;">
-          <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px;">
-            Evaluación de salud y operatividad por departamento
-          </p>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead>
-              <tr style="background: #f3f4f6; border-bottom: 2px solid #e5e7eb;">
-                <th style="padding: 12px; text-align: left; font-weight: 600; color: #1f2937; border-right: 1px solid #e5e7eb;">Departamento</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; color: #1f2937;">Operatividad</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; color: #1f2937;">Recursos</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; color: #1f2937;">Procesos</th>
-                <th style="padding: 12px; text-align: center; font-weight: 600; color: #1f2937;">Salud General</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; border-right: 1px solid #e5e7eb; color: #1f2937; font-weight: 500;">Recursos Humanos</td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center; color: #10b981; font-size: 13px; font-weight: 600;">Saludable</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; border-right: 1px solid #e5e7eb; color: #1f2937; font-weight: 500;">Desarrollo</td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #3b82f6; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center; color: #3b82f6; font-size: 13px; font-weight: 600;">En Progreso</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; border-right: 1px solid #e5e7eb; color: #1f2937; font-weight: 500;">Calidad</td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center; color: #10b981; font-size: 13px; font-weight: 600;">Saludable</td>
-              </tr>
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; border-right: 1px solid #e5e7eb; color: #1f2937; font-weight: 500;">Operaciones</td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center; color: #dc2626; font-size: 13px; font-weight: 600;">Crítico</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px; border-right: 1px solid #e5e7eb; color: #1f2937; font-weight: 500;">Finanzas</td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center;">
-                  <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 2px;"></span>
-                </td>
-                <td style="padding: 12px; text-align: center; color: #10b981; font-size: 13px; font-weight: 600;">Saludable</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Leyenda de Indicadores -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
-          <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 2px;"></span>
-              <span style="font-weight: 600; color: #10b981;">Saludable</span>
-            </div>
-            <div style="font-size: 12px; color: #6b7280;">Operativo y sin problemas</div>
-          </div>
-
-          <div style="background: #fef3c7; padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span style="display: inline-block; width: 10px; height: 10px; background: #f59e0b; border-radius: 2px;"></span>
-              <span style="font-weight: 600; color: #d97706;">En Riesgo</span>
-            </div>
-            <div style="font-size: 12px; color: #6b7280;">Requiere atención</div>
-          </div>
-
-          <div style="background: #dbeafe; padding: 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span style="display: inline-block; width: 10px; height: 10px; background: #3b82f6; border-radius: 2px;"></span>
-              <span style="font-weight: 600; color: #3b82f6;">En Progreso</span>
-            </div>
-            <div style="font-size: 12px; color: #6b7280;">En transición</div>
-          </div>
-
-          <div style="background: #fee2e2; padding: 16px; border-radius: 8px; border-left: 4px solid #ef4444;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span style="display: inline-block; width: 10px; height: 10px; background: #ef4444; border-radius: 2px;"></span>
-              <span style="font-weight: 600; color: #dc2626;">Crítico</span>
-            </div>
-            <div style="font-size: 12px; color: #6b7280;">Necesita acción inmediata</div>
-          </div>
-        </div>
-
-        <!-- Resumen de Salud General -->
-        <div style="margin-top: 20px; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-          <div style="font-weight: 600; color: #1f2937; margin-bottom: 12px; font-size: 14px;"> Resumen General</div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
-            <div style="background: white; padding: 12px; border-radius: 6px; text-align: center; border-left: 4px solid #10b981;">
-              <div style="font-size: 18px; font-weight: 700; color: #10b981;">3</div>
-              <div style="font-size: 11px; color: #6b7280;">Saludables</div>
-            </div>
-            <div style="background: white; padding: 12px; border-radius: 6px; text-align: center; border-left: 4px solid #f59e0b;">
-              <div style="font-size: 18px; font-weight: 700; color: #d97706;">1</div>
-              <div style="font-size: 11px; color: #6b7280;">En Riesgo</div>
-            </div>
-            <div style="background: white; padding: 12px; border-radius: 6px; text-align: center; border-left: 4px solid #ef4444;">
-              <div style="font-size: 18px; font-weight: 700; color: #dc2626;">1</div>
-              <div style="font-size: 11px; color: #6b7280;">Críticos</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Timeline View -->
       <div id="timeline" class="view-section">
         <div class="section-title">
