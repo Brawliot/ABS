@@ -1081,7 +1081,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
                 return `
               <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-                <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" ${hoverAttrs}>
+                <div class="dept-header" onclick="${escapeHtml(onclickHandler)}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" ${hoverAttrs}>
                   <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                     <span class="dept-toggle" style="font-size: 10px; color: #9ca3af;">▲</span>
                     <span style="font-size: 16px;">${isBloqueado ? '🔒' : dept.icono}</span>
@@ -1094,7 +1094,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                   <div style="display: grid; gap: 12px; margin-bottom: 16px;">
                     ${detailsHtml}
                   </div>
-                  <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter=${JSON.stringify(dept.id)}; return false;" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${escapedNombre}</button>
+                  <button class="plan-btn primary" onclick="document.querySelector('[data-view=subdepartment]').click(); window.currentDeptFilter=${escapeHtml(JSON.stringify(dept.id))}; return false;" style="width: 100%; padding: 10px 16px; font-size: 12px;">Ver Subdepartamentos de ${escapedNombre}</button>
                 </div>
               </div>
               `;
@@ -1401,21 +1401,51 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
     // Make projectData globally accessible
     window.projectData = ${JSON.stringify(projectData)};
 
-    // Mark department states based on firstBlocker (client-side only, sessionStorage available here)
+    // Mark department states based on team size + criticality (client-side only)
     if (window.projectData && window.projectData.departamentos) {
       try {
-        const firstBlockerJson = sessionStorage.getItem('firstBlocker');
-        if (firstBlockerJson) {
-          const firstBlocker = JSON.parse(firstBlockerJson);
-          const primeraBlockerName = firstBlocker?.primer_bloqueador?.departamento;
-          if (primeraBlockerName) {
-            window.projectData.departamentos.forEach(dept => {
-              dept.esPrimerBloqueador = dept.nombre === primeraBlockerName;
-              dept.bloqueadoPor = dept.nombre === primeraBlockerName ? undefined : primeraBlockerName;
-            });
-            console.log('Marked department states - First blocker:', primeraBlockerName);
+        const analysisJson = sessionStorage.getItem('plannerAnalysis') || localStorage.getItem('plannerAnalysis');
+        const analysis = analysisJson ? JSON.parse(analysisJson) : null;
+
+        // Map team size to max unlocked departments
+        const teamSizeMap = {
+          'Solo': 1,
+          '2-3': 2,
+          '4-6': 3,
+          '7-10': 4,
+          '10+': 5
+        };
+
+        let equipoSize = analysis?.resources?.equipo || 'Solo';
+        let maxUnlocked = teamSizeMap[equipoSize] || 2;
+
+        console.log('Team size:', equipoSize, '| Max unlocked:', maxUnlocked);
+
+        // Get critical departments only
+        const criticalDepts = window.projectData.departamentos
+          .filter(d => d.estado === 'CRÍTICO')
+          .sort((a, b) => (b.porcentaje || 0) - (a.porcentaje || 0));
+
+        // Select top N critical departments to unlock (based on team size)
+        const unlockedDepts = criticalDepts.slice(0, maxUnlocked);
+        const unlockedNames = unlockedDepts.map(d => d.nombre);
+
+        const primerDesbloqueado = unlockedNames[0] || 'Operativo';
+
+        console.log('Unlocked departments:', unlockedNames);
+
+        // Mark states
+        window.projectData.departamentos.forEach(dept => {
+          if (unlockedNames.includes(dept.nombre)) {
+            dept.esPrimerBloqueador = dept.nombre === primerDesbloqueado;
+            dept.bloqueadoPor = undefined; // Desbloqueado
+          } else {
+            dept.esPrimerBloqueador = false;
+            dept.bloqueadoPor = primerDesbloqueado; // Bloqueado por el primero
           }
-        }
+        });
+
+        console.log('Marked department states - Max:', maxUnlocked, '| Unlocked:', unlockedNames.length);
       } catch (e) {
         console.warn('Could not mark department states:', e);
       }
