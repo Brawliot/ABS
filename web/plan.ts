@@ -1316,12 +1316,19 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
     // Open subdepartment tasks popup
     window.openSubdeptPopup = function(subdeptId) {
+      console.log('openSubdeptPopup called with:', subdeptId);
       const popup = document.getElementById('popup-subdept');
       const title = document.getElementById('subdept-popup-title');
       const content = document.getElementById('subdept-popup-content');
 
+      console.log('popup:', popup, 'title:', title, 'content:', content);
+
       const subdept = projectData.subdepartamentos.find(s => s.id === subdeptId);
-      if (!subdept) return;
+      console.log('subdept found:', subdept);
+      if (!subdept) {
+        console.log('Subdepartamento no encontrado');
+        return;
+      }
 
       title.textContent = 'Tareas de ' + subdept.nombre;
 
