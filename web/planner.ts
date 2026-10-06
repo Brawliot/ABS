@@ -682,6 +682,15 @@ export function renderPlannerHtml(): string {
       content.scrollTop = content.scrollHeight;
     };
 
+    const hasLowConfidence = (jevResults) => {
+      const sector = jevResults.answers.sector?.choice;
+      const alcance = jevResults.answers.alcance_geografico?.choice;
+      const timeline = jevResults.answers.timeline?.choice;
+
+      const isVague = (val) => !val || val === 'No especificado' || val === 'Otros';
+      return isVague(sector) || isVague(alcance) || isVague(timeline);
+    };
+
     const handleSend = async () => {
       const value = input.value.trim();
       if (!value || sendBtn.disabled) return;
@@ -748,31 +757,37 @@ export function renderPlannerHtml(): string {
           lastJevAnalysis = results.answers;
           originalInput = value;
 
-          const loadingId2 = addLoadingMessage(2);
+          const lowConfidence = hasLowConfidence(results);
 
-          const response2 = await fetch('/api/planner/phase2', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              input: value,
-              jevAnalysis: {
-                sector: results.answers.sector.choice,
-                alcance_geografico: results.answers.alcance_geografico.choice,
-                timeline: results.answers.timeline.choice
-              }
-            })
-          });
+          if (lowConfidence) {
+            const loadingId2 = addLoadingMessage(2);
 
-          removeLoadingMessage(loadingId2);
+            const response2 = await fetch('/api/planner/phase2', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                input: value,
+                jevAnalysis: {
+                  sector: results.answers.sector.choice,
+                  alcance_geografico: results.answers.alcance_geografico.choice,
+                  timeline: results.answers.timeline.choice
+                }
+              })
+            });
 
-          if (!response2.ok) {
-            const error = await response2.json();
-            throw new Error(error.error || 'Error en Fase 2');
+            removeLoadingMessage(loadingId2);
+
+            if (!response2.ok) {
+              const error = await response2.json();
+              throw new Error(error.error || 'Error en Fase 2');
+            }
+
+            const phase2Results = await response2.json();
+            currentPhase2 = phase2Results;
+            addAnalysisMessage(results, phase2Results);
+          } else {
+            addQuestionMessage('✓ Tu idea está bien definida. Procedemos con el análisis de recursos.');
           }
-
-          const phase2Results = await response2.json();
-          currentPhase2 = phase2Results;
-          addAnalysisMessage(results, phase2Results);
 
           addResourcesForm();
         }
