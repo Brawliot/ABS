@@ -2,564 +2,375 @@
  * Plan page: Business plan summary with multiple views
  * Views: dashboard, department, timeline, subdepartment, step-graph
  */
-
-interface PlannerAnalysis {
-  phase1: any;
-  phase2: any;
-  jevPhase2: any;
-  phase5: any;
-  resources: any;
-  suggestedSubdepartments: Record<string, string>;
-  originalInput: string;
-  timestamp: string;
+function getAnalysisFromSession() {
+    try {
+        const stored = sessionStorage.getItem('plannerAnalysis');
+        if (!stored)
+            return null;
+        return JSON.parse(stored);
+    }
+    catch (e) {
+        console.error('Error reading analysis from sessionStorage:', e);
+        return null;
+    }
 }
-
-interface Paso {
-  id: string;
-  numero: number;
-  nombre: string;
-  descripcion: string;
-  tarea_padre: string;
-  estado: 'No iniciado' | 'En progreso' | 'Completado' | 'Bloqueado';
-  completitud_porcentaje: number;
-  duracion: { planeado_dias: number; real_dias: number };
-  requisitos: Array<{ tipo: string; descripcion: string; disponible: boolean }>;
-  acciones: Array<{ numero: number; descripcion: string; asignado_a: string }>;
-  resultado_esperado: string;
-  resultado_actual?: string;
-  validacion_completitud: boolean;
-  dependencias: { espera_paso: string[]; desbloquea_paso: string[] };
-  bloqueador?: string;
+function getFirstBlockerFromSession() {
+    try {
+        const stored = sessionStorage.getItem('firstBlocker');
+        if (!stored)
+            return null;
+        return JSON.parse(stored);
+    }
+    catch (e) {
+        console.error('Error reading firstBlocker from sessionStorage:', e);
+        return null;
+    }
 }
-
-interface Tarea {
-  id: string;
-  numero: number;
-  nombre: string;
-  descripcion: string;
-  sub_departamento_padre: string;
-  estado: 'No iniciada' | 'En progreso' | 'Completada' | 'Bloqueada';
-  completitud_porcentaje: number;
-  duracion: { planeado_dias: number; real_dias: number; desviacion_dias: number };
-  presupuesto: { planeado: number; real: number };
-  informacion_requerida: Array<{ tipo: string; descripcion: string; de_quien: string; recibido: boolean; fecha_recibido?: string }>;
-  pasos: Paso[];
-  dependencias: { requiere_antes: string[]; habilita: string[] };
-  riesgo: { nivel: 'Bajo' | 'Medio' | 'Alto'; razon: string };
-  validacion: { requerida: boolean; tipo: string; validador: string };
-  responsable: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
+function markDepartmentStates(departamentos) {
+    const firstBlocker = getFirstBlockerFromSession();
+    if (!firstBlocker || !firstBlocker.primer_bloqueador) {
+        return departamentos;
+    }
+    const primeraBlockerName = firstBlocker.primer_bloqueador.departamento;
+    return departamentos.map(dept => ({
+        ...dept,
+        esPrimerBloqueador: dept.nombre === primeraBlockerName,
+        bloqueadoPor: dept.nombre === primeraBlockerName ? undefined : primeraBlockerName
+    }));
 }
-
-interface SubDepartamento {
-  id: string;
-  nombre: string;
-  departamento_padre: string;
-  descripcion: string;
-  estado: 'Pendiente' | 'En Progreso' | 'Completado' | 'Bloqueado';
-  completitud_porcentaje: number;
-  timeline: {
-    planeado_semanas: number;
-    planeado_fecha_inicio: string;
-    planeado_fecha_fin: string;
-    real_semanas?: number;
-    real_fecha_inicio?: string;
-    real_fecha_fin?: string;
-    desviacion_dias: number;
-  };
-  presupuesto: {
-    planeado_euros: number;
-    real_euros: number;
-    desviacion_euros: number;
-    desviacion_porcentaje: number;
-  };
-  dependencias: {
-    bloquea_a: string[];
-    bloqueado_por: string[];
-    en_paralelo_con: string[];
-  };
-  bloqueadores: {
-    activos: string[];
-    potenciales: string[];
-  };
-  informacion_pendiente: Array<{ tipo: string; descripcion: string; de_quien: string; fecha_limite: string }>;
-  riesgo: { nivel: 'Verde' | 'Amarillo' | 'Rojo'; probabilidad: number; impacto: string; razon: string };
-  tareas: Tarea[];
-  validacion_requerida: boolean;
-  proxima_accion: string;
-  responsable: string;
-}
-
-interface Fase {
-  id: string;
-  numero: number;
-  nombre: string;
-  descripcion: string;
-  periodo: {
-    semana_inicio: number;
-    semana_fin: number;
-    fecha_inicio: string;
-    fecha_fin: string;
-  };
-  departamentos_activos: Array<{ departamento: string; estado: string; completitud: number }>;
-  sub_departamentos_activos: Array<{ sub_departamento: string; criticidad: 'Bloqueador' | 'Crítico' | 'Importante'; estado: string }>;
-  hitos_criticos: Array<{ nombre: string; fecha: string; departamento: string; bloqueador_para: string[] }>;
-  tareas_criticas: string[];
-  paralelismo: { tareas_simultaneas: string[]; capacidad: number };
-  presupuesto_fase: { planeado: number; real: number; porcentaje_total: number };
-  estado: 'Pendiente' | 'En progreso' | 'Completada';
-  salud: 'Verde' | 'Amarillo' | 'Rojo';
-}
-
-function getAnalysisFromSession(): PlannerAnalysis | null {
-  try {
-    const stored = sessionStorage.getItem('plannerAnalysis');
-    if (!stored) return null;
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error('Error reading analysis from sessionStorage:', e);
-    return null;
-  }
-}
-
-function getFirstBlockerFromSession(): any {
-  try {
-    const stored = sessionStorage.getItem('firstBlocker');
-    if (!stored) return null;
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error('Error reading firstBlocker from sessionStorage:', e);
-    return null;
-  }
-}
-
-function markDepartmentStates(departamentos: Departamento[]): Departamento[] {
-  const firstBlocker = getFirstBlockerFromSession();
-  if (!firstBlocker || !firstBlocker.primer_bloqueador) {
-    return departamentos;
-  }
-
-  const primeraBlockerName = firstBlocker.primer_bloqueador.departamento;
-  return departamentos.map(dept => ({
-    ...dept,
-    esPrimerBloqueador: dept.nombre === primeraBlockerName,
-    bloqueadoPor: dept.nombre === primeraBlockerName ? undefined : primeraBlockerName
-  }));
-}
-
 // Helper: Generate realistic Pasos for a Tarea
-function generarPasos(tareaId: string, numPasos: number = 3): Paso[] {
-  return Array.from({ length: numPasos }, (_, i) => ({
-    id: `${tareaId}-paso-${i + 1}`,
-    numero: i + 1,
-    nombre: ['Planificación', 'Ejecución', 'Validación', 'Cierre'][i % 4],
-    descripcion: `Paso ${i + 1} del proceso`,
-    tarea_padre: tareaId,
-    estado: i === 0 ? 'En progreso' : i < 1 ? 'Completado' : 'No iniciado',
-    completitud_porcentaje: i === 0 ? 50 : i < 1 ? 100 : 0,
-    duracion: { planeado_dias: 5, real_dias: i < 1 ? 5 : 0 },
-    requisitos: [{ tipo: 'documento', descripcion: 'Documentación requerida', disponible: true }],
-    acciones: [{ numero: 1, descripcion: 'Ejecutar paso', asignado_a: 'Equipo' }],
-    resultado_esperado: 'Completar paso exitosamente',
-    resultado_actual: i < 1 ? 'En progreso' : undefined,
-    validacion_completitud: i < 1,
-    dependencias: { espera_paso: i > 0 ? [`${tareaId}-paso-${i}`] : [], desbloquea_paso: [] },
-    bloqueador: undefined
-  }));
+function generarPasos(tareaId, numPasos = 3) {
+    return Array.from({ length: numPasos }, (_, i) => ({
+        id: `${tareaId}-paso-${i + 1}`,
+        numero: i + 1,
+        nombre: ['Planificación', 'Ejecución', 'Validación', 'Cierre'][i % 4],
+        descripcion: `Paso ${i + 1} del proceso`,
+        tarea_padre: tareaId,
+        estado: i === 0 ? 'En progreso' : i < 1 ? 'Completado' : 'No iniciado',
+        completitud_porcentaje: i === 0 ? 50 : i < 1 ? 100 : 0,
+        duracion: { planeado_dias: 5, real_dias: i < 1 ? 5 : 0 },
+        requisitos: [{ tipo: 'documento', descripcion: 'Documentación requerida', disponible: true }],
+        acciones: [{ numero: 1, descripcion: 'Ejecutar paso', asignado_a: 'Equipo' }],
+        resultado_esperado: 'Completar paso exitosamente',
+        resultado_actual: i < 1 ? 'En progreso' : undefined,
+        validacion_completitud: i < 1,
+        dependencias: { espera_paso: i > 0 ? [`${tareaId}-paso-${i}`] : [], desbloquea_paso: [] },
+        bloqueador: undefined
+    }));
 }
-
 // Helper: Generate realistic Tareas for a SubDepartamento
-function generarTareas(subDeptId: string, numTareas: number = 3): Tarea[] {
-  return Array.from({ length: numTareas }, (_, i) => ({
-    id: `${subDeptId}-tarea-${i + 1}`,
-    numero: i + 1,
-    nombre: `Tarea ${i + 1}: ${['Preparación', 'Implementación', 'Validación'][i % 3]}`,
-    descripcion: `Descripción de tarea ${i + 1}`,
-    sub_departamento_padre: subDeptId,
-    estado: i === 0 ? 'En progreso' : 'No iniciada',
-    completitud_porcentaje: i === 0 ? 40 : 0,
-    duracion: { planeado_dias: 10, real_dias: i === 0 ? 5 : 0, desviacion_dias: 0 },
-    presupuesto: { planeado: 5000, real: i === 0 ? 2000 : 0 },
-    informacion_requerida: [],
-    pasos: generarPasos(`${subDeptId}-tarea-${i + 1}`),
-    dependencias: { requiere_antes: i > 0 ? [`${subDeptId}-tarea-${i}`] : [], habilita: [] },
-    riesgo: { nivel: 'Bajo', razon: 'Tarea estándar' },
-    validacion: { requerida: false, tipo: 'revisión', validador: 'PM' },
-    responsable: 'Equipo',
-    fecha_inicio: new Date().toISOString().split('T')[0],
-    fecha_fin: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    prioridad: 'Media'
-  }));
+function generarTareas(subDeptId, numTareas = 3) {
+    return Array.from({ length: numTareas }, (_, i) => ({
+        id: `${subDeptId}-tarea-${i + 1}`,
+        numero: i + 1,
+        nombre: `Tarea ${i + 1}: ${['Preparación', 'Implementación', 'Validación'][i % 3]}`,
+        descripcion: `Descripción de tarea ${i + 1}`,
+        sub_departamento_padre: subDeptId,
+        estado: i === 0 ? 'En progreso' : 'No iniciada',
+        completitud_porcentaje: i === 0 ? 40 : 0,
+        duracion: { planeado_dias: 10, real_dias: i === 0 ? 5 : 0, desviacion_dias: 0 },
+        presupuesto: { planeado: 5000, real: i === 0 ? 2000 : 0 },
+        informacion_requerida: [],
+        pasos: generarPasos(`${subDeptId}-tarea-${i + 1}`),
+        dependencias: { requiere_antes: i > 0 ? [`${subDeptId}-tarea-${i}`] : [], habilita: [] },
+        riesgo: { nivel: 'Bajo', razon: 'Tarea estándar' },
+        validacion: { requerida: false, tipo: 'revisión', validador: 'PM' },
+        responsable: 'Equipo',
+        fecha_inicio: new Date().toISOString().split('T')[0],
+        fecha_fin: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        prioridad: 'Media'
+    }));
 }
-
 // Helper: Populate tareas for subdepartments that don't have them
-function poblarTareasSubdepartamentos(subdepts: SubDepartamento[]): SubDepartamento[] {
-  return subdepts.map(sub => ({
-    ...sub,
-    tareas: (sub.tareas && sub.tareas.length > 0) ? sub.tareas : generarTareas(sub.id, 3)
-  }));
+function poblarTareasSubdepartamentos(subdepts) {
+    return subdepts.map(sub => ({
+        ...sub,
+        tareas: (sub.tareas && sub.tareas.length > 0) ? sub.tareas : generarTareas(sub.id, 3)
+    }));
 }
-
 // Helper: Generate SubDepartamentos from departamentos
-function generarSubDepartamentos(depts: Departamento[]): SubDepartamento[] {
-  return depts.map((dept, idx) => ({
-    id: `${dept.id}-sub`,
-    nombre: `${dept.nombre} - Subdepartamento`,
-    departamento_padre: dept.id,
-    descripcion: `Subdepartamento de ${dept.nombre}`,
-    estado: dept.estado === 'CRÍTICO' ? 'En Progreso' : 'Pendiente',
-    completitud_porcentaje: dept.porcentaje || 0,
-    timeline: {
-      planeado_semanas: 12,
-      planeado_fecha_inicio: new Date().toISOString().split('T')[0],
-      planeado_fecha_fin: new Date(Date.now() + 84 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      real_semanas: dept.estado === 'CRÍTICO' ? 4 : undefined,
-      real_fecha_inicio: dept.estado === 'CRÍTICO' ? new Date().toISOString().split('T')[0] : undefined,
-      desviacion_dias: 0
-    },
-    presupuesto: {
-      planeado_euros: 50000,
-      real_euros: dept.estado === 'CRÍTICO' ? 15000 : 0,
-      desviacion_euros: 0,
-      desviacion_porcentaje: 0
-    },
-    dependencias: { bloquea_a: [], bloqueado_por: [], en_paralelo_con: [] },
-    bloqueadores: { activos: [], potenciales: [] },
-    informacion_pendiente: [],
-    riesgo: {
-      nivel: dept.colorPorcentaje === '#dc2626' ? 'Rojo' : dept.colorPorcentaje === '#f59e0b' ? 'Amarillo' : 'Verde',
-      probabilidad: dept.porcentaje || 50,
-      impacto: 'Alto',
-      razon: `Estado: ${dept.estado}`
-    },
-    tareas: generarTareas(`${dept.id}-sub`, 3),
-    validacion_requerida: dept.estado === 'CRÍTICO',
-    proxima_accion: 'Comenzar tareas iniciales',
-    responsable: 'Project Manager'
-  }));
+function generarSubDepartamentos(depts) {
+    return depts.map((dept, idx) => ({
+        id: `${dept.id}-sub`,
+        nombre: `${dept.nombre} - Subdepartamento`,
+        departamento_padre: dept.id,
+        descripcion: `Subdepartamento de ${dept.nombre}`,
+        estado: dept.estado === 'CRÍTICO' ? 'En Progreso' : 'Pendiente',
+        completitud_porcentaje: dept.porcentaje || 0,
+        timeline: {
+            planeado_semanas: 12,
+            planeado_fecha_inicio: new Date().toISOString().split('T')[0],
+            planeado_fecha_fin: new Date(Date.now() + 84 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            real_semanas: dept.estado === 'CRÍTICO' ? 4 : undefined,
+            real_fecha_inicio: dept.estado === 'CRÍTICO' ? new Date().toISOString().split('T')[0] : undefined,
+            desviacion_dias: 0
+        },
+        presupuesto: {
+            planeado_euros: 50000,
+            real_euros: dept.estado === 'CRÍTICO' ? 15000 : 0,
+            desviacion_euros: 0,
+            desviacion_porcentaje: 0
+        },
+        dependencias: { bloquea_a: [], bloqueado_por: [], en_paralelo_con: [] },
+        bloqueadores: { activos: [], potenciales: [] },
+        informacion_pendiente: [],
+        riesgo: {
+            nivel: dept.colorPorcentaje === '#dc2626' ? 'Rojo' : dept.colorPorcentaje === '#f59e0b' ? 'Amarillo' : 'Verde',
+            probabilidad: dept.porcentaje || 50,
+            impacto: 'Alto',
+            razon: `Estado: ${dept.estado}`
+        },
+        tareas: generarTareas(`${dept.id}-sub`, 3),
+        validacion_requerida: dept.estado === 'CRÍTICO',
+        proxima_accion: 'Comenzar tareas iniciales',
+        responsable: 'Project Manager'
+    }));
 }
-
 // Calculate health metrics for a department based on its subdepartments
-function calcularSaludDepartamento(deptId: string, subdepts: SubDepartamento[]): Record<string, any> {
-  const subsdeptsDept = subdepts.filter(s => s.departamento_padre === deptId);
-
-  if (subsdeptsDept.length === 0) {
+function calcularSaludDepartamento(deptId, subdepts) {
+    const subsdeptsDept = subdepts.filter(s => s.departamento_padre === deptId);
+    if (subsdeptsDept.length === 0) {
+        return {
+            estado: 'Sin actividad',
+            completitud: 0,
+            riesgo: 'Desconocido',
+            tareasCompletadas: '0 de 0',
+            subdepartamentosEnProgreso: 0,
+            bloqueadores: 0,
+            proximoHito: 'No definido'
+        };
+    }
+    // 1. Estado (cascada)
+    let estado = 'PENDIENTE';
+    if (subsdeptsDept.some(s => s.estado === 'Bloqueado')) {
+        estado = 'BLOQUEADO';
+    }
+    else if (subsdeptsDept.some(s => s.estado === 'En Progreso')) {
+        estado = 'EN PROGRESO';
+    }
+    else if (subsdeptsDept.every(s => s.estado === 'Completado')) {
+        estado = 'COMPLETADO';
+    }
+    // 2. Completitud % (promedio ponderado)
+    let tareasCompletadas = 0;
+    let tareasTotal = 0;
+    subsdeptsDept.forEach(sub => {
+        if (sub.tareas) {
+            const completadas = sub.tareas.filter(t => t.estado === 'Completado').length;
+            tareasCompletadas += completadas;
+            tareasTotal += sub.tareas.length;
+        }
+    });
+    const completitud = tareasTotal > 0 ? Math.round((tareasCompletadas / tareasTotal) * 100) : 0;
+    // 3. Riesgo (máximo)
+    const nivelesRiesgo = { 'ROJO': 3, 'AMARILLO': 2, 'VERDE': 1, 'Desconocido': 0 };
+    let riesgoMax = 'VERDE';
+    subsdeptsDept.forEach(sub => {
+        const riesgoActual = sub.riesgo?.nivel || 'Desconocido';
+        if (nivelesRiesgo[riesgoActual] > nivelesRiesgo[riesgoMax]) {
+            riesgoMax = riesgoActual;
+        }
+    });
+    // 4. Subdepartamentos en progreso
+    const subdepartamentosEnProgreso = subsdeptsDept.filter(s => s.estado === 'En Progreso').length;
+    // 5. Bloqueadores activos
+    let bloqueadores = 0;
+    subsdeptsDept.forEach(sub => {
+        if (sub.tareas) {
+            bloqueadores += sub.tareas.filter(t => t.estado === 'Bloqueado').length;
+        }
+    });
     return {
-      estado: 'Sin actividad',
-      completitud: 0,
-      riesgo: 'Desconocido',
-      tareasCompletadas: '0 de 0',
-      subdepartamentosEnProgreso: 0,
-      bloqueadores: 0,
-      proximoHito: 'No definido'
+        estado: estado,
+        completitud: completitud,
+        riesgo: riesgoMax,
+        tareasCompletadas: `${tareasCompletadas} de ${tareasTotal}`,
+        subdepartamentosEnProgreso: subdepartamentosEnProgreso,
+        bloqueadores: bloqueadores,
+        proximoHito: 'En revisión'
     };
-  }
-
-  // 1. Estado (cascada)
-  let estado = 'PENDIENTE';
-  if (subsdeptsDept.some(s => s.estado === 'Bloqueado')) {
-    estado = 'BLOQUEADO';
-  } else if (subsdeptsDept.some(s => s.estado === 'En Progreso')) {
-    estado = 'EN PROGRESO';
-  } else if (subsdeptsDept.every(s => s.estado === 'Completado')) {
-    estado = 'COMPLETADO';
-  }
-
-  // 2. Completitud % (promedio ponderado)
-  let tareasCompletadas = 0;
-  let tareasTotal = 0;
-  subsdeptsDept.forEach(sub => {
-    if (sub.tareas) {
-      const completadas = sub.tareas.filter(t => t.estado === 'Completado').length;
-      tareasCompletadas += completadas;
-      tareasTotal += sub.tareas.length;
-    }
-  });
-  const completitud = tareasTotal > 0 ? Math.round((tareasCompletadas / tareasTotal) * 100) : 0;
-
-  // 3. Riesgo (máximo)
-  const nivelesRiesgo = { 'ROJO': 3, 'AMARILLO': 2, 'VERDE': 1, 'Desconocido': 0 };
-  let riesgoMax = 'VERDE';
-  subsdeptsDept.forEach(sub => {
-    const riesgoActual = sub.riesgo?.nivel || 'Desconocido';
-    if (nivelesRiesgo[riesgoActual] > nivelesRiesgo[riesgoMax]) {
-      riesgoMax = riesgoActual;
-    }
-  });
-
-  // 4. Subdepartamentos en progreso
-  const subdepartamentosEnProgreso = subsdeptsDept.filter(s => s.estado === 'En Progreso').length;
-
-  // 5. Bloqueadores activos
-  let bloqueadores = 0;
-  subsdeptsDept.forEach(sub => {
-    if (sub.tareas) {
-      bloqueadores += sub.tareas.filter(t => t.estado === 'Bloqueado').length;
-    }
-  });
-
-  return {
-    estado: estado,
-    completitud: completitud,
-    riesgo: riesgoMax,
-    tareasCompletadas: `${tareasCompletadas} de ${tareasTotal}`,
-    subdepartamentosEnProgreso: subdepartamentosEnProgreso,
-    bloqueadores: bloqueadores,
-    proximoHito: 'En revisión'
-  };
 }
-
-export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectConfig {
-  const criticalDepts = analysis.phase5?.departamentos_criticos || [];
-  const importantDepts = analysis.phase5?.departamentos_importantes || [];
-  const secondaryDepts = analysis.phase5?.departamentos_secundarios || [];
-
-  let departamentos: Departamento[] = [
-    ...criticalDepts.map((d: any, i: number) => ({
-      id: `dept-critico-${i}`,
-      nombre: d.nombre,
-      estado: 'CRÍTICO',
-      porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
-      icono: '[C]',
-      colorPorcentaje: '#dc2626',
-      detalles: { estado: 'Crítico para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
-    })),
-    ...importantDepts.map((d: any, i: number) => ({
-      id: `dept-important-${i}`,
-      nombre: d.nombre,
-      estado: 'EN PROGRESO',
-      porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
-      icono: '[I]',
-      colorPorcentaje: '#f59e0b',
-      detalles: { estado: 'Importante para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
-    })),
-    ...secondaryDepts.map((d: any, i: number) => ({
-      id: `dept-secondary-${i}`,
-      nombre: d.nombre,
-      estado: 'PENDIENTE',
-      porcentaje: null,
-      icono: '[S]',
-      colorPorcentaje: '#6b7280',
-      detalles: { estado: 'Secundario en el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
-    }))
-  ];
-
-  const subdepartamentos = generarSubDepartamentos(departamentos);
-
-  // Calculate health metrics for each department based on its subdepartments
-  departamentos.forEach(dept => {
-    const salud = calcularSaludDepartamento(dept.id, subdepartamentos);
-    dept.estado = salud.estado;
-    dept.porcentaje = salud.completitud;
-    dept.detalles = {
-      completitud: `${salud.completitud}%`,
-      tareasCompletadas: salud.tareasCompletadas,
-      subdepartamentosEnProgreso: salud.subdepartamentosEnProgreso,
-      bloqueadores: salud.bloqueadores > 0 ? `${salud.bloqueadores} tarea(s) bloqueada(s)` : 'Ninguno',
-      riesgo: salud.riesgo,
-      proximoHito: salud.proximoHito
+export function mapAnalysisToProjectConfig(analysis) {
+    const criticalDepts = analysis.phase5?.departamentos_criticos || [];
+    const importantDepts = analysis.phase5?.departamentos_importantes || [];
+    const secondaryDepts = analysis.phase5?.departamentos_secundarios || [];
+    let departamentos = [
+        ...criticalDepts.map((d, i) => ({
+            id: `dept-critico-${i}`,
+            nombre: d.nombre,
+            estado: 'CRÍTICO',
+            porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
+            icono: '[C]',
+            colorPorcentaje: '#dc2626',
+            detalles: { estado: 'Crítico para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+        })),
+        ...importantDepts.map((d, i) => ({
+            id: `dept-important-${i}`,
+            nombre: d.nombre,
+            estado: 'EN PROGRESO',
+            porcentaje: d.probabilidad ? Math.round(d.probabilidad * 100) : 50,
+            icono: '[I]',
+            colorPorcentaje: '#f59e0b',
+            detalles: { estado: 'Importante para el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+        })),
+        ...secondaryDepts.map((d, i) => ({
+            id: `dept-secondary-${i}`,
+            nombre: d.nombre,
+            estado: 'PENDIENTE',
+            porcentaje: null,
+            icono: '[S]',
+            colorPorcentaje: '#6b7280',
+            detalles: { estado: 'Secundario en el proyecto', probabilidad: `${d.probabilidad ? Math.round(d.probabilidad * 100) : 50}%` }
+        }))
+    ];
+    const subdepartamentos = generarSubDepartamentos(departamentos);
+    // Calculate health metrics for each department based on its subdepartments
+    departamentos.forEach(dept => {
+        const salud = calcularSaludDepartamento(dept.id, subdepartamentos);
+        dept.estado = salud.estado;
+        dept.porcentaje = salud.completitud;
+        dept.detalles = {
+            completitud: `${salud.completitud}%`,
+            tareasCompletadas: salud.tareasCompletadas,
+            subdepartamentosEnProgreso: salud.subdepartamentosEnProgreso,
+            bloqueadores: salud.bloqueadores > 0 ? `${salud.bloqueadores} tarea(s) bloqueada(s)` : 'Ninguno',
+            riesgo: salud.riesgo,
+            proximoHito: salud.proximoHito
+        };
+        // Update color based on state
+        if (salud.estado === 'COMPLETADO') {
+            dept.colorPorcentaje = '#10b981';
+            dept.icono = '✓';
+        }
+        else if (salud.estado === 'EN PROGRESO') {
+            dept.colorPorcentaje = '#f59e0b';
+            dept.icono = '↻';
+        }
+        else if (salud.estado === 'BLOQUEADO') {
+            dept.colorPorcentaje = '#ef4444';
+            dept.icono = '⚠';
+        }
+    });
+    // Mark department states (bloqueado/abierto)
+    departamentos = markDepartmentStates(departamentos);
+    // Extract project name from jevPhase2
+    const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
+    // Create ProjectConfig
+    return {
+        proyecto: {
+            nombre: nombreProyecto,
+            estado: analysis.jevPhase2?.estado || 'En desarrollo',
+            semana: '1',
+            totalSemanas: '24',
+            metricas: {
+                progreso: Math.round((criticalDepts.length / (criticalDepts.length + importantDepts.length + secondaryDepts.length || 1)) * 100),
+                desviacionTimeline: 0,
+                desviacionPresupuesto: `-€${analysis.resources?.presupuesto || 0}`,
+                riesgoGeneral: criticalDepts.length > 0 ? 'ROJO' : 'AMARILLO'
+            }
+        },
+        departamentos,
+        subdepartamentos,
+        fases: [
+            {
+                id: 'q1',
+                trimestre: 'Q1 2025',
+                periodo: 'Enero - Marzo',
+                nombre: 'Fase de Planificación',
+                tareas: ['Validación de concepto', 'Análisis de viabilidad', 'Setup inicial']
+            },
+            {
+                id: 'q2',
+                trimestre: 'Q2 2025',
+                periodo: 'Abril - Junio',
+                nombre: 'Desarrollo Activo',
+                tareas: ['Implementación', 'Integración', 'Testing']
+            },
+            {
+                id: 'q3',
+                trimestre: 'Q3 2025',
+                periodo: 'Julio - Septiembre',
+                nombre: 'Optimización',
+                tareas: ['Refinamiento', 'Capacitación', 'Ajustes']
+            },
+            {
+                id: 'q4',
+                trimestre: 'Q4 2025',
+                periodo: 'Octubre - Diciembre',
+                nombre: 'Lanzamiento',
+                tareas: ['Go live', 'Soporte', 'Evaluación']
+            }
+        ],
+        hitos: [
+            { fecha: '15 Mar 2025', nombre: 'Análisis completado', trimestre: 'Q1' },
+            { fecha: '30 Jun 2025', nombre: 'MVP completado', trimestre: 'Q2' },
+            { fecha: '30 Sep 2025', nombre: 'Beta testing terminado', trimestre: 'Q3' },
+            { fecha: '15 Dic 2025', nombre: 'Go Live', trimestre: 'Q4' }
+        ],
+        agenda: {
+            hoy: [
+                { hora: '10:00', titulo: 'Revisión del plan', participantes: ['Equipo'] },
+                { hora: '14:30', titulo: 'Alineación de recursos', ubicacion: 'Virtual' }
+            ],
+            manana: [
+                { hora: '09:00', titulo: 'Checkpoint de validación', participantes: ['Stakeholders'] }
+            ],
+            proximosHitos: [
+                { nombre: 'Validación de departamentos críticos', fecha: 'Semana 1' },
+                { nombre: 'Setup de infraestructura', fecha: 'Semana 2' }
+            ]
+        },
+        pasos: subdepartamentos.flatMap(sub => sub.tareas.flatMap(t => t.pasos))
     };
-    // Update color based on state
-    if (salud.estado === 'COMPLETADO') {
-      dept.colorPorcentaje = '#10b981';
-      dept.icono = '✓';
-    } else if (salud.estado === 'EN PROGRESO') {
-      dept.colorPorcentaje = '#f59e0b';
-      dept.icono = '↻';
-    } else if (salud.estado === 'BLOQUEADO') {
-      dept.colorPorcentaje = '#ef4444';
-      dept.icono = '⚠';
+}
+const PLAN_VIEWS = {
+    dashboard: {
+        label: 'Panel General',
+        icon: '',
+        description: 'Resumen general del plan'
+    },
+    timeline: {
+        label: 'Cronograma',
+        icon: '',
+        description: 'Línea de tiempo del proyecto'
+    },
+    subdepartment: {
+        label: 'Subdepartamentos',
+        icon: '',
+        description: 'Desglose de subdepartamentos'
+    },
+    'step-graph': {
+        label: 'Grafo de Pasos',
+        icon: '',
+        description: 'Flujo de pasos y procesos'
     }
-  });
-
-  // Mark department states (bloqueado/abierto)
-  departamentos = markDepartmentStates(departamentos);
-
-  // Extract project name from jevPhase2
-  const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
-
-  // Create ProjectConfig
-  return {
-    proyecto: {
-      nombre: nombreProyecto,
-      estado: analysis.jevPhase2?.estado || 'En desarrollo',
-      semana: '1',
-      totalSemanas: '24',
-      metricas: {
-        progreso: Math.round((criticalDepts.length / (criticalDepts.length + importantDepts.length + secondaryDepts.length || 1)) * 100),
-        desviacionTimeline: 0,
-        desviacionPresupuesto: `-€${analysis.resources?.presupuesto || 0}`,
-        riesgoGeneral: criticalDepts.length > 0 ? 'ROJO' : 'AMARILLO'
-      }
-    },
-    departamentos,
-    subdepartamentos,
-    fases: [
-      {
-        id: 'q1',
-        trimestre: 'Q1 2025',
-        periodo: 'Enero - Marzo',
-        nombre: 'Fase de Planificación',
-        tareas: ['Validación de concepto', 'Análisis de viabilidad', 'Setup inicial']
-      },
-      {
-        id: 'q2',
-        trimestre: 'Q2 2025',
-        periodo: 'Abril - Junio',
-        nombre: 'Desarrollo Activo',
-        tareas: ['Implementación', 'Integración', 'Testing']
-      },
-      {
-        id: 'q3',
-        trimestre: 'Q3 2025',
-        periodo: 'Julio - Septiembre',
-        nombre: 'Optimización',
-        tareas: ['Refinamiento', 'Capacitación', 'Ajustes']
-      },
-      {
-        id: 'q4',
-        trimestre: 'Q4 2025',
-        periodo: 'Octubre - Diciembre',
-        nombre: 'Lanzamiento',
-        tareas: ['Go live', 'Soporte', 'Evaluación']
-      }
-    ],
-    hitos: [
-      { fecha: '15 Mar 2025', nombre: 'Análisis completado', trimestre: 'Q1' },
-      { fecha: '30 Jun 2025', nombre: 'MVP completado', trimestre: 'Q2' },
-      { fecha: '30 Sep 2025', nombre: 'Beta testing terminado', trimestre: 'Q3' },
-      { fecha: '15 Dic 2025', nombre: 'Go Live', trimestre: 'Q4' }
-    ],
-    agenda: {
-      hoy: [
-        { hora: '10:00', titulo: 'Revisión del plan', participantes: ['Equipo'] },
-        { hora: '14:30', titulo: 'Alineación de recursos', ubicacion: 'Virtual' }
-      ],
-      manana: [
-        { hora: '09:00', titulo: 'Checkpoint de validación', participantes: ['Stakeholders'] }
-      ],
-      proximosHitos: [
-        { nombre: 'Validación de departamentos críticos', fecha: 'Semana 1' },
-        { nombre: 'Setup de infraestructura', fecha: 'Semana 2' }
-      ]
-    },
-    pasos: subdepartamentos.flatMap(sub => sub.tareas.flatMap(t => t.pasos))
-  };
-}
-
-type PlanView = 'dashboard' | 'timeline' | 'subdepartment' | 'step-graph';
-
-// ============================================================================
-// TypeScript Interfaces for plan-config.json
-// ============================================================================
-
-interface ProyectoConfig {
-  nombre: string;
-  estado: string;
-  semana: string;
-  totalSemanas: string;
-  metricas: {
-    progreso: number;
-    desviacionTimeline: number;
-    desviacionPresupuesto: string;
-    riesgoGeneral: string;
-  };
-}
-
-interface Departamento {
-  id: string;
-  nombre: string;
-  estado: string;
-  porcentaje: number | null;
-  icono: string;
-  colorPorcentaje: string;
-  detalles: Record<string, string>;
-  bloqueadoPor?: string;
-  esPrimerBloqueador?: boolean;
-}
-
-interface Hito {
-  fecha: string;
-  nombre: string;
-  trimestre: string;
-}
-
-interface AgendaItem {
-  hora: string;
-  titulo: string;
-  participantes?: string[];
-  ubicacion?: string;
-}
-
-interface Agenda {
-  hoy: AgendaItem[];
-  manana: AgendaItem[];
-  proximosHitos: Array<{ nombre: string; fecha: string }>;
-}
-
-interface ProjectConfig {
-  proyecto: ProyectoConfig;
-  departamentos: Departamento[];
-  subdepartamentos: Subdepartamento[];
-  fases: Fase[];
-  hitos: Hito[];
-  agenda: Agenda;
-  pasos: Paso[];
-}
-
-const PLAN_VIEWS: Record<PlanView, { label: string; icon: string; description: string }> = {
-  dashboard: {
-    label: 'Panel General',
-    icon: '',
-    description: 'Resumen general del plan'
-  },
-  timeline: {
-    label: 'Cronograma',
-    icon: '',
-    description: 'Línea de tiempo del proyecto'
-  },
-  subdepartment: {
-    label: 'Subdepartamentos',
-    icon: '',
-    description: 'Desglose de subdepartamentos'
-  },
-  'step-graph': {
-    label: 'Grafo de Pasos',
-    icon: '',
-    description: 'Flujo de pasos y procesos'
-  }
 };
-
 /**
  * Renders the plan page HTML
  * If projectData is provided, uses it directly
  * Otherwise, the browser will load from sessionStorage via JavaScript
  */
 export { poblarTareasSubdepartamentos };
-
-export function renderPlanHtml(projectData?: ProjectConfig | null): string {
-  // If no projectData provided, use a minimal version
-  if (!projectData) {
-    projectData = {
-      proyecto: {
-        nombre: 'Plan de Negocio',
-        estado: 'Sin datos',
-        semana: '-',
-        totalSemanas: '-',
-        metricas: { progreso: 0, desviacionTimeline: 0, desviacionPresupuesto: '-', riesgoGeneral: '-' }
-      },
-      departamentos: [],
-      subdepartamentos: [],
-      fases: [],
-      hitos: [],
-      agenda: { hoy: [], manana: [], proximosHitos: [] },
-      pasos: []
-    };
-  }
-
-  return `<!doctype html>
+export function renderPlanHtml(projectData) {
+    // If no projectData provided, use a minimal version
+    if (!projectData) {
+        projectData = {
+            proyecto: {
+                nombre: 'Plan de Negocio',
+                estado: 'Sin datos',
+                semana: '-',
+                totalSemanas: '-',
+                metricas: { progreso: 0, desviacionTimeline: 0, desviacionPresupuesto: '-', riesgoGeneral: '-' }
+            },
+            departamentos: [],
+            subdepartamentos: [],
+            fases: [],
+            hitos: [],
+            agenda: { hoy: [], manana: [], proximosHitos: [] },
+            pasos: []
+        };
+    }
+    return `<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
@@ -997,11 +808,11 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
               <!-- Timeline Items -->
               <div style="position: relative; padding-left: 80px;">
                 ${projectData.fases.map((fase, idx) => {
-                  const isSecondHalf = idx >= projectData.fases.length / 2;
-                  const bgColor = isSecondHalf ? '#d1fae5' : (idx % 2 === 0 ? '#dbeafe' : '#bfdbfe');
-                  const borderColor = isSecondHalf ? '#10b981' : '#3b82f6';
-                  const numColor = isSecondHalf ? '#10b981' : '#3b82f6';
-                  return `
+        const isSecondHalf = idx >= projectData.fases.length / 2;
+        const bgColor = isSecondHalf ? '#d1fae5' : (idx % 2 === 0 ? '#dbeafe' : '#bfdbfe');
+        const borderColor = isSecondHalf ? '#10b981' : '#3b82f6';
+        const numColor = isSecondHalf ? '#10b981' : '#3b82f6';
+        return `
                 <div style="margin-bottom: ${idx < projectData.fases.length - 1 ? '40px' : '0'};">
                   <div style="position: absolute; left: -30px; top: -6px; width: 32px; height: 32px; background: ${bgColor}; border: 3px solid ${borderColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: ${numColor}; font-size: 13px;">${idx + 1}</div>
                   <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
@@ -1013,7 +824,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                   </div>
                 </div>
                 `;
-                }).join('')}
+    }).join('')}
               </div>
             </div>
 
@@ -1053,15 +864,14 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
             </div>
             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
               ${projectData.departamentos.map((dept, idx) => {
-                const isBloqueado = dept.bloqueadoPor ? true : false;
-                const cursorStyle = isBloqueado ? 'not-allowed' : 'pointer';
-                const bgHoverStyle = isBloqueado ? 'transparent' : '#f9fafb';
-                const opacityStyle = isBloqueado ? '0.6' : '1';
-                const onclickHandler = isBloqueado
-                  ? 'event.preventDefault(); event.stopPropagation();'
-                  : 'this.parentElement.querySelector(".dept-content").style.display = this.parentElement.querySelector(".dept-content").style.display === "none" ? "block" : "none"; this.querySelector(".dept-toggle").textContent = this.parentElement.querySelector(".dept-content").style.display === "none" ? "▼" : "▲";';
-
-                return `
+        const isBloqueado = dept.bloqueadoPor ? true : false;
+        const cursorStyle = isBloqueado ? 'not-allowed' : 'pointer';
+        const bgHoverStyle = isBloqueado ? 'transparent' : '#f9fafb';
+        const opacityStyle = isBloqueado ? '0.6' : '1';
+        const onclickHandler = isBloqueado
+            ? 'event.preventDefault(); event.stopPropagation();'
+            : 'this.parentElement.querySelector(".dept-content").style.display = this.parentElement.querySelector(".dept-content").style.display === "none" ? "block" : "none"; this.querySelector(".dept-toggle").textContent = this.parentElement.querySelector(".dept-content").style.display === "none" ? "▼" : "▲";';
+        return `
               <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
                 <div class="dept-header" onclick="${onclickHandler}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: ${cursorStyle}; user-select: none; transition: all 0.2s; background: ${isBloqueado ? '#f3f4f6' : 'transparent'}; opacity: ${opacityStyle};" onmouseover="!${isBloqueado} && (this.style.background = '${bgHoverStyle}')" onmouseout="this.style.background = '${isBloqueado ? '#f3f4f6' : 'transparent'}'">
                   <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
@@ -1089,7 +899,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                 </div>
               </div>
               `;
-              }).join('')}
+    }).join('')}
             </div>
           </div>
 
@@ -1168,11 +978,11 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
           <!-- Timeline Items -->
           <div style="position: relative; padding-left: 80px;">
             ${projectData.fases.map((fase, idx) => {
-              const isSecondHalf = idx >= projectData.fases.length / 2;
-              const bgColor = isSecondHalf ? '#d1fae5' : (idx % 2 === 0 ? '#dbeafe' : '#bfdbfe');
-              const borderColor = isSecondHalf ? '#10b981' : '#3b82f6';
-              const numColor = isSecondHalf ? '#10b981' : '#3b82f6';
-              return `
+        const isSecondHalf = idx >= projectData.fases.length / 2;
+        const bgColor = isSecondHalf ? '#d1fae5' : (idx % 2 === 0 ? '#dbeafe' : '#bfdbfe');
+        const borderColor = isSecondHalf ? '#10b981' : '#3b82f6';
+        const numColor = isSecondHalf ? '#10b981' : '#3b82f6';
+        return `
             <div style="margin-bottom: ${idx < projectData.fases.length - 1 ? '40px' : '0'};">
               <div style="position: absolute; left: -30px; top: -6px; width: 32px; height: 32px; background: ${bgColor}; border: 3px solid ${borderColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: ${numColor}; font-size: 13px;">${idx + 1}</div>
               <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
@@ -1184,7 +994,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
               </div>
             </div>
             `;
-            }).join('')}
+    }).join('')}
           </div>
         </div>
 
@@ -1226,12 +1036,11 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
           ${['Pendiente', 'En Progreso', 'Completado', 'Bloqueado'].map(estado => {
-            const subsForState = projectData.subdepartamentos.filter(s => s.estado === estado);
-            const stateEmoji = { 'Pendiente': '📚', 'En Progreso': '🔄', 'Completado': '✅', 'Bloqueado': '🚫' }[estado];
-            const stateBg = { 'Pendiente': '#f3f4f6', 'En Progreso': '#dbeafe', 'Completado': '#d1fae5', 'Bloqueado': '#fee2e2' }[estado];
-            const stateColor = { 'Pendiente': '#6b7280', 'En Progreso': '#1e40af', 'Completado': '#065f46', 'Bloqueado': '#991b1b' }[estado];
-
-            return `
+        const subsForState = projectData.subdepartamentos.filter(s => s.estado === estado);
+        const stateEmoji = { 'Pendiente': '📚', 'En Progreso': '🔄', 'Completado': '✅', 'Bloqueado': '🚫' }[estado];
+        const stateBg = { 'Pendiente': '#f3f4f6', 'En Progreso': '#dbeafe', 'Completado': '#d1fae5', 'Bloqueado': '#fee2e2' }[estado];
+        const stateColor = { 'Pendiente': '#6b7280', 'En Progreso': '#1e40af', 'Completado': '#065f46', 'Bloqueado': '#991b1b' }[estado];
+        return `
             <div style="background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;">
               <div style="background: #f3f4f6; padding: 12px 16px; border-bottom: 2px solid #e5e7eb;">
                 <div style="font-weight: 600; color: #1f2937; font-size: 13px;">${stateEmoji} ${estado}</div>
@@ -1239,8 +1048,8 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
               </div>
               <div style="padding: 12px; min-height: 300px;">
                 ${subsForState.map(sub => {
-                  const deptName = projectData.departamentos.find(d => d.id === sub.departamento_padre)?.nombre || 'Desconocido';
-                  return `
+            const deptName = projectData.departamentos.find(d => d.id === sub.departamento_padre)?.nombre || 'Desconocido';
+            return `
                   <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer;" onclick="window.openSubdeptPopup('${sub.id}')">
                     <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${sub.nombre}</div>
                     <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← ${deptName}</div>
@@ -1249,11 +1058,11 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                     </div>
                   </div>
                   `;
-                }).join('')}
+        }).join('')}
               </div>
             </div>
             `;
-          }).join('')}
+    }).join('')}
         </div>
       </div>
 
@@ -1391,33 +1200,6 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
   <script>
     // Make projectData globally accessible
     window.projectData = ${JSON.stringify(projectData)};
-
-    // Fallback: If no projectData from server, try to load from sessionStorage/localStorage
-    if (!window.projectData || !window.projectData.departamentos || window.projectData.departamentos.length === 0) {
-      const analysis = JSON.parse(sessionStorage.getItem('plannerAnalysis') || localStorage.getItem('plannerAnalysis') || 'null');
-      if (analysis) {
-        console.warn('No project data from server, loaded from storage. Analysis exists with phase5:', !!analysis.phase5);
-        // Reload the page with the analysis stored, letting the server-side handler pick it up
-        // We'll trigger a manual data load via API
-        window.projectData = {
-          proyecto: {
-            nombre: analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio',
-            estado: 'Cargando desde almacenamiento...',
-            semana: '1',
-            totalSemanas: '24',
-            metricas: { progreso: 0, desviacionTimeline: 0, desviacionPresupuesto: '-', riesgoGeneral: '-' }
-          },
-          departamentos: [],
-          subdepartamentos: [],
-          fases: [],
-          hitos: [],
-          agenda: { hoy: [], manana: [], proximosHitos: [] },
-          pasos: []
-        };
-      } else {
-        console.warn('No analysis data found in sessionStorage or localStorage');
-      }
-    }
 
     // Utility: Map PlannerAnalysis to visual data
     // Tab navigation

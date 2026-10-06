@@ -228,19 +228,31 @@ export function renderLoaderHtml(): string {
             document.getElementById(step).classList.add('done');
           });
 
-          // Save blocker result
+          // Save blocker result to sessionStorage (backup)
           sessionStorage.setItem('firstBlocker', JSON.stringify(blocker));
 
-          // Redirect to plan
+          // Store analysis on server and get ID
+          return fetch('/api/planner/store-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: analysis
+          }).then(r => r.json());
+        })
+        .then(storeResult => {
+          const analysisId = storeResult.analysisId;
+
+          // Redirect to plan with analysisId
           setTimeout(() => {
-            window.location.href = '/plan';
+            window.location.href = `/plan?aid=${analysisId}`;
           }, 1500);
         })
         .catch(e => {
           clearInterval(interval);
-          console.error('Error calculating blocker:', e);
+          console.error('Error in loader:', e);
+          const analysisId = sessionStorage.getItem('analysisId');
+          const redirectPath = analysisId ? `/plan?aid=${analysisId}` : '/plan';
           setTimeout(() => {
-            window.location.href = '/plan';
+            window.location.href = redirectPath;
           }, 2000);
         });
     }

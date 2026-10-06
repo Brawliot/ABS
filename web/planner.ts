@@ -433,21 +433,24 @@ export function renderPlannerHtml(): string {
         if (response.ok) {
           const result = await response.json();
           console.log('Analysis saved to server with ID:', result.id);
-          // Also save to sessionStorage as fallback
+          // Also save to sessionStorage and localStorage as fallback
           sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+          localStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
           return result.id;
         } else {
-          console.error('Failed to save analysis to server, using sessionStorage only');
+          console.error('Failed to save analysis to server, using sessionStorage/localStorage only');
           sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+          localStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
           return null;
         }
       } catch (e) {
         console.error('Error saving analysis:', e);
-        // Fallback to sessionStorage
+        // Fallback to sessionStorage and localStorage
         try {
           sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+          localStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
         } catch (e2) {
-          console.error('Error saving to sessionStorage:', e2);
+          console.error('Error saving to storage:', e2);
         }
         return null;
       }

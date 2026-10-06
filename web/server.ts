@@ -398,6 +398,19 @@ export function startWebServer(
         }
       }
 
+      if (path === "/api/planner/store-analysis" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const analysis = JSON.parse(body);
+          const analysisId = runtime.savePlannerAnalysis(analysis);
+          return sendJson(res, 200, { analysisId });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner store-analysis error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
       // Rutas de API
       if (path.startsWith("/api/")) {
         // Rutas de plan
