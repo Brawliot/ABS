@@ -841,7 +841,7 @@ export function renderPlannerHtml(): string {
         currentPhase5 = phase5Results;
         addPhase5ToAnalysis(phase5Results);
 
-        // Step 1: Check with Jev if departments are missing
+        // Automatic loop: Jev → ChatGPT → Jev (NO user questions)
         let loadingIdSuggest;
         try {
           const allDepts = [
@@ -852,6 +852,7 @@ export function renderPlannerHtml(): string {
 
           loadingIdSuggest = addLoadingMessage(3);
 
+          // Step 1: Jev checks if departments are missing
           const checkResponse = await fetch('/api/planner/check-missing-departments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -872,86 +873,110 @@ export function renderPlannerHtml(): string {
 
           const checkResult = await checkResponse.json();
 
-          if (checkResult.hay_faltantes) {
-            // Step 2: If missing, suggest with ChatGPT
-            loadingIdSuggest = addLoadingMessage(3);
-
-            const suggestResponse = await fetch('/api/planner/suggest-departments', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sector: currentPhase2?.subsector?.value || 'desconocido',
-                modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
-                departamentos_actuales: allDepts,
-                presupuesto: enrichedResources?.presupuesto || 'no especificado',
-                equipo: enrichedResources?.equipo || 'no especificado'
-              })
-            });
-
-            removeLoadingMessage(loadingIdSuggest);
-
-            if (suggestResponse.ok) {
-              const suggestions = await suggestResponse.json();
-              suggestedSubdepartments = suggestions.subdepartamentos || {};
-
-              if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
-                // Step 3: Validate suggestions with Jev
-                loadingIdSuggest = addLoadingMessage(3);
-
-                const validateResponse = await fetch('/api/planner/validate-departments', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    sector: currentPhase1?.answers.sector?.choice || 'desconocido',
-                    modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
-                    departamentos_propuestos: suggestions.departamentos_sugeridos,
-                    departamentos_originales: allDepts,
-                    presupuesto: enrichedResources?.presupuesto || 'no especificado',
-                    equipo: enrichedResources?.equipo || 'no especificado'
-                  })
-                });
-
-                removeLoadingMessage(loadingIdSuggest);
-
-                if (validateResponse.ok) {
-                  const validateResult = await validateResponse.json();
-                  if (validateResult.departamentos_validos && validateResult.departamentos_validos.length > 0) {
-                    const deptList = validateResult.departamentos_validos.join(', ');
-                    const msg = 'Jev ha validado estos departamentos como críticos (confianza ' + Math.round(validateResult.confianza * 100) + '%): ' + deptList + '. ¿Agregarlos?';
-                    addQuestionMessage(msg);
-                    phase5State = 'validating_suggestions';
-                  } else {
-                    addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-                    phase5State = 'asking_custom';
-                  }
-                } else {
-                  addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-                  phase5State = 'asking_custom';
-                }
-              } else {
-                addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-                phase5State = 'asking_custom';
-              }
-            } else {
-              addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-              phase5State = 'asking_custom';
-            }
-          } else {
-            addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-            phase5State = 'asking_custom';
+          // If confidence is low OR Jev says NO → Finish (no missing departments)
+          if (checkResult.confianza < 0.8 || !checkResult.hay_faltantes) {
+            addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+            currentQuestion = null;
+            currentMetric = null;
+            saveAnalysisToSession();
+            setTimeout(() => {
+              window.location.href = '/plan';
+            }, 1500);
+            return;
           }
+
+          // Step 2: Jev says YES (high confidence) → ChatGPT suggests
+          loadingIdSuggest = addLoadingMessage(3);
+
+          const suggestResponse = await fetch('/api/planner/suggest-departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sector: currentPhase2?.subsector?.value || 'desconocido',
+              modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
+              departamentos_actuales: allDepts,
+              presupuesto: enrichedResources?.presupuesto || 'no especificado',
+              equipo: enrichedResources?.equipo || 'no especificado'
+            })
+          });
+
+          removeLoadingMessage(loadingIdSuggest);
+
+          if (!suggestResponse.ok) {
+            throw new Error('Error suggesting departments');
+          }
+
+          const suggestions = await suggestResponse.json();
+          suggestedSubdepartments = suggestions.subdepartamentos || {};
+
+          if (!suggestions.departamentos_sugeridos || suggestions.departamentos_sugeridos.length === 0) {
+            addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+            currentQuestion = null;
+            currentMetric = null;
+            saveAnalysisToSession();
+            setTimeout(() => {
+              window.location.href = '/plan';
+            }, 1500);
+            return;
+          }
+
+          // Step 3: Jev validates ChatGPT suggestions
+          loadingIdSuggest = addLoadingMessage(3);
+
+          const validateResponse = await fetch('/api/planner/validate-departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sector: currentPhase1?.answers.sector?.choice || 'desconocido',
+              modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
+              departamentos_propuestos: suggestions.departamentos_sugeridos,
+              departamentos_originales: allDepts,
+              presupuesto: enrichedResources?.presupuesto || 'no especificado',
+              equipo: enrichedResources?.equipo || 'no especificado'
+            })
+          });
+
+          removeLoadingMessage(loadingIdSuggest);
+
+          if (!validateResponse.ok) {
+            throw new Error('Error validating departments');
+          }
+
+          const validateResult = await validateResponse.json();
+
+          // Show validated departments (no user question)
+          if (validateResult.departamentos_validos && validateResult.departamentos_validos.length > 0) {
+            const deptList = validateResult.departamentos_validos.join(', ');
+            const confPercent = Math.round(validateResult.confianza * 100);
+            addQuestionMessage('✓ Departamentos críticos identificados (Jev - ' + confPercent + '%): ' + deptList);
+
+            // Add to phase5
+            if (!currentPhase5.departamentos_identificados) {
+              currentPhase5.departamentos_identificados = [];
+            }
+            currentPhase5.departamentos_identificados = validateResult.departamentos_validos;
+          }
+
+          // Finish and redirect
+          addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+          currentQuestion = null;
+          currentMetric = null;
+          saveAnalysisToSession();
+          setTimeout(() => {
+            window.location.href = '/plan';
+          }, 1500);
+
         } catch (e) {
           if (loadingIdSuggest) removeLoadingMessage(loadingIdSuggest);
-          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-          phase5State = 'asking_custom';
+          console.error('Error in department validation loop:', e);
+          addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+          currentQuestion = null;
+          currentMetric = null;
+          saveAnalysisToSession();
+          setTimeout(() => {
+            window.location.href = '/plan';
+          }, 1500);
         }
-
-        if (phase5Results.departamentos_preguntar.length > 0 && phase5State !== 'validating_suggestions') {
-          phase5State = 'validating_departments';
-        }
-
-        currentQuestion = null;
-        currentMetric = null;
       } catch (error) {
         if (loadingId) removeLoadingMessage(loadingId);
         if (loadingIdSuggest) removeLoadingMessage(loadingIdSuggest);
@@ -998,40 +1023,7 @@ export function renderPlannerHtml(): string {
 
       let loadingId;
       try {
-        if (phase5State === 'validating_suggestions') {
-          if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
-            addQuestionMessage('✓ Sugerencias agregadas a tu estructura.');
-          } else {
-            addQuestionMessage('De acuerdo, continúa sin ellas.');
-          }
-          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
-          phase5State = 'asking_custom';
-        } else if (phase5State === 'asking_custom' || phase5State === 'describing_custom') {
-          if (phase5State === 'asking_custom') {
-            if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
-              addQuestionMessage('¿Cuáles son esos departamentos y por qué son independientes y críticos?');
-              phase5State = 'describing_custom';
-            } else {
-              addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
-              phase5State = null;
-              saveAnalysisToSession();
-              setTimeout(() => {
-                window.location.href = '/plan';
-              }, 1500);
-            }
-          } else if (phase5State === 'describing_custom') {
-            const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
-            addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
-            phase5State = null;
-            if (currentPhase5 && customDepts.length > 0) {
-              currentPhase5.departamentos_personalizados = customDepts;
-            }
-            saveAnalysisToSession();
-            setTimeout(() => {
-              window.location.href = '/plan';
-            }, 1500);
-          }
-        } else if (currentQuestion && currentMetric && currentPhase2) {
+        if (currentQuestion && currentMetric && currentPhase2) {
           loadingId = addLoadingMessage(2);
 
           const refineResponse = await fetch('/api/planner/refine-iterate', {
