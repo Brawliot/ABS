@@ -823,8 +823,9 @@ export function renderPlannerHtml(): string {
         addPhase5ToAnalysis(phase5Results);
 
         // Auto-suggest additional departments via Jev + ChatGPT
-        const loadingId = addLoadingMessage(3);
+        let loadingId;
         try {
+          loadingId = addLoadingMessage(3);
           const allDepts = [
             ...phase5Results.departamentos_criticos.map(d => d.nombre),
             ...phase5Results.departamentos_importantes.map(d => d.nombre),
