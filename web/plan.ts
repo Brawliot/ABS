@@ -216,6 +216,76 @@ function generarSubDepartamentos(depts: Departamento[]): SubDepartamento[] {
   }));
 }
 
+// Calculate health metrics for a department based on its subdepartments
+function calcularSaludDepartamento(deptId: string, subdepts: SubDepartamento[]): Record<string, any> {
+  const subsdeptsDept = subdepts.filter(s => s.departamento_padre === deptId);
+
+  if (subsdeptsDept.length === 0) {
+    return {
+      estado: 'Sin actividad',
+      completitud: 0,
+      riesgo: 'Desconocido',
+      tareasCompletadas: '0 de 0',
+      subdepartamentosEnProgreso: 0,
+      bloqueadores: 0,
+      proximoHito: 'No definido'
+    };
+  }
+
+  // 1. Estado (cascada)
+  let estado = 'PENDIENTE';
+  if (subsdeptsDept.some(s => s.estado === 'Bloqueado')) {
+    estado = 'BLOQUEADO';
+  } else if (subsdeptsDept.some(s => s.estado === 'En Progreso')) {
+    estado = 'EN PROGRESO';
+  } else if (subsdeptsDept.every(s => s.estado === 'Completado')) {
+    estado = 'COMPLETADO';
+  }
+
+  // 2. Completitud % (promedio ponderado)
+  let tareasCompletadas = 0;
+  let tareasTotal = 0;
+  subsdeptsDept.forEach(sub => {
+    if (sub.tareas) {
+      const completadas = sub.tareas.filter(t => t.estado === 'Completado').length;
+      tareasCompletadas += completadas;
+      tareasTotal += sub.tareas.length;
+    }
+  });
+  const completitud = tareasTotal > 0 ? Math.round((tareasCompletadas / tareasTotal) * 100) : 0;
+
+  // 3. Riesgo (máximo)
+  const nivelesRiesgo = { 'ROJO': 3, 'AMARILLO': 2, 'VERDE': 1, 'Desconocido': 0 };
+  let riesgoMax = 'VERDE';
+  subsdeptsDept.forEach(sub => {
+    const riesgoActual = sub.riesgo?.nivel || 'Desconocido';
+    if (nivelesRiesgo[riesgoActual] > nivelesRiesgo[riesgoMax]) {
+      riesgoMax = riesgoActual;
+    }
+  });
+
+  // 4. Subdepartamentos en progreso
+  const subdepartamentosEnProgreso = subsdeptsDept.filter(s => s.estado === 'En Progreso').length;
+
+  // 5. Bloqueadores activos
+  let bloqueadores = 0;
+  subsdeptsDept.forEach(sub => {
+    if (sub.tareas) {
+      bloqueadores += sub.tareas.filter(t => t.estado === 'Bloqueado').length;
+    }
+  });
+
+  return {
+    estado: estado,
+    completitud: completitud,
+    riesgo: riesgoMax,
+    tareasCompletadas: `${tareasCompletadas} de ${tareasTotal}`,
+    subdepartamentosEnProgreso: subdepartamentosEnProgreso,
+    bloqueadores: bloqueadores,
+    proximoHito: 'En revisión'
+  };
+}
+
 export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectConfig {
   const criticalDepts = analysis.phase5?.departamentos_criticos || [];
   const importantDepts = analysis.phase5?.departamentos_importantes || [];
@@ -252,6 +322,32 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
   ];
 
   const subdepartamentos = generarSubDepartamentos(departamentos);
+
+  // Calculate health metrics for each department based on its subdepartments
+  departamentos.forEach(dept => {
+    const salud = calcularSaludDepartamento(dept.id, subdepartamentos);
+    dept.estado = salud.estado;
+    dept.porcentaje = salud.completitud;
+    dept.detalles = {
+      completitud: `${salud.completitud}%`,
+      tareasCompletadas: salud.tareasCompletadas,
+      subdepartamentosEnProgreso: salud.subdepartamentosEnProgreso,
+      bloqueadores: salud.bloqueadores > 0 ? `${salud.bloqueadores} tarea(s) bloqueada(s)` : 'Ninguno',
+      riesgo: salud.riesgo,
+      proximoHito: salud.proximoHito
+    };
+    // Update color based on state
+    if (salud.estado === 'COMPLETADO') {
+      dept.colorPorcentaje = '#10b981';
+      dept.icono = '✓';
+    } else if (salud.estado === 'EN PROGRESO') {
+      dept.colorPorcentaje = '#f59e0b';
+      dept.icono = '↻';
+    } else if (salud.estado === 'BLOQUEADO') {
+      dept.colorPorcentaje = '#ef4444';
+      dept.icono = '⚠';
+    }
+  });
 
   // Extract project name from jevPhase2
   const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
@@ -924,7 +1020,6 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <div style="font-size: 16px; font-weight: 600; color: #1f2937;">Departamentos</div>
-              <button class="plan-btn secondary" onclick="document.querySelector('[data-view=subdepartment]').click()" style="flex: 0; padding: 8px 16px; font-size: 12px;">Ver Subdepartamentos</button>
             </div>
             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
               ${projectData.departamentos.map((dept, idx) => `
