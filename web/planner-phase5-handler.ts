@@ -23,9 +23,9 @@ interface Department {
 }
 
 interface Phase5Output {
-  departamentos_incluidos: Department[];
-  departamentos_preguntar: Department[];
-  departamentos_omitidos: Department[];
+  departamentos_criticos: Department[];
+  departamentos_importantes: Department[];
+  departamentos_secundarios: Department[];
 }
 
 const DEPARTMENTS = [
@@ -289,9 +289,9 @@ export function calculateDepartmentProbabilities(input: Phase5Input): Phase5Outp
   });
 
   return {
-    departamentos_incluidos,
-    departamentos_preguntar,
-    departamentos_omitidos,
+    departamentos_criticos: departamentos_incluidos,
+    departamentos_importantes: departamentos_preguntar,
+    departamentos_secundarios: departamentos_omitidos,
   };
 }
 

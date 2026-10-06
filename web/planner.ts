@@ -719,21 +719,21 @@ export function renderPlannerHtml(): string {
       let html = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">';
       html += '<div style="font-size: 13px; font-weight: 600; color: #059669; margin-bottom: 12px;">Estructura de Departamentos</div>';
 
-      if (phase5Results.departamentos_incluidos.length > 0) {
+      if (phase5Results.departamentos_criticos.length > 0) {
         html += '<div style="margin-bottom: 12px;">';
         html += '<div style="font-size: 12px; font-weight: 600; color: #166534; margin-bottom: 6px;">Críticos (automático):</div>';
         html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
-        phase5Results.departamentos_incluidos.forEach((d) => {
+        phase5Results.departamentos_criticos.forEach((d) => {
           html += '<span style="display: inline-block; background: #dcfce7; border-left: 3px solid #16a34a; padding: 6px 10px; border-radius: 3px; font-size: 12px;"><strong>' + d.nombre + '</strong> ' + d.probabilidad + '%</span>';
         });
         html += '</div></div>';
       }
 
-      if (phase5Results.departamentos_preguntar.length > 0) {
+      if (phase5Results.departamentos_importantes.length > 0) {
         html += '<div style="margin-bottom: 12px;">';
         html += '<div style="font-size: 12px; font-weight: 600; color: #7c2d12; margin-bottom: 6px;">A validar (probabilidad media):</div>';
         html += '<div class="jev-phase2-metrics" style="gap: 6px;">';
-        phase5Results.departamentos_preguntar.forEach((d) => {
+        phase5Results.departamentos_importantes.forEach((d) => {
           html += '<span style="display: inline-block; background: #fef3c7; border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 3px; font-size: 12px;"><strong>' + d.nombre + '</strong> ' + d.probabilidad + '%</span>';
         });
         html += '</div></div>';
