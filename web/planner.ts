@@ -404,6 +404,7 @@ export function renderPlannerHtml(): string {
     let currentMetric = null;
     let originalInput = null;
     let phase5State = null;
+    let enrichedResources = null;
 
     const addUserMessage = (text) => {
       const div = document.createElement('div');
@@ -694,6 +695,8 @@ export function renderPlannerHtml(): string {
       const teamSize = document.getElementById('team-size-input').value;
       const experience = parseInt(document.getElementById('experience-input').value);
 
+      enrichedResources = { presupuesto: budget, equipo: teamSize };
+
       const formContainer = document.getElementById('resources-form-container');
       if (formContainer) formContainer.remove();
 
@@ -806,12 +809,49 @@ export function renderPlannerHtml(): string {
         currentPhase5 = phase5Results;
         addPhase5ToAnalysis(phase5Results);
 
-        if (phase5Results.departamentos_preguntar.length > 0) {
-          addQuestionMessage('Algunos departamentos tienen probabilidad media. ¿Necesitas: ' + phase5Results.departamentos_preguntar.map(d => d.nombre).join(', ') + '?');
-          phase5State = 'validating_departments';
-        } else {
-          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista? (No debe ser sub-función de otro)');
+        // Auto-suggest additional departments via Jev + ChatGPT
+        const loadingId = addLoadingMessage(3);
+        try {
+          const allDepts = [
+            ...phase5Results.departamentos_criticos.map(d => d.nombre),
+            ...phase5Results.departamentos_importantes.map(d => d.nombre),
+            ...phase5Results.departamentos_secundarios.map(d => d.nombre)
+          ];
+
+          const suggestResponse = await fetch('/api/planner/suggest-departments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sector: currentPhase2?.subsector || 'desconocido',
+              modelo_negocio: currentPhase2?.modelo_negocio || 'desconocido',
+              departamentos_actuales: allDepts,
+              presupuesto: enrichedResources?.presupuesto || 'no especificado',
+              equipo: enrichedResources?.equipo || 'no especificado'
+            })
+          });
+
+          removeLoadingMessage(loadingId);
+
+          if (suggestResponse.ok) {
+            const suggestions = await suggestResponse.json();
+            if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
+              addQuestionMessage('Basándome en tu negocio, sugiero agregar: ' + suggestions.departamentos_sugeridos.join(', ') + '. ' + suggestions.razon + '\n\n¿Agregarlos?');
+              phase5State = 'validating_suggestions';
+            } else {
+              addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+              phase5State = 'asking_custom';
+            }
+          } else {
+            addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+            phase5State = 'asking_custom';
+          }
+        } catch (e) {
+          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
           phase5State = 'asking_custom';
+        }
+
+        if (phase5Results.departamentos_preguntar.length > 0 && phase5State !== 'validating_suggestions') {
+          phase5State = 'validating_departments';
         }
 
         currentQuestion = null;
@@ -849,24 +889,34 @@ export function renderPlannerHtml(): string {
       sendBtn.disabled = true;
 
       try {
-        if (phase5State === 'asking_custom') {
+        if (phase5State === 'validating_suggestions') {
           if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
-            addQuestionMessage('¿Cuáles son esos departamentos y por qué son independientes y críticos?');
-            phase5State = 'describing_custom';
+            addQuestionMessage('✓ Sugerencias agregadas a tu estructura.');
           } else {
-            addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+            addQuestionMessage('De acuerdo, continúa sin ellas.');
+          }
+          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
+          phase5State = 'asking_custom';
+        } else if (phase5State === 'asking_custom' || phase5State === 'describing_custom') {
+          if (phase5State === 'asking_custom') {
+            if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
+              addQuestionMessage('¿Cuáles son esos departamentos y por qué son independientes y críticos?');
+              phase5State = 'describing_custom';
+            } else {
+              addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+              phase5State = null;
+              setTimeout(() => {
+                window.location.href = '/plan';
+              }, 1500);
+            }
+          } else if (phase5State === 'describing_custom') {
+            const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
+            addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
             phase5State = null;
             setTimeout(() => {
               window.location.href = '/plan';
             }, 1500);
           }
-        } else if (phase5State === 'describing_custom') {
-          const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
-          addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
-          phase5State = null;
-          setTimeout(() => {
-            window.location.href = '/plan';
-          }, 1500);
         } else if (currentQuestion && currentMetric && currentPhase2) {
           const loadingId = addLoadingMessage(2);
 

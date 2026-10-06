@@ -339,6 +339,20 @@ export function startWebServer(
         }
       }
 
+      if (path === "/api/planner/suggest-departments" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const { suggestDepartments } = await import('./suggest-departments.js');
+          const result = await suggestDepartments(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner suggest-departments error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
       // Rutas de API
       if (path.startsWith("/api/")) {
         const handled = await handleApiRoute(path, method, req, res, {});
