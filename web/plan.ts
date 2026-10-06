@@ -845,7 +845,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
         </div>
 
         <!-- Cronograma Popup -->
-        <div id="popup-cronograma" class="metric-popup" style="display: flex; z-index: 2000;">
+        <div id="popup-cronograma" class="metric-popup" style="z-index: 2000;" onclick="if(event.target===this)this.classList.remove('active')">
           <div class="metric-popup-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
             <button class="metric-popup-close" onclick="this.closest('.metric-popup').classList.remove('active')">×</button>
             <h3 class="metric-popup-title" style="margin-top: 0;">Cronograma del Proyecto</h3>
