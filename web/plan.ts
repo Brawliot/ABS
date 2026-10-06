@@ -848,20 +848,36 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
 
         <!-- Departments Status & Schedule - Two Columns -->
         <div style="display: grid; grid-template-columns: 1fr 0.5fr; gap: 24px; margin-bottom: 24px;">
-          <!-- Column 1: Departments - Compact List -->
+          <!-- Column 1: Departments - Expandable List -->
           <div>
-            <div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 16px;">Departamentos</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">Departamentos</div>
+              <button class="plan-btn secondary" onclick="document.querySelector('[data-view=subdepartment]').click()" style="flex: 0; padding: 8px 16px; font-size: 12px;">Ver Subdepartamentos</button>
+            </div>
             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
               ${projectData.departamentos.map((dept, idx) => `
-              <div onclick="document.getElementById('modal-${dept.id}').style.display='flex'" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; ${idx < projectData.departamentos.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''} cursor: pointer; transition: all 0.2s;"><div style="display: flex; align-items: center; gap: 10px; flex: 1;"><span style="font-size: 16px;">${dept.icono}</span><div style="font-weight: 500; color: #1f2937; font-size: 13px;">${dept.nombre}</div></div><div style="font-weight: 700; color: ${dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div></div>
+              <div style="border-bottom: ${idx < projectData.departamentos.length - 1 ? '1px solid #e5e7eb' : 'none'};">
+                <div class="dept-header" onclick="this.parentElement.querySelector('.dept-content').style.display = this.parentElement.querySelector('.dept-content').style.display === 'none' ? 'block' : 'none'; this.querySelector('.dept-toggle').textContent = this.parentElement.querySelector('.dept-content').style.display === 'none' ? '▼' : '▲';" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; transition: all 0.2s;">
+                  <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                    <span class="dept-toggle" style="font-size: 10px; color: #9ca3af;">▲</span>
+                    <span style="font-size: 16px;">${dept.icono}</span>
+                    <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${dept.nombre}</div>
+                  </div>
+                  <div style="font-weight: 700; color: ${dept.colorPorcentaje}; font-size: 13px;">${dept.porcentaje !== null ? dept.porcentaje + '%' : '-'}</div>
+                </div>
+                <div class="dept-content" style="display: none; padding: 12px 16px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
+                  <div style="display: grid; gap: 12px;">
+                    ${Object.entries(dept.detalles).map(([key, value]) => `
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                      <span style="color: #6b7280; font-weight: 500;">${key}:</span>
+                      <span style="color: #1f2937; font-weight: 600;">${value}</span>
+                    </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
               `).join('')}
             </div>
-
-            <!-- Modals -->
-            ${projectData.departamentos.map((dept) => `
-            <div id="modal-${dept.id}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target===this)this.style.display='none'"><div style="background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%;"><button onclick="this.closest('div').parentElement.style.display='none'" style="float: right; border: none; background: transparent; font-size: 24px; cursor: pointer; color: #9ca3af;">×</button><h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin-bottom: 12px;">${dept.nombre}</h3><div style="color: ${dept.colorPorcentaje}; font-weight: 600; margin-bottom: 12px;">${dept.estado}</div>${dept.porcentaje !== null ? `<div style="font-size: 32px; font-weight: 700; color: ${dept.colorPorcentaje}; margin-bottom: 12px;">${dept.porcentaje}%</div>` : ''}<div style="color: #6b7280; font-size: 13px; line-height: 1.6;">${Object.entries(dept.detalles).map(([key, value]) => `<strong>${key}:</strong> ${value}`).join('<br/>')}</div></div></div>
-            `).join('')}
-
           </div>
 
           <!-- Column 2: Agenda -->
