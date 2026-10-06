@@ -374,8 +374,7 @@ export function mapAnalysisToProjectConfig(analysis: PlannerAnalysis): ProjectCo
     }
   });
 
-  // Mark department states (bloqueado/abierto)
-  departamentos = markDepartmentStates(departamentos);
+  // Note: markDepartmentStates will be called on client-side only (sessionStorage not available on server)
 
   // Extract project name from jevPhase2
   const nombreProyecto = analysis.jevPhase2?.modelo_negocio || 'Plan de Negocio';
@@ -1391,6 +1390,26 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
   <script>
     // Make projectData globally accessible
     window.projectData = ${JSON.stringify(projectData)};
+
+    // Mark department states based on firstBlocker (client-side only, sessionStorage available here)
+    if (window.projectData && window.projectData.departamentos) {
+      try {
+        const firstBlockerJson = sessionStorage.getItem('firstBlocker');
+        if (firstBlockerJson) {
+          const firstBlocker = JSON.parse(firstBlockerJson);
+          const primeraBlockerName = firstBlocker?.primer_bloqueador?.departamento;
+          if (primeraBlockerName) {
+            window.projectData.departamentos.forEach(dept => {
+              dept.esPrimerBloqueador = dept.nombre === primeraBlockerName;
+              dept.bloqueadoPor = dept.nombre === primeraBlockerName ? undefined : primeraBlockerName;
+            });
+            console.log('Marked department states - First blocker:', primeraBlockerName);
+          }
+        }
+      } catch (e) {
+        console.warn('Could not mark department states:', e);
+      }
+    }
 
     // Fallback: If no projectData from server, try to load from sessionStorage/localStorage
     if (!window.projectData || !window.projectData.departamentos || window.projectData.departamentos.length === 0) {
