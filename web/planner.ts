@@ -848,7 +848,9 @@ export function renderPlannerHtml(): string {
           if (suggestResponse.ok) {
             const suggestions = await suggestResponse.json();
             if (suggestions.departamentos_sugeridos && suggestions.departamentos_sugeridos.length > 0) {
-              addQuestionMessage('Basándome en tu negocio, sugiero agregar: ' + suggestions.departamentos_sugeridos.join(', ') + '. ' + suggestions.razon + '\n\n¿Agregarlos?');
+              const deptList = suggestions.departamentos_sugeridos.join(', ');
+              const msg = 'Basándome en tu negocio, sugiero agregar: ' + deptList + '. ' + suggestions.razon + '. ¿Agregarlos?';
+              addQuestionMessage(msg);
               phase5State = 'validating_suggestions';
             } else {
               addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista?');
