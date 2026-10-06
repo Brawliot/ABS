@@ -1091,7 +1091,7 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
                 ${subsForState.map(sub => {
                   const deptName = projectData.departamentos.find(d => d.id === sub.departamento_padre)?.nombre || 'Desconocido';
                   return `
-                  <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer;" onclick="window.openSubdeptPopup('${sub.id}', '${sub.nombre.replace(/'/g, "\\'")}', ${JSON.stringify(sub.tareas || []).replace(/'/g, "&apos;")})">
+                  <div data-subdept-id="${sub.id}" data-dept-parent="${sub.departamento_padre}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer;" onclick="window.openSubdeptPopup('${sub.id}')">
                     <div style="font-weight: 500; color: #1f2937; font-size: 13px;">${sub.nombre}</div>
                     <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">← ${deptName}</div>
                     <div style="margin-top: 8px;">
@@ -1315,17 +1315,22 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
     }
 
     // Open subdepartment tasks popup
-    window.openSubdeptPopup = function(subdeptId, subdeptName, tareas) {
+    window.openSubdeptPopup = function(subdeptId) {
       const popup = document.getElementById('popup-subdept');
       const title = document.getElementById('subdept-popup-title');
       const content = document.getElementById('subdept-popup-content');
 
-      title.textContent = 'Tareas de ' + subdeptName;
+      const subdept = projectData.subdepartamentos.find(s => s.id === subdeptId);
+      if (!subdept) return;
 
-      if (!tareas || tareas.length === 0) {
+      title.textContent = 'Tareas de ' + subdept.nombre;
+
+      const tareas = subdept.tareas || [];
+      if (tareas.length === 0) {
         content.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 40px 20px;">No hay tareas asignadas</p>';
       } else {
-        content.innerHTML = tareas.map((tarea, idx) => {
+        let html = '';
+        tareas.forEach((tarea, idx) => {
           const estado = tarea.estado || 'Pendiente';
           const estatoColors = {
             'Completado': { bg: '#d1fae5', color: '#065f46' },
@@ -1335,30 +1340,29 @@ export function renderPlanHtml(projectData?: ProjectConfig | null): string {
           };
           const colors = estatoColors[estado] || estatoColors['Pendiente'];
 
-          return `
-          <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-              <div>
-                <div style="font-weight: 600; color: #1f2937; font-size: 13px;">${idx + 1}. ${tarea.nombre || 'Tarea sin nombre'}</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 6px; line-height: 1.5;">${tarea.descripcion || ''}</div>
-              </div>
-              <span style="display: inline-block; background: ${colors.bg}; color: ${colors.color}; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap;">${estado}</span>
-            </div>
-            ${tarea.pasos ? `
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
-              <div style="font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 8px;">Pasos:</div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
-                ${tarea.pasos.map((paso, pidx) => `
-                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; font-size: 11px; color: #6b7280;">
-                  ${paso}
-                </div>
-                `).join('')}
-              </div>
-            </div>
-            ` : ''}
-          </div>
-          `;
-        }).join('');
+          html += '<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px;">';
+          html += '<div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">';
+          html += '<div>';
+          html += '<div style="font-weight: 600; color: #1f2937; font-size: 13px;">' + (idx + 1) + '. ' + (tarea.nombre || 'Tarea sin nombre') + '</div>';
+          html += '<div style="color: #6b7280; font-size: 12px; margin-top: 6px; line-height: 1.5;">' + (tarea.descripcion || '') + '</div>';
+          html += '</div>';
+          html += '<span style="display: inline-block; background: ' + colors.bg + '; color: ' + colors.color + '; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap;">' + estado + '</span>';
+          html += '</div>';
+
+          if (tarea.pasos && tarea.pasos.length > 0) {
+            html += '<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">';
+            html += '<div style="font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 8px;">Pasos:</div>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">';
+            tarea.pasos.forEach(paso => {
+              html += '<div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; font-size: 11px; color: #6b7280;">' + paso + '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+          }
+
+          html += '</div>';
+        });
+        content.innerHTML = html;
       }
 
       popup.classList.add('active');
