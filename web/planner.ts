@@ -822,8 +822,8 @@ export function renderPlannerHtml(): string {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              sector: currentPhase2?.subsector || 'desconocido',
-              modelo_negocio: currentPhase2?.modelo_negocio || 'desconocido',
+              sector: currentPhase2?.subsector?.value || 'desconocido',
+              modelo_negocio: currentJevPhase2?.modelo_negocio || 'desconocido',
               departamentos_actuales: allDepts,
               presupuesto: enrichedResources?.presupuesto || 'no especificado',
               equipo: enrichedResources?.equipo || 'no especificado'

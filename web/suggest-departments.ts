@@ -1,8 +1,6 @@
 /**
- * Suggest additional departments using Jev + ChatGPT
+ * Suggest additional departments using ChatGPT
  */
-
-import { analyzeWithChatGPT } from "./planner-phase2-handler.js";
 
 interface SuggestDepartmentsInput {
   sector: string;
