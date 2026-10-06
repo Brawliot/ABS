@@ -399,9 +399,11 @@ export function renderPlannerHtml(): string {
     let currentPhase1 = null;
     let currentPhase2 = null;
     let currentJevPhase2 = null;
+    let currentPhase5 = null;
     let currentQuestion = null;
     let currentMetric = null;
     let originalInput = null;
+    let phase5State = null;
 
     const addUserMessage = (text) => {
       const div = document.createElement('div');
@@ -801,12 +803,15 @@ export function renderPlannerHtml(): string {
         }
 
         const phase5Results = await phase5Response.json();
+        currentPhase5 = phase5Results;
         addPhase5ToAnalysis(phase5Results);
 
         if (phase5Results.departamentos_preguntar.length > 0) {
-          addQuestionMessage('Algunos departamentos tienen probabilidad media. Valida si los necesitas respondiendo a continuación.');
+          addQuestionMessage('Algunos departamentos tienen probabilidad media. ¿Necesitas: ' + phase5Results.departamentos_preguntar.map(d => d.nombre).join(', ') + '?');
+          phase5State = 'validating_departments';
         } else {
-          addQuestionMessage('✓ Estructura de departamentos definida.');
+          addQuestionMessage('¿Hay algún departamento CRÍTICO e INDEPENDIENTE que no esté en la lista? (No debe ser sub-función de otro)');
+          phase5State = 'asking_custom';
         }
 
         currentQuestion = null;
@@ -844,7 +849,19 @@ export function renderPlannerHtml(): string {
       sendBtn.disabled = true;
 
       try {
-        if (currentQuestion && currentMetric && currentPhase2) {
+        if (phase5State === 'asking_custom') {
+          if (value.toLowerCase().includes('sí') || value.toLowerCase().includes('si')) {
+            addQuestionMessage('¿Cuáles son esos departamentos y por qué son independientes y críticos?');
+            phase5State = 'describing_custom';
+          } else {
+            addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
+            phase5State = null;
+          }
+        } else if (phase5State === 'describing_custom') {
+          const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
+          addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
+          phase5State = null;
+        } else if (currentQuestion && currentMetric && currentPhase2) {
           const loadingId = addLoadingMessage(2);
 
           const refineResponse = await fetch('/api/planner/refine-iterate', {
