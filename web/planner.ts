@@ -874,7 +874,7 @@ export function renderPlannerHtml(): string {
           const checkResult = await checkResponse.json();
 
           // If confidence is low OR Jev says NO → Finish (no missing departments)
-          if (checkResult.confianza < 0.8 || !checkResult.hay_faltantes) {
+          if (checkResult.confianza < 0.85 || !checkResult.hay_faltantes) {
             addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
             currentQuestion = null;
             currentMetric = null;
