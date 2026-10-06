@@ -117,101 +117,109 @@ function calculateDepartmentProbability(dept: string, input: Phase5Input): numbe
   // Department-specific calculations
   switch (dept) {
     case "Legal & Compliance":
-      if (hasHighRegulation) prob += 30;
+      prob = 75; // Base high
+      if (hasHighRegulation) prob += 20;
       else if (hasMediumRegulation) prob += 15;
-      if (isFinance || isHealth || isConstruction) prob += 20;
+      if (isHospitality) prob += 15; // Food permits, labor law
+      if (isFinance || isHealth) prob += 15;
       if (isB2B || isEnterprise) prob += 10;
       return Math.min(prob, 99);
 
     case "Finanzas":
-      prob = 85; // Almost always needed
-      if (isBudgetHigh) prob += 10;
-      if (isB2B) prob += 5;
+      prob = 90; // Almost always needed
+      if (isBudgetHigh) prob += 8;
+      if (isHospitality || isRetail) prob += 5;
       return Math.min(prob, 99);
 
     case "RRHH":
-      if (!isSoloFounder) prob += 25;
-      if (isLargeTeam) prob += 15;
-      if (isBudgetLow) prob -= 10;
-      if (isHospitality) prob += 15; // Needs staff
-      return Math.min(Math.max(prob, 40), 98);
+      prob = 70; // Base high
+      if (isHospitality) prob += 20; // Needs lots of staff
+      if (isManufacturing) prob += 15;
+      if (!isSoloFounder) prob += 15;
+      if (isLargeTeam) prob += 10;
+      if (isBudgetLow) prob -= 5;
+      return Math.min(Math.max(prob, 50), 98);
 
     case "Operativo":
-      prob = 80; // Almost always needed
-      if (isHospitality || isManufacturing) prob += 15;
-      if (isEarlyStage) prob += 10;
+      prob = 85; // Almost always needed
+      if (isHospitality || isManufacturing) prob += 12;
+      if (isEarlyStage) prob += 5;
       return Math.min(prob, 99);
 
     case "Ventas":
-      if (isB2C) prob += 25;
-      if (isB2B) prob += 30;
+      if (isB2C) prob += 30;
+      if (isB2B) prob += 35;
       if (isSME || isEnterprise) prob += 20;
       if (isDelivery) prob += 20;
-      if (isBudgetLow) prob -= 15;
-      return Math.min(Math.max(prob, 30), 92);
-
-    case "Marketing":
-      if (isB2C) prob += 30;
-      if (isIndividual || isSME) prob += 20;
-      if (isHospitality) prob += 15;
-      if (isBudgetLow) prob -= 20;
-      if (isBudgetHigh) prob += 15;
-      return Math.min(Math.max(prob, 35), 88);
-
-    case "Logística":
-      if (hasHighDependency || hasMediumDependency) prob += 30;
-      if (isDelivery || isMarketplace) prob += 30;
-      if (isRetail) prob += 20;
-      if (isBudgetLow) prob -= 15;
-      return Math.min(Math.max(prob, 35), 85);
-
-    case "Soporte/Success":
-      if (isSaaS || isMarketplace) prob += 30;
-      if (isB2C && hasTraction) prob += 15;
-      if (isEnterprise) prob += 20;
-      if (isEarlyStage) prob -= 25;
-      return Math.min(Math.max(prob, 15), 80);
-
-    case "Tecnología":
-      if (isTech || isSaaS) prob += 35;
-      if (isMarketplace) prob += 25;
-      if (isDelivery) prob += 25;
-      if (isBudgetLow) prob -= 15;
-      if (isEarlyStage) prob += 15;
-      return Math.min(Math.max(prob, 30), 90);
-
-    case "Producto":
-      if (isSaaS || isTech) prob += 30;
-      if (isHospitality) prob += 30;
-      if (isEarlyStage) prob += 25;
-      if (hasTraction) prob += 15;
-      return Math.min(Math.max(prob, 50), 95);
-
-    case "Sanidad":
-      if (isHealth) prob += 90;
-      else if (isHospitality || isManufacturing) prob += 35;
-      else prob -= 40;
-      return Math.min(Math.max(prob, 0), 95);
-
-    case "Compras/Proveedores":
-      if (hasHighDependency || hasMediumDependency) prob += 35;
-      if (isManufacturing || isHospitality) prob += 25;
       if (isBudgetLow) prob -= 10;
       return Math.min(Math.max(prob, 40), 92);
 
+    case "Marketing":
+      if (isB2C) prob += 35;
+      if (isIndividual || isSME) prob += 25;
+      if (isHospitality) prob += 20;
+      if (isBudgetLow) prob -= 15;
+      if (isBudgetHigh) prob += 15;
+      return Math.min(Math.max(prob, 45), 88);
+
+    case "Logística":
+      if (hasHighDependency || hasMediumDependency) prob += 35;
+      if (isDelivery || isMarketplace) prob += 35;
+      if (isRetail || isHospitality) prob += 15;
+      if (isBudgetLow) prob -= 10;
+      return Math.min(Math.max(prob, 45), 85);
+
+    case "Soporte/Success":
+      if (isSaaS || isMarketplace) prob += 35;
+      if (isB2C && hasTraction) prob += 20;
+      if (isEnterprise) prob += 25;
+      if (isEarlyStage) prob -= 20;
+      return Math.min(Math.max(prob, 20), 80);
+
+    case "Tecnología":
+      if (isTech || isSaaS) prob += 40;
+      if (isMarketplace) prob += 30;
+      if (isDelivery) prob += 28;
+      if (isBudgetLow) prob -= 10;
+      if (isEarlyStage) prob += 15;
+      return Math.min(Math.max(prob, 35), 90);
+
+    case "Producto":
+      prob = 60; // Base higher
+      if (isSaaS || isTech) prob += 30;
+      if (isHospitality) prob += 35;
+      if (isEarlyStage) prob += 20;
+      if (hasTraction) prob += 15;
+      return Math.min(Math.max(prob, 55), 95);
+
+    case "Sanidad":
+      if (isHealth) prob += 95;
+      else if (isHospitality) prob += 88; // Food safety critical
+      else if (isManufacturing) prob += 40;
+      else prob -= 45;
+      return Math.min(Math.max(prob, 0), 99);
+
+    case "Compras/Proveedores":
+      prob = 65; // Base higher
+      if (isHospitality || isManufacturing) prob += 30; // Critical for supply
+      if (hasHighDependency || hasMediumDependency) prob += 20;
+      if (isBudgetLow) prob -= 5;
+      return Math.min(Math.max(prob, 50), 95);
+
     case "Marca":
-      if (isB2C) prob += 25;
-      if (isIndividual || isSME) prob += 20;
+      if (isB2C) prob += 30;
+      if (isIndividual || isSME) prob += 25;
       if (isBudgetHigh) prob += 20;
-      if (isBudgetLow) prob -= 20;
-      if (isEarlyStage) prob -= 15;
-      return Math.min(Math.max(prob, 35), 80);
+      if (isBudgetLow) prob -= 15;
+      if (isEarlyStage) prob -= 10;
+      return Math.min(Math.max(prob, 40), 80);
 
     case "Infraestructura":
-      if (isHospitality || isManufacturing || isConstruction) prob += 40;
-      if (isBudgetHigh) prob += 15;
-      if (isEarlyStage) prob += 15;
-      return Math.min(Math.max(prob, 40), 95);
+      prob = 70; // Base higher
+      if (isHospitality || isManufacturing || isConstruction) prob += 25;
+      if (isBudgetHigh) prob += 12;
+      if (isEarlyStage) prob += 10;
+      return Math.min(Math.max(prob, 45), 95);
 
     default:
       return prob;
