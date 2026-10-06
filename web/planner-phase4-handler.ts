@@ -125,8 +125,9 @@ const DIMENSION_MAPPINGS = {
   "Expertise dual o múltiple": [],
 };
 
-function normalize(text: string): string {
-  return text
+function normalize(text: string | undefined | null): string {
+  if (!text) return "";
+  return String(text)
     .toLowerCase()
     .replace(/á/g, "a")
     .replace(/é/g, "e")
@@ -135,11 +136,13 @@ function normalize(text: string): string {
     .replace(/ú/g, "u");
 }
 
-function findMapping(value: string): string[] {
+function findMapping(value: string | undefined | null): string[] {
   if (!value) return [];
   const normalized = normalize(value);
+  if (!normalized) return [];
   for (const [key, dimensions] of Object.entries(DIMENSION_MAPPINGS)) {
-    if (normalize(key).includes(normalized) || normalized.includes(normalize(key))) {
+    const normalizedKey = normalize(key);
+    if (normalizedKey && (normalizedKey.includes(normalized) || normalized.includes(normalizedKey))) {
       return dimensions;
     }
   }

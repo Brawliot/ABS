@@ -716,16 +716,16 @@ export function renderPlannerHtml(): string {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sector: currentPhase1.answers.sector.choice,
-            alcance_geografico: currentPhase1.answers.alcance_geografico.choice,
-            regulacion: currentPhase2.constraints.confidence ? 'Regulación crítica' : currentPhase2.constraints.dinero,
-            modelo_negocio: jevPhase2Results.modelo_negocio,
-            equipo: jevPhase2Results.equipo,
-            validacion: jevPhase2Results.validacion,
-            dependencia: jevPhase2Results.dependencia,
-            cliente_objetivo: jevPhase2Results.cliente_objetivo,
-            presupuesto: jevPhase2Results.presupuesto,
-            experiencia: jevPhase2Results.experiencia
+            sector: currentPhase1.answers.sector?.choice || '',
+            alcance_geografico: currentPhase1.answers.alcance_geografico?.choice || '',
+            regulacion: jevPhase2Results.regulacion || '',
+            modelo_negocio: jevPhase2Results.modelo_negocio || '',
+            equipo: jevPhase2Results.equipo || '',
+            validacion: jevPhase2Results.validacion || '',
+            dependencia: jevPhase2Results.dependencia || '',
+            cliente_objetivo: jevPhase2Results.cliente_objetivo || '',
+            presupuesto: jevPhase2Results.presupuesto || '',
+            experiencia: jevPhase2Results.experiencia || ''
           })
         });
 
