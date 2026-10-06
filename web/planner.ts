@@ -823,9 +823,9 @@ export function renderPlannerHtml(): string {
         addPhase5ToAnalysis(phase5Results);
 
         // Auto-suggest additional departments via Jev + ChatGPT
-        let loadingId;
+        let loadingIdSuggest;
         try {
-          loadingId = addLoadingMessage(3);
+          loadingIdSuggest = addLoadingMessage(3);
           const allDepts = [
             ...phase5Results.departamentos_criticos.map(d => d.nombre),
             ...phase5Results.departamentos_importantes.map(d => d.nombre),
@@ -844,7 +844,7 @@ export function renderPlannerHtml(): string {
             })
           });
 
-          removeLoadingMessage(loadingId);
+          removeLoadingMessage(loadingIdSuggest);
 
           if (suggestResponse.ok) {
             const suggestions = await suggestResponse.json();
@@ -873,7 +873,8 @@ export function renderPlannerHtml(): string {
         currentQuestion = null;
         currentMetric = null;
       } catch (error) {
-        removeLoadingMessage(loadingId);
+        if (loadingId) removeLoadingMessage(loadingId);
+        if (loadingIdSuggest) removeLoadingMessage(loadingIdSuggest);
         const msg = error instanceof Error ? error.message : 'Error desconocido';
         addErrorMessage('Error: ' + msg);
       } finally {
