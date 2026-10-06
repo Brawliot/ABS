@@ -411,6 +411,24 @@ export function renderPlannerHtml(): string {
     let enrichedResources = null;
     let suggestedSubdepartments = {};
 
+    const saveAnalysisToSession = () => {
+      const analysis = {
+        phase1: currentPhase1,
+        phase2: currentPhase2,
+        jevPhase2: currentJevPhase2,
+        phase5: currentPhase5,
+        resources: enrichedResources,
+        suggestedSubdepartments: suggestedSubdepartments,
+        originalInput: originalInput,
+        timestamp: new Date().toISOString()
+      };
+      try {
+        sessionStorage.setItem('plannerAnalysis', JSON.stringify(analysis));
+      } catch (e) {
+        console.error('Error saving analysis to sessionStorage:', e);
+      }
+    };
+
     const addUserMessage = (text) => {
       const div = document.createElement('div');
       div.className = 'message user';
@@ -996,6 +1014,7 @@ export function renderPlannerHtml(): string {
             } else {
               addQuestionMessage('✓ Análisis completo. Tu plan de negocio está estructurado y listo.');
               phase5State = null;
+              saveAnalysisToSession();
               setTimeout(() => {
                 window.location.href = '/plan';
               }, 1500);
@@ -1004,6 +1023,10 @@ export function renderPlannerHtml(): string {
             const customDepts = value.split(',').map(d => d.trim()).filter(d => d.length > 0);
             addQuestionMessage('✓ Departamentos personalizados agregados: ' + customDepts.join(', '));
             phase5State = null;
+            if (currentPhase5 && customDepts.length > 0) {
+              currentPhase5.departamentos_personalizados = customDepts;
+            }
+            saveAnalysisToSession();
             setTimeout(() => {
               window.location.href = '/plan';
             }, 1500);
