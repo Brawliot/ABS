@@ -33,6 +33,7 @@ import { refineAndSelectNextQuestion } from "./planner-refine-iterate.js";
 import { enrichAnalysisWithResources } from "./planner-enrich-resources.js";
 import { analyzeWithJevPhase2 } from "./planner-jev-phase2.js";
 import { inferDimensions } from "./planner-phase4-handler.js";
+import { calculateDepartmentProbabilities } from "./planner-phase5-handler.js";
 import { AppRuntime } from "./runtime.js";
 import { ParteIdentityStore } from "../policies/identity.js";
 import {
@@ -315,6 +316,24 @@ export function startWebServer(
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.error("Planner Phase 4 error:", msg);
+          return sendJson(res, 500, { error: msg });
+        }
+      }
+
+      if (path === "/api/planner/phase5" && method === "POST") {
+        try {
+          const body = await readBody(req);
+          const data = JSON.parse(body);
+          const required = ["sector", "alcance_geografico", "regulacion", "modelo_negocio", "equipo", "validacion", "dependencia", "cliente_objetivo", "presupuesto", "experiencia"];
+          const missing = required.filter(k => !data[k]);
+          if (missing.length > 0) {
+            return sendJson(res, 400, { error: `Missing fields: ${missing.join(", ")}` });
+          }
+          const result = calculateDepartmentProbabilities(data);
+          return sendJson(res, 200, result);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Planner Phase 5 error:", msg);
           return sendJson(res, 500, { error: msg });
         }
       }
